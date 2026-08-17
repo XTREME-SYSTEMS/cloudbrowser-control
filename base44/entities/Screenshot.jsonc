@@ -1,0 +1,33 @@
+{
+  "name": "Screenshot",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL to the stored screenshot image"
+    },
+    "caption": {
+      "type": "string"
+    },
+    "full_page": {
+      "type": "boolean",
+      "default": false
+    },
+    "taken_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "file_url"
+  ]
+}

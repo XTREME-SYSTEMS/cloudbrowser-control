@@ -1,0 +1,77 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "retrying",
+        "cancelled"
+      ],
+      "default": "queued"
+    },
+    "start_url": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Reference to Session entity"
+    },
+    "schedule_id": {
+      "type": "string",
+      "description": "Reference to Schedule that triggered this job, if any"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0
+    },
+    "max_retries": {
+      "type": "number",
+      "default": 3
+    },
+    "backoff_seconds": {
+      "type": "number",
+      "default": 30
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "results_summary": {
+      "type": "object",
+      "description": "Counts and summary of results produced"
+    },
+    "steps_count": {
+      "type": "number",
+      "default": 0
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "session_config": {
+      "type": "object",
+      "description": "Session options: viewport, user_agent, proxy_id, headers, blocked_resources, etc."
+    }
+  },
+  "required": [
+    "name",
+    "status"
+  ]
+}

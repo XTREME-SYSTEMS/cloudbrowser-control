@@ -1,0 +1,39 @@
+{
+  "name": "Proxy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "server": {
+      "type": "string",
+      "description": "Proxy server URL (host:port)"
+    },
+    "username": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "http",
+        "https",
+        "socks5"
+      ],
+      "default": "http"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "server"
+  ]
+}

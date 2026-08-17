@@ -1,0 +1,75 @@
+{
+  "name": "Step",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Reference to Job entity"
+    },
+    "order": {
+      "type": "number",
+      "default": 0
+    },
+    "name": {
+      "type": "string"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "goto",
+        "back",
+        "forward",
+        "reload",
+        "wait_for_selector",
+        "wait_for_load_state",
+        "wait_for_timeout",
+        "click",
+        "hover",
+        "type",
+        "fill",
+        "press",
+        "select_option",
+        "scroll",
+        "drag_and_drop",
+        "upload_file",
+        "download",
+        "handle_dialog",
+        "screenshot",
+        "pdf",
+        "extract_text",
+        "extract_html",
+        "extract_attribute",
+        "extract_table",
+        "extract_json",
+        "ai_extract",
+        "set_cookies",
+        "set_headers",
+        "set_local_storage",
+        "new_tab",
+        "switch_tab",
+        "close_tab",
+        "capture_response"
+      ]
+    },
+    "selector": {
+      "type": "string",
+      "description": "CSS or XPath selector"
+    },
+    "value": {
+      "type": "string",
+      "description": "Text to type, option to select, URL to goto, etc."
+    },
+    "options": {
+      "type": "object",
+      "description": "Action-specific options (full_page, timeout, wait_until, schema, etc.)"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "order",
+    "action_type"
+  ]
+}

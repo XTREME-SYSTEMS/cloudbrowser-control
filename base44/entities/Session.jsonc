@@ -1,0 +1,90 @@
+{
+  "name": "Session",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Engine-side browser session ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "idle",
+        "ended",
+        "errored",
+        "timed_out"
+      ],
+      "default": "pending"
+    },
+    "target_url": {
+      "type": "string",
+      "description": "Initial URL the session navigated to"
+    },
+    "viewport": {
+      "type": "object",
+      "description": "{ width, height } viewport config"
+    },
+    "user_agent": {
+      "type": "string"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "geolocation": {
+      "type": "object",
+      "description": "{ latitude, longitude }"
+    },
+    "proxy_id": {
+      "type": "string",
+      "description": "Reference to Proxy entity"
+    },
+    "headers": {
+      "type": "object",
+      "description": "Extra HTTP headers"
+    },
+    "blocked_resources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "timeout_ms": {
+      "type": "number",
+      "default": 30000
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "current_url": {
+      "type": "string"
+    },
+    "current_title": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "name": "LogEntry",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "string"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warn",
+        "error",
+        "debug"
+      ],
+      "default": "info"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "action",
+        "network",
+        "console",
+        "error",
+        "system"
+      ],
+      "default": "action"
+    },
+    "message": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "level",
+    "message"
+  ]
+}

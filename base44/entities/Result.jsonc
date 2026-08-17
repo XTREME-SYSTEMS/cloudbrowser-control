@@ -1,0 +1,46 @@
+{
+  "name": "Result",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "string"
+    },
+    "step_order": {
+      "type": "number"
+    },
+    "action_type": {
+      "type": "string"
+    },
+    "data_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "html",
+        "attribute",
+        "json",
+        "table",
+        "screenshot_url",
+        "pdf_url",
+        "ai_extract"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "description": "The extracted or produced payload"
+    },
+    "extracted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "job_id",
+    "data_type"
+  ]
+}

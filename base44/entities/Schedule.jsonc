@@ -1,0 +1,45 @@
+{
+  "name": "Schedule",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "cron_expression": {
+      "type": "string",
+      "description": "Standard cron expression (UTC)"
+    },
+    "interval_seconds": {
+      "type": "number",
+      "description": "Alternative to cron: fixed interval in seconds"
+    },
+    "job_template": {
+      "type": "object",
+      "description": "Full job definition: name, start_url, session_config, steps array"
+    },
+    "last_run": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "next_run": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "ID of the backing workflow"
+    },
+    "run_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "enabled"
+  ]
+}

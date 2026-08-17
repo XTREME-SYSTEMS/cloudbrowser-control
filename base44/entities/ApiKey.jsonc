@@ -1,0 +1,36 @@
+{
+  "name": "ApiKey",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Label for this key (e.g. production, staging)"
+    },
+    "key_prefix": {
+      "type": "string",
+      "description": "First 8 chars for display"
+    },
+    "key_hash": {
+      "type": "string",
+      "description": "Hashed key for verification"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_used": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "key_hash"
+  ]
+}
