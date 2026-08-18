@@ -215,7 +215,7 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
       const sessions = keyRecord.project_id
         ? allSessions.filter((s) => s.project_id === keyRecord.project_id)
         : allSessions;
-      return Response.json({ sessions, request_id: requestId });
+      return Response.json({ sessions, request_id: requestId, _filter_version: "v2" });
     }
 
     case "POST:/sessions": {
