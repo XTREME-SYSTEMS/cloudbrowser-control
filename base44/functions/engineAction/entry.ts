@@ -1,13 +1,14 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { secrets } from "base44:runtime";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     setEngineClient(base44);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) return Response.json({ error: "Unauthorized", __v: DEPLOYMENT_VERSION }, { status: 401 });
 
     const body = await req.json();
     const { action } = body;
@@ -230,8 +231,8 @@ export default async function(req) {
       return Response.json({ base64: engineRes.base64, url: engineRes.url, title: engineRes.title });
     }
 
-    return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });
+    return Response.json({ error: `Unknown action: ${action}`, __v: DEPLOYMENT_VERSION }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

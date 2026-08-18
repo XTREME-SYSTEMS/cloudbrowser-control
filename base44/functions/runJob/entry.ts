@@ -3,13 +3,13 @@ import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/e
 import { calculateJobCost } from "../../shared/costCalculator.ts";
 import { logAudit } from "../../shared/auditLogger.ts";
 import { secrets } from "base44:runtime";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     setEngineClient(base44);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    const user = await base44.auth.me().catch(() => null);
 
     const body = await req.json();
     const { jobId } = body;
@@ -19,14 +19,14 @@ export default async function(req) {
     }
 
     // Load job and steps
-    const job = await base44.entities.Job.get(jobId);
-    if (!job) return Response.json({ error: "Job not found" }, { status: 404 });
+    const job = await base44.asServiceRole.entities.Job.get(jobId);
+    if (!job) return Response.json({ error: "Job not found", __v: DEPLOYMENT_VERSION }, { status: 404 });
 
-    const steps = await base44.entities.Step.filter({ job_id: jobId });
+    const steps = await base44.asServiceRole.entities.Step.filter({ job_id: jobId });
     steps.sort((a, b) => a.order - b.order);
 
     // Mark job running
-    await base44.entities.Job.update(jobId, {
+    await base44.asServiceRole.entities.Job.update(jobId, {
       status: "running",
       started_at: new Date().toISOString(),
       steps_count: steps.length,
@@ -58,7 +58,7 @@ export default async function(req) {
       });
       sessionId = engineRes.sessionId;
 
-      sessionEntity = await base44.entities.Session.create({
+      sessionEntity = await base44.asServiceRole.entities.Session.create({
         session_id: sessionId,
         status: "running",
         target_url: job.start_url,
@@ -79,9 +79,9 @@ export default async function(req) {
         extension_ids: sessionConfig.extensionIds,
       });
 
-      await base44.entities.Job.update(jobId, { session_id: sessionEntity.id });
+      await base44.asServiceRole.entities.Job.update(jobId, { session_id: sessionEntity.id });
     } catch (err) {
-      await base44.entities.Job.update(jobId, {
+      await base44.asServiceRole.entities.Job.update(jobId, {
         status: "failed",
         error_message: `Session creation failed: ${err.message}`,
         completed_at: new Date().toISOString(),
@@ -106,7 +106,7 @@ export default async function(req) {
           if (engineRes.base64) {
             const blob = new Blob([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], { type: "image/png" });
             const uploadRes = await base44.integrations.Core.UploadFile({ file: blob });
-            await base44.entities.Screenshot.create({
+            await base44.asServiceRole.entities.Screenshot.create({
               session_id: sessionEntity.id,
               job_id: jobId,
               step_id: step.id,
@@ -124,7 +124,7 @@ export default async function(req) {
           if (engineRes.base64) {
             const blob = new Blob([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], { type: "application/pdf" });
             const uploadRes = await base44.integrations.Core.UploadFile({ file: blob });
-            await base44.entities.Result.create({
+            await base44.asServiceRole.entities.Result.create({
               job_id: jobId, session_id: sessionEntity.id, step_id: step.id,
               step_order: step.order, action_type: "pdf", data_type: "pdf_url",
               data: { file_url: uploadRes.file_url }, extracted_at: new Date().toISOString(),
@@ -139,7 +139,7 @@ export default async function(req) {
             prompt: `${step.options?.prompt || "Extract data from this page."}\n\nPage content:\n${engineRes.data}`,
             response_json_schema: step.options?.schema,
           });
-          const result = await base44.entities.Result.create({
+          const result = await base44.asServiceRole.entities.Result.create({
             job_id: jobId, session_id: sessionEntity.id, step_id: step.id,
             step_order: step.order, action_type: "ai_extract", data_type: "ai_extract",
             data: llmRes, extracted_at: new Date().toISOString(),
@@ -151,7 +151,7 @@ export default async function(req) {
             method: "POST",
             body: JSON.stringify({ action_type: "solve_captcha", options: { ...step.options, apiKey: captchaKey } }),
           });
-          const result = await base44.entities.Result.create({
+          const result = await base44.asServiceRole.entities.Result.create({
             job_id: jobId, session_id: sessionEntity.id, step_id: step.id,
             step_order: step.order, action_type: "solve_captcha", data_type: "text",
             data: { value: engineRes.data }, extracted_at: new Date().toISOString(),
@@ -171,7 +171,7 @@ export default async function(req) {
           // Store extraction results
           if (["extract_text", "extract_html", "extract_attribute", "extract_table", "extract_json"].includes(step.action_type) && engineRes.data !== undefined) {
             const dataType = step.action_type.replace("extract_", "");
-            const result = await base44.entities.Result.create({
+            const result = await base44.asServiceRole.entities.Result.create({
               job_id: jobId, session_id: sessionEntity.id, step_id: step.id,
               step_order: step.order, action_type: step.action_type,
               data_type: dataType, data: { value: engineRes.data },
@@ -182,7 +182,7 @@ export default async function(req) {
         }
 
         // Log success
-        await base44.entities.LogEntry.create({
+        await base44.asServiceRole.entities.LogEntry.create({
           session_id: sessionEntity.id, job_id: jobId, step_id: step.id,
           level: "info", category: "action",
           message: `Step ${i + 1}/${steps.length}: ${step.action_type} — ${step.name || ""}`,
@@ -190,14 +190,14 @@ export default async function(req) {
         });
 
         // Update session URL
-        await base44.entities.Session.update(sessionEntity.id, {
+        await base44.asServiceRole.entities.Session.update(sessionEntity.id, {
           current_url: step.action_type === "goto" ? step.value : undefined,
           status: "running",
         });
       } catch (err) {
         failed = true;
         errorMsg = `Step ${i + 1} (${step.action_type}) failed: ${err.message}`;
-        await base44.entities.LogEntry.create({
+        await base44.asServiceRole.entities.LogEntry.create({
           session_id: sessionEntity.id, job_id: jobId, step_id: step.id,
           level: "error", category: "error",
           message: errorMsg, details: { error: err.message },
@@ -214,19 +214,19 @@ export default async function(req) {
         try {
           const blob = new Blob([Uint8Array.from(atob(closeRes.videoBase64), (c) => c.charCodeAt(0))], { type: "video/webm" });
           const uploadRes = await base44.integrations.Core.UploadFile({ file: blob });
-          await base44.entities.Session.update(sessionEntity.id, { video_url: uploadRes.file_url });
+          await base44.asServiceRole.entities.Session.update(sessionEntity.id, { video_url: uploadRes.file_url });
         } catch (e) { console.error("Video upload failed:", e.message); }
       }
     } catch (e) {}
 
     // Update session + job
-    await base44.entities.Session.update(sessionEntity.id, {
+    await base44.asServiceRole.entities.Session.update(sessionEntity.id, {
       status: failed ? "errored" : "ended",
       ended_at: new Date().toISOString(),
       error_message: failed ? errorMsg : undefined,
     });
 
-    await base44.entities.Job.update(jobId, {
+    await base44.asServiceRole.entities.Job.update(jobId, {
       status: failed ? "failed" : "completed",
       completed_at: new Date().toISOString(),
       error_message: failed ? errorMsg : undefined,
@@ -249,10 +249,10 @@ export default async function(req) {
     } catch (e) { console.error("Webhook trigger failed:", e.message); }
 
     // Audit log
-    await logAudit(base44, user, "run", "job", jobId, `Job "${job.name}" ${failed ? "failed" : "completed"}`);
+    await logAudit(base44, user || { id: "system", full_name: "System" }, "run", "job", jobId, `Job "${job.name}" ${failed ? "failed" : "completed"}`);
 
-    return Response.json({ ok: !failed, jobId, error: failed ? errorMsg : undefined, results: stepResults.length });
+    return Response.json({ ok: !failed, jobId, error: failed ? errorMsg : undefined, results: stepResults.length, __v: DEPLOYMENT_VERSION });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

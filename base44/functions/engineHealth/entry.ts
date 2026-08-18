@@ -1,12 +1,13 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   setEngineClient(base44);
   try {
     if (!await isEngineConfigured()) {
-      return Response.json({ ok: false, configured: false, error: "Browser engine not configured" }, { status: 200 });
+      return Response.json({ ok: false, configured: false, error: "Browser engine not configured", __v: DEPLOYMENT_VERSION }, { status: 200 });
     }
 
     try {
@@ -26,7 +27,7 @@ export default async function (req) {
         checked_at: new Date().toISOString(),
         checked_by: "system",
       });
-      return Response.json({ ok: true, configured: true, ...health });
+      return Response.json({ ok: true, configured: true, ...health, __v: DEPLOYMENT_VERSION });
     } catch (err) {
       // Persist unhealthy observation
       await base44.asServiceRole.entities.EngineHealthLog.create({
@@ -39,6 +40,6 @@ export default async function (req) {
       return Response.json({ ok: false, configured: true, error: err.message }, { status: 200 });
     }
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

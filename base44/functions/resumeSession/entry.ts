@@ -1,12 +1,13 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   setEngineClient(base44);
   try {
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) return Response.json({ error: "Unauthorized", __v: DEPLOYMENT_VERSION }, { status: 401 });
 
     const body = await req.json();
     const { resume_token, profile_id } = body;
@@ -14,7 +15,7 @@ export default async function (req) {
 
     // Find the original session by resume_token
     const sessions = await base44.entities.Session.filter({ resume_token });
-    if (!sessions.length) return Response.json({ error: "Invalid or expired resume token" }, { status: 404 });
+    if (!sessions.length) return Response.json({ error: "Invalid or expired resume token", __v: DEPLOYMENT_VERSION }, { status: 404 });
     const original = sessions[0];
 
     if (!await isEngineConfigured()) return Response.json({ error: "Engine not configured" }, { status: 503 });
@@ -73,6 +74,6 @@ export default async function (req) {
       context_restored: !!(cookies || storageState),
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

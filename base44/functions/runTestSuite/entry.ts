@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
 // Test Oracle v2 — runtime-evidence only, zero false positives
@@ -221,13 +222,31 @@ export default async function (req) {
       return { error: `Expected job.id, got ${r.error || r.status}` };
     });
 
-    await runTest(base44, runId, suite, "POST /jobs/:id/run uses canonical jobId contract", "Jobs", 3, async () => {
+    await runTest(base44, runId, suite, "POST /jobs/:id/run executes real browser job end-to-end", "Jobs", 5, async () => {
       if (!engineConfigured) return { error: skipReason };
       if (!createdJobId) return { error: "No job to run" };
       const r = await callGateway(base44, { api_key: testKey, path: `/jobs/${createdJobId}/run`, method: "POST" });
-      // Job should run (may fail if engine down, but should NOT 500 with "jobId undefined")
-      if (r.status === 500 && r.error?.includes("jobId")) return { error: "Contract mismatch: job_id vs jobId still broken" };
-      return r.ok || r.status < 500 ? true : { error: `Job run failed: ${r.error}` };
+      // Must be a successful response — no HTTP-status shortcut
+      if (!r.ok) return { error: `Job run failed (${r.status}): ${r.error}` };
+      // Job must reach completed terminal state
+      const job = await base44.asServiceRole.entities.Job.get(createdJobId);
+      if (!job) return { error: "Job not found after run" };
+      if (job.status !== "completed") return { error: `Job did not complete — status: ${job.status}, error: ${job.error_message || "none"}` };
+      // Real session must have been created with non-null runtime session ID
+      if (!job.session_id) return { error: "No session_id on job — real browser session was not created" };
+      const session = await base44.asServiceRole.entities.Session.get(job.session_id);
+      if (!session) return { error: "Session entity not found" };
+      if (!session.session_id) return { error: "No runtime session ID — engine did not create a real browser" };
+      // No authentication failure
+      if (job.error_message?.includes("401") || job.error_message?.includes("Unauthorized") || job.error_message?.includes("Forbidden")) {
+        return { error: `Authentication failure in job: ${job.error_message}` };
+      }
+      // Expected result/artifact must exist (screenshot from the test job steps)
+      const screenshots = await base44.asServiceRole.entities.Screenshot.filter({ job_id: createdJobId });
+      if (screenshots.length === 0) return { error: "No screenshots produced — job did not execute real browser actions" };
+      // Cleanup must have occurred — session should be ended
+      if (session.status !== "ended") return { error: `Session not cleaned up — status: ${session.status}` };
+      return true;
     });
 
     await runTest(base44, runId, suite, "GET /jobs/:id/results returns results array", "Jobs", 1, async () => {
@@ -428,8 +447,9 @@ export default async function (req) {
       release_status: releaseStatus,
       engine_configured: engineConfigured,
       categories,
+      __v: DEPLOYMENT_VERSION,
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

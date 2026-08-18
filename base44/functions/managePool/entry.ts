@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineGet, engineDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -84,8 +85,9 @@ export default async function (req) {
       region: enginePool.region ?? null,
       created,
       recycled,
+      __v: DEPLOYMENT_VERSION,
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

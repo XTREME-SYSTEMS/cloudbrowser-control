@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
 // Inbound webhook — HMAC-SHA256 required, fail-closed (v4)
@@ -28,7 +29,7 @@ export default async function (req) {
 
     // Fail-closed: require signature first
     if (!signature) {
-      return Response.json({ error: "Webhook signature required" }, { status: 401 });
+      return Response.json({ error: "Webhook signature required", __v: DEPLOYMENT_VERSION }, { status: 401 });
     }
     if (!timestamp) {
       return Response.json({ error: "Webhook timestamp required" }, { status: 401 });
@@ -98,6 +99,6 @@ export default async function (req) {
 
     return Response.json({ success: true, job_id, verified_webhook: verifiedWebhook.name, result });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

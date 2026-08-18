@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
 // API Gateway v1 — secure, canonical, real runtime
@@ -94,7 +95,7 @@ function matchRoute(method, rawPath) {
 }
 
 function errorResponse(status, error, requestId) {
-  return Response.json({ error, request_id: requestId }, { status });
+  return Response.json({ error, request_id: requestId, __v: DEPLOYMENT_VERSION }, { status });
 }
 
 export default async function (req) {
@@ -165,7 +166,7 @@ export default async function (req) {
 async function dispatch(base44, route, params, data, keyRecord, requestId) {
   switch (route) {
     case "GET:/health":
-      return Response.json({ status: "ok", timestamp: new Date().toISOString(), request_id: requestId });
+      return Response.json({ status: "ok", timestamp: new Date().toISOString(), request_id: requestId, __v: DEPLOYMENT_VERSION });
 
     case "GET:/sessions": {
       const sessions = await base44.asServiceRole.entities.Session.list("-created_date", 50);
