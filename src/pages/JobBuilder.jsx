@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Play, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, ArrowLeft, Calculator, DollarSign } from "lucide-react";
 
 const ACTION_TYPES = [
   "goto", "back", "forward", "reload", "wait_for_selector", "wait_for_load_state", "wait_for_timeout",
@@ -24,6 +24,8 @@ export default function JobBuilder() {
   const [steps, setSteps] = useState([]);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
+  const [costEstimate, setCostEstimate] = useState(null);
+  const [estimating, setEstimating] = useState(false);
   const [viewport, setViewport] = useState({ width: 1280, height: 720 });
   const [userAgent, setUserAgent] = useState("");
   const [blockedResources, setBlockedResources] = useState([]);
@@ -39,6 +41,21 @@ export default function JobBuilder() {
   };
 
   const removeStep = (i) => setSteps(steps.filter((_, idx) => idx !== i));
+
+  const fetchEstimate = async () => {
+    setEstimating(true);
+    try {
+      const res = await base44.functions.invoke("estimateCost", {
+        steps,
+        sessionConfig: { viewport, userAgent, blockedResources },
+      });
+      setCostEstimate(res.data);
+    } catch (e) {
+      alert("Failed to estimate: " + (e.response?.data?.error || e.message));
+    } finally {
+      setEstimating(false);
+    }
+  };
   const moveStep = (i, dir) => {
     const j = i + dir;
     if (j < 0 || j >= steps.length) return;
@@ -175,6 +192,38 @@ export default function JobBuilder() {
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Cost estimate */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2"><DollarSign className="w-5 h-5" />Cost Estimate</CardTitle>
+            <Button size="sm" variant="outline" onClick={fetchEstimate} disabled={estimating || steps.length === 0}>
+              {estimating ? <div className="w-3 h-3 border-2 border-muted border-t-primary rounded-full animate-spin" /> : <Calculator className="w-4 h-4 mr-1" />}
+              {estimating ? "Calculating..." : "Estimate Cost"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!costEstimate ? (
+            <p className="text-center py-4 text-muted-foreground text-sm">Click "Estimate Cost" to project the cost of this job based on {steps.length} step(s).</p>
+          ) : (
+            <div className="space-y-3">
+              {costEstimate.estimates.map((est, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="capitalize">{est.category}: <span className="text-muted-foreground">{est.description}</span></span>
+                  <span className="font-medium">${est.cost.toFixed(4)}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-3 border-t">
+                <span className="font-medium">Estimated Total</span>
+                <span className="font-heading font-bold text-lg">${costEstimate.totalCost.toFixed(4)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Est. duration: ~{costEstimate.estimatedDurationSec}s · Based on configured rates in Cost Monitor</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

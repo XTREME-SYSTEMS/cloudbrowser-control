@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
+import { calculateJobCost } from "../../shared/costCalculator.ts";
 
 export default async function(req) {
   try {
@@ -196,6 +197,13 @@ export default async function(req) {
       error_message: failed ? errorMsg : undefined,
       results_summary: { count: stepResults.length, types: stepResults.map((r) => r.data_type) },
     });
+
+    // Calculate and store cost
+    try {
+      await calculateJobCost(base44, jobId);
+    } catch (e) {
+      console.error("Cost calculation failed:", e.message);
+    }
 
     return Response.json({ ok: !failed, jobId, error: failed ? errorMsg : undefined, results: stepResults.length });
   } catch (error) {

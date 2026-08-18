@@ -1,0 +1,40 @@
+{
+  "name": "CostSettings",
+  "type": "object",
+  "properties": {
+    "compute_rate_per_min": {
+      "type": "number",
+      "default": 0.005,
+      "description": "USD per minute of browser session compute time"
+    },
+    "proxy_rate_per_gb": {
+      "type": "number",
+      "default": 2.0,
+      "description": "USD per GB of proxy bandwidth"
+    },
+    "llm_rate_per_call": {
+      "type": "number",
+      "default": 0.02,
+      "description": "USD per LLM/AI extraction call"
+    },
+    "storage_rate_per_gb_month": {
+      "type": "number",
+      "default": 0.02,
+      "description": "USD per GB of storage per month"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "monthly_budget": {
+      "type": "number",
+      "description": "Monthly budget cap in USD for alerts"
+    },
+    "alert_threshold_pct": {
+      "type": "number",
+      "default": 80,
+      "description": "Alert when monthly spend reaches this % of budget"
+    }
+  },
+  "required": []
+}

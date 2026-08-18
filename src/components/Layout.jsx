@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe, Menu } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe, Menu, DollarSign } from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/sessions", label: "Sessions", icon: Monitor },
   { to: "/jobs", label: "Jobs", icon: Briefcase },
   { to: "/schedules", label: "Schedules", icon: Calendar },
+  { to: "/costs", label: "Costs", icon: DollarSign },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

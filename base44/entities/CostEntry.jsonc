@@ -1,0 +1,54 @@
+{
+  "name": "CostEntry",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Reference to Session entity"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "Reference to Job entity"
+    },
+    "schedule_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "compute",
+        "proxy",
+        "llm",
+        "storage"
+      ],
+      "description": "Cost category"
+    },
+    "description": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Quantity consumed (minutes, GB, calls, etc.)"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit of measurement (minutes, GB, calls, etc.)"
+    },
+    "rate": {
+      "type": "number",
+      "description": "Cost per unit in USD"
+    },
+    "cost": {
+      "type": "number",
+      "description": "Total cost in USD for this entry"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "category",
+    "cost"
+  ]
+}

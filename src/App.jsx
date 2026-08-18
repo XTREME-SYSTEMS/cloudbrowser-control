@@ -19,6 +19,7 @@ import Jobs from '@/pages/Jobs';
 import JobBuilder from '@/pages/JobBuilder';
 import JobDetail from '@/pages/JobDetail';
 import Schedules from '@/pages/Schedules';
+import Costs from '@/pages/Costs';
 import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
           <Route path="/jobs/new" element={<JobBuilder />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/schedules" element={<Schedules />} />
+          <Route path="/costs" element={<Costs />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
