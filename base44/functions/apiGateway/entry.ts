@@ -375,7 +375,7 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
     case "POST:/jobs/:id/run": {
       // Canonical contract: jobId (not job_id)
       const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: params.id });
-      return Response.json({ ...result, request_id: requestId });
+      return Response.json({ ...(result.data || result), request_id: requestId });
     }
 
     case "GET:/jobs/:id/results": {

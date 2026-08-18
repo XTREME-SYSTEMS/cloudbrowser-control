@@ -570,7 +570,16 @@ app.post("/sessions/:id/execute", async (req, res) => {
       case "extract_table": { result.data = await page.evaluate((sel) => { const t = document.querySelector(sel); if (!t) return []; return [...t.querySelectorAll("tr")].map((r) => [...r.querySelectorAll("th,td")].map((c) => c.innerText.trim())); }, selector); break; }
       case "extract_json": { result.data = await page.evaluate(options.evaluateFn || `(selector) => document.querySelector(selector)?.innerText`, selector); try { result.data = JSON.parse(result.data); } catch (e) {} break; }
       case "ai_extract": { result.data = await page.evaluate(() => document.body.innerText.slice(0, 50000)); result.url = s.url; result.title = s.title; break; }
-      case "evaluate": { result.data = await page.evaluate(options.fn || value); break; }
+      case "evaluate": {
+        const fnStr = options.fn || value;
+        // If string looks like a function definition, wrap and call it
+        if (typeof fnStr === "string" && (fnStr.trim().startsWith("(") || fnStr.trim().startsWith("function"))) {
+          result.data = await page.evaluate(`(${fnStr})()`);
+        } else {
+          result.data = await page.evaluate(fnStr);
+        }
+        break;
+      }
       case "screenshot": { const buf = await page.screenshot({ fullPage: options.fullPage || false, type: "png" }); result.base64 = buf.toString("base64"); result.mimeType = "image/png"; result.size = buf.length; break; }
       case "pdf": { const buf = await page.pdf({ format: options.format || "A4", printBackground: options.printBackground !== false }); result.base64 = buf.toString("base64"); result.mimeType = "application/pdf"; result.size = buf.length; break; }
       case "set_cookies": { await s.context.addCookies(options.cookies || []); break; }

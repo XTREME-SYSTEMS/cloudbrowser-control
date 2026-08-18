@@ -114,8 +114,8 @@ export default async function(req) {
       if (!engineRes.base64) return Response.json({ error: "No screenshot returned" }, { status: 500 });
 
       // Upload to Base44 file storage
-      const blob = new Blob([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], { type: "image/png" });
-      const uploadRes = await base44.integrations.Core.UploadFile({ file: blob });
+      const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], "screenshot.png", { type: "image/png" });
+      const uploadRes = await base44.integrations.Core.UploadFile({ file });
       const file_url = uploadRes.file_url;
 
       const screenshot = await base44.entities.Screenshot.create({
@@ -141,8 +141,8 @@ export default async function(req) {
 
       if (!engineRes.base64) return Response.json({ error: "No PDF returned" }, { status: 500 });
 
-      const blob = new Blob([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], { type: "application/pdf" });
-      const uploadRes = await base44.integrations.Core.UploadFile({ file: blob });
+      const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], "document.pdf", { type: "application/pdf" });
+      const uploadRes = await base44.integrations.Core.UploadFile({ file });
       const file_url = uploadRes.file_url;
 
       const result = await base44.entities.Result.create({
