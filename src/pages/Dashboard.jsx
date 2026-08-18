@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import { Activity, CheckCircle, AlertCircle, Cpu, Plus } from "lucide-react";
+import UsageCheatSheet from "@/components/UsageCheatSheet";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ sessions: 0, activeSessions: 0, jobs: 0, completedJobs: 0, failedJobs: 0, queuedJobs: 0 });
@@ -75,7 +76,7 @@ export default function Dashboard() {
               {engineHealth?.ok
                 ? `${engineHealth.active_sessions} active sessions · uptime ${Math.round(engineHealth.uptime)}s`
                 : engineHealth?.configured === false
-                ? "Set BROWSER_ENGINE_URL and BROWSER_ENGINE_API_KEY in Settings → Secrets"
+                ? "Set ENGINE_URL and ENGINE_API_KEY in Settings → Secrets"
                 : engineHealth?.error || "Check your engine deployment"}
             </p>
           </div>
@@ -90,6 +91,9 @@ export default function Dashboard() {
         <StatCard label="Success Rate" value={`${successRate}%`} icon={CheckCircle} accent="text-green-500" />
         <StatCard label="Failed Jobs" value={stats.failedJobs} icon={AlertCircle} accent="text-red-500" />
       </div>
+
+      {/* Usage cheat sheet */}
+      <UsageCheatSheet engineHealth={engineHealth} stats={stats} />
 
       {/* Recent jobs */}
       <Card>
