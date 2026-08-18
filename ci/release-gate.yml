@@ -1,0 +1,90 @@
+# CI/CD Release Gate Configuration
+
+**Note:** GitHub Actions workflows cannot be created from the Base44 builder. This file documents the required CI/CD gates. Create `.github/workflows/release-gate.yml` manually in your repository with the following content:
+
+```yaml
+name: Release Gate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  code-quality:
+    name: Code Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+
+  engine-syntax:
+    name: Browser Engine Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check engine syntax
+        working-directory: browser-engine
+        run: |
+          npm ci
+          node --check server.js
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for plaintext secrets in entity schemas
+        run: |
+          if grep -r '"password"' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'; then
+            echo "FAIL: Plaintext password field found"
+            exit 1
+          fi
+          if grep -r '"secret"' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'; then
+            echo "FAIL: Plaintext secret field found"
+            exit 1
+          fi
+      - name: Check for hardcoded API keys
+        run: |
+          if grep -rE '(cb_live_|cb_test_)[a-f0-9]{32}' src/ base44/ --include='*.ts' --include='*.jsx'; then
+            echo "FAIL: Hardcoded API key found"
+            exit 1
+          fi
+      - name: Check SSRF guards
+        run: |
+          grep -q "isBlockedHost" browser-engine/server.js || exit 1
+
+  release-status:
+    name: Release Gate Status
+    runs-on: ubuntu-latest
+    needs: [code-quality, engine-syntax, security-audit]
+    steps:
+      - run: echo "All required gates passed"
+```
+
+## Required Gates
+
+| Gate | Command | Blocking |
+|------|---------|----------|
+| Install | `npm ci` | Yes |
+| Build | `npm run build` | Yes |
+| Lint | `npm run lint` | Yes |
+| Typecheck | `npm run typecheck` | Yes |
+| Engine Syntax | `node --check browser-engine/server.js` | Yes |
+| Security Audit | Plaintext secret check | Yes |
+| Runtime Suite | `runTestSuite` via Base44 | Post-deploy |
+| Master Release Matrix | `runMasterReleaseSuite` via Base44 | Post-deploy |

@@ -15,7 +15,7 @@ export default function ProfilesManager() {
 
   const add = async () => {
     if (!newProfile.name) return;
-    try { await base44.entities.Profile.create(newProfile); setNewProfile({ name: "", user_data_dir: "", description: "" }); load(); } catch (e) { alert(e.message); }
+    try { await base44.functions.invoke("saveProfile", newProfile); setNewProfile({ name: "", user_data_dir: "", description: "" }); load(); } catch (e) { alert(e.message); }
   };
   const remove = async (id) => { await base44.entities.Profile.delete(id); load(); };
 

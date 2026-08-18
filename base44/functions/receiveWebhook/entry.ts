@@ -1,8 +1,10 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
-// Inbound webhook — HMAC-SHA256 required, fail-closed (v4)
+// Inbound webhook — HMAC-SHA256 required, fail-closed (v5)
+// Uses encrypted secret from secret_encrypted field (not plaintext)
 // ═══════════════════════════════════════════════
 
 async function hmacSha256(secret, message) {
@@ -32,31 +34,38 @@ export default async function (req) {
       return Response.json({ error: "Webhook signature required", __v: DEPLOYMENT_VERSION }, { status: 401 });
     }
     if (!timestamp) {
-      return Response.json({ error: "Webhook timestamp required" }, { status: 401 });
+      return Response.json({ error: "Webhook timestamp required", __v: DEPLOYMENT_VERSION }, { status: 401 });
     }
 
     // Replay protection
     const ts = parseInt(timestamp, 10);
     if (isNaN(ts) || Math.abs(Date.now() - ts) > REPLAY_WINDOW_MS) {
-      return Response.json({ error: "Webhook timestamp outside replay window" }, { status: 401 });
+      return Response.json({ error: "Webhook timestamp outside replay window", __v: DEPLOYMENT_VERSION }, { status: 401 });
     }
 
     // Idempotency check
     if (event_id) {
       const seen = await base44.asServiceRole.entities.WebhookDelivery.filter({ event: `idempotency:${event_id}` });
       if (seen.length > 0) {
-        return Response.json({ ok: true, idempotent: true, message: "Already processed" });
+        return Response.json({ ok: true, idempotent: true, message: "Already processed", __v: DEPLOYMENT_VERSION });
       }
     }
 
-    // Verify HMAC against all active webhooks
+    // Verify HMAC against all active webhooks — decrypt secret before signing
     const webhooks = await base44.asServiceRole.entities.Webhook.filter({ active: true });
     let verifiedWebhook = null;
     const message = `${timestamp}.${event_id || ""}.${JSON.stringify(payload || {})}`;
 
     for (const w of webhooks) {
-      if (!w.secret) continue;
-      const expected = await hmacSha256(w.secret, message);
+      let signingSecret = null;
+      if (w.secret_encrypted) {
+        signingSecret = await decrypt(w.secret_encrypted);
+      } else if (w.secret) {
+        // Legacy plaintext fallback (for records not yet migrated)
+        signingSecret = w.secret;
+      }
+      if (!signingSecret) continue;
+      const expected = await hmacSha256(signingSecret, message);
       if (timingSafeEqual(signature, expected)) {
         verifiedWebhook = w;
         break;
@@ -74,14 +83,13 @@ export default async function (req) {
         success: false,
         duration_ms: 0,
       });
-      return Response.json({ error: "Invalid webhook signature" }, { status: 403 });
+      return Response.json({ error: "Invalid webhook signature", __v: DEPLOYMENT_VERSION }, { status: 403 });
     }
 
-    // Trigger the job
-    if (!job_id) return Response.json({ error: "job_id required" }, { status: 400 });
+    if (!job_id) return Response.json({ error: "job_id required", __v: DEPLOYMENT_VERSION }, { status: 400 });
 
     const job = await base44.asServiceRole.entities.Job.get(job_id);
-    if (!job) return Response.json({ error: "Job not found" }, { status: 404 });
+    if (!job) return Response.json({ error: "Job not found", __v: DEPLOYMENT_VERSION }, { status: 404 });
 
     const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: job_id });
 
@@ -97,7 +105,7 @@ export default async function (req) {
       });
     }
 
-    return Response.json({ success: true, job_id, verified_webhook: verifiedWebhook.name, result });
+    return Response.json({ success: true, job_id, verified_webhook: verifiedWebhook.name, result, __v: DEPLOYMENT_VERSION });
   } catch (error) {
     return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }

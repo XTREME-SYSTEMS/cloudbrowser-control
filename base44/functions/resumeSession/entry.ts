@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 export default async function (req) {
@@ -20,12 +21,25 @@ export default async function (req) {
 
     if (!await isEngineConfigured()) return Response.json({ error: "Engine not configured" }, { status: 503 });
 
-    // Load context state from profile if available
+    // Load context state from profile if available (decrypt encrypted fields)
     const profile = profile_id || original.profile_id;
     let cookies = null, storageState = null;
     if (profile) {
       const profiles = await base44.entities.Profile.filter({ id: profile });
-      if (profiles[0]) { cookies = profiles[0].cookies; storageState = profiles[0].storage_state; }
+      if (profiles[0]) {
+        if (profiles[0].cookies_encrypted) {
+          const decrypted = await decrypt(profiles[0].cookies_encrypted);
+          if (decrypted) cookies = JSON.parse(decrypted);
+        } else if (profiles[0].cookies) {
+          cookies = profiles[0].cookies; // Legacy fallback
+        }
+        if (profiles[0].storage_state_encrypted) {
+          const decrypted = await decrypt(profiles[0].storage_state_encrypted);
+          if (decrypted) storageState = JSON.parse(decrypted);
+        } else if (profiles[0].storage_state) {
+          storageState = profiles[0].storage_state; // Legacy fallback
+        }
+      }
     }
 
     // Create a new session on the engine with state restoration (proper POST)

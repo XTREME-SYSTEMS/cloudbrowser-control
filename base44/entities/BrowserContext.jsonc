@@ -1,0 +1,74 @@
+{
+  "name": "BrowserContext",
+  "type": "object",
+  "properties": {
+    "context_id": {
+      "type": "string",
+      "description": "Unique context identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable context name"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Project this context belongs to"
+    },
+    "cookies_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted cookies JSON (base64). Never returned to frontend."
+    },
+    "storage_state_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted localStorage/sessionStorage (base64). Never returned to frontend."
+    },
+    "auth_state": {
+      "type": "string",
+      "enum": [
+        "anonymous",
+        "authenticated",
+        "expired"
+      ],
+      "default": "anonymous"
+    },
+    "lease_owner": {
+      "type": "string",
+      "description": "Current lease owner (session ID or user ID)"
+    },
+    "lease_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current lease expires"
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the context is currently locked by a session"
+    },
+    "last_used": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Context expiration \u2014 expired contexts are reaped"
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Revoked contexts cannot be attached"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "Associated Profile entity"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "context_id",
+    "name"
+  ]
+}

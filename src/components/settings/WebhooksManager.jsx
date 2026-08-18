@@ -10,7 +10,7 @@ const EVENTS = ["job.completed", "job.failed", "session.created", "session.ended
 
 export default function WebhooksManager() {
   const [webhooks, setWebhooks] = useState([]);
-  const [newWebhook, setNewWebhook] = useState({ name: "", url: "", events: [] });
+  const [newWebhook, setNewWebhook] = useState({ name: "", url: "", events: [], secret: "" });
 
   const load = async () => { try { setWebhooks(await base44.entities.Webhook.list("-created_date", 50)); } catch (e) {} };
   useEffect(() => { load(); }, []);
@@ -22,7 +22,7 @@ export default function WebhooksManager() {
 
   const add = async () => {
     if (!newWebhook.name || !newWebhook.url) return;
-    try { await base44.entities.Webhook.create(newWebhook); setNewWebhook({ name: "", url: "", events: [] }); load(); } catch (e) { alert(e.message); }
+    try { await base44.functions.invoke("saveWebhook", newWebhook); setNewWebhook({ name: "", url: "", events: [], secret: "" }); load(); } catch (e) { alert(e.message); }
   };
 
   const remove = async (id) => { await base44.entities.Webhook.delete(id); load(); };
@@ -34,6 +34,7 @@ export default function WebhooksManager() {
         <div className="space-y-3">
           <div><Label>Name</Label><Input value={newWebhook.name} onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })} /></div>
           <div><Label>URL</Label><Input value={newWebhook.url} onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })} placeholder="https://..." /></div>
+          <div><Label>Signing Secret</Label><Input type="password" value={newWebhook.secret} onChange={(e) => setNewWebhook({ ...newWebhook, secret: e.target.value })} placeholder="Optional HMAC secret" /></div>
           <div><Label>Events</Label>
             <div className="flex flex-wrap gap-2 mt-1">
               {EVENTS.map((ev) => (

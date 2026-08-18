@@ -12,13 +12,23 @@
       "type": "string",
       "description": "Path to persistent user data directory on engine"
     },
-    "cookies": {
-      "type": "object",
-      "description": "Saved cookies snapshot"
+    "cookies_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted cookies JSON (base64). Never returned to frontend."
     },
-    "storage_state": {
-      "type": "object",
-      "description": "Saved localStorage and sessionStorage"
+    "storage_state_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted localStorage/sessionStorage JSON (base64). Never returned to frontend."
+    },
+    "has_cookies": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether cookies are saved (safe for frontend display)"
+    },
+    "has_storage_state": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether storage state is saved (safe for frontend display)"
     },
     "last_used": {
       "type": "string",

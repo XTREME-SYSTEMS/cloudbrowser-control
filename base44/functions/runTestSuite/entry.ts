@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
+import { encrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
@@ -295,8 +296,9 @@ export default async function (req) {
     });
 
     await runTest(base44, runId, suite, "Invalid HMAC signature rejected (403)", "Security", 3, async () => {
+      const encryptedSecret = await encrypt("test_secret_123");
       const wh = await base44.asServiceRole.entities.Webhook.create({
-        name: "HMAC Test", url: "https://example.com/hook", secret: "test_secret_123", active: true,
+        name: "HMAC Test", url: "https://example.com/hook", secret_encrypted: encryptedSecret, has_secret: true, active: true,
       });
       try {
         const r = await base44.asServiceRole.functions.invoke("receiveWebhook", {
@@ -312,8 +314,9 @@ export default async function (req) {
     });
 
     await runTest(base44, runId, suite, "Replay attack rejected (timestamp outside window)", "Security", 3, async () => {
+      const encryptedSecret = await encrypt("test_secret_456");
       const wh = await base44.asServiceRole.entities.Webhook.create({
-        name: "Replay Test", url: "https://example.com/hook", secret: "test_secret_456", active: true,
+        name: "Replay Test", url: "https://example.com/hook", secret_encrypted: encryptedSecret, has_secret: true, active: true,
       });
       try {
         const oldTimestamp = (Date.now() - 10 * 60 * 1000).toString(); // 10 min ago

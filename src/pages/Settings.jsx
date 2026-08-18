@@ -44,7 +44,7 @@ export default function Settings() {
   const addProxy = async () => {
     if (!newProxy.name || !newProxy.server) return;
     try {
-      await base44.entities.Proxy.create(newProxy);
+      await base44.functions.invoke("saveProxy", newProxy);
       setNewProxy({ name: "", server: "", username: "", password: "", country: "", protocol: "http" });
       loadProxies();
     } catch (e) { alert(e.response?.data?.error || e.message); }

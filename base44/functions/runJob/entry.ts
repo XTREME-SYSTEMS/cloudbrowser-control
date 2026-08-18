@@ -5,6 +5,40 @@ import { logAudit } from "../../shared/auditLogger.ts";
 import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
+// Compute SHA-256 content hash for artifact integrity
+async function computeContentHash(base64Data) {
+  const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Create an Artifact record with full metadata
+async function createArtifact(base44, type, storageKey, storageBackend, sessionEntity, jobId, step, base64Data, mimeType) {
+  const contentHash = await computeContentHash(base64Data);
+  const sizeBytes = Math.floor(base64Data.length * 0.75);
+  const retentionDays = 30;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
+  return base44.asServiceRole.entities.Artifact.create({
+    artifact_id: "art_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+    type,
+    project_id: sessionEntity.project_id || null,
+    session_id: sessionEntity.id,
+    job_id: jobId,
+    step_id: step?.id || null,
+    storage_key: storageKey,
+    storage_backend: storageBackend,
+    mime_type: mimeType,
+    size_bytes: sizeBytes,
+    content_hash: contentHash,
+    created_at: now.toISOString(),
+    expires_at: expiresAt,
+    retention_days: retentionDays,
+    access_policy: "private",
+    metadata: { action_type: step?.action_type },
+  });
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -115,6 +149,8 @@ export default async function(req) {
               full_page: !!step.options?.fullPage,
               taken_at: new Date().toISOString(),
             });
+            // Also create Artifact record with content hash + retention
+            await createArtifact(base44, "screenshot", uploadRes.file_url, "base44_files", sessionEntity, jobId, step, engineRes.base64, "image/png");
           }
         } else if (step.action_type === "pdf") {
           const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
@@ -129,6 +165,8 @@ export default async function(req) {
               step_order: step.order, action_type: "pdf", data_type: "pdf_url",
               data: { file_url: uploadRes.file_url }, extracted_at: new Date().toISOString(),
             });
+            // Also create Artifact record with content hash + retention
+            await createArtifact(base44, "pdf", uploadRes.file_url, "base44_files", sessionEntity, jobId, step, engineRes.base64, "application/pdf");
           }
         } else if (step.action_type === "ai_extract") {
           const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {

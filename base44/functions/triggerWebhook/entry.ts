@@ -1,7 +1,10 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { decrypt } from "../../shared/crypto.ts";
+import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
 // Outbound webhook — HMAC signed, retry, DLQ, SSRF-safe
+// v2: Uses encrypted secret from secret_encrypted field (not plaintext)
 // ═══════════════════════════════════════════════
 
 async function hmacSha256(secret, message) {
@@ -20,7 +23,6 @@ function isBlockedUrl(urlStr) {
     if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "0.0.0.0") return true;
     if (h === "169.254.169.254" || h === "metadata.google.internal") return true;
     if (h.endsWith(".internal") || h.endsWith(".local")) return true;
-    // IPv6 private/link-local
     if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
     const parts = h.split(".").map(Number);
     if (parts.length === 4) {
@@ -28,8 +30,8 @@ function isBlockedUrl(urlStr) {
       if (a === 10 || a === 127 || a === 0) return true;
       if (a === 172 && b >= 16 && b <= 31) return true;
       if (a === 192 && b === 168) return true;
-      if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-      if (a >= 224) return true; // multicast/reserved
+      if (a === 100 && b >= 64 && b <= 127) return true;
+      if (a >= 224) return true;
     }
     return false;
   } catch { return true; }
@@ -53,7 +55,6 @@ export default async function (req) {
     let dlqCount = 0;
 
     for (const webhook of matching) {
-      // SSRF guard
       if (isBlockedUrl(webhook.url)) {
         await base44.asServiceRole.entities.WebhookDelivery.create({
           webhook_id: webhook.id, event,
@@ -69,10 +70,17 @@ export default async function (req) {
       const eventId = "evt_" + timestamp + "_" + Math.random().toString(36).slice(2, 8);
       const message = `${timestamp}.${eventId}.${JSON.stringify(payload || {})}`;
 
-      // Sign with HMAC if secret exists
-      const signature = webhook.secret ? await hmacSha256(webhook.secret, message) : null;
+      // Decrypt the signing secret if encrypted version exists
+      let signingSecret = null;
+      if (webhook.secret_encrypted) {
+        signingSecret = await decrypt(webhook.secret_encrypted);
+      } else if (webhook.secret) {
+        // Legacy plaintext fallback (for records not yet migrated)
+        signingSecret = webhook.secret;
+      }
 
-      // Format payload based on provider
+      const signature = signingSecret ? await hmacSha256(signingSecret, message) : null;
+
       let requestBody;
       const headers = {
         "Content-Type": "application/json",
@@ -95,7 +103,6 @@ export default async function (req) {
         requestBody = JSON.stringify({ event, payload, timestamp, event_id: eventId, webhook: webhook.name });
       }
 
-      // Retry with exponential backoff
       let lastError = null;
       let lastStatus = 0;
       let lastBody = "";
@@ -138,15 +145,11 @@ export default async function (req) {
       });
 
       if (success) triggered++;
-      else {
-        failed++;
-        // If all retries failed, this is a DLQ candidate
-        dlqCount++;
-      }
+      else { failed++; dlqCount++; }
     }
 
-    return Response.json({ triggered, failed, dlq: dlqCount, total: matching.length });
+    return Response.json({ triggered, failed, dlq: dlqCount, total: matching.length, __v: DEPLOYMENT_VERSION });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }
