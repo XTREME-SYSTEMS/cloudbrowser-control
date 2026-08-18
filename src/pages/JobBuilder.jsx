@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Play, ArrowLeft, Calculator, DollarSign } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, ArrowLeft, Calculator, DollarSign, Video, Bug, Layers } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const ACTION_TYPES = [
   "goto", "back", "forward", "reload", "wait_for_selector", "wait_for_load_state", "wait_for_timeout",
@@ -15,6 +16,7 @@ const ACTION_TYPES = [
   "upload_file", "download", "handle_dialog", "new_tab", "switch_tab", "close_tab",
   "screenshot", "pdf", "extract_text", "extract_html", "extract_attribute", "extract_table",
   "extract_json", "ai_extract", "set_cookies", "set_headers", "set_local_storage", "capture_response",
+  "solve_captcha", "mock_response", "save_state", "restore_state",
 ];
 
 export default function JobBuilder() {
@@ -29,6 +31,19 @@ export default function JobBuilder() {
   const [viewport, setViewport] = useState({ width: 1280, height: 720 });
   const [userAgent, setUserAgent] = useState("");
   const [blockedResources, setBlockedResources] = useState([]);
+  const [recordVideo, setRecordVideo] = useState(false);
+  const [enableCDP, setEnableCDP] = useState(false);
+  const [usePool, setUsePool] = useState(false);
+  const [profileId, setProfileId] = useState("");
+  const [extensionIds, setExtensionIds] = useState([]);
+  const [networkMocksJson, setNetworkMocksJson] = useState("[]");
+  const [profiles, setProfiles] = useState([]);
+  const [extensions, setExtensions] = useState([]);
+
+  useEffect(() => {
+    base44.entities.Profile.list("-created_date", 50).then(setProfiles).catch(() => {});
+    base44.entities.Extension.list("-created_date", 50).then(setExtensions).catch(() => {});
+  }, []);
 
   const addStep = () => {
     setSteps([...steps, { name: "", action_type: "goto", selector: "", value: "", options: {} }]);
@@ -70,7 +85,7 @@ export default function JobBuilder() {
     try {
       const job = await base44.entities.Job.create({
         name, status: "queued", start_url: startUrl,
-        session_config: { viewport, userAgent, blockedResources },
+        session_config: { viewport, userAgent, blockedResources, recordVideo, enableCDP, usePool, profileId, extensionIds, networkMocks: (() => { try { return JSON.parse(networkMocksJson); } catch { return []; } })(), userDataDir: profiles.find((p) => p.id === profileId)?.user_data_dir, extensions: extensionIds.map((id) => extensions.find((e) => e.id === id)?.file_url).filter(Boolean) },
         steps_count: steps.length,
       });
 
@@ -192,6 +207,53 @@ export default function JobBuilder() {
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Advanced options */}
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Layers className="w-5 h-5" />Advanced Options</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-2"><Video className="w-4 h-4" /><span className="text-sm">Record Video</span></div>
+              <Switch checked={recordVideo} onCheckedChange={setRecordVideo} />
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-2"><Bug className="w-4 h-4" /><span className="text-sm">CDP Debugging</span></div>
+              <Switch checked={enableCDP} onCheckedChange={setEnableCDP} />
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-2"><Layers className="w-4 h-4" /><span className="text-sm">Session Pool</span></div>
+              <Switch checked={usePool} onCheckedChange={setUsePool} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Persistent Profile</Label>
+              <Select value={profileId} onValueChange={setProfileId}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>None</SelectItem>
+                  {profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Extensions</Label>
+              <Select value={extensionIds[0] || ""} onValueChange={(v) => setExtensionIds(v ? [v] : [])}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>None</SelectItem>
+                  {extensions.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label>Network Mocks (JSON array)</Label>
+            <Textarea className="font-mono text-xs" rows={3} value={networkMocksJson} onChange={(e) => setNetworkMocksJson(e.target.value)} placeholder='[{"url":"**/api/*","status":200,"body":"{\"mocked\":true}"}]' />
+          </div>
         </CardContent>
       </Card>
 

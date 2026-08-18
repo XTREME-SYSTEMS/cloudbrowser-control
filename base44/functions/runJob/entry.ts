@@ -1,6 +1,8 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
 import { calculateJobCost } from "../../shared/costCalculator.ts";
+import { logAudit } from "../../shared/auditLogger.ts";
+import { secrets } from "base44:runtime";
 
 export default async function(req) {
   try {
@@ -45,6 +47,12 @@ export default async function(req) {
           proxy: sessionConfig.proxy,
           headers: sessionConfig.headers,
           blockedResources: sessionConfig.blockedResources,
+          recordVideo: sessionConfig.recordVideo,
+          enableCDP: sessionConfig.enableCDP,
+          extensions: sessionConfig.extensions,
+          userDataDir: sessionConfig.userDataDir,
+          networkMocks: sessionConfig.networkMocks,
+          usePool: sessionConfig.usePool,
         }),
       });
       sessionId = engineRes.sessionId;
@@ -63,6 +71,11 @@ export default async function(req) {
         blocked_resources: sessionConfig.blockedResources,
         started_at: new Date().toISOString(),
         timeout_ms: sessionConfig.timeoutMs || 30000,
+        record_video: !!sessionConfig.recordVideo,
+        enable_cdp: !!sessionConfig.enableCDP,
+        cdp_url: engineRes.cdpUrl,
+        profile_id: sessionConfig.profileId,
+        extension_ids: sessionConfig.extensionIds,
       });
 
       await base44.entities.Job.update(jobId, { session_id: sessionEntity.id });
@@ -131,6 +144,18 @@ export default async function(req) {
             data: llmRes, extracted_at: new Date().toISOString(),
           });
           stepResults.push(result);
+        } else if (step.action_type === "solve_captcha") {
+          const captchaKey = secrets.get("CAPTCHA_SOLVER_API_KEY") || "";
+          const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
+            method: "POST",
+            body: JSON.stringify({ action_type: "solve_captcha", options: { ...step.options, apiKey: captchaKey } }),
+          });
+          const result = await base44.entities.Result.create({
+            job_id: jobId, session_id: sessionEntity.id, step_id: step.id,
+            step_order: step.order, action_type: "solve_captcha", data_type: "text",
+            data: { value: engineRes.data }, extracted_at: new Date().toISOString(),
+          });
+          stepResults.push(result);
         } else {
           const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
             method: "POST",
@@ -181,8 +206,17 @@ export default async function(req) {
       }
     }
 
-    // Close engine session
-    try { await engineFetch(`/sessions/${sessionId}`, { method: "DELETE" }); } catch (e) {}
+    // Close engine session (and upload video if recorded)
+    try {
+      const closeRes = await engineFetch(`/sessions/${sessionId}`, { method: "DELETE" });
+      if (closeRes.videoBase64) {
+        try {
+          const blob = new Blob([Uint8Array.from(atob(closeRes.videoBase64), (c) => c.charCodeAt(0))], { type: "video/webm" });
+          const uploadRes = await base44.integrations.Core.UploadFile({ file: blob });
+          await base44.entities.Session.update(sessionEntity.id, { video_url: uploadRes.file_url });
+        } catch (e) { console.error("Video upload failed:", e.message); }
+      }
+    } catch (e) {}
 
     // Update session + job
     await base44.entities.Session.update(sessionEntity.id, {
@@ -204,6 +238,17 @@ export default async function(req) {
     } catch (e) {
       console.error("Cost calculation failed:", e.message);
     }
+
+    // Trigger webhooks
+    try {
+      await base44.functions.invoke("triggerWebhook", {
+        event: failed ? "job.failed" : "job.completed",
+        payload: { jobId, jobName: job.name, status: failed ? "failed" : "completed", error: failed ? errorMsg : null },
+      });
+    } catch (e) { console.error("Webhook trigger failed:", e.message); }
+
+    // Audit log
+    await logAudit(base44, user, "run", "job", jobId, `Job "${job.name}" ${failed ? "failed" : "completed"}`);
 
     return Response.json({ ok: !failed, jobId, error: failed ? errorMsg : undefined, results: stepResults.length });
   } catch (error) {

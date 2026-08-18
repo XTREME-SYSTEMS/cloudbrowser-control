@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
+import { secrets } from "base44:runtime";
 
 export default async function(req) {
   try {
@@ -28,6 +29,12 @@ export default async function(req) {
           proxy: sessionConfig?.proxy,
           headers: sessionConfig?.headers,
           blockedResources: sessionConfig?.blockedResources,
+          recordVideo: sessionConfig?.recordVideo,
+          enableCDP: sessionConfig?.enableCDP,
+          extensions: sessionConfig?.extensions,
+          userDataDir: sessionConfig?.userDataDir,
+          networkMocks: sessionConfig?.networkMocks,
+          usePool: sessionConfig?.usePool,
         }),
       });
 
@@ -46,6 +53,11 @@ export default async function(req) {
         tags: tags || [],
         started_at: new Date().toISOString(),
         timeout_ms: sessionConfig?.timeoutMs || 30000,
+        record_video: !!sessionConfig?.recordVideo,
+        enable_cdp: !!sessionConfig?.enableCDP,
+        cdp_url: engineRes.cdpUrl,
+        profile_id: sessionConfig?.profileId,
+        extension_ids: sessionConfig?.extensionIds,
       });
 
       return Response.json({ session });
@@ -168,6 +180,53 @@ export default async function(req) {
       });
 
       return Response.json({ data: llmRes });
+    }
+
+    // ---- Share session ----
+    if (action === "share_session") {
+      const { sessionId, sessionEntityId } = body;
+      const engineRes = await engineFetch(`/sessions/${sessionId}/share`, { method: "POST" });
+      await base44.entities.Session.update(sessionEntityId, { share_token: engineRes.shareToken });
+      return Response.json({ shareToken: engineRes.shareToken });
+    }
+
+    // ---- Save state ----
+    if (action === "save_state") {
+      const { sessionId, sessionEntityId } = body;
+      const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
+        method: "POST",
+        body: JSON.stringify({ action_type: "save_state" }),
+      });
+      await base44.entities.Session.update(sessionEntityId, { resume_token: engineRes.data?.stateToken });
+      return Response.json({ state: engineRes.data });
+    }
+
+    // ---- Restore state ----
+    if (action === "restore_state") {
+      const { sessionId, stateToken } = body;
+      const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
+        method: "POST",
+        body: JSON.stringify({ action_type: "restore_state", options: { stateToken } }),
+      });
+      return Response.json({ result: engineRes.data });
+    }
+
+    // ---- Solve CAPTCHA ----
+    if (action === "solve_captcha") {
+      const { sessionId, captchaType, siteKey } = body;
+      const captchaKey = secrets.get("CAPTCHA_SOLVER_API_KEY") || "";
+      const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
+        method: "POST",
+        body: JSON.stringify({ action_type: "solve_captcha", options: { type: captchaType, siteKey, apiKey: captchaKey } }),
+      });
+      return Response.json({ result: engineRes.data });
+    }
+
+    // ---- Get screenshot (for live view) ----
+    if (action === "get_screenshot") {
+      const { sessionId } = body;
+      const engineRes = await engineFetch(`/sessions/${sessionId}/screenshot`);
+      return Response.json({ base64: engineRes.base64, url: engineRes.url, title: engineRes.title });
     }
 
     return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });

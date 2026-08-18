@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Cpu, Key, Globe, RefreshCw, Plus, Trash2, CheckCircle, XCircle } from "lucide-react";
+import WebhooksManager from "@/components/settings/WebhooksManager";
+import ExtensionsManager from "@/components/settings/ExtensionsManager";
+import ProfilesManager from "@/components/settings/ProfilesManager";
 
 export default function Settings() {
   const [health, setHealth] = useState(null);
@@ -141,6 +144,10 @@ export default function Settings() {
           )}
         </CardContent>
       </Card>
+
+      <WebhooksManager />
+      <ExtensionsManager />
+      <ProfilesManager />
     </div>
   );
 }

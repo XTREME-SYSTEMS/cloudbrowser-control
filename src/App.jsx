@@ -20,6 +20,7 @@ import JobBuilder from '@/pages/JobBuilder';
 import JobDetail from '@/pages/JobDetail';
 import Schedules from '@/pages/Schedules';
 import Costs from '@/pages/Costs';
+import AuditLogs from '@/pages/AuditLogs';
 import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
@@ -62,6 +63,7 @@ const AuthenticatedApp = () => {
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/schedules" element={<Schedules />} />
           <Route path="/costs" element={<Costs />} />
+          <Route path="/audit-logs" element={<AuditLogs />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
