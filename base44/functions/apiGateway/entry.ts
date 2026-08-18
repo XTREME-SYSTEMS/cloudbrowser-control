@@ -64,7 +64,9 @@ async function checkRateLimit(base44, keyHash, limitPerMinute) {
   );
 
   // Step 2: If no entry existed, create one (first request in window)
-  if (updateResult.modified_count === 0) {
+  // SDK returns { updated: N }, not modified_count — check both for safety
+  const updatedCount = updateResult.updated ?? updateResult.modified_count ?? 0;
+  if (updatedCount === 0) {
     try {
       await base44.asServiceRole.entities.RateLimitEntry.create({
         key_hash: keyHash,
