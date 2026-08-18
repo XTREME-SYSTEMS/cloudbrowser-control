@@ -86,6 +86,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_end": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (session.session_id && await isEngineConfigured()) {
         try { await engineDelete(`/sessions/${session.session_id}`); } catch (e) {}
       }
@@ -98,6 +99,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_navigate": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "goto", value: params.url,
@@ -111,6 +113,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_act": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: params.action_type,
@@ -124,6 +127,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_observe": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "evaluate",
@@ -135,6 +139,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_extract": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const extractType = params.extract_type || "extract_text";
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
@@ -146,6 +151,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_screenshot": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "screenshot", options: { fullPage: params.full_page || false },
@@ -162,12 +168,14 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_list_tabs": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       return { tabs: session.tabs || [], current_url: session.current_url };
     }
 
     case "browser_switch_tab": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "switch_tab", value: String(params.tab_index),
@@ -197,6 +205,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const contexts = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: params.context_id });
       if (!contexts.length) throw new Error("Context not found");
       const ctx = contexts[0];
+      if (keyRecord.project_id && ctx.project_id !== keyRecord.project_id) throw new Error("Context not found");
       if (ctx.revoked) throw new Error("Context has been revoked — access denied");
       // Lease the context
       await base44.asServiceRole.entities.BrowserContext.update(ctx.id, {
@@ -221,6 +230,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "context_delete": {
       const contexts = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: params.context_id });
       if (!contexts.length) throw new Error("Context not found");
+      if (keyRecord.project_id && contexts[0].project_id !== keyRecord.project_id) throw new Error("Context not found");
       await base44.asServiceRole.entities.BrowserContext.delete(contexts[0].id);
       return { success: true };
     }

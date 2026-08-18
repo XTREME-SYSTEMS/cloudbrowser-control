@@ -211,7 +211,10 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
       return Response.json({ status: "ok", timestamp: new Date().toISOString(), request_id: requestId, __v: DEPLOYMENT_VERSION });
 
     case "GET:/sessions": {
-      const sessions = await base44.asServiceRole.entities.Session.list("-created_date", 50);
+      const allSessions = await base44.asServiceRole.entities.Session.list("-created_date", 50);
+      const sessions = keyRecord.project_id
+        ? allSessions.filter((s) => s.project_id === keyRecord.project_id)
+        : allSessions;
       return Response.json({ sessions, request_id: requestId });
     }
 
@@ -294,6 +297,8 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
     case "GET:/sessions/:id": {
       const session = await base44.asServiceRole.entities.Session.get(params.id);
       if (!session) return errorResponse(404, "Session not found", requestId);
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id)
+        return errorResponse(404, "Session not found", requestId);
       return Response.json({ session, request_id: requestId });
     }
 
@@ -301,6 +306,8 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
       // Resolve Base44 control-plane ID → runtime session ID
       const session = await base44.asServiceRole.entities.Session.get(params.id);
       if (!session) return errorResponse(404, "Session not found", requestId);
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id)
+        return errorResponse(404, "Session not found", requestId);
       if (!session.session_id) return errorResponse(409, "Session has no runtime ID — cannot execute action", requestId);
 
       if (!await isEngineConfigured()) return errorResponse(503, "Browser engine not configured", requestId);
@@ -334,6 +341,8 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
       // Terminate REAL browser first, then reconcile
       const session = await base44.asServiceRole.entities.Session.get(params.id);
       if (!session) return errorResponse(404, "Session not found", requestId);
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id)
+        return errorResponse(404, "Session not found", requestId);
 
       let runtimeClosed = false;
       let closeError = null;
@@ -367,7 +376,10 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
     }
 
     case "GET:/jobs": {
-      const jobs = await base44.asServiceRole.entities.Job.list("-created_date", 50);
+      const allJobs = await base44.asServiceRole.entities.Job.list("-created_date", 50);
+      const jobs = keyRecord.project_id
+        ? allJobs.filter((j) => j.project_id === keyRecord.project_id)
+        : allJobs;
       return Response.json({ jobs, request_id: requestId });
     }
 
@@ -400,17 +412,28 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
 
     case "POST:/jobs/:id/run": {
       // Canonical contract: jobId (not job_id)
+      const job = await base44.asServiceRole.entities.Job.get(params.id);
+      if (!job) return errorResponse(404, "Job not found", requestId);
+      if (keyRecord.project_id && job.project_id !== keyRecord.project_id)
+        return errorResponse(404, "Job not found", requestId);
       const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: params.id });
       return Response.json({ ...(result.data || result), request_id: requestId });
     }
 
     case "GET:/jobs/:id/results": {
+      const job = await base44.asServiceRole.entities.Job.get(params.id);
+      if (!job) return errorResponse(404, "Job not found", requestId);
+      if (keyRecord.project_id && job.project_id !== keyRecord.project_id)
+        return errorResponse(404, "Job not found", requestId);
       const results = await base44.asServiceRole.entities.Result.filter({ job_id: params.id });
       return Response.json({ results, request_id: requestId });
     }
 
     case "GET:/projects": {
-      const projects = await base44.asServiceRole.entities.Project.list("-created_date", 50);
+      const allProjects = await base44.asServiceRole.entities.Project.list("-created_date", 50);
+      const projects = keyRecord.project_id
+        ? allProjects.filter((p) => p.id === keyRecord.project_id)
+        : allProjects;
       return Response.json({ projects, request_id: requestId });
     }
 
