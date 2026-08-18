@@ -25,9 +25,14 @@
         ]
       }
     },
-    "secret": {
+    "secret_encrypted": {
       "type": "string",
-      "description": "Secret for signing payloads"
+      "description": "AES-GCM encrypted HMAC signing secret (base64). Never returned to frontend."
+    },
+    "has_secret": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a signing secret is configured (safe for frontend display)"
     },
     "active": {
       "type": "boolean",

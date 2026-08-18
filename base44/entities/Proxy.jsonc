@@ -12,8 +12,14 @@
     "username": {
       "type": "string"
     },
-    "password": {
-      "type": "string"
+    "password_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted proxy password (base64). Never returned to frontend."
+    },
+    "has_password": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a password is configured (safe for frontend display)"
     },
     "country": {
       "type": "string"
