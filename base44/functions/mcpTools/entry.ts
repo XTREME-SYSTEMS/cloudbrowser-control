@@ -197,7 +197,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const contexts = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: params.context_id });
       if (!contexts.length) throw new Error("Context not found");
       const ctx = contexts[0];
-      if (ctx.revoked) throw new Error("Context has been revoked");
+      if (ctx.revoked) throw new Error("Context has been revoked — access denied");
       // Lease the context
       await base44.asServiceRole.entities.BrowserContext.update(ctx.id, {
         is_locked: true,

@@ -152,8 +152,8 @@ export class LocalDLQ extends DLQAdapter {
 // ═══════════════════════════════════════════════
 
 export function createFabricAdapters() {
-  // In production, check for REDIS_URL and return Redis adapters.
-  // Until Redis is provisioned, use local adapters (single-node only).
+  // SINGLE_WORKER_PRODUCTION MODE
+  // This platform runs in single-worker mode only. Multi-worker requires Redis.
   const redisUrl = typeof process !== "undefined" && process.env?.REDIS_URL;
 
   if (redisUrl) {
@@ -162,7 +162,7 @@ export function createFabricAdapters() {
     throw new Error("Redis adapter not yet implemented — REDIS_URL detected but adapter is BLOCKED pending implementation");
   }
 
-  // Local development adapters
+  // Local development adapters — SINGLE_WORKER only
   return {
     sessionStore: new LocalSessionStore(),
     workerRegistry: new LocalWorkerRegistry(),
@@ -170,6 +170,16 @@ export function createFabricAdapters() {
     idempotencyStore: new LocalIdempotencyStore(),
     dlq: new LocalDLQ(),
     distributed: false,
-    warning: "Using local single-node adapters — not safe for multi-instance production",
+    mode: "SINGLE_WORKER_PRODUCTION",
+    warning: "SINGLE_WORKER mode — local adapters only. Multi-worker requires Redis provisioning + adapter implementation.",
   };
+}
+
+// Enforce single-worker mode — prevents accidental horizontal scaling
+export function enforceSingleWorker() {
+  const workerId = typeof process !== "undefined" ? process.env?.WORKER_ID || process.env?.RAILWAY_REPLICA_ID : null;
+  if (workerId && workerId !== "0" && workerId !== "1") {
+    throw new Error(`MULTI_WORKER_DETECTED: WORKER_ID=${workerId}. This platform runs in SINGLE_WORKER mode only. Scale-to-many is not supported without Redis.`);
+  }
+  return { mode: "SINGLE_WORKER", worker_id: workerId || "single" };
 }

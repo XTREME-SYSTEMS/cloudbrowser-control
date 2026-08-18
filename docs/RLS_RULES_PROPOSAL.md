@@ -183,10 +183,10 @@ To activate, add the `"rls"` key to each entity's `.jsonc` file and save. Rules 
 
 ```jsonc
 "rls": {
-  "read": { "user_id": "{{user.id}}" },
+  "read": { "data.user_id": "{{user.id}}" },
   "create": {},
-  "update": { "user_id": "{{user.id}}" },
-  "delete": { "user_id": "{{user.id}}" }
+  "update": { "data.user_id": "{{user.id}}" },
+  "delete": { "data.user_id": "{{user.id}}" }
 }
 ```
 
@@ -194,9 +194,9 @@ To activate, add the `"rls"` key to each entity's `.jsonc` file and save. Rules 
 
 ```jsonc
 "rls": {
-  "read": { "$or": [ { "user_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
-  "create": { "user_id": "{{user.id}}" },
-  "update": { "$or": [ { "user_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
+  "read": { "$or": [ { "data.user_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
+  "create": { "data.user_id": "{{user.id}}" },
+  "update": { "$or": [ { "data.user_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
   "delete": { "user_condition": { "role": "admin" } }
 }
 ```
@@ -205,10 +205,10 @@ To activate, add the `"rls"` key to each entity's `.jsonc` file and save. Rules 
 
 ```jsonc
 "rls": {
-  "read": { "$or": [ { "owner_id": "{{user.id}}" }, { "data.member_ids": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
-  "create": { "owner_id": "{{user.id}}" },
-  "update": { "$or": [ { "owner_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
-  "delete": { "$or": [ { "owner_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] }
+  "read": { "$or": [ { "data.owner_id": "{{user.id}}" }, { "data.member_ids": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
+  "create": { "data.owner_id": "{{user.id}}" },
+  "update": { "$or": [ { "data.owner_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] },
+  "delete": { "$or": [ { "data.owner_id": "{{user.id}}" }, { "user_condition": { "role": "admin" } } ] }
 }
 ```
 
