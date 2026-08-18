@@ -1,10 +1,10 @@
 import { secrets } from "base44:runtime";
 
 export async function getEngineConfig() {
-  const url = secrets.get("BROWSER_ENGINE_URL");
-  const key = secrets.get("BROWSER_ENGINE_API_KEY");
+  const url = secrets.get("ENGINE_URL");
+  const key = secrets.get("ENGINE_API_KEY");
   if (!url || !key) {
-    throw new Error("Browser engine not configured. Set BROWSER_ENGINE_URL and BROWSER_ENGINE_API_KEY in Settings → Secrets.");
+    throw new Error("Browser engine not configured. Set ENGINE_URL and ENGINE_API_KEY in Settings → Secrets.");
   }
   return { baseUrl: url.replace(/\/$/, ""), key };
 }
@@ -30,7 +30,7 @@ export async function engineFetch(path, options = {}) {
 }
 
 export function isEngineConfigured() {
-  const url = secrets.get("BROWSER_ENGINE_URL");
-  const key = secrets.get("BROWSER_ENGINE_API_KEY");
+  const url = secrets.get("ENGINE_URL");
+  const key = secrets.get("ENGINE_API_KEY");
   return !!(url && key);
 }
