@@ -1,17 +1,18 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
+import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { secrets } from "base44:runtime";
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
+    setEngineClient(base44);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const { action } = body;
 
-    if (!isEngineConfigured()) {
+    if (!await isEngineConfigured()) {
       return Response.json({ error: "Browser engine not configured. Set BROWSER_ENGINE_URL and BROWSER_ENGINE_API_KEY in Settings → Secrets." }, { status: 503 });
     }
 

@@ -1,10 +1,11 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { engineGet, isEngineConfigured } from "../../shared/engineClient.ts";
+import { engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
+  setEngineClient(base44);
   try {
-    if (!isEngineConfigured()) {
+    if (!await isEngineConfigured()) {
       return Response.json({ ok: false, configured: false, error: "Browser engine not configured" }, { status: 200 });
     }
 

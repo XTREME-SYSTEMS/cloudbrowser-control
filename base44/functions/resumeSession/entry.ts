@@ -1,8 +1,9 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { enginePost, isEngineConfigured } from "../../shared/engineClient.ts";
+import { enginePost, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
+  setEngineClient(base44);
   try {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export default async function (req) {
     if (!sessions.length) return Response.json({ error: "Invalid or expired resume token" }, { status: 404 });
     const original = sessions[0];
 
-    if (!isEngineConfigured()) return Response.json({ error: "Engine not configured" }, { status: 503 });
+    if (!await isEngineConfigured()) return Response.json({ error: "Engine not configured" }, { status: 503 });
 
     // Load context state from profile if available
     const profile = profile_id || original.profile_id;

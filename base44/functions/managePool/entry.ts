@@ -1,8 +1,9 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { enginePost, engineGet, engineDelete, isEngineConfigured } from "../../shared/engineClient.ts";
+import { enginePost, engineGet, engineDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
+  setEngineClient(base44);
   try {
     const settings = await base44.asServiceRole.entities.SystemSettings.list("-created_date", 1);
     const sys = settings[0] || {};
@@ -11,7 +12,7 @@ export default async function (req) {
 
     // Get real pool state from the engine
     let enginePool = { poolSize: 0, poolCapacity: 3, warmCount: 0, activeSessions: 0, maxSessions: 10, workerId: null, region: null };
-    if (isEngineConfigured()) {
+    if (await isEngineConfigured()) {
       try { enginePool = await engineGet("/pool"); } catch (e) { /* engine down or 401 */ }
     }
 
@@ -24,7 +25,7 @@ export default async function (req) {
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     for (const s of pooled) {
       if (s.started_at && new Date(s.started_at).getTime() < fiveMinAgo) {
-        if (s.session_id && isEngineConfigured()) {
+        if (s.session_id && await isEngineConfigured()) {
           try { await engineDelete(`/sessions/${s.session_id}`); } catch (e) {}
         }
         await base44.asServiceRole.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
@@ -33,7 +34,7 @@ export default async function (req) {
     }
 
     // Warm up new sessions if below warm count — creates REAL browsers
-    if (isEngineConfigured() && enginePool.warmCount < warmCount) {
+    if (await isEngineConfigured() && enginePool.warmCount < warmCount) {
       const needed = warmCount - enginePool.warmCount;
       for (let i = 0; i < needed && i < 3; i++) {
         try {
@@ -62,7 +63,7 @@ export default async function (req) {
     if (pooled.length > poolSize) {
       const excess = pooled.slice(poolSize);
       for (const s of excess) {
-        if (s.session_id && isEngineConfigured()) {
+        if (s.session_id && await isEngineConfigured()) {
           try { await engineDelete(`/sessions/${s.session_id}`); } catch (e) {}
         }
         await base44.asServiceRole.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });

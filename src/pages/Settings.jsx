@@ -15,6 +15,7 @@ import StorageRetentionManager from "@/components/settings/StorageRetentionManag
 import WebhooksManager from "@/components/settings/WebhooksManager";
 import ExtensionsManager from "@/components/settings/ExtensionsManager";
 import ProfilesManager from "@/components/settings/ProfilesManager";
+import EngineConnectionManager from "@/components/settings/EngineConnectionManager";
 
 export default function Settings() {
   const [health, setHealth] = useState(null);
@@ -112,6 +113,8 @@ export default function Settings() {
               )}
             </CardContent>
           </Card>
+
+          <EngineConnectionManager />
 
           <SessionDefaultsManager />
           <ConcurrencyLimitsManager />

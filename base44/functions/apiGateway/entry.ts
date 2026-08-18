@@ -1,5 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { enginePost, engineDelete, engineGet, isEngineConfigured } from "../../shared/engineClient.ts";
+import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 
 // ═══════════════════════════════════════════════
 // API Gateway v1 — secure, canonical, real runtime
@@ -99,6 +99,7 @@ function errorResponse(status, error, requestId) {
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
+  setEngineClient(base44);
   const requestId = req.headers.get("x-request-id") || "req_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
 
   try {
@@ -173,7 +174,7 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
 
     case "POST:/sessions": {
       // Create REAL browser session on the engine
-      if (!isEngineConfigured()) {
+      if (!await isEngineConfigured()) {
         return errorResponse(503, "Browser engine not configured", requestId);
       }
       let engineRes;
@@ -259,7 +260,7 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
       if (!session) return errorResponse(404, "Session not found", requestId);
       if (!session.session_id) return errorResponse(409, "Session has no runtime ID — cannot execute action", requestId);
 
-      if (!isEngineConfigured()) return errorResponse(503, "Browser engine not configured", requestId);
+      if (!await isEngineConfigured()) return errorResponse(503, "Browser engine not configured", requestId);
 
       // Canonical action contract
       let engineRes;
@@ -294,7 +295,7 @@ async function dispatch(base44, route, params, data, keyRecord, requestId) {
       let runtimeClosed = false;
       let closeError = null;
 
-      if (session.session_id && isEngineConfigured()) {
+      if (session.session_id && await isEngineConfigured()) {
         try {
           await engineDelete(`/sessions/${session.session_id}`);
           runtimeClosed = true;
