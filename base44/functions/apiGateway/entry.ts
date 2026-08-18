@@ -107,10 +107,13 @@ export default async function (req) {
     const body = await req.json();
     const { path: requestPath, method: requestMethod = "GET", data = {} } = body;
 
-    // ── Authenticate via Authorization header or body api_key (backward compat) ──
+    // ── Authenticate via body api_key (preferred) or Authorization header ──
+    // The Authorization header in internal function calls carries a platform JWT,
+    // not an API key. Only use it if it matches the API key prefix.
     const authHeader = req.headers.get("authorization") || "";
     const headerKey = authHeader.replace(/^Bearer\s+/i, "");
-    const apiKey = headerKey || body.api_key || "";
+    const headerIsApiKey = headerKey.startsWith("cb_live_") || headerKey.startsWith("cb_test_");
+    const apiKey = (headerIsApiKey ? headerKey : "") || body.api_key || "";
 
     if (!apiKey) return errorResponse(401, "Missing API key. Provide Authorization: Bearer <key> header.", requestId);
 
