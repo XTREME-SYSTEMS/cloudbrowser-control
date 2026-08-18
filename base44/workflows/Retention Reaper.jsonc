@@ -1,0 +1,110 @@
+{
+  "name": "Retention Reaper",
+  "description": "Daily cleanup of expired screenshots, logs, and videos based on SystemSettings retention policy. Produces audit evidence for each reaped batch.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 3 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "retention_reaper",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "reap_screenshots": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reapExpired",
+            "args": {
+              "entity": "Screenshot",
+              "date_field": "taken_at",
+              "setting_key": "screenshot_retention_days",
+              "default_days": 30
+            }
+          },
+          "then": "reap_logs",
+          "x-base44": {
+            "title": "Reap expired screenshots",
+            "description": "Delete screenshots older than retention period"
+          }
+        }
+      },
+      {
+        "reap_logs": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reapExpired",
+            "args": {
+              "entity": "LogEntry",
+              "date_field": "timestamp",
+              "setting_key": "log_retention_days",
+              "default_days": 14
+            }
+          },
+          "then": "reap_videos",
+          "x-base44": {
+            "title": "Reap expired logs",
+            "description": "Delete log entries older than retention period"
+          }
+        }
+      },
+      {
+        "reap_videos": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reapExpired",
+            "args": {
+              "entity": "Session",
+              "date_field": "ended_at",
+              "setting_key": "video_retention_days",
+              "default_days": 7,
+              "clear_field": "video_url",
+              "filter": {
+                "record_video": true
+              }
+            }
+          },
+          "then": "log_receipt",
+          "x-base44": {
+            "title": "Reap expired videos",
+            "description": "Clear video URLs older than retention period"
+          }
+        }
+      },
+      {
+        "log_receipt": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "logAudit",
+            "args": {
+              "action": "reap",
+              "entity_type": "retention",
+              "description": "Retention reaper completed daily cycle"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Log audit receipt",
+            "description": "Record evidence of reaper execution"
+          }
+        }
+      }
+    ]
+  }
+}

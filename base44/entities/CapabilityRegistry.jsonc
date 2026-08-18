@@ -1,0 +1,106 @@
+{
+  "name": "CapabilityRegistry",
+  "type": "object",
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "description": "Canonical capability identifier"
+    },
+    "category": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "advertised": {
+      "type": "boolean",
+      "default": false
+    },
+    "ui_surface": {
+      "type": "string"
+    },
+    "api_surface": {
+      "type": "string"
+    },
+    "base44_function": {
+      "type": "string"
+    },
+    "railway_endpoint": {
+      "type": "string"
+    },
+    "runtime_handler": {
+      "type": "string"
+    },
+    "authorization_policy": {
+      "type": "string"
+    },
+    "tenant_scope": {
+      "type": "string"
+    },
+    "artifact_output": {
+      "type": "string"
+    },
+    "telemetry": {
+      "type": "string"
+    },
+    "cleanup_behavior": {
+      "type": "string"
+    },
+    "test_id": {
+      "type": "string"
+    },
+    "latest_evidence_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "VERIFIED",
+        "PARTIAL",
+        "BROKEN",
+        "MISSING",
+        "BLOCKED"
+      ],
+      "default": "MISSING"
+    },
+    "blocker": {
+      "type": "string"
+    },
+    "security_status": {
+      "type": "string",
+      "enum": [
+        "secure",
+        "warning",
+        "critical",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "performance_status": {
+      "type": "string",
+      "enum": [
+        "optimal",
+        "acceptable",
+        "degraded",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "release_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "capability_id",
+    "name",
+    "status"
+  ]
+}

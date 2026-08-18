@@ -45,7 +45,10 @@
         "extract_table",
         "extract_json",
         "ai_extract",
+        "evaluate",
         "set_cookies",
+        "import_cookies",
+        "export_cookies",
         "set_headers",
         "set_local_storage",
         "capture_response",
@@ -53,13 +56,8 @@
         "mock_response",
         "save_state",
         "restore_state",
-        "import_cookies",
-        "export_cookies",
         "crawl",
-        "paginate",
-        "evaluate",
-        "save_state",
-        "restore_state"
+        "paginate"
       ]
     },
     "selector": {

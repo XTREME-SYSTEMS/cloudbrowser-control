@@ -1,5 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
+import { enginePost, isEngineConfigured } from "../../shared/engineClient.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -18,7 +18,7 @@ export default async function (req) {
 
     if (!isEngineConfigured()) return Response.json({ error: "Engine not configured" }, { status: 503 });
 
-    // Create a new session on the engine, restoring state
+    // Load context state from profile if available
     const profile = profile_id || original.profile_id;
     let cookies = null, storageState = null;
     if (profile) {
@@ -26,21 +26,26 @@ export default async function (req) {
       if (profiles[0]) { cookies = profiles[0].cookies; storageState = profiles[0].storage_state; }
     }
 
-    const engineResp = await engineFetch("/sessions", {
+    // Create a new session on the engine with state restoration (proper POST)
+    const engineResp = await enginePost("/sessions", {
       target_url: original.current_url || original.target_url,
       viewport: original.viewport,
-      user_agent: original.user_agent,
+      userAgent: original.user_agent,
       locale: original.locale,
       timezone: original.timezone,
-      proxy_id: original.proxy_id,
+      proxy: original.proxy_id ? { server: original.proxy_id } : undefined,
       headers: original.headers,
       cookies,
-      storage_state: storageState,
+      storageState,
       resume: true,
+      usePool: false,
     });
 
+    const runtimeSessionId = engineResp.sessionId;
+    if (!runtimeSessionId) return Response.json({ error: "Engine returned no runtime session ID" }, { status: 502 });
+
     const newSession = await base44.entities.Session.create({
-      session_id: engineResp.session_id || engineResp.id,
+      session_id: runtimeSessionId,
       status: "running",
       target_url: original.current_url || original.target_url,
       viewport: original.viewport,
@@ -51,10 +56,21 @@ export default async function (req) {
       headers: original.headers,
       profile_id: profile,
       started_at: new Date().toISOString(),
-      metadata: { resumed_from: original.id, ...original.metadata },
+      metadata: {
+        resumed_from: original.id,
+        ...original.metadata,
+        worker_id: engineResp.workerId,
+        region: engineResp.region,
+        engine_version: engineResp.engineVersion,
+      },
     });
 
-    return Response.json({ session: newSession, resumed_from: original.id });
+    return Response.json({
+      session: newSession,
+      resumed_from: original.id,
+      runtime_session_id: runtimeSessionId,
+      context_restored: !!(cookies || storageState),
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

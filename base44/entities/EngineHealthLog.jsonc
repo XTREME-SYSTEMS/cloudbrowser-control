@@ -7,11 +7,22 @@
       "enum": [
         "healthy",
         "degraded",
-        "down"
+        "unhealthy",
+        "unreachable"
       ]
     },
     "response_time_ms": {
       "type": "number"
+    },
+    "worker_id": {
+      "type": "string",
+      "description": "Railway worker that was probed"
+    },
+    "region": {
+      "type": "string"
+    },
+    "engine_version": {
+      "type": "string"
     },
     "active_sessions": {
       "type": "number"
@@ -22,11 +33,22 @@
     "pool_size": {
       "type": "number"
     },
-    "uptime": {
+    "pool_capacity": {
       "type": "number"
     },
-    "error": {
+    "uptime_seconds": {
+      "type": "number"
+    },
+    "error_message": {
       "type": "string"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checked_by": {
+      "type": "string",
+      "description": "User ID who triggered the health check"
     }
   },
   "required": [

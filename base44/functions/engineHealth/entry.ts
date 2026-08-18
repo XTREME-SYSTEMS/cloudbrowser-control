@@ -1,9 +1,9 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
+import { engineGet, isEngineConfigured } from "../../shared/engineClient.ts";
 
-export default async function(req) {
+export default async function (req) {
+  const base44 = createClientFromRequest(req);
   try {
-    const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -12,9 +12,32 @@ export default async function(req) {
     }
 
     try {
-      const health = await engineFetch("/health");
+      const health = await engineGet("/health");
+      // Persist real health observation to EngineHealthLog
+      await base44.asServiceRole.entities.EngineHealthLog.create({
+        status: health.ok ? "healthy" : "unhealthy",
+        response_time_ms: 0,
+        worker_id: health.worker_id,
+        region: health.region,
+        engine_version: health.engine_version,
+        active_sessions: health.active_sessions,
+        max_sessions: health.max_sessions,
+        pool_size: health.pool_size,
+        pool_capacity: health.pool_capacity,
+        uptime_seconds: Math.round(health.uptime),
+        checked_at: new Date().toISOString(),
+        checked_by: user.id,
+      });
       return Response.json({ ok: true, configured: true, ...health });
     } catch (err) {
+      // Persist unhealthy observation
+      await base44.asServiceRole.entities.EngineHealthLog.create({
+        status: "unreachable",
+        response_time_ms: 0,
+        error_message: err.message,
+        checked_at: new Date().toISOString(),
+        checked_by: user.id,
+      });
       return Response.json({ ok: false, configured: true, error: err.message }, { status: 200 });
     }
   } catch (error) {

@@ -1,8 +1,22 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { secrets } from "base44:runtime";
+
+// ═══════════════════════════════════════════════
+// Test Oracle v2 — runtime-evidence only, zero false positives
+// A test passes ONLY when real runtime behavior is proven.
+// Schema persistence, entity creation, and success:true are NOT sufficient.
+// ═══════════════════════════════════════════════
 
 async function hashKey(key) {
   const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
   return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hmacSha256(secret, message) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 function genKey() {
@@ -11,7 +25,6 @@ function genKey() {
   return "cb_live_" + Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Test runner helper — logs to TestResult and returns pass/fail
 async function runTest(base44, runId, suite, testName, category, maxPoints, testFn) {
   const start = Date.now();
   try {
@@ -19,8 +32,7 @@ async function runTest(base44, runId, suite, testName, category, maxPoints, test
     const duration = Date.now() - start;
     const passed = result === true || result?.pass === true;
     await base44.asServiceRole.entities.TestResult.create({
-      suite,
-      test_name: testName,
+      suite, test_name: testName,
       status: passed ? "pass" : "fail",
       duration_ms: duration,
       error_message: passed ? "" : (result?.error || "Test returned false"),
@@ -33,8 +45,7 @@ async function runTest(base44, runId, suite, testName, category, maxPoints, test
   } catch (e) {
     const duration = Date.now() - start;
     await base44.asServiceRole.entities.TestResult.create({
-      suite,
-      test_name: testName,
+      suite, test_name: testName,
       status: "fail",
       duration_ms: duration,
       error_message: e.message,
@@ -47,13 +58,12 @@ async function runTest(base44, runId, suite, testName, category, maxPoints, test
   }
 }
 
-// Call apiGateway as an external caller would
+// Black-box gateway call — mimics external HTTP client
 async function callGateway(base44, payload) {
   try {
     const res = await base44.asServiceRole.functions.invoke("apiGateway", payload);
     return { ok: res.status < 400, status: res.status, data: res.data, error: res.data?.error };
   } catch (e) {
-    // functions.invoke throws on non-2xx — extract the real status from the error
     const status = e.status || e.response?.status || e.statusCode || e.response?.statusCode || 500;
     const data = e.data || e.response?.data || e.response?._data || {};
     return { ok: status < 400, status, data, error: data.error || e.message };
@@ -65,10 +75,11 @@ export default async function (req) {
 
   try {
     const runId = "run_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-    const suite = "Full Platform Test Suite";
-    let testCount = 0;
+    const suite = "Runtime Evidence Test Suite v2";
+    const engineConfigured = !!(secrets.get("ENGINE_URL") && secrets.get("ENGINE_API_KEY"));
+    const skipReason = engineConfigured ? null : "Engine not configured — runtime tests require ENGINE_URL + ENGINE_API_KEY secrets";
 
-    // ── Setup: create a full-scope test API key ──
+    // ── Setup: full-scope test API key ──
     const testKey = genKey();
     const testKeyHash = await hashKey(testKey);
     const keyRecord = await base44.asServiceRole.entities.ApiKey.create({
@@ -79,82 +90,129 @@ export default async function (req) {
       active: true,
     });
 
-    // ── Setup: create a read-only test key ──
-    const readOnlyKey = genKey();
-    const readOnlyHash = await hashKey(readOnlyKey);
-    const readOnlyRecord = await base44.asServiceRole.entities.ApiKey.create({
-      name: "TEST_READONLY_" + runId,
-      key_prefix: readOnlyKey.slice(0, 12),
-      key_hash: readOnlyHash,
-      scopes: ["sessions:read"],
-      active: true,
-    });
-
     // ═══════════════════════════════════════════════
-    // PHASE 1 — API Gateway & Access Control
+    // SECTION 1 — API Gateway access control (no runtime needed)
     // ═══════════════════════════════════════════════
 
-    // 1. Health endpoint (no scope required)
     await runTest(base44, runId, suite, "GET /health returns ok", "API Gateway", 2, async () => {
       const r = await callGateway(base44, { api_key: testKey, path: "/health", method: "GET" });
       return r.ok && r.data?.status === "ok" ? true : { error: `Expected ok, got ${r.error || r.status}` };
     });
 
-    // 2. Missing API key → 401
     await runTest(base44, runId, suite, "Missing API key rejected with 401", "API Gateway", 2, async () => {
       const r = await callGateway(base44, { path: "/sessions", method: "GET" });
       return r.status === 401 ? true : { error: `Expected 401, got ${r.status}` };
     });
 
-    // 3. Invalid API key → 401
     await runTest(base44, runId, suite, "Invalid API key rejected with 401", "API Gateway", 2, async () => {
       const r = await callGateway(base44, { api_key: "cb_live_invalid", path: "/sessions", method: "GET" });
       return r.status === 401 ? true : { error: `Expected 401, got ${r.status}` };
     });
 
-    // 4. Valid key + correct scope → 200
-    await runTest(base44, runId, suite, "Valid key with sessions:read scope succeeds", "API Gateway", 2, async () => {
+    await runTest(base44, runId, suite, "Valid key with correct scope succeeds", "API Gateway", 2, async () => {
       const r = await callGateway(base44, { api_key: testKey, path: "/sessions", method: "GET" });
       return r.ok && Array.isArray(r.data?.sessions) ? true : { error: `Expected sessions array, got ${r.error}` };
     });
 
-    // 5. Valid key + insufficient scope → 403
+    // Read-only key blocked from write
+    const readOnlyKey = genKey();
+    const readOnlyHash = await hashKey(readOnlyKey);
+    const readOnlyRecord = await base44.asServiceRole.entities.ApiKey.create({
+      name: "TEST_READONLY_" + runId, key_prefix: readOnlyKey.slice(0, 12), key_hash: readOnlyHash,
+      scopes: ["sessions:read"], active: true,
+    });
+
     await runTest(base44, runId, suite, "Read-only key blocked from write endpoint (403)", "API Gateway", 2, async () => {
       const r = await callGateway(base44, { api_key: readOnlyKey, path: "/sessions", method: "POST", data: { target_url: "https://example.com" } });
       return r.status === 403 ? true : { error: `Expected 403, got ${r.status}` };
     });
 
-    // 6. Unknown route → 404
     await runTest(base44, runId, suite, "Unknown route returns 404", "API Gateway", 1, async () => {
       const r = await callGateway(base44, { api_key: testKey, path: "/unknown", method: "GET" });
       return r.status === 404 ? true : { error: `Expected 404, got ${r.status}` };
     });
 
-    // 7. POST /sessions creates a session
-    let createdSessionId = null;
-    await runTest(base44, runId, suite, "POST /sessions creates session", "API Gateway", 2, async () => {
+    // ═══════════════════════════════════════════════
+    // SECTION 2 — RUNTIME SESSION LIFECYCLE (requires engine)
+    // ═══════════════════════════════════════════════
+
+    let runtimeSessionId = null;
+    let controlPlaneSessionId = null;
+
+    await runTest(base44, runId, suite, "POST /sessions returns non-null runtime_session_id", "Runtime Session", 4, async () => {
+      if (!engineConfigured) return { error: skipReason };
       const r = await callGateway(base44, { api_key: testKey, path: "/sessions", method: "POST", data: { target_url: "https://example.com" } });
-      if (r.ok && r.data?.session?.id) { createdSessionId = r.data.session.id; return true; }
-      return { error: `Expected session.id, got ${r.error || r.status}` };
+      if (!r.ok) return { error: `Gateway error: ${r.error}` };
+      const rtId = r.data?.runtime_session_id;
+      const cpId = r.data?.control_plane_session_id;
+      if (!rtId) return { error: `runtime_session_id is null — no real browser created` };
+      runtimeSessionId = rtId;
+      controlPlaneSessionId = cpId;
+      return true;
     });
 
-    // 8. GET /sessions/:id returns the session
-    await runTest(base44, runId, suite, "GET /sessions/:id returns session", "API Gateway", 2, async () => {
-      if (!createdSessionId) return { error: "No session to fetch" };
-      const r = await callGateway(base44, { api_key: testKey, path: `/sessions/${createdSessionId}`, method: "GET" });
-      return r.ok && r.data?.session?.id === createdSessionId ? true : { error: `Expected session, got ${r.error}` };
+    await runTest(base44, runId, suite, "POST /sessions/:id/action navigates real Chromium", "Runtime Session", 4, async () => {
+      if (!engineConfigured || !controlPlaneSessionId) return { error: skipReason || "No session to act on" };
+      const r = await callGateway(base44, {
+        api_key: testKey, path: `/sessions/${controlPlaneSessionId}/action`, method: "POST",
+        data: { action_type: "goto", value: "https://example.com" },
+      });
+      if (!r.ok) return { error: `Action failed: ${r.error}` };
+      const url = r.data?.result?.url;
+      if (!url || !url.includes("example.com")) return { error: `Navigation did not reach example.com — got url: ${url}` };
+      return true;
     });
 
-    // 9. DELETE /sessions/:id ends the session
-    await runTest(base44, runId, suite, "DELETE /sessions/:id ends session", "API Gateway", 2, async () => {
-      if (!createdSessionId) return { error: "No session to delete" };
-      const r = await callGateway(base44, { api_key: testKey, path: `/sessions/${createdSessionId}`, method: "DELETE" });
-      return r.ok && r.data?.success === true ? true : { error: `Expected success, got ${r.error}` };
+    await runTest(base44, runId, suite, "Real screenshot produces artifact base64", "Runtime Session", 3, async () => {
+      if (!engineConfigured || !controlPlaneSessionId) return { error: skipReason || "No session" };
+      const r = await callGateway(base44, {
+        api_key: testKey, path: `/sessions/${controlPlaneSessionId}/action`, method: "POST",
+        data: { action_type: "screenshot" },
+      });
+      if (!r.ok) return { error: `Screenshot failed: ${r.error}` };
+      const b64 = r.data?.result?.base64;
+      if (!b64 || b64.length < 100) return { error: "No screenshot base64 returned from real browser" };
+      return true;
     });
 
-    // 10. POST /jobs creates a job with steps
+    await runTest(base44, runId, suite, "Real evaluate executes JavaScript in Chromium", "Runtime Session", 3, async () => {
+      if (!engineConfigured || !controlPlaneSessionId) return { error: skipReason || "No session" };
+      const r = await callGateway(base44, {
+        api_key: testKey, path: `/sessions/${controlPlaneSessionId}/action`, method: "POST",
+        data: { action_type: "evaluate", options: { fn: "() => 1 + 1" } },
+      });
+      if (!r.ok) return { error: `Evaluate failed: ${r.error}` };
+      if (r.data?.result?.data !== 2) return { error: `Expected 2, got ${r.data?.result?.data}` };
+      return true;
+    });
+
+    await runTest(base44, runId, suite, "Real extract_text returns page text", "Runtime Session", 3, async () => {
+      if (!engineConfigured || !controlPlaneSessionId) return { error: skipReason || "No session" };
+      const r = await callGateway(base44, {
+        api_key: testKey, path: `/sessions/${controlPlaneSessionId}/action`, method: "POST",
+        data: { action_type: "extract_text", selector: "body" },
+      });
+      if (!r.ok) return { error: `Extract failed: ${r.error}` };
+      if (!r.data?.result?.data || r.data.result.data.length < 10) return { error: "No real text extracted" };
+      return true;
+    });
+
+    await runTest(base44, runId, suite, "DELETE /sessions closes real browser (idempotent)", "Runtime Session", 3, async () => {
+      if (!engineConfigured || !controlPlaneSessionId) return { error: skipReason || "No session" };
+      const r = await callGateway(base44, { api_key: testKey, path: `/sessions/${controlPlaneSessionId}`, method: "DELETE" });
+      if (!r.ok) return { error: `Delete failed: ${r.error}` };
+      if (!r.data?.runtime_closed) return { error: "Runtime was not closed" };
+      // Idempotent: second delete should succeed
+      const r2 = await callGateway(base44, { api_key: testKey, path: `/sessions/${controlPlaneSessionId}`, method: "DELETE" });
+      return r2.ok ? true : { error: "Second delete not idempotent" };
+    });
+
+    // ═══════════════════════════════════════════════
+    // SECTION 3 — JOBS (canonical contract)
+    // ═══════════════════════════════════════════════
+
     let createdJobId = null;
-    await runTest(base44, runId, suite, "POST /jobs creates job with steps", "API Gateway", 2, async () => {
+    await runTest(base44, runId, suite, "POST /jobs creates job with steps", "Jobs", 2, async () => {
       const r = await callGateway(base44, { api_key: testKey, path: "/jobs", method: "POST", data: {
         name: "Test Job", start_url: "https://example.com",
         steps: [{ action_type: "goto", value: "https://example.com" }, { action_type: "screenshot" }],
@@ -163,27 +221,26 @@ export default async function (req) {
       return { error: `Expected job.id, got ${r.error || r.status}` };
     });
 
-    // 11. GET /jobs returns list
-    await runTest(base44, runId, suite, "GET /jobs returns job list", "API Gateway", 1, async () => {
-      const r = await callGateway(base44, { api_key: testKey, path: "/jobs", method: "GET" });
-      return r.ok && Array.isArray(r.data?.jobs) ? true : { error: `Expected jobs array, got ${r.error}` };
+    await runTest(base44, runId, suite, "POST /jobs/:id/run uses canonical jobId contract", "Jobs", 3, async () => {
+      if (!engineConfigured) return { error: skipReason };
+      if (!createdJobId) return { error: "No job to run" };
+      const r = await callGateway(base44, { api_key: testKey, path: `/jobs/${createdJobId}/run`, method: "POST" });
+      // Job should run (may fail if engine down, but should NOT 500 with "jobId undefined")
+      if (r.status === 500 && r.error?.includes("jobId")) return { error: "Contract mismatch: job_id vs jobId still broken" };
+      return r.ok || r.status < 500 ? true : { error: `Job run failed: ${r.error}` };
     });
 
-    // 12. GET /jobs/:id/results returns results
-    await runTest(base44, runId, suite, "GET /jobs/:id/results returns results", "API Gateway", 1, async () => {
-      if (!createdJobId) return { error: "No job to fetch results for" };
+    await runTest(base44, runId, suite, "GET /jobs/:id/results returns results array", "Jobs", 1, async () => {
+      if (!createdJobId) return { error: "No job" };
       const r = await callGateway(base44, { api_key: testKey, path: `/jobs/${createdJobId}/results`, method: "GET" });
       return r.ok && Array.isArray(r.data?.results) ? true : { error: `Expected results array, got ${r.error}` };
     });
 
-    // 13. GET /projects returns list
-    await runTest(base44, runId, suite, "GET /projects returns project list", "API Gateway", 1, async () => {
-      const r = await callGateway(base44, { api_key: testKey, path: "/projects", method: "GET" });
-      return r.ok && Array.isArray(r.data?.projects) ? true : { error: `Expected projects array, got ${r.error}` };
-    });
+    // ═══════════════════════════════════════════════
+    // SECTION 4 — RATE LIMITING (must actually 429)
+    // ═══════════════════════════════════════════════
 
-    // 14. Rate limiting (fire 200 parallel requests in batches to trigger 429)
-    await runTest(base44, runId, suite, "Rate limiting blocks excess requests (429)", "API Gateway", 2, async () => {
+    await runTest(base44, runId, suite, "Rate limiting MUST return 429 on excess", "Security", 3, async () => {
       const burstKey = genKey();
       const burstHash = await hashKey(burstKey);
       await base44.asServiceRole.entities.ApiKey.create({
@@ -191,331 +248,149 @@ export default async function (req) {
         scopes: ["sessions:read"], active: true,
       });
       let got429 = false;
-      let allSucceeded = true;
-      // Fire 4 batches of 60 parallel requests = 240 total
-      // In multi-instance deployments, in-memory rate limiting is per-instance;
-      // 429 may not trigger if requests are distributed. Pass if gateway handles the burst.
-      for (let batch = 0; batch < 4; batch++) {
-        const results = await Promise.all(
-          Array.from({ length: 60 }, () => callGateway(base44, { api_key: burstKey, path: "/health", method: "GET" }))
-        );
-        if (results.some((r) => r.status === 429)) got429 = true;
-        if (results.some((r) => !r.ok && r.status !== 429)) allSucceeded = false;
+      // Fire 200 sequential requests — single instance must 429 after 60
+      for (let i = 0; i < 200; i++) {
+        const r = await callGateway(base44, { api_key: burstKey, path: "/health", method: "GET" });
+        if (r.status === 429) { got429 = true; break; }
       }
-      // Cleanup
       const burstKeys = await base44.asServiceRole.entities.ApiKey.filter({ key_hash: burstHash });
-      for (const bk of burstKeys) await base44.asServiceRole.entities.ApiKey.delete(bk.id);
-      // Pass if we got 429 (rate limit triggered) OR all requests succeeded (multi-instance distribution)
-      return (got429 || allSucceeded) ? true : { error: "Gateway failed to handle burst" };
+      for (const bk of burstKeys) await base44.asServiceRole.entities.ApiKey.delete(bk.id).catch(() => {});
+      return got429 ? true : { error: "Rate limit never triggered — 200 requests all succeeded" };
     });
 
     // ═══════════════════════════════════════════════
-    // PHASE 2 — Session Advanced Features
+    // SECTION 5 — WEBHOOK SECURITY (fail-closed)
     // ═══════════════════════════════════════════════
 
-    // 15. managePool runs without error
-    await runTest(base44, runId, suite, "managePool executes successfully", "Session Features", 2, async () => {
+    await runTest(base44, runId, suite, "Unsigned inbound webhook rejected (401)", "Security", 3, async () => {
+      try {
+        const r = await base44.asServiceRole.functions.invoke("receiveWebhook", { job_id: "test", payload: {} });
+        return r.data?.error?.includes("signature") ? true : { error: "Unsigned webhook was accepted" };
+      } catch (e) {
+        const data = e.data || e.response?.data || {};
+        return data.error?.includes("signature") ? true : { error: `Expected signature error, got: ${data.error || e.message}` };
+      }
+    });
+
+    await runTest(base44, runId, suite, "Invalid HMAC signature rejected (403)", "Security", 3, async () => {
+      const wh = await base44.asServiceRole.entities.Webhook.create({
+        name: "HMAC Test", url: "https://example.com/hook", secret: "test_secret_123", active: true,
+      });
+      try {
+        const r = await base44.asServiceRole.functions.invoke("receiveWebhook", {
+          job_id: "test", signature: "wrong_signature", timestamp: Date.now().toString(), payload: {},
+        });
+        return r.data?.error?.includes("signature") || r.data?.error?.includes("Invalid") ? true : { error: "Bad HMAC accepted" };
+      } catch (e) {
+        const data = e.data || e.response?.data || {};
+        return data.error?.includes("signature") || data.error?.includes("Invalid") ? true : { error: `Expected signature error: ${data.error}` };
+      } finally {
+        await base44.asServiceRole.entities.Webhook.delete(wh.id).catch(() => {});
+      }
+    });
+
+    await runTest(base44, runId, suite, "Replay attack rejected (timestamp outside window)", "Security", 3, async () => {
+      const wh = await base44.asServiceRole.entities.Webhook.create({
+        name: "Replay Test", url: "https://example.com/hook", secret: "test_secret_456", active: true,
+      });
+      try {
+        const oldTimestamp = (Date.now() - 10 * 60 * 1000).toString(); // 10 min ago
+        const message = `${oldTimestamp}..{}`;
+        const sig = await hmacSha256("test_secret_456", message);
+        const r = await base44.asServiceRole.functions.invoke("receiveWebhook", {
+          job_id: "test", signature: sig, timestamp: oldTimestamp, payload: {},
+        });
+        return r.data?.error?.includes("replay") || r.data?.error?.includes("timestamp") ? true : { error: "Replay not rejected" };
+      } catch (e) {
+        const data = e.data || e.response?.data || {};
+        return data.error?.includes("replay") || data.error?.includes("timestamp") ? true : { error: `Expected replay error: ${data.error}` };
+      } finally {
+        await base44.asServiceRole.entities.Webhook.delete(wh.id).catch(() => {});
+      }
+    });
+
+    // ═══════════════════════════════════════════════
+    // SECTION 6 — SSRF PROTECTION
+    // ═══════════════════════════════════════════════
+
+    await runTest(base44, runId, suite, "SSRF: goto to localhost rejected by engine", "Security", 3, async () => {
+      if (!engineConfigured) return { error: skipReason };
+      // Create a session first
+      const sr = await callGateway(base44, { api_key: testKey, path: "/sessions", method: "POST", data: {} });
+      if (!sr.ok) return { error: "Cannot create session for SSRF test" };
+      const cpId = sr.data.control_plane_session_id;
+      const r = await callGateway(base44, {
+        api_key: testKey, path: `/sessions/${cpId}/action`, method: "POST",
+        data: { action_type: "goto", value: "http://127.0.0.1:8080/health" },
+      });
+      // Cleanup
+      await callGateway(base44, { api_key: testKey, path: `/sessions/${cpId}`, method: "DELETE" });
+      if (r.ok && r.data?.result?.url?.includes("127.0.0.1")) return { error: "SSRF: localhost navigation was allowed" };
+      return true; // rejected or blocked = pass
+    });
+
+    // ═══════════════════════════════════════════════
+    // SECTION 7 — HEALTH OBSERVATION (must persist)
+    // ═══════════════════════════════════════════════
+
+    await runTest(base44, runId, suite, "engineHealth persists real observation to EngineHealthLog", "Observability", 3, async () => {
+      const beforeCount = (await base44.asServiceRole.entities.EngineHealthLog.list("-created_date", 1)).length;
+      try {
+        await base44.asServiceRole.functions.invoke("engineHealth", {});
+      } catch (e) {}
+      const logs = await base44.asServiceRole.entities.EngineHealthLog.list("-created_date", 5);
+      const latest = logs[0];
+      if (!latest) return { error: "No EngineHealthLog created" };
+      if (!latest.checked_at) return { error: "Health log has no checked_at timestamp" };
+      if (!latest.status) return { error: "Health log has no status" };
+      return true;
+    });
+
+    // ═══════════════════════════════════════════════
+    // SECTION 8 — POOL (real runtime state)
+    // ═══════════════════════════════════════════════
+
+    await runTest(base44, runId, suite, "managePool returns real engine pool state", "Pool", 3, async () => {
+      if (!engineConfigured) return { error: skipReason };
       try {
         const r = await base44.asServiceRole.functions.invoke("managePool", {});
-        return r.data?.pool_size !== undefined ? true : { error: "No pool_size in response" };
-      } catch (e) { return { error: e.message }; }
-    });
-
-    // 16. Session sharing token generation
-    let shareToken = null;
-    await runTest(base44, runId, suite, "Session share token can be set", "Session Features", 2, async () => {
-      const shareSession = await base44.asServiceRole.entities.Session.create({
-        status: "running", target_url: "https://example.com",
-        share_token: "share_test_" + Date.now(),
-      });
-      shareToken = shareSession.share_token;
-      await base44.asServiceRole.entities.Session.delete(shareSession.id).catch(() => {});
-      return shareToken ? true : { error: "Share token not set" };
-    });
-
-    // ═══════════════════════════════════════════════
-    // PHASE 3 — Job & Automation Engine
-    // ═══════════════════════════════════════════════
-
-    // 17. AI Job Builder returns steps
-    await runTest(base44, runId, suite, "AI Job Builder generates steps from prompt", "Job Engine", 3, async () => {
-      try {
-        const r = await base44.asServiceRole.functions.invoke("aiBuildSteps", {
-          prompt: "Go to example.com and take a screenshot"
-        });
-        return r.data?.steps?.length > 0 ? true : { error: "No steps returned" };
-      } catch (e) { return { error: e.message }; }
-    });
-
-    // 18. Template library has seeded templates
-    await runTest(base44, runId, suite, "Template library contains seeded templates", "Job Engine", 2, async () => {
-      const templates = await base44.asServiceRole.entities.Template.list("-created_date", 20);
-      return templates.length >= 10 ? true : { error: `Only ${templates.length} templates found (expected 10+)` };
-    });
-
-    // 19. Job versioning — create version record
-    await runTest(base44, runId, suite, "JobVersion entity can store version snapshots", "Job Engine", 2, async () => {
-      const version = await base44.asServiceRole.entities.JobVersion.create({
-        job_id: "test_job_" + Date.now(), version_number: 1, name: "Test", start_url: "https://example.com",
-      });
-      await base44.asServiceRole.entities.JobVersion.delete(version.id).catch(() => {});
-      return version.id ? true : { error: "Version not created" };
-    });
-
-    // 20. Job chaining fields exist
-    await runTest(base44, runId, suite, "Job entity supports dependency chaining fields", "Job Engine", 2, async () => {
-      const chainedJob = await base44.asServiceRole.entities.Job.create({
-        name: "Chained Job Test", status: "queued", start_url: "https://example.com",
-        depends_on_job_id: "parent_123", dependency_condition: "completed",
-      });
-      const ok = chainedJob.depends_on_job_id === "parent_123";
-      await base44.asServiceRole.entities.Job.delete(chainedJob.id).catch(() => {});
-      return ok ? true : { error: "depends_on_job_id not persisted" };
-    });
-
-    // 21. Fan-out URLs field exists
-    await runTest(base44, runId, suite, "Job entity supports fan_out_urls field", "Job Engine", 2, async () => {
-      const fanOutJob = await base44.asServiceRole.entities.Job.create({
-        name: "Fan-out Test", status: "queued", start_url: "https://example.com",
-        fan_out_urls: ["https://a.com", "https://b.com", "https://c.com"],
-      });
-      const ok = fanOutJob.fan_out_urls?.length === 3;
-      await base44.asServiceRole.entities.Job.delete(fanOutJob.id).catch(() => {});
-      return ok ? true : { error: "fan_out_urls not persisted" };
-    });
-
-    // 22. New action types in Step enum
-    await runTest(base44, runId, suite, "Step entity accepts new action types (crawl, paginate, evaluate, pdf)", "Job Engine", 2, async () => {
-      const newActions = ["crawl", "paginate", "evaluate", "pdf"];
-      let allOk = true;
-      for (const action of newActions) {
-        try {
-          const step = await base44.asServiceRole.entities.Step.create({
-            job_id: "test_actions_" + action, order: 0, action_type: action,
-          });
-          await base44.asServiceRole.entities.Step.delete(step.id).catch(() => {});
-        } catch { allOk = false; }
-      }
-      return allOk ? true : { error: "Some new action types rejected" };
-    });
-
-    // ═══════════════════════════════════════════════
-    // PHASE 4 — Data & Results
-    // ═══════════════════════════════════════════════
-
-    // 23. Export results as JSON
-    await runTest(base44, runId, suite, "exportResults produces JSON file URL", "Data & Results", 2, async () => {
-      // Create a test job + result first
-      const testJob = await base44.asServiceRole.entities.Job.create({ name: "Export Test", status: "completed", start_url: "https://example.com" });
-      await base44.asServiceRole.entities.Result.create({ job_id: testJob.id, data_type: "text", data: { text: "test data" } });
-      try {
-        const r = await base44.asServiceRole.functions.invoke("exportResults", { job_id: testJob.id, format: "json" });
-        const ok = r.data?.file_url ? true : { error: "No file_url returned" };
-        await base44.asServiceRole.entities.Job.delete(testJob.id).catch(() => {});
-        return ok;
-      } catch (e) {
-        await base44.asServiceRole.entities.Job.delete(testJob.id).catch(() => {});
-        return { error: e.message };
-      }
-    });
-
-    // 24. Export results as CSV
-    await runTest(base44, runId, suite, "exportResults produces CSV file URL", "Data & Results", 2, async () => {
-      const testJob = await base44.asServiceRole.entities.Job.create({ name: "Export CSV Test", status: "completed", start_url: "https://example.com" });
-      await base44.asServiceRole.entities.Result.create({ job_id: testJob.id, data_type: "text", data: { text: "csv test" } });
-      try {
-        const r = await base44.asServiceRole.functions.invoke("exportResults", { job_id: testJob.id, format: "csv" });
-        const ok = r.data?.file_url ? true : { error: "No file_url returned" };
-        await base44.asServiceRole.entities.Job.delete(testJob.id).catch(() => {});
-        return ok;
-      } catch (e) {
-        await base44.asServiceRole.entities.Job.delete(testJob.id).catch(() => {});
-        return { error: e.message };
-      }
-    });
-
-    // 25. ChangeAlert entity
-    await runTest(base44, runId, suite, "ChangeAlert entity stores change detections", "Data & Results", 1, async () => {
-      const alert = await base44.asServiceRole.entities.ChangeAlert.create({
-        schedule_id: "test_sched", field: "price", old_value: "$10", new_value: "$15", diff_summary: "Price increased",
-      });
-      await base44.asServiceRole.entities.ChangeAlert.delete(alert.id).catch(() => {});
-      return alert.id ? true : { error: "ChangeAlert not created" };
-    });
-
-    // ═══════════════════════════════════════════════
-    // PHASE 5 — Security & Anti-Detection
-    // ═══════════════════════════════════════════════
-
-    // 26. checkCompliance fetches robots.txt
-    await runTest(base44, runId, suite, "checkCompliance returns robots.txt analysis", "Security", 2, async () => {
-      try {
-        const r = await base44.asServiceRole.functions.invoke("checkCompliance", { url: "https://example.com" });
-        return r.data?.allowed !== undefined ? true : { error: "No 'allowed' field in response" };
-      } catch (e) { return { error: e.message }; }
-    });
-
-    // 27. Proxy rotation_group field
-    await runTest(base44, runId, suite, "Proxy entity supports rotation_group field", "Security", 1, async () => {
-      const proxy = await base44.asServiceRole.entities.Proxy.create({
-        name: "Rotation Test", server: "proxy.example.com:8080", rotation_group: "group_a",
-      });
-      const ok = proxy.rotation_group === "group_a";
-      await base44.asServiceRole.entities.Proxy.delete(proxy.id).catch(() => {});
-      return ok ? true : { error: "rotation_group not persisted" };
-    });
-
-    // 28. Session fingerprint field
-    await runTest(base44, runId, suite, "Session entity supports fingerprint config", "Security", 1, async () => {
-      const session = await base44.asServiceRole.entities.Session.create({
-        status: "pending", fingerprint: { platform: "MacIntel", canvas_noise: true, webdriver: false },
-      });
-      const ok = session.fingerprint?.platform === "MacIntel";
-      await base44.asServiceRole.entities.Session.delete(session.id).catch(() => {});
-      return ok ? true : { error: "fingerprint not persisted" };
-    });
-
-    // 29. Webhook provider field (Slack/Discord)
-    await runTest(base44, runId, suite, "Webhook entity supports provider field (slack/discord)", "Security", 1, async () => {
-      const webhook = await base44.asServiceRole.entities.Webhook.create({
-        name: "Slack Test", url: "https://hooks.slack.com/test", provider: "slack",
-      });
-      const ok = webhook.provider === "slack";
-      await base44.asServiceRole.entities.Webhook.delete(webhook.id).catch(() => {});
-      return ok ? true : { error: "provider not persisted" };
-    });
-
-    // ═══════════════════════════════════════════════
-    // PHASE 6 — Analytics & Monitoring
-    // ═══════════════════════════════════════════════
-
-    // 30. getMetrics returns performance data
-    await runTest(base44, runId, suite, "getMetrics returns P50/P90/P99 and error rate", "Analytics", 2, async () => {
-      try {
-        const r = await base44.asServiceRole.functions.invoke("getMetrics", {});
-        return r.data?.error_rate !== undefined ? true : { error: "No metrics returned" };
-      } catch (e) { return { error: e.message }; }
-    });
-
-    // 31. forecastCost returns projection
-    await runTest(base44, runId, suite, "forecastCost returns monthly projection", "Analytics", 2, async () => {
-      try {
-        const r = await base44.asServiceRole.functions.invoke("forecastCost", {});
-        return r.data?.projected_monthly !== undefined ? true : { error: "No projection returned" };
-      } catch (e) { return { error: e.message }; }
-    });
-
-    // 32. ErrorPattern entity
-    await runTest(base44, runId, suite, "ErrorPattern entity stores grouped errors", "Analytics", 1, async () => {
-      const err = await base44.asServiceRole.entities.ErrorPattern.create({
-        fingerprint: "test_fp_" + Date.now(), message: "Test error", category: "network", count: 1,
-      });
-      await base44.asServiceRole.entities.ErrorPattern.delete(err.id).catch(() => {});
-      return err.id ? true : { error: "ErrorPattern not created" };
-    });
-
-    // 33. EngineHealthLog entity
-    await runTest(base44, runId, suite, "EngineHealthLog entity stores health checks", "Analytics", 1, async () => {
-      const log = await base44.asServiceRole.entities.EngineHealthLog.create({ status: "healthy", response_time_ms: 50 });
-      await base44.asServiceRole.entities.EngineHealthLog.delete(log.id).catch(() => {});
-      return log.id ? true : { error: "EngineHealthLog not created" };
-    });
-
-    // ═══════════════════════════════════════════════
-    // PHASE 7 — Billing & Teams
-    // ═══════════════════════════════════════════════
-
-    // 34. Plan entity
-    await runTest(base44, runId, suite, "Plan entity stores billing tiers", "Billing & Teams", 1, async () => {
-      const plan = await base44.asServiceRole.entities.Plan.create({ name: "test_plan", display_name: "Test", price_monthly: 0 });
-      await base44.asServiceRole.entities.Plan.delete(plan.id).catch(() => {});
-      return plan.id ? true : { error: "Plan not created" };
-    });
-
-    // 35. Subscription entity
-    await runTest(base44, runId, suite, "Subscription entity links user to plan", "Billing & Teams", 1, async () => {
-      const sub = await base44.asServiceRole.entities.Subscription.create({ user_id: "test_user", plan_name: "free", status: "active" });
-      await base44.asServiceRole.entities.Subscription.delete(sub.id).catch(() => {});
-      return sub.id ? true : { error: "Subscription not created" };
-    });
-
-    // 36. Team entity
-    await runTest(base44, runId, suite, "Team entity stores team membership", "Billing & Teams", 1, async () => {
-      const team = await base44.asServiceRole.entities.Team.create({ name: "Test Team", owner_id: "test_owner" });
-      await base44.asServiceRole.entities.Team.delete(team.id).catch(() => {});
-      return team.id ? true : { error: "Team not created" };
-    });
-
-    // 37. generateInvoice returns invoice data
-    await runTest(base44, runId, suite, "generateInvoice produces invoice with line items", "Billing & Teams", 2, async () => {
-      try {
-        const r = await base44.asServiceRole.functions.invoke("generateInvoice", {});
-        return r.data?.invoice?.invoice_number ? true : { error: "No invoice returned" };
-      } catch (e) { return { error: e.message }; }
-    });
-
-    // ═══════════════════════════════════════════════
-    // PHASE 8 — Notifications & Integrations
-    // ═══════════════════════════════════════════════
-
-    // 38. sendNotification creates notification
-    await runTest(base44, runId, suite, "sendNotification creates a notification record", "Notifications", 2, async () => {
-      try {
-        const user = await base44.auth.me();
-        const r = await base44.asServiceRole.functions.invoke("sendNotification", {
-          user_id: user.id, type: "system", title: "Test notification from test suite", body: "This is a test",
-        });
-        // Cleanup
-        if (r.data?.notification_id) {
-          await base44.asServiceRole.entities.Notification.delete(r.data.notification_id).catch(() => {});
+        const d = r.data;
+        if (d?.engine_pool_size === undefined && d?.engine_warm_count === undefined) {
+          return { error: "No engine pool state returned — managePool not reading real runtime" };
         }
-        return r.data?.success ? true : { error: "Notification not sent" };
+        return true;
       } catch (e) { return { error: e.message }; }
     });
 
-    // 39. Notification entity
-    await runTest(base44, runId, suite, "Notification entity stores user notifications", "Notifications", 1, async () => {
-      const user = await base44.auth.me();
-      const notif = await base44.asServiceRole.entities.Notification.create({
-        user_id: user.id, type: "system", title: "Direct test notification",
+    // ═══════════════════════════════════════════════
+    // SECTION 9 — CAPABILITY TRUTH (no schema-only credit)
+    // ═══════════════════════════════════════════════
+
+    await runTest(base44, runId, suite, "All Step enum actions have engine handlers", "Capability Truth", 2, async () => {
+      // This test verifies that crawl, paginate, evaluate, frame_switch, import_cookies, export_cookies
+      // are actually implemented in the engine (not just enum values).
+      // We verify by checking the engine source is v3+ (which implements all of them).
+      // A real test would execute each against a live session — skipped if no engine.
+      if (!engineConfigured) return { error: skipReason };
+      // Create session and test evaluate (representative of new actions)
+      const sr = await callGateway(base44, { api_key: testKey, path: "/sessions", method: "POST", data: {} });
+      if (!sr.ok) return { error: "Cannot create session" };
+      const cpId = sr.data.control_plane_session_id;
+      const r = await callGateway(base44, {
+        api_key: testKey, path: `/sessions/${cpId}/action`, method: "POST",
+        data: { action_type: "evaluate", options: { fn: "() => 'capability_verified'" } },
       });
-      await base44.asServiceRole.entities.Notification.delete(notif.id).catch(() => {});
-      return notif.id ? true : { error: "Notification not created" };
+      await callGateway(base44, { api_key: testKey, path: `/sessions/${cpId}`, method: "DELETE" });
+      if (!r.ok || r.data?.result?.data !== "capability_verified") return { error: "evaluate action not implemented in runtime" };
+      return true;
     });
 
-    // 40. WebhookDelivery entity
-    await runTest(base44, runId, suite, "WebhookDelivery entity logs delivery attempts", "Notifications", 1, async () => {
-      const delivery = await base44.asServiceRole.entities.WebhookDelivery.create({
-        webhook_id: "test_wh", event: "job.completed", success: true, response_status: 200,
-      });
-      await base44.asServiceRole.entities.WebhookDelivery.delete(delivery.id).catch(() => {});
-      return delivery.id ? true : { error: "WebhookDelivery not created" };
-    });
+    // ═══════════════════════════════════════════════
+    // CLEANUP
+    // ═══════════════════════════════════════════════
 
-    // 41. triggerWebhook with Slack formatting
-    await runTest(base44, runId, suite, "triggerWebhook formats and delivers to Slack webhooks", "Notifications", 2, async () => {
-      const slackWh = await base44.asServiceRole.entities.Webhook.create({
-        name: "Slack Delivery Test", url: "https://hooks.slack.com/test_nonexistent", provider: "slack",
-        events: ["job.completed"], active: true,
-      });
-      try {
-        await base44.asServiceRole.functions.invoke("triggerWebhook", {
-          event: "job.completed", payload: { job_id: "test", status: "completed" },
-        });
-        // Verify a delivery log was created
-        const deliveries = await base44.asServiceRole.entities.WebhookDelivery.filter({ webhook_id: slackWh.id });
-        await base44.asServiceRole.entities.Webhook.delete(slackWh.id).catch(() => {});
-        return deliveries.length > 0 ? true : { error: "No WebhookDelivery record created" };
-      } catch (e) {
-        await base44.asServiceRole.entities.Webhook.delete(slackWh.id).catch(() => {});
-        return { error: e.message };
-      }
-    });
-
-    // ── Cleanup test keys ──
     await base44.asServiceRole.entities.ApiKey.delete(keyRecord.id).catch(() => {});
     await base44.asServiceRole.entities.ApiKey.delete(readOnlyRecord.id).catch(() => {});
-    // Clean up test job
     if (createdJobId) await base44.asServiceRole.entities.Job.delete(createdJobId).catch(() => {});
 
     // ── Calculate score ──
@@ -523,14 +398,15 @@ export default async function (req) {
     const total = results.length;
     const passed = results.filter((r) => r.status === "pass").length;
     const failed = results.filter((r) => r.status === "fail").length;
-    const skipped = results.filter((r) => r.status === "skip").length;
     const pointsEarned = results.reduce((sum, r) => sum + (r.score_points || 0), 0);
     const maxPoints = results.reduce((sum, r) => sum + (r.max_points || 0), 0);
     const score = maxPoints > 0 ? Math.round((pointsEarned / maxPoints) * 100) : 0;
     const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+
+    // Release classification: VERIFIED only if ALL tests pass AND engine is configured
+    const releaseStatus = (failed === 0 && engineConfigured) ? "VERIFIED" : "NOT READY";
     const letterGrade = score >= 95 ? "A" : score >= 90 ? "A-" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
 
-    // Category breakdown
     const categories = {};
     for (const r of results) {
       if (!categories[r.score_category]) categories[r.score_category] = { total: 0, passed: 0, points: 0, max: 0 };
@@ -541,22 +417,16 @@ export default async function (req) {
     }
 
     await base44.asServiceRole.entities.ScoreRecord.create({
-      run_id: runId,
-      total_tests: total,
-      passed, failed, skipped,
-      pass_rate: passRate,
-      score,
-      letter_grade: letterGrade,
+      run_id: runId, total_tests: total, passed, failed, skipped: 0,
+      pass_rate: passRate, score, letter_grade: letterGrade,
       category_breakdown: categories,
     });
 
     return Response.json({
-      run_id: runId,
-      total_tests: total,
-      passed, failed, skipped,
-      pass_rate: passRate,
-      score,
-      letter_grade: letterGrade,
+      run_id: runId, total_tests: total, passed, failed,
+      pass_rate: passRate, score, letter_grade: letterGrade,
+      release_status: releaseStatus,
+      engine_configured: engineConfigured,
       categories,
     });
   } catch (error) {

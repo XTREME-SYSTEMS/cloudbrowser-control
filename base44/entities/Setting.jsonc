@@ -1,0 +1,182 @@
+{
+  "name": "Setting",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string",
+      "description": "Canonical key e.g. engine.pool_size, security.enforce_https"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "system",
+        "workers",
+        "regions",
+        "browser",
+        "sessions",
+        "contexts",
+        "pool",
+        "network",
+        "proxies",
+        "egress",
+        "jobs",
+        "queue",
+        "retries",
+        "schedules",
+        "ai_models",
+        "ai_agents",
+        "live_view",
+        "artifacts",
+        "storage",
+        "retention",
+        "security",
+        "cors",
+        "ssrf",
+        "ip_cidr",
+        "api_keys",
+        "oauth",
+        "mcp",
+        "webhooks",
+        "organizations",
+        "teams",
+        "rbac",
+        "rls",
+        "observability",
+        "logging",
+        "tracing",
+        "recording",
+        "slo",
+        "alerts",
+        "budgets",
+        "cost",
+        "billing",
+        "feature_flags",
+        "integrations",
+        "deployment",
+        "versions",
+        "rollback",
+        "recovery",
+        "backups",
+        "advanced"
+      ]
+    },
+    "scope_type": {
+      "type": "string",
+      "enum": [
+        "platform",
+        "organization",
+        "team",
+        "project",
+        "environment",
+        "job",
+        "session"
+      ],
+      "default": "platform"
+    },
+    "scope_id": {
+      "type": "string",
+      "description": "ID of the scope entity, or null for platform"
+    },
+    "desired_value": {
+      "type": "string",
+      "description": "Operator-set desired value (JSON-stringified for flexible types)"
+    },
+    "effective_value": {
+      "type": "string",
+      "description": "Computed effective value after inheritance (JSON-stringified)"
+    },
+    "actual_runtime_value": {
+      "type": "string",
+      "description": "Value read back from the runtime after apply (JSON-stringified)"
+    },
+    "default_value": {
+      "type": "string",
+      "description": "Built-in default (JSON-stringified)"
+    },
+    "inherited_from": {
+      "type": "string",
+      "description": "Scope this setting inherits from if not overridden"
+    },
+    "runtime_target": {
+      "type": "string",
+      "description": "Where this setting is enforced: engine, gateway, control_plane"
+    },
+    "validation_schema": {
+      "type": "object",
+      "description": "JSON schema to validate desired_value against"
+    },
+    "hot_reload_supported": {
+      "type": "boolean",
+      "default": false
+    },
+    "restart_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "sensitive": {
+      "type": "boolean",
+      "default": false
+    },
+    "operator_editable": {
+      "type": "boolean",
+      "default": true
+    },
+    "approval_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "changed_by": {
+      "type": "string"
+    },
+    "changed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "change_reason": {
+      "type": "string"
+    },
+    "previous_value": {
+      "type": "string",
+      "description": "Value before the last change \u2014 for rollback (JSON-stringified)"
+    },
+    "apply_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "applying",
+        "applied",
+        "verified",
+        "failed",
+        "drifted"
+      ],
+      "default": "pending"
+    },
+    "drift_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "desired_drift",
+        "runtime_drift",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "rollback_value": {
+      "type": "string",
+      "description": "Value to restore on rollback (JSON-stringified)"
+    },
+    "last_verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidence_id": {
+      "type": "string",
+      "description": "Reference to the evidence receipt proving runtime read-back"
+    }
+  },
+  "required": [
+    "setting_key",
+    "category",
+    "scope_type"
+  ]
+}

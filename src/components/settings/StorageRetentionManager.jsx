@@ -35,12 +35,24 @@ export default function StorageRetentionManager() {
   };
 
   const purgeNow = async () => {
-    if (!confirm("Delete all screenshots, logs, and videos now? This frees storage immediately.")) return;
+    if (!confirm("Delete ALL screenshots, logs, and videos now? This frees storage immediately and cannot be undone.")) return;
     setPurging(true);
     try {
-      await base44.entities.Screenshot.deleteMany({});
-      await base44.entities.LogEntry.deleteMany({});
-      alert("Purged screenshots and logs.");
+      const [ss, logs] = await Promise.all([
+        base44.entities.Screenshot.list("-created_date", 10000),
+        base44.entities.LogEntry.list("-created_date", 10000),
+      ]);
+      let deleted = 0;
+      // Delete screenshots
+      for (const s of ss) { await base44.entities.Screenshot.delete(s.id).catch(() => {}); deleted++; }
+      // Delete logs
+      for (const l of logs) { await base44.entities.LogEntry.delete(l.id).catch(() => {}); deleted++; }
+      // Delete videos (stored as video_url on sessions)
+      const sessions = await base44.entities.Session.filter({ record_video: true });
+      for (const s of sessions) {
+        if (s.video_url) await base44.entities.Session.update(s.id, { video_url: null }).catch(() => {});
+      }
+      alert(`Purged ${deleted} screenshots and logs, cleared ${sessions.length} video references.`);
     } catch (e) { alert(e.message); }
     finally { setPurging(false); }
   };

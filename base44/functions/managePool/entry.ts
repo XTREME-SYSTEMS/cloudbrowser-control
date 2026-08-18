@@ -1,5 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { engineFetch, isEngineConfigured } from "../../shared/engineClient.ts";
+import { enginePost, engineGet, engineDelete, isEngineConfigured } from "../../shared/engineClient.ts";
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -12,10 +12,14 @@ export default async function (req) {
     const poolSize = sys.pool_size || 3;
     const warmCount = sys.pool_warm_count || 2;
 
-    // Get current pooled sessions
-    const pooled = await base44.entities.Session.filter({ status: "pooled" });
-    const activePooled = pooled.length;
+    // Get real pool state from the engine
+    let enginePool = { poolSize: 0, poolCapacity: 3, warmCount: 0, activeSessions: 0, maxSessions: 10, workerId: null, region: null };
+    if (isEngineConfigured()) {
+      try { enginePool = await engineGet("/pool"); } catch (e) { /* engine down */ }
+    }
 
+    // Get control-plane pooled sessions
+    const pooled = await base44.entities.Session.filter({ status: "pooled" });
     let created = 0;
     let recycled = 0;
 
@@ -23,36 +27,48 @@ export default async function (req) {
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     for (const s of pooled) {
       if (s.started_at && new Date(s.started_at).getTime() < fiveMinAgo) {
+        // Close the real runtime session if it exists
+        if (s.session_id && isEngineConfigured()) {
+          try { await engineDelete(`/sessions/${s.session_id}`); } catch (e) {}
+        }
         await base44.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
         recycled++;
       }
     }
 
-    // Warm up new sessions if below warm count
-    if (isEngineConfigured() && activePooled < warmCount) {
-      const needed = warmCount - activePooled;
+    // Warm up new sessions if below warm count — creates REAL browsers
+    if (isEngineConfigured() && enginePool.warmCount < warmCount) {
+      const needed = warmCount - enginePool.warmCount;
       for (let i = 0; i < needed && i < 3; i++) {
         try {
-          const engineResp = await engineFetch("/sessions", {
+          const engineResp = await enginePost("/sessions", {
             pooled: true,
             viewport: { width: sys.default_viewport_width || 1920, height: sys.default_viewport_height || 1080 },
+            usePool: false, // don't pull from pool, create fresh
           });
-          await base44.entities.Session.create({
-            session_id: engineResp.session_id || engineResp.id,
-            status: "pooled",
-            pool_id: "default",
-            started_at: new Date().toISOString(),
-            viewport: { width: sys.default_viewport_width || 1920, height: sys.default_viewport_height || 1080 },
-          });
-          created++;
+          const runtimeId = engineResp.sessionId;
+          if (runtimeId) {
+            await base44.entities.Session.create({
+              session_id: runtimeId,
+              status: "pooled",
+              pool_id: "default",
+              started_at: new Date().toISOString(),
+              viewport: { width: sys.default_viewport_width || 1920, height: sys.default_viewport_height || 1080 },
+              metadata: { worker_id: engineResp.workerId, region: engineResp.region, engine_version: engineResp.engineVersion },
+            });
+            created++;
+          }
         } catch (e) { /* engine may be down, skip */ }
       }
     }
 
     // Trim excess pooled sessions
-    if (activePooled > poolSize) {
+    if (pooled.length > poolSize) {
       const excess = pooled.slice(poolSize);
       for (const s of excess) {
+        if (s.session_id && isEngineConfigured()) {
+          try { await engineDelete(`/sessions/${s.session_id}`); } catch (e) {}
+        }
         await base44.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
         recycled++;
       }
@@ -61,7 +77,14 @@ export default async function (req) {
     return Response.json({
       pool_size: poolSize,
       warm_count: warmCount,
-      active_pooled: activePooled,
+      active_pooled: pooled.length,
+      engine_pool_size: enginePool.poolSize,
+      engine_pool_capacity: enginePool.poolCapacity,
+      engine_warm_count: enginePool.warmCount,
+      engine_active_sessions: enginePool.activeSessions,
+      engine_max_sessions: enginePool.maxSessions,
+      worker_id: enginePool.workerId,
+      region: enginePool.region,
       created,
       recycled,
     });

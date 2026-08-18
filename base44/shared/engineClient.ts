@@ -9,6 +9,13 @@ export async function getEngineConfig() {
   return { baseUrl: url.replace(/\/$/, ""), key };
 }
 
+export function isEngineConfigured() {
+  const url = secrets.get("ENGINE_URL");
+  const key = secrets.get("ENGINE_API_KEY");
+  return !!(url && key);
+}
+
+// Generic authenticated fetch with proper method + body
 export async function engineFetch(path, options = {}) {
   const { baseUrl, key } = await getEngineConfig();
   const res = await fetch(`${baseUrl}${path}`, {
@@ -29,8 +36,18 @@ export async function engineFetch(path, options = {}) {
   return body;
 }
 
-export function isEngineConfigured() {
-  const url = secrets.get("ENGINE_URL");
-  const key = secrets.get("ENGINE_API_KEY");
-  return !!(url && key);
+// POST helper — always sends JSON body, never accidentally GETs
+export async function enginePost(path, payload) {
+  return engineFetch(path, {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+}
+
+export async function engineDelete(path) {
+  return engineFetch(path, { method: "DELETE" });
+}
+
+export async function engineGet(path) {
+  return engineFetch(path, { method: "GET" });
 }

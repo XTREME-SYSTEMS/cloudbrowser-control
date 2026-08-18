@@ -1,0 +1,101 @@
+{
+  "name": "Artifact",
+  "type": "object",
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "description": "Unique artifact identifier"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "screenshot",
+        "pdf",
+        "download",
+        "upload",
+        "video",
+        "har",
+        "trace",
+        "json",
+        "csv",
+        "xlsx",
+        "dom_snapshot",
+        "dataset",
+        "report"
+      ],
+      "description": "Artifact type"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "step_id": {
+      "type": "string"
+    },
+    "storage_key": {
+      "type": "string",
+      "description": "Object key in storage (file_url or private URI)"
+    },
+    "storage_backend": {
+      "type": "string",
+      "enum": [
+        "base44_files",
+        "private_storage",
+        "external"
+      ],
+      "default": "base44_files"
+    },
+    "signed_url": {
+      "type": "string",
+      "description": "Time-limited signed URL for download"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "size_bytes": {
+      "type": "number"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of artifact content for integrity"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this artifact expires and becomes eligible for reaping"
+    },
+    "retention_days": {
+      "type": "number"
+    },
+    "access_policy": {
+      "type": "string",
+      "enum": [
+        "private",
+        "project",
+        "team",
+        "public"
+      ],
+      "default": "private"
+    },
+    "evidence_id": {
+      "type": "string",
+      "description": "Link to test evidence if this artifact proves a capability"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "type",
+    "storage_key"
+  ]
+}

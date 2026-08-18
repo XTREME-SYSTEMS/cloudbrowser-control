@@ -1,6 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 
-export default async function(req) {
+export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -10,6 +10,8 @@ export default async function(req) {
     const name = body.name || "Default";
     const scopes = body.scopes || ["sessions:read", "sessions:write", "jobs:read", "jobs:write"];
     const projectId = body.project_id || null;
+    const teamId = body.team_id || null;
+    const expiresAt = body.expires_at || null;
 
     // Generate random API key
     const keyBytes = new Uint8Array(32);
@@ -28,14 +30,18 @@ export default async function(req) {
       key_hash: keyHash,
       scopes,
       active: true,
+      project_id: projectId,
+      team_id: teamId,
+      expires_at: expiresAt,
+      created_by: user.id,
     });
 
     // Link to project if provided
     if (projectId) {
-      await base44.entities.Project.update(projectId, { api_key_id: created.id });
+      await base44.entities.Project.update(projectId, { api_key_id: created.id }).catch(() => {});
     }
 
-    return Response.json({ api_key: apiKey, id: created.id, prefix, name, scopes });
+    return Response.json({ api_key: apiKey, id: created.id, prefix, name, scopes, expires_at: expiresAt });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

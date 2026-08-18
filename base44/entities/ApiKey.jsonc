@@ -8,11 +8,11 @@
     },
     "key_prefix": {
       "type": "string",
-      "description": "First 8 chars for display"
+      "description": "First 12 chars for display"
     },
     "key_hash": {
       "type": "string",
-      "description": "Hashed key for verification"
+      "description": "SHA-256 hashed key for verification"
     },
     "active": {
       "type": "boolean",
@@ -27,6 +27,26 @@
       "items": {
         "type": "string"
       }
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Project this key is bound to"
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team this key is bound to"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Expiration timestamp \u2014 expired keys are rejected"
+    },
+    "rotated_from": {
+      "type": "string",
+      "description": "ID of the key this was rotated from"
+    },
+    "created_by": {
+      "type": "string"
     }
   },
   "required": [
