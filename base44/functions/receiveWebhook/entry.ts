@@ -1,7 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 
 // ═══════════════════════════════════════════════
-// Inbound webhook — HMAC-SHA256 required, fail-closed (v3)
+// Inbound webhook — HMAC-SHA256 required, fail-closed (v4)
 // ═══════════════════════════════════════════════
 
 async function hmacSha256(secret, message) {
@@ -18,7 +18,7 @@ function timingSafeEqual(a, b) {
   return result === 0;
 }
 
-const REPLAY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const REPLAY_WINDOW_MS = 5 * 60 * 1000;
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -26,7 +26,7 @@ export default async function (req) {
     const body = await req.json();
     const { job_id, signature, timestamp, event_id, payload } = body;
 
-    // ── Require signature — fail-closed ──
+    // Fail-closed: require signature first
     if (!signature) {
       return Response.json({ error: "Webhook signature required" }, { status: 401 });
     }
@@ -34,13 +34,13 @@ export default async function (req) {
       return Response.json({ error: "Webhook timestamp required" }, { status: 401 });
     }
 
-    // ── Replay protection ──
+    // Replay protection
     const ts = parseInt(timestamp, 10);
     if (isNaN(ts) || Math.abs(Date.now() - ts) > REPLAY_WINDOW_MS) {
       return Response.json({ error: "Webhook timestamp outside replay window" }, { status: 401 });
     }
 
-    // ── Idempotency ──
+    // Idempotency check
     if (event_id) {
       const seen = await base44.asServiceRole.entities.WebhookDelivery.filter({ event: `idempotency:${event_id}` });
       if (seen.length > 0) {
@@ -48,7 +48,7 @@ export default async function (req) {
       }
     }
 
-    // ── Verify HMAC against all active webhooks ──
+    // Verify HMAC against all active webhooks
     const webhooks = await base44.asServiceRole.entities.Webhook.filter({ active: true });
     let verifiedWebhook = null;
     const message = `${timestamp}.${event_id || ""}.${JSON.stringify(payload || {})}`;
@@ -63,12 +63,11 @@ export default async function (req) {
     }
 
     if (!verifiedWebhook) {
-      // Log the rejection
       await base44.asServiceRole.entities.WebhookDelivery.create({
         webhook_id: "rejected",
         event: "signature_rejected",
         payload: { timestamp, event_id },
-        response_status: 401,
+        response_status: 403,
         response_body: "Invalid HMAC signature",
         attempts: 1,
         success: false,
@@ -77,16 +76,14 @@ export default async function (req) {
       return Response.json({ error: "Invalid webhook signature" }, { status: 403 });
     }
 
-    // ── Trigger the job with canonical contract ──
+    // Trigger the job
     if (!job_id) return Response.json({ error: "job_id required" }, { status: 400 });
 
     const job = await base44.asServiceRole.entities.Job.get(job_id);
     if (!job) return Response.json({ error: "Job not found" }, { status: 404 });
 
-    // Run the job — canonical jobId contract
     const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: job_id });
 
-    // Record idempotency marker
     if (event_id) {
       await base44.asServiceRole.entities.WebhookDelivery.create({
         webhook_id: verifiedWebhook.id,

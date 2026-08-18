@@ -12,11 +12,11 @@ export default async function (req) {
     // Get real pool state from the engine
     let enginePool = { poolSize: 0, poolCapacity: 3, warmCount: 0, activeSessions: 0, maxSessions: 10, workerId: null, region: null };
     if (isEngineConfigured()) {
-      try { enginePool = await engineGet("/pool"); } catch (e) { /* engine down */ }
+      try { enginePool = await engineGet("/pool"); } catch (e) { /* engine down or 401 */ }
     }
 
     // Get control-plane pooled sessions
-    const pooled = await base44.entities.Session.filter({ status: "pooled" });
+    const pooled = await base44.asServiceRole.entities.Session.filter({ status: "pooled" });
     let created = 0;
     let recycled = 0;
 
@@ -24,11 +24,10 @@ export default async function (req) {
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     for (const s of pooled) {
       if (s.started_at && new Date(s.started_at).getTime() < fiveMinAgo) {
-        // Close the real runtime session if it exists
         if (s.session_id && isEngineConfigured()) {
           try { await engineDelete(`/sessions/${s.session_id}`); } catch (e) {}
         }
-        await base44.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
+        await base44.asServiceRole.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
         recycled++;
       }
     }
@@ -41,11 +40,11 @@ export default async function (req) {
           const engineResp = await enginePost("/sessions", {
             pooled: true,
             viewport: { width: sys.default_viewport_width || 1920, height: sys.default_viewport_height || 1080 },
-            usePool: false, // don't pull from pool, create fresh
+            usePool: false,
           });
           const runtimeId = engineResp.sessionId;
           if (runtimeId) {
-            await base44.entities.Session.create({
+            await base44.asServiceRole.entities.Session.create({
               session_id: runtimeId,
               status: "pooled",
               pool_id: "default",
@@ -66,7 +65,7 @@ export default async function (req) {
         if (s.session_id && isEngineConfigured()) {
           try { await engineDelete(`/sessions/${s.session_id}`); } catch (e) {}
         }
-        await base44.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
+        await base44.asServiceRole.entities.Session.update(s.id, { status: "ended", ended_at: new Date().toISOString() });
         recycled++;
       }
     }
@@ -75,13 +74,13 @@ export default async function (req) {
       pool_size: poolSize,
       warm_count: warmCount,
       active_pooled: pooled.length,
-      engine_pool_size: enginePool.poolSize,
-      engine_pool_capacity: enginePool.poolCapacity,
-      engine_warm_count: enginePool.warmCount,
-      engine_active_sessions: enginePool.activeSessions,
-      engine_max_sessions: enginePool.maxSessions,
-      worker_id: enginePool.workerId,
-      region: enginePool.region,
+      engine_pool_size: enginePool.poolSize ?? 0,
+      engine_pool_capacity: enginePool.poolCapacity ?? 3,
+      engine_warm_count: enginePool.warmCount ?? 0,
+      engine_active_sessions: enginePool.activeSessions ?? 0,
+      engine_max_sessions: enginePool.maxSessions ?? 10,
+      worker_id: enginePool.workerId ?? null,
+      region: enginePool.region ?? null,
       created,
       recycled,
     });

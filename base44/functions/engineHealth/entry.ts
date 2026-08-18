@@ -4,9 +4,6 @@ import { engineGet, isEngineConfigured } from "../../shared/engineClient.ts";
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   try {
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
     if (!isEngineConfigured()) {
       return Response.json({ ok: false, configured: false, error: "Browser engine not configured" }, { status: 200 });
     }
@@ -26,7 +23,7 @@ export default async function (req) {
         pool_capacity: health.pool_capacity,
         uptime_seconds: Math.round(health.uptime),
         checked_at: new Date().toISOString(),
-        checked_by: user.id,
+        checked_by: "system",
       });
       return Response.json({ ok: true, configured: true, ...health });
     } catch (err) {
@@ -36,7 +33,7 @@ export default async function (req) {
         response_time_ms: 0,
         error_message: err.message,
         checked_at: new Date().toISOString(),
-        checked_by: user.id,
+        checked_by: "system",
       });
       return Response.json({ ok: false, configured: true, error: err.message }, { status: 200 });
     }
