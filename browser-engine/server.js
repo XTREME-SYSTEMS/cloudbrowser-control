@@ -105,6 +105,8 @@ function isBlockedHost(hostname) {
   if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "0.0.0.0") return true;
   // Cloud metadata
   if (h === "169.254.169.254" || h === "metadata.google.internal") return true;
+  // IPv6 private/link-local
+  if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
   // Private ranges
   if (h.endsWith(".internal") || h.endsWith(".local")) return true;
   const parts = h.split(".").map(Number);

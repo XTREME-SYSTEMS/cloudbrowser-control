@@ -24,7 +24,7 @@ export default function SecurityManager() {
     try {
       const list = await base44.entities.SystemSettings.list("-created_date", 1);
       if (list[0]) { setSettings(list[0]); setForm(list[0]); }
-      else setForm({ captcha_provider: "none", captcha_api_key: "", ip_allowlist: [], enforce_https: false });
+      else setForm({ captcha_provider: "none", ip_allowlist: [], enforce_https: false });
     } catch (e) {}
   };
   useEffect(() => { load(); }, []);
@@ -87,7 +87,10 @@ export default function SecurityManager() {
             </div>
           </div>
           {form.captcha_provider !== "none" && (
-            <div><Label>CAPTCHA API Key</Label><Input type="password" value={form.captcha_api_key || ""} onChange={(e) => setForm({ ...form, captcha_api_key: e.target.value })} placeholder="Enter provider API key" /></div>
+            <div className="p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground">
+              <Lock className="w-3.5 h-3.5 inline mr-1" />
+              CAPTCHA API key is managed securely in Settings → Secrets (<code className="font-mono">CAPTCHA_SOLVER_API_KEY</code>). It is never stored in the database or exposed to the frontend.
+            </div>
           )}
         </div>
 

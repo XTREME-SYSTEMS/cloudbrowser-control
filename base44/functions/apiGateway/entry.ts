@@ -51,28 +51,52 @@ function deriveClientIP(req) {
 
 // Database-backed rate limit — persists across function invocations.
 // Fixed-window approach: one RateLimitEntry per (key_hash, minute window).
+// ATOMIC: increment-first via updateMany $inc, then check. Eliminates race condition.
 // For distributed production with Redis, swap this function for a Redis adapter.
 async function checkRateLimit(base44, keyHash, limitPerMinute) {
   const now = Date.now();
   const windowStart = Math.floor(now / 60000) * 60000;
+
+  // Step 1: Atomically increment if entry exists (MongoDB $inc is atomic)
+  const updateResult = await base44.asServiceRole.entities.RateLimitEntry.updateMany(
+    { key_hash: keyHash, window_start: windowStart },
+    { $inc: { count: 1 } }
+  );
+
+  // Step 2: If no entry existed, create one (first request in window)
+  if (updateResult.modified_count === 0) {
+    try {
+      await base44.asServiceRole.entities.RateLimitEntry.create({
+        key_hash: keyHash,
+        window_start: windowStart,
+        count: 1,
+      });
+      return true;
+    } catch (e) {
+      // Race: another request created it — fall through to read
+    }
+  }
+
+  // Step 3: Read all entries (handles duplicate entries from creation race)
   const entries = await base44.asServiceRole.entities.RateLimitEntry.filter({
     key_hash: keyHash,
     window_start: windowStart,
   });
-  if (entries.length === 0) {
-    await base44.asServiceRole.entities.RateLimitEntry.create({
-      key_hash: keyHash,
-      window_start: windowStart,
-      count: 1,
-    });
-    return true;
+
+  if (entries.length === 0) return true; // safe default
+
+  // Step 4: If duplicates exist (from creation race), merge them
+  if (entries.length > 1) {
+    const totalCount = entries.reduce((sum, e) => sum + e.count, 0);
+    await base44.asServiceRole.entities.RateLimitEntry.update(entries[0].id, { count: totalCount });
+    for (let i = 1; i < entries.length; i++) {
+      await base44.asServiceRole.entities.RateLimitEntry.delete(entries[i].id).catch(() => {});
+    }
+    return totalCount <= limitPerMinute;
   }
-  const entry = entries[0];
-  if (entry.count >= limitPerMinute) return false;
-  await base44.asServiceRole.entities.RateLimitEntry.update(entry.id, {
-    count: entry.count + 1,
-  });
-  return true;
+
+  // Step 5: Single entry — check count
+  return entries[0].count <= limitPerMinute;
 }
 
 // Route → required scope

@@ -11,21 +11,25 @@ async function hmacSha256(secret, message) {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// SSRF guard — block private/loopback/metadata
+// SSRF guard — block private/loopback/metadata/CGNAT/IPv6-private
 function isBlockedUrl(urlStr) {
   try {
     const parsed = new URL(urlStr);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return true;
     const h = parsed.hostname.toLowerCase();
     if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "0.0.0.0") return true;
     if (h === "169.254.169.254" || h === "metadata.google.internal") return true;
     if (h.endsWith(".internal") || h.endsWith(".local")) return true;
+    // IPv6 private/link-local
+    if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
     const parts = h.split(".").map(Number);
     if (parts.length === 4) {
       const [a, b] = parts;
       if (a === 10 || a === 127 || a === 0) return true;
       if (a === 172 && b >= 16 && b <= 31) return true;
       if (a === 192 && b === 168) return true;
-      if (a >= 224) return true;
+      if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+      if (a >= 224) return true; // multicast/reserved
     }
     return false;
   } catch { return true; }

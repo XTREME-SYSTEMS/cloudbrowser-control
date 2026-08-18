@@ -88,10 +88,6 @@
       ],
       "default": "none"
     },
-    "captcha_api_key": {
-      "type": "string",
-      "description": "API key for CAPTCHA solving service"
-    },
     "ip_allowlist": {
       "type": "array",
       "items": {
