@@ -100,7 +100,7 @@ export default function JobBuilder() {
             <Label>Start URL</Label>
             <Input value={startUrl} onChange={(e) => setStartUrl(e.target.value)} placeholder="https://example.com" />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label>Viewport Width</Label>
               <Input type="number" value={viewport.width} onChange={(e) => setViewport({ ...viewport, width: parseInt(e.target.value) })} />
@@ -138,7 +138,7 @@ export default function JobBuilder() {
                   <Button size="sm" variant="ghost" onClick={() => removeStep(i)}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Name</Label>
                   <Input value={step.name} onChange={(e) => updateStep(i, "name", e.target.value)} placeholder="Step description" />

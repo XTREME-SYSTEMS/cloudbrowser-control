@@ -1,0 +1,46 @@
+{
+  "name": "BrowserForge — Browser Automation",
+  "short_name": "BrowserForge",
+  "description": "Self-hosted browser automation platform for managing headless Chrome fleets and automated data extraction.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0a0a",
+  "categories": ["productivity", "developer", "business"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/",
+      "description": "View automation overview"
+    },
+    {
+      "name": "New Job",
+      "short_name": "New Job",
+      "url": "/jobs/new",
+      "description": "Create a new automation job"
+    },
+    {
+      "name": "Sessions",
+      "short_name": "Sessions",
+      "url": "/sessions",
+      "description": "View browser sessions"
+    }
+  ]
+}

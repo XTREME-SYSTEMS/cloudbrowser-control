@@ -1,6 +1,8 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe, Menu } from "lucide-react";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -10,9 +12,57 @@ const navItems = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function Layout() {
+function NavLinks({ onNavigate }) {
   const location = useLocation();
-  const navigate = useNavigate();
+  return (
+    <nav className="flex-1 p-4 space-y-1">
+      {navItems.map(({ to, label, icon: Icon }) => {
+        const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+        return (
+          <Link
+            key={to}
+            to={to}
+            onClick={onNavigate}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function SidebarContent({ onLogout }) {
+  return (
+    <div className="flex flex-col h-full bg-sidebar">
+      <div className="p-6 border-b border-sidebar-border">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+            <Globe className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <span className="font-heading font-semibold text-sidebar-foreground">BrowserForge</span>
+        </div>
+      </div>
+      <NavLinks />
+      <div className="p-4 border-t border-sidebar-border">
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent w-full"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Layout() {
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await base44.auth.logout();
@@ -21,52 +71,39 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-        <div className="p-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Globe className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-semibold text-sidebar-foreground">BrowserForge</span>
-          </div>
-        </div>
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map(({ to, label, icon: Icon }) => {
-            const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="p-4 border-t border-sidebar-border">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent w-full"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-64 border-r border-sidebar-border flex-col">
+        <SidebarContent onLogout={handleLogout} />
       </aside>
 
+      {/* Mobile drawer */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SidebarContent onLogout={handleLogout} />
+        </SheetContent>
+      </Sheet>
+
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-8 max-w-7xl mx-auto">
-          <Outlet />
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile top bar */}
+        <header className="md:hidden flex items-center gap-3 p-4 border-b bg-sidebar shrink-0">
+          <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1">
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <Globe className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-heading font-semibold">BrowserForge</span>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto">
+          <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

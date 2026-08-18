@@ -57,7 +57,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-heading font-bold">Settings</h1>
+      <h1 className="text-2xl md:text-3xl font-heading font-bold">Settings</h1>
 
       {/* Engine status */}
       <Card>
@@ -98,7 +98,7 @@ export default function Settings() {
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="w-5 h-5" />Proxy Pool</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div><Label>Name</Label><Input value={newProxy.name} onChange={(e) => setNewProxy({ ...newProxy, name: e.target.value })} /></div>
             <div><Label>Server (host:port)</Label><Input value={newProxy.server} onChange={(e) => setNewProxy({ ...newProxy, server: e.target.value })} /></div>
             <div><Label>Country</Label><Input value={newProxy.country} onChange={(e) => setNewProxy({ ...newProxy, country: e.target.value })} /></div>

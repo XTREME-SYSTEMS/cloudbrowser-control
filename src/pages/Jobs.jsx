@@ -41,7 +41,7 @@ export default function Jobs() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-heading font-bold">Jobs</h1>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold">Jobs</h1>
           <p className="text-muted-foreground mt-1">Automation jobs — define steps and run them</p>
         </div>
         <Link to="/jobs/new"><Button><Plus className="w-4 h-4 mr-2" />New Job</Button></Link>

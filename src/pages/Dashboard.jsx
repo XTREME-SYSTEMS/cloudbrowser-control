@@ -53,9 +53,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-heading font-bold">Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Browser automation control center</p>
         </div>
         <Link to="/jobs/new">
@@ -65,9 +65,9 @@ export default function Dashboard() {
 
       {/* Engine health banner */}
       <Card className={`p-4 ${engineHealth?.ok ? "border-green-500/50 bg-green-50/50" : "border-orange-500/50 bg-orange-50/50"}`}>
-        <div className="flex items-center gap-3">
-          <Cpu className={`w-5 h-5 ${engineHealth?.ok ? "text-green-600" : "text-orange-600"}`} />
-          <div className="flex-1">
+        <div className="flex items-center gap-3 flex-col sm:flex-row">
+          <Cpu className={`w-5 h-5 shrink-0 ${engineHealth?.ok ? "text-green-600" : "text-orange-600"}`} />
+          <div className="flex-1 text-center sm:text-left">
             <p className="font-medium">
               {engineHealth?.ok ? "Engine connected" : engineHealth?.configured === false ? "Engine not configured" : "Engine unreachable"}
             </p>
@@ -79,7 +79,7 @@ export default function Dashboard() {
                 : engineHealth?.error || "Check your engine deployment"}
             </p>
           </div>
-          <Link to="/settings"><Button variant="outline" size="sm">Configure</Button></Link>
+          <Link to="/settings" className="shrink-0"><Button variant="outline" size="sm">Configure</Button></Link>
         </div>
       </Card>
 
