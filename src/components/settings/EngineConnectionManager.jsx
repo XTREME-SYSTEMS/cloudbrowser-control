@@ -78,13 +78,21 @@ export default function EngineConnectionManager() {
           <Input placeholder="https://your-engine.up.railway.app" value={engineUrl} onChange={(e) => setEngineUrl(e.target.value)} />
         </div>
 
+        {/* Reconciliation steps */}
+        <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-sm space-y-1">
+          <p className="font-medium flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" />API Key Reconciliation</p>
+          <p className="text-xs">Step 1: Set the same <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">ENGINE_API_KEY</code> on Railway → Environment Variables.</p>
+          <p className="text-xs">Step 2: Paste that same key below and test it against the engine.</p>
+          <p className="text-xs">Step 3: If verified, update <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">ENGINE_API_KEY</code> in Base44 Settings → Secrets.</p>
+        </div>
+
         {/* Candidate key — transient, never persisted */}
         <div className="space-y-2">
-          <Label>Candidate API Key (transient — not stored)</Label>
+          <Label>New ENGINE_API Key (same as Railway)</Label>
           <div className="flex gap-2">
             <Input
               type={showKey ? "text" : "password"}
-              placeholder="Enter candidate key to test against engine"
+              placeholder="Paste the new shared API key here"
               value={candidateKey}
               onChange={(e) => setCandidateKey(e.target.value)}
             />
@@ -92,17 +100,26 @@ export default function EngineConnectionManager() {
               {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">Transient — tested against the engine, never stored in the database.</p>
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleTest} disabled={saving || !engineUrl}>
+          <Button onClick={handleTest} disabled={saving || !candidateKey}>
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-            Test &amp; Reconcile
+            Test Key
           </Button>
           <Button variant="outline" onClick={handleDeployCheck}>
             <Fingerprint className="w-4 h-4 mr-2" />Check Deployment
           </Button>
         </div>
+
+        {/* Verified key — next step instruction */}
+        {recon?.candidate_valid && (
+          <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 text-sm space-y-1">
+            <p className="font-medium flex items-center gap-1.5"><CheckCircle className="w-4 h-4" />Key Verified Against Engine!</p>
+            <p className="text-xs">Now update <code className="bg-green-100 dark:bg-green-900 px-1 rounded">ENGINE_API_KEY</code> in Base44 Settings → Secrets with this same value, then click Test again to confirm reconciliation.</p>
+          </div>
+        )}
 
         {/* Status grid */}
         <div className="grid grid-cols-2 gap-2 text-sm">
