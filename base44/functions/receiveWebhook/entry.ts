@@ -1,7 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 
 // ═══════════════════════════════════════════════
-// Inbound webhook — HMAC-SHA256 required, fail-closed
+// Inbound webhook — HMAC-SHA256 required, fail-closed (v3)
 // ═══════════════════════════════════════════════
 
 async function hmacSha256(secret, message) {

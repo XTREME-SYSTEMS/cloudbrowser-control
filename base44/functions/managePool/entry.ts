@@ -4,10 +4,7 @@ import { enginePost, engineGet, engineDelete, isEngineConfigured } from "../../s
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   try {
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
-    const settings = await base44.entities.SystemSettings.list("-created_date", 1);
+    const settings = await base44.asServiceRole.entities.SystemSettings.list("-created_date", 1);
     const sys = settings[0] || {};
     const poolSize = sys.pool_size || 3;
     const warmCount = sys.pool_warm_count || 2;
