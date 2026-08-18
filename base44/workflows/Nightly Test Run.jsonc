@@ -1,0 +1,83 @@
+{
+  "description": "Runs the full test suite every night at midnight, calculates the score, and sends a notification if the score drops below 90%",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 0 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "nightly_test_run",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_tests": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runTestSuite",
+            "args": {}
+          },
+          "then": "check_score",
+          "x-base44": {
+            "title": "Run test suite",
+            "description": "Execute all tests and log results"
+          }
+        }
+      },
+      {
+        "check_score": {
+          "switch": [
+            {
+              "when": "${ .run_tests.score < 90 }",
+              "then": "send_alert"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Check score",
+            "description": "Alert if below 90%"
+          }
+        }
+      },
+      {
+        "send_alert": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendNotification",
+            "args": {
+              "type": "test_score",
+              "title": "Test score below threshold",
+              "body": "Nightly test run scored ${ .run_tests.score }% (${ .run_tests.letter_grade }). ${ .run_tests.failed } of ${ .run_tests.total_tests } tests failed.",
+              "link": "/test-results",
+              "send_email": true
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send alert",
+            "description": "Notify about low score"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Nightly Test Run"
+}

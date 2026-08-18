@@ -30,6 +30,10 @@
     "active": {
       "type": "boolean",
       "default": true
+    },
+    "rotation_group": {
+      "type": "string",
+      "description": "Group name for round-robin rotation"
     }
   },
   "required": [

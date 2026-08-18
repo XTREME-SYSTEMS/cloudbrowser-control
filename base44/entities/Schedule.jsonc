@@ -36,6 +36,10 @@
     "run_count": {
       "type": "number",
       "default": 0
+    },
+    "change_detection": {
+      "type": "object",
+      "description": "Config: { enabled, fields_to_watch, alert_on_change }"
     }
   },
   "required": [

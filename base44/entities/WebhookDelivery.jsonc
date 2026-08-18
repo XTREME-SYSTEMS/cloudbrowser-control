@@ -1,0 +1,36 @@
+{
+  "name": "WebhookDelivery",
+  "type": "object",
+  "properties": {
+    "webhook_id": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "response_status": {
+      "type": "number"
+    },
+    "response_body": {
+      "type": "string"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 1
+    },
+    "success": {
+      "type": "boolean",
+      "default": false
+    },
+    "duration_ms": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "webhook_id",
+    "event"
+  ]
+}

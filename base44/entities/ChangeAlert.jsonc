@@ -1,0 +1,32 @@
+{
+  "name": "ChangeAlert",
+  "type": "object",
+  "properties": {
+    "schedule_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "field": {
+      "type": "string",
+      "description": "What changed"
+    },
+    "old_value": {
+      "type": "string"
+    },
+    "new_value": {
+      "type": "string"
+    },
+    "diff_summary": {
+      "type": "string"
+    },
+    "acknowledged": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "schedule_id"
+  ]
+}

@@ -103,8 +103,7 @@
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "References to Extension entities"
+      }
     },
     "pool_id": {
       "type": "string"
@@ -122,6 +121,20 @@
       "items": {
         "type": "object"
       }
+    },
+    "fingerprint": {
+      "type": "object",
+      "description": "Browser fingerprint config: platform, plugins, fonts, canvas_noise, webdriver"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "tabs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Multi-tab state tracking"
     }
   },
   "required": [

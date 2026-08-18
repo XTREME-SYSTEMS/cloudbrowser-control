@@ -7,6 +7,7 @@ import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import { Activity, CheckCircle, AlertCircle, Cpu, Plus } from "lucide-react";
 import UsageCheatSheet from "@/components/UsageCheatSheet";
+import ActivityFeed from "@/components/ActivityFeed";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ sessions: 0, activeSessions: 0, jobs: 0, completedJobs: 0, failedJobs: 0, queuedJobs: 0 });
@@ -95,31 +96,34 @@ export default function Dashboard() {
       {/* Usage cheat sheet */}
       <UsageCheatSheet engineHealth={engineHealth} stats={stats} />
 
-      {/* Recent jobs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Jobs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentJobs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No jobs yet. <Link to="/jobs/new" className="text-primary underline">Create your first job</Link>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recentJobs.map((job) => (
-                <Link key={job.id} to={`/jobs/${job.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={job.status} />
-                    <span className="font-medium">{job.name}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">{job.start_url?.slice(0, 50)}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Recent jobs + Activity feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Jobs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentJobs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No jobs yet. <Link to="/jobs/new" className="text-primary underline">Create your first job</Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentJobs.map((job) => (
+                  <Link key={job.id} to={`/jobs/${job.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={job.status} />
+                      <span className="font-medium">{job.name}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{job.start_url?.slice(0, 50)}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <ActivityFeed />
+      </div>
     </div>
   );
 }

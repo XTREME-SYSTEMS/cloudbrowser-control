@@ -1,0 +1,35 @@
+{
+  "name": "JobVersion",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "version_number": {
+      "type": "number",
+      "default": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "start_url": {
+      "type": "string"
+    },
+    "session_config": {
+      "type": "object"
+    },
+    "steps_snapshot": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "saved_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "version_number"
+  ]
+}

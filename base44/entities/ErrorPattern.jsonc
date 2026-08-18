@@ -1,0 +1,50 @@
+{
+  "name": "ErrorPattern",
+  "type": "object",
+  "properties": {
+    "fingerprint": {
+      "type": "string",
+      "description": "Hash of error message + stack for grouping"
+    },
+    "message": {
+      "type": "string"
+    },
+    "stack": {
+      "type": "string"
+    },
+    "count": {
+      "type": "number",
+      "default": 1
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "affected_jobs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "network",
+        "timeout",
+        "selector",
+        "auth",
+        "captcha",
+        "engine",
+        "other"
+      ]
+    }
+  },
+  "required": [
+    "fingerprint",
+    "message"
+  ]
+}

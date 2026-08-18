@@ -1,0 +1,45 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "plan_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "canceled",
+        "past_due",
+        "trialing"
+      ],
+      "default": "active"
+    },
+    "current_period_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "current_period_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "credits_used": {
+      "type": "number",
+      "default": 0
+    },
+    "credits_remaining": {
+      "type": "number",
+      "default": 0
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "plan_name"
+  ]
+}

@@ -18,7 +18,10 @@
           "job.failed",
           "session.created",
           "session.ended",
-          "schedule.triggered"
+          "schedule.triggered",
+          "change.detected",
+          "engine.down",
+          "budget.alert"
         ]
       }
     },
@@ -36,6 +39,15 @@
     },
     "last_status": {
       "type": "number"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "generic",
+        "slack",
+        "discord"
+      ],
+      "default": "generic"
     }
   },
   "required": [

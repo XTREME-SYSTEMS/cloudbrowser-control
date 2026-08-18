@@ -1,0 +1,35 @@
+{
+  "name": "EngineHealthLog",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "degraded",
+        "down"
+      ]
+    },
+    "response_time_ms": {
+      "type": "number"
+    },
+    "active_sessions": {
+      "type": "number"
+    },
+    "max_sessions": {
+      "type": "number"
+    },
+    "pool_size": {
+      "type": "number"
+    },
+    "uptime": {
+      "type": "number"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ]
+}

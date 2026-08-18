@@ -1,0 +1,49 @@
+{
+  "name": "TestResult",
+  "type": "object",
+  "properties": {
+    "suite": {
+      "type": "string",
+      "description": "Phase or category name"
+    },
+    "test_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "skip"
+      ],
+      "default": "pass"
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "score_category": {
+      "type": "string"
+    },
+    "score_points": {
+      "type": "number",
+      "default": 0
+    },
+    "max_points": {
+      "type": "number",
+      "default": 1
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Groups results from a single run"
+    }
+  },
+  "required": [
+    "suite",
+    "test_name",
+    "status"
+  ]
+}

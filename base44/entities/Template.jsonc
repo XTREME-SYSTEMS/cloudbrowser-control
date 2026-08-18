@@ -1,0 +1,46 @@
+{
+  "name": "Template",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "scraping",
+        "automation",
+        "monitoring",
+        "testing",
+        "social",
+        "ecommerce",
+        "general"
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of step definitions"
+    },
+    "default_config": {
+      "type": "object",
+      "description": "Default session config for this template"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Lucide icon name"
+    },
+    "author": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}

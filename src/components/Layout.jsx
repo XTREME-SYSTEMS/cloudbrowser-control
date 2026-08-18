@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe, Menu, DollarSign, ScrollText } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Bell } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -10,7 +11,15 @@ const navItems = [
   { to: "/jobs", label: "Jobs", icon: Briefcase },
   { to: "/schedules", label: "Schedules", icon: Calendar },
   { to: "/costs", label: "Costs", icon: DollarSign },
+  { to: "/jobs/ai-builder", label: "AI Builder", icon: Sparkles },
+  { to: "/templates", label: "Templates", icon: Briefcase },
+  { to: "/analytics", label: "Analytics", icon: Activity },
+  { to: "/errors", label: "Errors", icon: AlertTriangle },
+  { to: "/billing", label: "Billing", icon: CreditCard },
+  { to: "/team", label: "Team", icon: Users },
   { to: "/audit-logs", label: "Audit Logs", icon: ScrollText },
+  { to: "/api-docs", label: "API Docs", icon: Code2 },
+  { to: "/test-results", label: "Test Results", icon: Trophy },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -92,12 +101,13 @@ export default function Layout() {
           <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1">
             <Menu className="w-6 h-6" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
               <Globe className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-heading font-semibold">BrowserForge</span>
           </div>
+          <NotificationBell />
         </header>
 
         <main className="flex-1 overflow-auto">

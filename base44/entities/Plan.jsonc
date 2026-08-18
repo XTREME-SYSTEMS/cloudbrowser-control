@@ -1,0 +1,54 @@
+{
+  "name": "Plan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "enum": [
+        "free",
+        "starter",
+        "pro",
+        "enterprise"
+      ]
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "price_monthly": {
+      "type": "number",
+      "default": 0
+    },
+    "included_credits": {
+      "type": "number",
+      "default": 100
+    },
+    "max_sessions": {
+      "type": "number",
+      "default": 5
+    },
+    "max_concurrent_sessions": {
+      "type": "number",
+      "default": 2
+    },
+    "max_jobs_per_day": {
+      "type": "number",
+      "default": 50
+    },
+    "retention_days": {
+      "type": "number",
+      "default": 7
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stripe_price_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

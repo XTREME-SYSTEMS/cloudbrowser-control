@@ -68,6 +68,37 @@
     "session_config": {
       "type": "object",
       "description": "Session options: viewport, user_agent, proxy_id, headers, blocked_resources, etc."
+    },
+    "depends_on_job_id": {
+      "type": "string",
+      "description": "Parent job that must complete before this one starts"
+    },
+    "dependency_condition": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "completed_with_results",
+        "always"
+      ],
+      "default": "completed"
+    },
+    "parent_job_id": {
+      "type": "string",
+      "description": "If this is a fan-out child, the parent job ID"
+    },
+    "fan_out_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Run the same job across multiple URLs"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "version_number": {
+      "type": "number",
+      "default": 1
     }
   },
   "required": [

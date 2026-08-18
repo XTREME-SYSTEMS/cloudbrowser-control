@@ -36,6 +36,7 @@
         "new_tab",
         "switch_tab",
         "close_tab",
+        "frame_switch",
         "screenshot",
         "pdf",
         "extract_text",
@@ -51,6 +52,13 @@
         "solve_captcha",
         "mock_response",
         "save_state",
+        "restore_state",
+        "import_cookies",
+        "export_cookies",
+        "crawl",
+        "paginate",
+        "evaluate",
+        "save_state",
         "restore_state"
       ]
     },
@@ -65,6 +73,10 @@
     },
     "description": {
       "type": "string"
+    },
+    "output_schema": {
+      "type": "object",
+      "description": "JSON schema to validate extracted data against"
     }
   },
   "required": [

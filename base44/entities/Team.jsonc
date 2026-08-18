@@ -1,0 +1,25 @@
+{
+  "name": "Team",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "member_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "plan_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "owner_id"
+  ]
+}

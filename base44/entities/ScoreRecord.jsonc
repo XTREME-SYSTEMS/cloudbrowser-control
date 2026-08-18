@@ -1,0 +1,48 @@
+{
+  "name": "ScoreRecord",
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "total_tests": {
+      "type": "number",
+      "default": 0
+    },
+    "passed": {
+      "type": "number",
+      "default": 0
+    },
+    "failed": {
+      "type": "number",
+      "default": 0
+    },
+    "skipped": {
+      "type": "number",
+      "default": 0
+    },
+    "pass_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentage 0-100"
+    },
+    "score": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentage 0-100"
+    },
+    "letter_grade": {
+      "type": "string"
+    },
+    "category_breakdown": {
+      "type": "object",
+      "description": "Per-category pass counts"
+    }
+  },
+  "required": [
+    "run_id",
+    "total_tests",
+    "passed",
+    "failed"
+  ]
+}
