@@ -175,6 +175,17 @@ async function closeSession(id, reason = "ended") {
   return true;
 }
 
+// Normalize cookies for Playwright: ensure each has url or domain+path
+function normalizeCookies(cookies) {
+  return (cookies || []).map((c) => {
+    const cookie = { ...c };
+    if (!cookie.url && cookie.domain && !cookie.path) {
+      cookie.path = "/";
+    }
+    return cookie;
+  });
+}
+
 async function locate(page, selector) {
   if (!selector) return page;
   if (selector.startsWith("//") || selector.startsWith("xpath=")) {
@@ -516,9 +527,14 @@ app.post("/sessions/:id/execute", async (req, res) => {
 
     // SSRF guard for navigation actions
     if (["goto", "crawl"].includes(action_type)) {
-      const targetUrl = action_type === "goto" ? (value || selector) : (options.startUrl || s.url);
-      const validation = validateTargetUrl(targetUrl);
-      if (!validation.ok) return res.status(400).json({ ok: false, action_type, error: `URL rejected: ${validation.error}` });
+      const targetUrl = action_type === "goto" ? (value || selector) : (options.startUrl || page.url());
+      // Skip SSRF for crawl when no explicit startUrl — crawl validates each URL internally
+      if (action_type === "crawl" && !options.startUrl) {
+        // crawl uses page.url() as starting point; if about:blank, crawl will handle gracefully
+      } else {
+        const validation = validateTargetUrl(targetUrl);
+        if (!validation.ok) { s.status = "idle"; return res.status(400).json({ ok: false, action_type, error: `URL rejected: ${validation.error}` }); }
+      }
     }
 
     switch (action_type) {
@@ -550,7 +566,20 @@ app.post("/sessions/:id/execute", async (req, res) => {
       case "handle_dialog": { page.once("dialog", async (d) => { if (options.accept) await d.accept(value || ""); else await d.dismiss(); }); break; }
       case "new_tab": { const np = await s.context.newPage(); s.page = np; s.tabs = s.tabs || []; s.tabs.push(np); result.tabIndex = s.tabs.length - 1; break; }
       case "switch_tab": { const idx = parseInt(value, 10) || 0; if (s.tabs?.[idx]) { s.page = s.tabs[idx]; s.url = s.page.url(); result.url = s.url; } break; }
-      case "close_tab": { const idx = parseInt(value, 10) || 0; if (s.tabs?.[idx]) { await s.tabs[idx].close(); s.tabs.splice(idx, 1); } break; }
+      case "close_tab": {
+        const idx = parseInt(value, 10) || 0;
+        if (s.tabs?.[idx]) {
+          const closingPage = s.tabs[idx];
+          await closingPage.close();
+          s.tabs.splice(idx, 1);
+          // If we closed the active page, switch to another available page
+          if (s.page === closingPage) {
+            s.page = s.tabs[0] || s.context.pages()[0] || null;
+            if (s.page) { s.url = s.page.url(); result.url = s.url; }
+          }
+        }
+        break;
+      }
       case "frame_switch": {
         // Switch active frame by selector or index
         if (selector) {
@@ -582,8 +611,8 @@ app.post("/sessions/:id/execute", async (req, res) => {
       }
       case "screenshot": { const buf = await page.screenshot({ fullPage: options.fullPage || false, type: "png" }); result.base64 = buf.toString("base64"); result.mimeType = "image/png"; result.size = buf.length; break; }
       case "pdf": { const buf = await page.pdf({ format: options.format || "A4", printBackground: options.printBackground !== false }); result.base64 = buf.toString("base64"); result.mimeType = "application/pdf"; result.size = buf.length; break; }
-      case "set_cookies": { await s.context.addCookies(options.cookies || []); break; }
-      case "import_cookies": { await s.context.addCookies(options.cookies || []); result.imported = (options.cookies || []).length; break; }
+      case "set_cookies": { await s.context.addCookies(normalizeCookies(options.cookies || [])); break; }
+      case "import_cookies": { await s.context.addCookies(normalizeCookies(options.cookies || [])); result.imported = (options.cookies || []).length; break; }
       case "export_cookies": { result.data = await s.context.cookies(); result.exported = result.data.length; break; }
       case "set_headers": { await s.context.setExtraHTTPHeaders(options.headers || {}); break; }
       case "set_local_storage": { await page.evaluate(([k, v]) => localStorage.setItem(k, v), [options.key, options.value]); break; }
