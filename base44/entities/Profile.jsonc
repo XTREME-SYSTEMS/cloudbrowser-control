@@ -1,0 +1,31 @@
+{
+  "name": "Profile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "user_data_dir": {
+      "type": "string",
+      "description": "Path to persistent user data directory on engine"
+    },
+    "cookies": {
+      "type": "object",
+      "description": "Saved cookies snapshot"
+    },
+    "storage_state": {
+      "type": "object",
+      "description": "Saved localStorage and sessionStorage"
+    },
+    "last_used": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

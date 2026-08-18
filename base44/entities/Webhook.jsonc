@@ -1,0 +1,45 @@
+{
+  "name": "Webhook",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL to send webhook payloads to"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "job.completed",
+          "job.failed",
+          "session.created",
+          "session.ended",
+          "schedule.triggered"
+        ]
+      }
+    },
+    "secret": {
+      "type": "string",
+      "description": "Secret for signing payloads"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_triggered": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_status": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "name",
+    "url"
+  ]
+}

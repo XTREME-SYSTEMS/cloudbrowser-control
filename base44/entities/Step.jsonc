@@ -3,8 +3,7 @@
   "type": "object",
   "properties": {
     "job_id": {
-      "type": "string",
-      "description": "Reference to Job entity"
+      "type": "string"
     },
     "order": {
       "type": "number",
@@ -34,6 +33,9 @@
         "upload_file",
         "download",
         "handle_dialog",
+        "new_tab",
+        "switch_tab",
+        "close_tab",
         "screenshot",
         "pdf",
         "extract_text",
@@ -45,23 +47,21 @@
         "set_cookies",
         "set_headers",
         "set_local_storage",
-        "new_tab",
-        "switch_tab",
-        "close_tab",
-        "capture_response"
+        "capture_response",
+        "solve_captcha",
+        "mock_response",
+        "save_state",
+        "restore_state"
       ]
     },
     "selector": {
-      "type": "string",
-      "description": "CSS or XPath selector"
+      "type": "string"
     },
     "value": {
-      "type": "string",
-      "description": "Text to type, option to select, URL to goto, etc."
+      "type": "string"
     },
     "options": {
-      "type": "object",
-      "description": "Action-specific options (full_page, timeout, wait_until, schema, etc.)"
+      "type": "object"
     },
     "description": {
       "type": "string"
