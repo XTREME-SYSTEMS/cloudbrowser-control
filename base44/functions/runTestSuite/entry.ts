@@ -274,6 +274,9 @@ export default async function (req) {
       }
       const burstKeys = await base44.asServiceRole.entities.ApiKey.filter({ key_hash: burstHash });
       for (const bk of burstKeys) await base44.asServiceRole.entities.ApiKey.delete(bk.id).catch(() => {});
+      // Clean up rate limit entries created during the burst test
+      const rlEntries = await base44.asServiceRole.entities.RateLimitEntry.filter({ key_hash: burstHash });
+      for (const rl of rlEntries) await base44.asServiceRole.entities.RateLimitEntry.delete(rl.id).catch(() => {});
       return got429 ? true : { error: "Rate limit never triggered — 200 requests all succeeded" };
     });
 

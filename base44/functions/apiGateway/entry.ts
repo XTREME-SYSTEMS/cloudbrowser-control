@@ -49,16 +49,29 @@ function deriveClientIP(req) {
   return req.headers.get("x-real-ip") || "";
 }
 
-// In-memory rate limit (single-instance; interface ready for distributed adapter)
-const rateLimitMap = new Map();
-function checkRateLimit(keyHash, limitPerMinute) {
+// Database-backed rate limit — persists across function invocations.
+// Fixed-window approach: one RateLimitEntry per (key_hash, minute window).
+// For distributed production with Redis, swap this function for a Redis adapter.
+async function checkRateLimit(base44, keyHash, limitPerMinute) {
   const now = Date.now();
-  const windowMs = 60 * 1000;
-  const entries = rateLimitMap.get(keyHash) || [];
-  const recent = entries.filter((t) => now - t < windowMs);
-  if (recent.length >= limitPerMinute) return false;
-  recent.push(now);
-  rateLimitMap.set(keyHash, recent);
+  const windowStart = Math.floor(now / 60000) * 60000;
+  const entries = await base44.asServiceRole.entities.RateLimitEntry.filter({
+    key_hash: keyHash,
+    window_start: windowStart,
+  });
+  if (entries.length === 0) {
+    await base44.asServiceRole.entities.RateLimitEntry.create({
+      key_hash: keyHash,
+      window_start: windowStart,
+      count: 1,
+    });
+    return true;
+  }
+  const entry = entries[0];
+  if (entry.count >= limitPerMinute) return false;
+  await base44.asServiceRole.entities.RateLimitEntry.update(entry.id, {
+    count: entry.count + 1,
+  });
   return true;
 }
 
@@ -142,9 +155,9 @@ export default async function (req) {
       }
     }
 
-    // ── Rate limit ──
+    // ── Rate limit (database-backed, persists across invocations) ──
     const rateLimit = sysSettings.rate_limit_per_minute || 60;
-    if (!checkRateLimit(keyHash, rateLimit)) {
+    if (!await checkRateLimit(base44, keyHash, rateLimit)) {
       return errorResponse(429, "Rate limit exceeded", requestId);
     }
 

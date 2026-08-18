@@ -1,0 +1,23 @@
+{
+  "name": "RateLimitEntry",
+  "type": "object",
+  "properties": {
+    "key_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the API key (or IP) being rate-limited"
+    },
+    "window_start": {
+      "type": "number",
+      "description": "Epoch milliseconds of the fixed-window start (floor(now/60000)*60000)"
+    },
+    "count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of requests in this window"
+    }
+  },
+  "required": [
+    "key_hash",
+    "window_start"
+  ]
+}
