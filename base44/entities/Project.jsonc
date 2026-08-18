@@ -1,0 +1,35 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "api_key_id": {
+      "type": "string",
+      "description": "Associated API key for this project"
+    },
+    "default_session_config": {
+      "type": "object",
+      "description": "Default viewport, user agent, locale, timezone, proxy, etc."
+    },
+    "color": {
+      "type": "string",
+      "description": "Label color for UI identification"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
