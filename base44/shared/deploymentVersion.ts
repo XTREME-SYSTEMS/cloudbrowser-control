@@ -18,13 +18,13 @@ export const SCHEMA_VERSION = "v3.1";
 
 export const FUNCTION_REGISTRY = {
   apiGateway: "v4.1.0",
-  runJob: "v4.0.0",
-  engineAction: "v4.0.0",
-  managePool: "v4.0.0",
-  receiveWebhook: "v4.0.0",
-  engineHealth: "v4.0.0",
-  resumeSession: "v4.0.0",
-  updateEngineConfig: "v4.0.0",
+  runJob: "v4.1.0",
+  engineAction: "v4.1.0",
+  managePool: "v4.1.0",
+  receiveWebhook: "v4.1.0",
+  engineHealth: "v4.1.0",
+  resumeSession: "v4.1.0",
+  updateEngineConfig: "v4.1.0",
   runTestSuite: "v4.1.0",
   getDeploymentStatus: "v4.1.0",
 };
