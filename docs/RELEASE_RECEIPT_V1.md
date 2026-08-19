@@ -37,10 +37,40 @@
 1. **Engine syntax check**: Removed `npm ci` — `node --check server.js` only validates syntax, no dependencies needed
 2. **RLS check**: Added exclusion for `User.jsonc` — built-in entity with platform-managed security (admin-only access enforced by platform, no explicit `rls` key in schema)
 
-### Next Action Required
+### Phase 1 — Workflow Parity Check (2026-08-19)
 
-The Base44 builder cannot write to `.github/workflows/`. The fixed workflow is at
-`ci/release-gate.yml`. It must be re-committed:
+**RESULT: CI RECOMMIT REQUIRED**
+
+The corrected `ci/release-gate.yml` contains both fixes. The live
+`.github/workflows/release-gate.yml` still contains the OLD configuration.
+
+#### Semantic Parity Comparison
+
+| Required Check | ci/release-gate.yml (corrected) | .github/workflows/release-gate.yml (LIVE) | Parity |
+|----------------|-----------------------------------|-------------------------------------------|--------|
+| npm ci at repository root | ✅ line 52 | ✅ line 52 | ✅ MATCH |
+| npm run build | ✅ line 55 | ✅ line 55 | ✅ MATCH |
+| npm run lint | ✅ line 58 | ✅ line 58 | ✅ MATCH |
+| npm run typecheck | ✅ line 61 | ✅ line 61 | ✅ MATCH |
+| node --check browser-engine/server.js (NO npm ci) | ✅ line 76 — `run: node --check server.js` | ❌ lines 76-78 — `run: \| npm ci \n node --check server.js` | ❌ MISMATCH |
+| Plaintext secret scans | ✅ lines 86-105 | ✅ lines 88-107 | ✅ MATCH |
+| Hardcoded API-key scan | ✅ lines 108-113 | ✅ lines 109-115 | ✅ MATCH |
+| SSRF guard validation | ✅ lines 115-118 | ✅ lines 117-120 | ✅ MATCH |
+| RLS scan excluding User.jsonc | ✅ lines 120-134 — excludes User.jsonc | ❌ lines 122-132 — NO User.jsonc exclusion | ❌ MISMATCH |
+| release-status depends on all required jobs | ✅ line 139 | ✅ line 137 | ✅ MATCH |
+| No continue-on-error on required gates | ✅ absent | ✅ absent | ✅ MATCH |
+
+**Two defects remain in the live GitHub workflow:**
+
+1. **Engine syntax check (lines 76-78)**: Still requires `npm ci` inside `browser-engine/` — fails because no `package-lock.json` exists there. `node --check` does not require dependency installation.
+2. **RLS static audit (lines 122-132)**: Still requires explicit `rls` key on `User.jsonc` — fails because User is a Base44 built-in entity with platform-managed security (admin-only access enforced by platform, no explicit `rls` key in schema).
+
+These are workflow-definition defects, not runtime/product defects.
+
+### Next Action Required — CI RECOMMIT REQUIRED
+
+The Base44 builder cannot write to `.github/workflows/`. The corrected workflow is at
+`ci/release-gate.yml` with both fixes applied. It must be re-committed:
 
 ```bash
 cp ci/release-gate.yml .github/workflows/release-gate.yml
@@ -49,8 +79,13 @@ git commit -m "ci: fix engine syntax and RLS check for V1 release gate"
 git push
 ```
 
-After the GitHub Actions run goes green, the three final consecutive clean V1
-release cycles can proceed. Until then, the release is NOT verified and NOT frozen.
+**Release certification is BLOCKED until:**
+1. The corrected workflow is committed to `.github/workflows/release-gate.yml`
+2. A new GitHub Actions run produces conclusion = SUCCESS
+3. The new commit SHA is captured for final release certification
+
+The historical failed run (32206125542) is preserved as pre-release CI incident evidence.
+The release is NOT verified and NOT frozen.
 
 ---
 
