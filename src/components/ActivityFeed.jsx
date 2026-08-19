@@ -19,7 +19,7 @@ export default function ActivityFeed() {
           ...sessions.map((s) => ({ id: s.id, type: "session", title: `Session ${s.status}`, subtitle: s.target_url || s.current_url || "—", time: s.created_date, icon: Monitor })),
           ...jobs.map((j) => ({ id: j.id, type: "job", title: `Job "${j.name}" ${j.status}`, subtitle: j.start_url || "—", time: j.created_date, icon: Briefcase })),
           ...logs.map((l) => ({ id: l.id, type: "log", title: l.message, subtitle: l.category, time: l.timestamp || l.created_date, icon: ScrollText })),
-        ].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0)).slice(0, 15);
+        ].sort((a, b) => new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()).slice(0, 15);
         if (mounted) setEvents(allEvents);
       } catch {}
     };

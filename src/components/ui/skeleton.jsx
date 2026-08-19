@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils"
 
+/**
+ * @param {React.HTMLAttributes<HTMLDivElement>} props
+ */
 function Skeleton({
   className,
   ...props

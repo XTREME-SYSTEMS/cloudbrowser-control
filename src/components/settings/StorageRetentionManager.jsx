@@ -9,7 +9,7 @@ import { Database, Save, Trash2 } from "lucide-react";
 
 export default function StorageRetentionManager() {
   const [settings, setSettings] = useState(null);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(/** @type {any} */ ({}));
   const [saving, setSaving] = useState(false);
   const [purging, setPurging] = useState(false);
 

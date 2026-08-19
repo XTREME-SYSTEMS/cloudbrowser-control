@@ -9,7 +9,7 @@ import { Gauge, Save, Video, Bug } from "lucide-react";
 
 export default function ConcurrencyLimitsManager() {
   const [settings, setSettings] = useState(null);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(/** @type {any} */ ({}));
   const [saving, setSaving] = useState(false);
 
   const load = async () => {

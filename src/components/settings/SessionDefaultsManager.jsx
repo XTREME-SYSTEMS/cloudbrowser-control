@@ -11,7 +11,7 @@ const BLOCKABLE = ["image", "font", "media", "stylesheet"];
 
 export default function SessionDefaultsManager() {
   const [settings, setSettings] = useState(null);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(/** @type {any} */ ({}));
   const [saving, setSaving] = useState(false);
 
   const load = async () => {

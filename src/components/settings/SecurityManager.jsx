@@ -16,7 +16,7 @@ const CAPTCHA_PROVIDERS = [
 
 export default function SecurityManager() {
   const [settings, setSettings] = useState(null);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(/** @type {any} */ ({}));
   const [newIp, setNewIp] = useState("");
   const [saving, setSaving] = useState(false);
 

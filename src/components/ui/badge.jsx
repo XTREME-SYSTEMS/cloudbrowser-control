@@ -23,12 +23,15 @@ const badgeVariants = cva(
   }
 )
 
+/**
+ * @param {React.HTMLAttributes<HTMLDivElement> & { variant?: string }} props
+ */
 function Badge({
   className,
   variant,
   ...props
 }) {
-  return (<div className={cn(badgeVariants({ variant }), className)} {...props} />);
+  return (<div className={cn(badgeVariants({ variant: /** @type {any} */ (variant) }), className)} {...props} />);
 }
 
 export { Badge, badgeVariants }
