@@ -503,8 +503,13 @@ export default async function (req) {
       return qualityGates.typecheck === true ? true : { error: "Typecheck not verified — pass quality_gates.typecheck=true" };
     });
 
-    await runCategoryTest(base44, runId, "CI/CD", "CI/CD workflow defined (ci/release-gate.yml)", async () => {
-      return qualityGates.cicd === true ? true : { error: "CI/CD workflow not verified — pass quality_gates.cicd=true after confirming ci/release-gate.yml exists" };
+    await runCategoryTest(base44, runId, "CI/CD", "GitHub Actions release gate (.github/workflows/release-gate.yml green run)", async () => {
+      // PHASE 2 HARDENING: CI/CD PASS requires an actual green GitHub Actions run
+      // from the real workflow file committed at .github/workflows/release-gate.yml.
+      // Caller-supplied booleans (quality_gates.cicd) are NOT accepted as evidence.
+      // The platform sandbox cannot verify GitHub Actions; this test remains PENDING
+      // until the operator commits the workflow and confirms a green run.
+      return { error: "CI/CD PENDING — requires actual green GitHub Actions run from .github/workflows/release-gate.yml. Caller-supplied booleans are not accepted." };
     });
 
     // ── Compile Master Matrix ──

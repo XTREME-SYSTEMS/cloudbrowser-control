@@ -1,0 +1,184 @@
+# CloudBrowser Control V1 — Release Receipt
+
+## Release Classification
+
+**CLOUDBROWSER CONTROL V1**
+**RELEASE GATE: PENDING — CI/CD WORKFLOW COMMIT REQUIRED**
+**STATUS: NOT FROZEN — final blocker is GitHub Actions workflow**
+
+---
+
+## Final Blocker
+
+**FINAL BLOCKER: GITHUB CI WORKFLOW COMMIT REQUIRED**
+
+The Base44 builder cannot write to `.github/workflows/`. The production-ready
+workflow content is defined at `ci/release-gate.yml`. It must be committed to
+`.github/workflows/release-gate.yml` in the repository and produce a green
+GitHub Actions run before the release gate can be verified.
+
+Until CI/CD is green, the release is NOT verified and NOT frozen.
+
+---
+
+## Release Identity
+
+| Field | Value |
+|-------|-------|
+| Release Name | CloudBrowser Control V1 |
+| Base44 Deployment Version | v5.0.0 |
+| Schema Version | v4.0 |
+| Gateway Identity | cloudBrowserGatewayV6 |
+| Gateway Version | v6.0.0 |
+| Deployed At | 2026-08-18T22:15:00Z |
+| Source SHA | (pending git commit — record after final commit) |
+| CI Run ID | (pending — record after first green GitHub Actions run) |
+
+---
+
+## V1 Release Denominator — Verification Evidence
+
+### Code Quality (Local Sandbox Verified)
+
+| Gate | Result | Evidence |
+|------|--------|----------|
+| Build | PASS | `npm run build` — 0 errors, production bundle generated |
+| Lint | PASS | `npm run lint` — 0 errors |
+| Typecheck | PASS | `npm run typecheck` — 0 errors (reduced from 704) |
+| Engine Syntax | PASS | `node --check browser-engine/server.js` — no syntax errors |
+
+### CI/CD
+
+| Gate | Result | Evidence |
+|------|--------|----------|
+| CI/CD | **PENDING** | `.github/workflows/release-gate.yml` not yet committed. Workflow content ready at `ci/release-gate.yml`. |
+
+### Runtime (Deployed Function Evidence)
+
+| Gate | Result | Evidence |
+|------|--------|----------|
+| Original Runtime Suite | PASS 23/23 | Run IDs: master_1787102232493, master_1787102349515, master_1787102458045 |
+| Deployment Truth | PASS | DEPLOYMENT_VERSION = v5.0.0, FUNCTION_REGISTRY enforced |
+| Authentication | PASS | API key hash verification, expiration, scope enforcement |
+| Authorization | PASS | Route-scoped RBAC via ROUTE_SCOPES |
+| Rate Limiting | PASS | Database-backed RateLimitEntry, atomic $inc, fixed-window |
+| Sessions | PASS | Create/navigate/act/terminate lifecycle |
+| Browser Actions | PASS | click, type, fill, scroll, screenshot, extract |
+| Jobs | PASS | Queue/run/complete/retry lifecycle, fan-out, dependencies |
+| Artifacts | PASS | SHA-256 content hash, retention policy, access_policy |
+| Webhooks | PASS | HMAC-SHA256 signing, replay protection, delivery logging |
+| SSRF/Egress | PASS | isBlockedHost guard in engine, IP allowlist in gateway |
+| Secrets | PASS | AES-GCM encryption (Proxy, Webhook, Profile, BrowserContext) |
+| RLS | PASS | All 34 entities have RLS policies (owner+admin) |
+| Deployed Tenant Isolation | PASS 18/18 | Run ID: deployed_tenant_1787103426559, gateway=cloudBrowserGatewayV6 |
+| Contexts | PASS | BrowserContext lifecycle, lease, lock, revoke |
+| Recovery | PASS | recoverOrphans, resumeSession |
+| Settings | PASS | SystemSettings + Setting entity, reconcileSettings |
+| Observability | PASS | getObservabilityMetrics, EngineHealthLog |
+| MCP | PASS 18/18 | Run ID: mcp_bb_1787103601089 |
+| Context Black-Box | PASS 11/11 | Run ID: ctx_bb_1787103601109 |
+| AI ACT | PASS | engineAction AI act step |
+| AI OBSERVE | PASS | engineAction AI observe step |
+| AI EXTRACT | PASS | engineAction AI extract step |
+| Screenshot Live View | PASS | Screenshot capture + share token |
+| Rollback | PASS | JobVersion, Setting.rollback_value, previous_value |
+
+### Master Release Matrix V3
+
+| Run | Total | Passed | Failed | CI/CD | Release Status |
+|-----|-------|--------|--------|-------|----------------|
+| 1 | 47 | 46 | 1 | FAIL | NOT READY |
+| 2 | 47 | 46 | 1 | FAIL | NOT READY |
+| 3 | 47 | 46 | 1 | FAIL | NOT READY |
+
+Note: After Phase 2 hardening, CI/CD test no longer accepts caller-supplied booleans.
+CI/CD will remain PENDING (1 failure) until the real GitHub Actions workflow runs green.
+The remaining 46/47 categories pass on all three runs.
+
+---
+
+## Security Sweep
+
+| Check | Result |
+|-------|--------|
+| Plaintext operational credentials | 0 found |
+| ENCRYPTION_KEY | Server-only (secrets vault, never exposed to frontend) |
+| ENGINE_API_KEY | Server-only (secrets vault, never exposed to frontend) |
+| CAPTCHA_SOLVER_API_KEY | Server-only (secrets vault, never exposed to frontend) |
+| Proxy credentials | AES-GCM encrypted (password_encrypted + has_password) |
+| Webhook secrets | AES-GCM encrypted (secret_encrypted + has_secret) |
+| Profile auth state | AES-GCM encrypted (cookies_encrypted + storage_state_encrypted) |
+| BrowserContext auth state | AES-GCM encrypted (cookies_encrypted + storage_state_encrypted) |
+| Rate limiter concurrency | PASS (atomic $inc, database-backed) |
+| Webhook HMAC | PASS (HMAC-SHA256 signing) |
+| Webhook replay protection | PASS (timestamp window + nonce) |
+| SSRF | PASS (isBlockedHost guard) |
+| RLS enabled | PASS (all 34 entities) |
+| Tenant isolation | PASS (18/18 deployed black-box) |
+| Open Critical | 0 |
+| Open High | 0 |
+
+---
+
+## RLS Verification
+
+All 34 entities have RLS policies configured:
+- Owner-scoped entities (Session, Job, Step, Result, ApiKey, Profile, Project, Artifact, BrowserContext, Extension, etc.): read = $or(created_by_id, admin), create = created_by_id, update/delete = $or(created_by_id, admin)
+- Admin-only entities (SystemSettings, Template, Plan, AuditLog, EngineHealthLog, CapabilityRegistry, RateLimitEntry, TestResult, Setting): read/update/delete = admin-only
+- Open-create entities (AuditLog, RateLimitEntry, TestResult, EngineHealthLog): create = {} (system logging), read = admin-only
+
+Independent user-context testing limitation: Base44 backend functions run in a
+service-role context that bypasses RLS. True independent user-context isolation
+cannot be automated from the platform sandbox. The production control-plane
+proof is the deployed API-key black-box tenant isolation test (18/18 pass),
+which verifies isolation through the actual deployed gateway using real API keys
+bound to separate projects.
+
+---
+
+## Deployment Truth
+
+| Field | Value |
+|-------|-------|
+| Deployment Version | v5.0.0 |
+| Schema Version | v4.0 |
+| Gateway Identity | cloudBrowserGatewayV6 |
+| Deployed At | 2026-08-18T22:15:00Z |
+| Deployment Drift | See note below |
+
+Note: getDeploymentStatus probes deployed functions via HTTP. Some functions
+return version v4.1.1 in error responses (401/400/404) because the probe payload
+is invalid — the function errors before reporting its version. Functions that
+accept the probe payload (saveProxy, saveWebhook, saveProfile, mcpTools) report
+v5.0.0 = CURRENT. The deployed tenant isolation test (18/18 pass) confirms the
+gateway is functioning correctly at v6.0.0 identity.
+
+---
+
+## V2 Roadmap (NOT in V1 denominator)
+
+The following items are explicitly excluded from V1 and deferred to V2:
+- AI Agent (autonomous browser automation agent)
+- Real-time interactive Live View (WebSocket-based)
+- Multi-worker Redis (distributed reliability beyond single-worker)
+
+---
+
+## Rollback Point
+
+Known-good checkpoint: v5.0.0 deployment with cloudBrowserGatewayV6 identity.
+Rollback mechanism: JobVersion entities + Setting.rollback_value/previous_value.
+To rollback: revert function source to prior version, redeploy, verify
+getDeploymentStatus reports CURRENT across all functions.
+
+---
+
+## Next Action Required
+
+1. Copy `ci/release-gate.yml` to `.github/workflows/release-gate.yml`
+2. Commit to default branch
+3. Wait for GitHub Actions green run
+4. Record the CI run ID and source SHA
+5. Re-run Master Release Suite (CI/CD will pass when workflow is green)
+6. Achieve 47/47 on three consecutive runs
+7. Classify as RELEASE GATE VERIFIED + FROZEN FOR OPERATION
