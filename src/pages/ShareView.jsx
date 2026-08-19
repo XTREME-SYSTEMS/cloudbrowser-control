@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw, ExternalLink, Globe } from "lucide-react";
+import { Eye, RefreshCw, Globe } from "lucide-react";
 
 export default function ShareView() {
   const { token } = useParams();

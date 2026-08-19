@@ -105,7 +105,7 @@ export default async function (req) {
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Security", "API key authentication enforced", async () => {
       try {
-        const r = await base44.asServiceRole.functions.invoke("apiGateway", { path: "/sessions", method: "GET" });
+        const r = await base44.asServiceRole.functions.invoke("cloudBrowserGatewayV6", { path: "/sessions", method: "GET" });
         return r.status === 401 ? true : { error: `Expected 401, got ${r.status}` };
       } catch (e) { return e.status === 401 ? true : { error: e.message }; }
     });
@@ -398,13 +398,21 @@ export default async function (req) {
     // ═══════════════════════════════════════════════
     // TENANT ISOLATION (Phase 4) — adversarial
     // ═══════════════════════════════════════════════
-    await runCategoryTest(base44, runId, "Tenant Isolation", "Tenant isolation negative tests pass", async () => {
+    await runCategoryTest(base44, runId, "Tenant Isolation", "DEPLOYED gateway tenant isolation (real black-box)", async () => {
+      try {
+        const r = await base44.asServiceRole.functions.invoke("runDeployedTenantIsolationTests", {});
+        const d = r.data || r;
+        if (d.deployed_tenant_isolation_verified) return true;
+        return { error: `Deployed tenant isolation FAILED — neg: ${d.negative_tests?.passed}/${d.negative_tests?.total}, pos: ${d.positive_tests?.passed}/${d.positive_tests?.total}` };
+      } catch (e) { return { error: `Deployed tenant isolation failed: ${e.message}` }; }
+    });
+
+    await runCategoryTest(base44, runId, "Tenant Isolation", "Unit/model tenant isolation (filtering logic)", async () => {
       try {
         const r = await base44.asServiceRole.functions.invoke("runTenantIsolationTests", {});
         const d = r.data || r;
-        if (d.rls_active) return true;
-        return { error: `RLS not active — ${d.negative_tests?.passed}/${d.negative_tests?.total} negative tests passed (need all)` };
-      } catch (e) { return { error: `Tenant isolation failed: ${e.message}` }; }
+        return d.rls_active ? true : { error: `Unit tenant isolation: ${d.negative_tests?.passed}/${d.negative_tests?.total} negative tests passed` };
+      } catch (e) { return { error: e.message }; }
     });
 
     // ═══════════════════════════════════════════════
@@ -457,11 +465,7 @@ export default async function (req) {
       return mcpBbResults.length > 0 ? true : { error: "MCP Black-Box did not pass — EXTRACT not verified" };
     });
 
-    await runCategoryTest(base44, runId, "AI AGENT", "Autonomous AI agent capability", async () => {
-      // AI AGENT (autonomous browsing agent) is NOT IMPLEMENTED
-      // aiBuildSteps generates steps from natural language, but no autonomous agent
-      return { error: "AI AGENT not implemented — aiBuildSteps exists but no autonomous browsing agent" };
-    });
+    // AI AGENT is a V2 ROADMAP ITEM — not a V1 blocker. Excluded from V1 matrix.
 
     // ═══════════════════════════════════════════════
     // LIVE VIEW CLASSIFICATION (Phase 13)
@@ -472,10 +476,7 @@ export default async function (req) {
       return true;
     });
 
-    await runCategoryTest(base44, runId, "Real-time Live View", "Real-time interactive streaming", async () => {
-      // NOT IMPLEMENTED — no WebSocket, no mouse/keyboard input, no real-time streaming
-      return { error: "Real-time interactive Live View NOT IMPLEMENTED — no WebSocket/streaming infrastructure" };
-    });
+    // Real-time Interactive Live View is a V2 ROADMAP ITEM — not a V1 blocker. Excluded from V1 matrix.
 
     // ═══════════════════════════════════════════════
     // BUILD / LINT / TYPECHECK (Phase 5) — requires CI

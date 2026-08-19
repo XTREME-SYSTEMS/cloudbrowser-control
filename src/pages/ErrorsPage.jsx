@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, Clock, Bug } from "lucide-react";
 
 const CATEGORY_COLORS = { network: "text-blue-500", timeout: "text-orange-500", selector: "text-purple-500", auth: "text-red-500", captcha: "text-yellow-500", engine: "text-red-600", other: "text-muted-foreground" };

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cpu, Key, Globe, RefreshCw, Plus, Trash2, CheckCircle, XCircle, Settings2, Folder, Shield, Database, Webhook, Puzzle, UserCircle } from "lucide-react";
+import { Cpu, Key, Globe, RefreshCw, Plus, Trash2, CheckCircle, XCircle, Settings2, Shield } from "lucide-react";
 import ApiKeysManager from "@/components/settings/ApiKeysManager";
 import ProjectsManager from "@/components/settings/ProjectsManager";
 import SessionDefaultsManager from "@/components/settings/SessionDefaultsManager";

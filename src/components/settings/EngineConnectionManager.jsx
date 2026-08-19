@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Cpu, Save, Eye, EyeOff, Loader2, CheckCircle, XCircle, AlertTriangle, ShieldCheck, Fingerprint } from "lucide-react";
+import { Cpu, Eye, EyeOff, Loader2, CheckCircle, XCircle, AlertTriangle, ShieldCheck, Fingerprint } from "lucide-react";
 
 export default function EngineConnectionManager() {
   const [engineUrl, setEngineUrl] = useState("");

@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Activity, CheckCircle, AlertCircle, XCircle, Cpu, Plus, Shield, DollarSign,
-  Server, Gauge, Zap, AlertTriangle, Radio, Clock, TrendingUp, Lock,
+  Activity, CheckCircle, AlertCircle, XCircle, Cpu, Plus, Shield,
+  Server, Gauge, Zap, AlertTriangle, Radio, Clock, TrendingUp,
 } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";
 import ActivityFeed from "@/components/ActivityFeed";

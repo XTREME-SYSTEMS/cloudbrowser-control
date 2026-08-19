@@ -6,9 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
-  Calculator, BookOpen, Zap, Lightbulb, Cpu, Globe, Brain, HardDrive,
+  Calculator, Zap, Cpu, Globe, Brain, HardDrive,
   TrendingUp, Activity, Gauge, Video, Bug, Layers, Save, Puzzle, UserCircle,
-  Shield, Webhook, Network, Share2, ScrollText, Rocket, Target, DollarSign,
+  Shield, Webhook, Network, Share2, ScrollText, Rocket, Target,
 } from "lucide-react";
 
 const DEFAULT_RATES = {
