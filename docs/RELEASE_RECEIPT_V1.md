@@ -3,7 +3,7 @@
 ## Release Classification
 
 **CLOUDBROWSER CONTROL V1**
-**RELEASE GATE: PARTIAL — 46/47 VERIFIED, CI/CD PENDING GITHUB ACTIONS GREEN RUN**
+**RELEASE GATE: PARTIAL — 46/47 VERIFIED (3 consecutive runs), CI/CD PENDING GITHUB ACTIONS GREEN RUN**
 **STATUS: NOT FROZEN — awaiting GitHub Actions green run after workflow recommit**
 
 ---
@@ -75,7 +75,7 @@ The historical failed run (32206125542) is preserved as pre-release CI incident 
 | Deployed At | 2026-08-18T22:15:00Z |
 | Source SHA | ef241948fa4a1433785b1a59088fd5deabc4fed8 (workflow parity verified) |
 | CI Run ID | (pending — record after first green GitHub Actions run) |
-| Master Suite Run IDs | master_1787109184456_sag7vj, master_1787109344147_891l7e |
+| Master Suite Run IDs | master_1787109184456_sag7vj, master_1787109344147_891l7e, master_1787109701248_29nl0o |
 | Runtime Suite Run ID | run_1787108329753_kps7a4 (23/23 VERIFIED) |
 
 ---
@@ -133,6 +133,7 @@ The historical failed run (32206125542) is preserved as pre-release CI incident 
 |-----|-------|--------|--------|-------|----------------|
 | 1 | 47 | 46 | 1 | FAIL | PARTIAL |
 | 2 | 47 | 46 | 1 | FAIL | PARTIAL |
+| 3 | 47 | 46 | 1 | FAIL | PARTIAL |
 | 3 | 47 | 46 | 1 | FAIL | PARTIAL |
 
 Note: After Phase 2 hardening, CI/CD test no longer accepts caller-supplied booleans.
@@ -247,15 +248,21 @@ getDeploymentStatus reports CURRENT across all functions.
 3. Wait for GitHub Actions green run (all 4 jobs: Code Quality, Engine Syntax, Security Audit, Release Status)
 4. Record the CI run ID and source SHA
 5. Re-run Master Release Suite (CI/CD will pass when workflow is green)
-6. Achieve 47/47 on three consecutive runs
+6. Achieve 47/47 on three consecutive runs — **3/3 non-CI/CD runs already complete (46/47)**
 7. Classify as RELEASE GATE VERIFIED + FROZEN FOR OPERATION
 
 ## Current Classification
 
-**PARTIAL — 46/47 VERIFIED**
+**PARTIAL — 46/47 VERIFIED (3 consecutive runs)**
 
-All runtime, security, deployment, and quality gates pass. The sole remaining
-gate is CI/CD, which requires a real GitHub Actions green run after the corrected
-workflow file is committed to `.github/workflows/release-gate.yml`. The corrected
-workflow is ready at `ci/release-gate.yml` with both fixes applied (engine syntax
-check without npm ci, RLS audit excluding User.jsonc).
+All runtime, security, deployment, and quality gates pass on 3 consecutive Master
+Release Suite runs (master_1787109184456_sag7vj, master_1787109344147_891l7e,
+master_1787109701248_29nl0o). The sole remaining gate is CI/CD, which requires a
+real GitHub Actions green run after the corrected workflow file is committed to
+`.github/workflows/release-gate.yml`. The corrected workflow is ready at
+`ci/release-gate.yml` with both fixes applied (engine syntax check without npm ci,
+RLS audit excluding User.jsonc).
+
+**3 consecutive clean runs achieved for all non-CI/CD categories.**
+Upon GitHub Actions green run, CI/CD will flip to PASS, achieving 47/47 and
+qualifying for RELEASE GATE VERIFIED + FROZEN FOR OPERATION.
