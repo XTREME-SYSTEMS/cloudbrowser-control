@@ -3,21 +3,54 @@
 ## Release Classification
 
 **CLOUDBROWSER CONTROL V1**
-**RELEASE GATE: PENDING — CI/CD WORKFLOW COMMIT REQUIRED**
-**STATUS: NOT FROZEN — final blocker is GitHub Actions workflow**
+**RELEASE GATE: PENDING — CI/CD RUN FAILED, WORKFLOW FIXES REQUIRED**
+**STATUS: NOT FROZEN — CI workflow committed but run failed, fixes applied to ci/release-gate.yml**
 
 ---
 
-## Final Blocker
+## CI/CD Run Status
 
-**FINAL BLOCKER: GITHUB CI WORKFLOW COMMIT REQUIRED**
+### Run 1 (commit ea2c0586b7801e0bcddb400efdfaac0a024c93da)
 
-The Base44 builder cannot write to `.github/workflows/`. The production-ready
-workflow content is defined at `ci/release-gate.yml`. It must be committed to
-`.github/workflows/release-gate.yml` in the repository and produce a green
-GitHub Actions run before the release gate can be verified.
+| Field | Value |
+|-------|-------|
+| GitHub Run ID | 32206125542 |
+| Run Number | 2 |
+| Event | push (main) |
+| Commit SHA | ea2c0586b7801e0bcddb400efdfaac0a024c93da |
+| Status | completed |
+| Conclusion | **FAILURE** |
+| URL | https://github.com/XTREME-SYSTEMS/cloudbrowser-control/actions/runs/32206125542 |
+| Created | 2026-08-19T01:46:19Z |
 
-Until CI/CD is green, the release is NOT verified and NOT frozen.
+### Job Results
+
+| Job | Conclusion | Failed Step | Root Cause |
+|-----|------------|-------------|------------|
+| Code Quality Gate | ✅ SUCCESS | — | Build, Lint, Typecheck all passed |
+| Browser Engine Syntax Check | ❌ FAILURE | "Check engine syntax" | `npm ci` requires package-lock.json which doesn't exist in browser-engine/ |
+| Security Audit | ❌ FAILURE | "Check RLS enabled on all entities" | User.jsonc (built-in entity) has no explicit `rls` key — platform manages its security |
+| Release Gate Status | ⏭ SKIPPED | — | Depends on failed jobs |
+
+### Fixes Applied to ci/release-gate.yml
+
+1. **Engine syntax check**: Removed `npm ci` — `node --check server.js` only validates syntax, no dependencies needed
+2. **RLS check**: Added exclusion for `User.jsonc` — built-in entity with platform-managed security (admin-only access enforced by platform, no explicit `rls` key in schema)
+
+### Next Action Required
+
+The Base44 builder cannot write to `.github/workflows/`. The fixed workflow is at
+`ci/release-gate.yml`. It must be re-committed:
+
+```bash
+cp ci/release-gate.yml .github/workflows/release-gate.yml
+git add .github/workflows/release-gate.yml
+git commit -m "ci: fix engine syntax and RLS check for V1 release gate"
+git push
+```
+
+After the GitHub Actions run goes green, the three final consecutive clean V1
+release cycles can proceed. Until then, the release is NOT verified and NOT frozen.
 
 ---
 
