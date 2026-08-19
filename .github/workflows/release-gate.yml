@@ -73,9 +73,7 @@ jobs:
 
       - name: Check engine syntax
         working-directory: browser-engine
-        run: |
-          npm ci
-          node --check server.js
+        run: node --check server.js
 
   security-audit:
     name: Security Audit
@@ -123,6 +121,10 @@ jobs:
         run: |
           MISSING=0
           for f in base44/entities/*.jsonc; do
+            # User.jsonc is built-in with platform-managed security (no explicit rls key needed)
+            if [ "$(basename "$f")" = "User.jsonc" ]; then
+              continue
+            fi
             if ! grep -q '"rls"' "$f"; then
               echo "FAIL: RLS not found in $f"
               MISSING=1
