@@ -1,14 +1,14 @@
 {
-  "description": "Runs the full test suite every night at midnight, calculates the score, and sends a notification if the score drops below 90%",
+  "description": "Runs the full test suite every week on Sunday at 02:00 UTC, calculates the score, and sends a notification if the score drops below 90%",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 0 * * *",
+      "cron_expression": "0 2 * * 0",
       "one_time_date": null,
-      "timezone": "America/New_York",
+      "timezone": "UTC",
       "interval_value": null,
       "interval_unit": null,
       "interval_anchor": null,
@@ -65,7 +65,7 @@
             "args": {
               "type": "test_score",
               "title": "Test score below threshold",
-              "body": "Nightly test run scored ${ .run_tests.score }% (${ .run_tests.letter_grade }). ${ .run_tests.failed } of ${ .run_tests.total_tests } tests failed.",
+              "body": "Weekly test run scored ${ .run_tests.score }% (${ .run_tests.letter_grade }). ${ .run_tests.failed } of ${ .run_tests.total_tests } tests failed.",
               "link": "/test-results",
               "send_email": true
             }
