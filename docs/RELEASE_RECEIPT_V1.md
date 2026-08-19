@@ -3,8 +3,8 @@
 ## Release Classification
 
 **CLOUDBROWSER CONTROL V1**
-**RELEASE GATE: PENDING — CI/CD RUN FAILED, WORKFLOW FIXES REQUIRED**
-**STATUS: NOT FROZEN — CI workflow committed but run failed, fixes applied to ci/release-gate.yml**
+**RELEASE GATE: PENDING — CI RECOMMIT REQUIRED**
+**STATUS: NOT FROZEN — corrected ci/release-gate.yml not yet committed to .github/workflows/**
 
 ---
 
@@ -37,12 +37,13 @@
 1. **Engine syntax check**: Removed `npm ci` — `node --check server.js` only validates syntax, no dependencies needed
 2. **RLS check**: Added exclusion for `User.jsonc` — built-in entity with platform-managed security (admin-only access enforced by platform, no explicit `rls` key in schema)
 
-### Phase 1 — Workflow Parity Check (2026-08-19)
+### Phase 1 — Workflow Parity Check (2026-08-19, re-verified 22:13 UTC)
 
 **RESULT: CI RECOMMIT REQUIRED**
 
 The corrected `ci/release-gate.yml` contains both fixes. The live
-`.github/workflows/release-gate.yml` still contains the OLD configuration.
+`.github/workflows/release-gate.yml` still contains the OLD configuration —
+the recommit has NOT been performed as of this verification.
 
 #### Semantic Parity Comparison
 
