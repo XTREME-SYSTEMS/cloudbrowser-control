@@ -1,5 +1,8 @@
 import { Card } from "@/components/ui/card";
 
+/**
+ * @param {{ label: string; value: any; icon: any; accent?: string }} props
+ */
 export default function StatCard({ label, value, icon: Icon, accent = "text-primary" }) {
   return (
     <Card className="p-5">

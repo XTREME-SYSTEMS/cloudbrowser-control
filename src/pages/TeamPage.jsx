@@ -39,7 +39,7 @@ export default function TeamPage() {
   const invite = async () => {
     if (!inviteEmail) return;
     try {
-      await base44.users.inviteUser(inviteEmail, inviteRole);
+      await /** @type {any} */ (base44).users.inviteUser(inviteEmail, inviteRole);
       setInviteEmail("");
       const users = await base44.entities.User.list();
       setMembers(users);

@@ -227,6 +227,7 @@ export default function Dashboard() {
   );
 }
 
+/** @param {{ label: string; value: any; ok?: any; icon: any }} props */
 function StatusItem({ label, value, ok, icon: Icon }) {
   return (
     <div className="flex items-center gap-2">
@@ -239,6 +240,7 @@ function StatusItem({ label, value, ok, icon: Icon }) {
   );
 }
 
+/** @param {{ label: string; value: any; icon: any; accent?: string }} props */
 function Metric({ label, value, icon: Icon, accent }) {
   return (
     <div className="p-3 rounded-lg bg-muted/30">

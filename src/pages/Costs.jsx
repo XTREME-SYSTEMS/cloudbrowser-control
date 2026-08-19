@@ -20,7 +20,7 @@ export default function Costs() {
   const [sessions, setSessions] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [rateForm, setRateForm] = useState({});
+  const [rateForm, setRateForm] = useState(/** @type {any} */ ({}));
   const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function Costs() {
     // Long sessions
     const longSessions = sessions.filter((s) => {
       if (!s.started_at) return false;
-      const dur = (s.ended_at ? new Date(s.ended_at) : new Date()) - new Date(s.started_at);
+      const dur = (s.ended_at ? new Date(s.ended_at) : new Date()).getTime() - new Date(s.started_at).getTime();
       return dur > 300000; // >5 min
     });
     if (longSessions.length > 0) {
