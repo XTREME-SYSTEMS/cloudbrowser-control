@@ -22,7 +22,7 @@ export async function hmacSha256(secret, message) {
 
 export async function callGateway(base44, payload) {
   try {
-    const res = await base44.asServiceRole.functions.invoke("apiGateway", payload);
+    const res = await base44.asServiceRole.functions.invoke("cloudBrowserGatewayV6", payload);
     return { ok: res.status < 400, status: res.status, data: res.data, error: res.data?.error };
   } catch (e) {
     const status = e.status || e.response?.status || e.response?.statusCode || e.statusCode || 500;

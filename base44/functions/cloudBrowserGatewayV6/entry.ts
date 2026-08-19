@@ -6,11 +6,12 @@ import {
 } from "../../shared/gatewayCore.ts";
 
 // ═══════════════════════════════════════════════
-// API Gateway v1 — legacy identity (kept for compatibility)
-// All new callers should use cloudBrowserGatewayV6.
+// CloudBrowser Gateway V6 — fresh deployed identity
+// Complete production gateway with project-scoped tenant isolation.
+// GATEWAY_IDENTITY marker proves SOURCE = DEPLOYED = INVOKED.
 // ═══════════════════════════════════════════════
 
-const GATEWAY_IDENTITY = "apiGateway";
+const GATEWAY_IDENTITY = "cloudBrowserGatewayV6";
 
 function errorResponse(status, error, requestId) {
   return Response.json({ error, request_id: requestId, __v: DEPLOYMENT_VERSION, gateway: GATEWAY_IDENTITY }, { status });
