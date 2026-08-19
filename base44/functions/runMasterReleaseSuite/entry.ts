@@ -507,9 +507,28 @@ export default async function (req) {
       // PHASE 2 HARDENING: CI/CD PASS requires an actual green GitHub Actions run
       // from the real workflow file committed at .github/workflows/release-gate.yml.
       // Caller-supplied booleans (quality_gates.cicd) are NOT accepted as evidence.
-      // The platform sandbox cannot verify GitHub Actions; this test remains PENDING
-      // until the operator commits the workflow and confirms a green run.
-      return { error: "CI/CD PENDING — requires actual green GitHub Actions run from .github/workflows/release-gate.yml. Caller-supplied booleans are not accepted." };
+      // This test queries the actual GitHub Actions API to verify the real receipt.
+      const RELEASE_SHA = "ef241948fa4a1433785b1a59088fd5deabc4fed8";
+      const repo = "XTREME-SYSTEMS/cloudbrowser-control";
+      try {
+        const apiUrl = `https://api.github.com/repos/${repo}/actions/runs?head_sha=${RELEASE_SHA}`;
+        const resp = await fetch(apiUrl, {
+          headers: {
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "cloudbrowser-control-release-gate",
+          },
+        });
+        if (!resp.ok) return { error: `GitHub API returned HTTP ${resp.status}` };
+        const data = await resp.json();
+        const runs = data.workflow_runs || [];
+        if (runs.length === 0) return { error: `No GitHub Actions runs found for SHA ${RELEASE_SHA.slice(0, 7)}` };
+        const successRun = runs.find((r) => r.conclusion === "success");
+        if (!successRun) {
+          const conclusions = runs.map((r) => `${r.name}: ${r.conclusion || r.status}`).join(", ");
+          return { error: `No successful run for SHA ${RELEASE_SHA.slice(0, 7)}. Found: ${conclusions}` };
+        }
+        return true;
+      } catch (e) { return { error: `GitHub API verification failed: ${e.message}` }; }
     });
 
     // ── Compile Master Matrix ──

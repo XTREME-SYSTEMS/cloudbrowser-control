@@ -1,6 +1,136 @@
 # CloudBrowser Control V1 — Operational Handoff
 
-## Daily Operations Guide
+## Production Start Procedure
+
+### 1. Health Verification
+```
+POST /functions/engineHealth  {}
+```
+Verify `status: "healthy"`, `engine_version: "3.0.0"`, `active_sessions < max_sessions`.
+If unhealthy, see Railway Recovery (step 12).
+
+### 2. Create a Project
+Navigate to Settings → Projects → New Project. Name it, optionally set default
+session config (viewport, proxy). Projects provide tenant isolation boundaries.
+
+### 3. Create and Scope an API Key
+Navigate to Settings → API Keys → Create. Name it, select scopes
+(`sessions:write`, `jobs:write`, `results:read`), bind to the Project from step 2.
+Copy the key immediately — it is shown once and stored as a SHA-256 hash.
+
+### 4. Start a Browser Session
+```
+POST /functions/cloudBrowserGatewayV6
+Authorization: Bearer cb_live_<key>
+{ "path": "/sessions", "method": "POST", "data": { "target_url": "https://example.com" } }
+```
+Returns `session_id`. Session enters `running` status.
+
+### 5. Run Browser Actions
+```
+POST /functions/cloudBrowserGatewayV6
+{ "path": "/sessions/{id}/actions", "method": "POST",
+  "data": { "action": "click", "selector": "#button" } }
+```
+Actions: `goto`, `click`, `type`, `fill`, `scroll`, `screenshot`, `extract_text`,
+`extract_html`, `evaluate`, `wait_for_selector`, `press`, `select_option`.
+
+### 6. Create and Run Jobs
+Navigate to Jobs → New Job (visual builder) or Jobs → AI Builder. Set start URL,
+add steps, configure session options, save. Run via API:
+```
+POST /functions/runJob  { "job_id": "<job_id>" }
+```
+Job executes all steps sequentially, stores results and artifacts, triggers
+webhooks on completion.
+
+### 7. Use MCP (Model Context Protocol)
+```
+POST /functions/mcpTools
+{ "tool": "browser_navigate", "params": { "url": "..." }, "api_key": "cb_live_<key>" }
+```
+Tools: `browser_start`, `browser_navigate`, `browser_click`, `browser_type`,
+`browser_extract`, `browser_screenshot`, `browser_observe`, `browser_act`,
+`context_create`, `context_attach`. All scoped to the API key's project_id.
+
+### 8. Use Durable Contexts
+Create a Profile (Settings → Profiles) with cookies/storage state. A
+BrowserContext is created from the Profile with lease/lock/revoke lifecycle.
+Attach to a session:
+```
+{ "path": "/sessions", "method": "POST", "data": { "profile_id": "<profile_id>" } }
+```
+Contexts persist auth state across sessions. Expired contexts are auto-reaped.
+
+### 9. Retrieve Artifacts
+Navigate to Jobs → job → Artifacts tab, or via API:
+```
+GET /functions/cloudBrowserGatewayV6  { "path": "/artifacts/{id}" }
+```
+Each artifact has a SHA-256 content hash for integrity. Signed URLs are
+time-limited for download. Types: screenshot, pdf, download, video, json, csv.
+
+### 10. Monitor Errors
+Navigate to Errors page (sidebar). Filter by pattern, severity, or date.
+ErrorPattern entities auto-classify recurring failures. Click an error to see
+affected jobs/sessions and stack traces.
+
+### 11. Check Rate Limits
+Rate limits are database-backed (RateLimitEntry entity, fixed-window, atomic $inc).
+Default: 60 requests/minute per API key (configurable in Settings → System).
+When exceeded, gateway returns HTTP 429. Monitor via:
+```
+GET /functions/cloudBrowserGatewayV6  { "path": "/health" }
+```
+Rate limit entries are auto-cleaned after each window expires.
+
+### 12. Railway (Engine) Recovery
+If engine health = unhealthy/unreachable:
+1. Check Railway dashboard for worker status
+2. Verify ENGINE_URL and ENGINE_API_KEY secrets (Settings → Secrets)
+3. Railway auto-restarts crashed workers
+4. Sessions queue but do not execute until engine recovers
+5. Run `engineHealth` to confirm recovery
+6. Orphaned sessions recovered by `recoverOrphans` function
+
+### 13. Base44 (Control Plane) Recovery
+If gateway returns 500 or functions not responding:
+1. Check Base44 status page
+2. Verify functions deployed via `getDeploymentStatus`
+3. If deployment drift: redeploy affected functions from the builder
+4. If RLS lockout: verify user role is admin in Settings → Team
+5. Contact Base44 support if platform is down
+
+### 14. Rollback
+**Deployment rollback:** Revert function source to prior version in the builder,
+redeploy, run `getDeploymentStatus` to verify all functions report CURRENT,
+run `runTestSuite` to verify runtime health. Known-good checkpoint: v5.0.0.
+
+**Job rollback:** Navigate to Jobs → job → Versions tab, select a prior
+JobVersion, restore — creates a new version with the prior steps snapshot.
+
+### 15. Credential Rotation
+**ENCRYPTION_KEY:** Generate new key → update Settings → Secrets → run
+`migrateSecrets` to re-encrypt all stored secrets → verify decryption.
+
+**ENGINE_API_KEY:** Generate new key in engine → update Settings → Secrets →
+run `engineHealth` to verify connectivity.
+
+**CAPTCHA_SOLVER_API_KEY:** Update Settings → Secrets → test with a
+captcha-protected page.
+
+### 16. Daily Health Verification
+1. Dashboard loads, engine status = healthy
+2. Create a test session → navigate → screenshot → terminate
+3. Run a test job → verify results appear
+4. Check Errors page for new patterns
+5. Run `engineHealth` → response time < 500ms
+6. Check `getDeploymentStatus` → 0 functional drift
+7. Review AuditLog for unexpected admin actions
+
+---
+
+## Daily Operations Guide (Detailed Reference)
 
 ### API Keys
 
@@ -150,6 +280,24 @@ Contexts support leasing (lock/unlock) and expiration (auto-reap).
 2. Filter by error pattern, severity, or date
 3. ErrorPattern entities auto-classify recurring failures
 4. Click an error to see affected jobs/sessions and stack traces
+
+---
+
+### Rate Limits
+
+**Check rate limit status:**
+Rate limits are database-backed (RateLimitEntry entity) using fixed-window
+algorithm with atomic $inc for concurrency safety.
+
+- Default: 60 requests/minute per API key (configurable in Settings → System)
+- When exceeded: gateway returns HTTP 429 with error "Rate limit exceeded"
+- Rate limit entries are auto-cleaned after each 60-second window expires
+- To adjust: update `rate_limit_per_minute` in SystemSettings
+
+**Monitor rate limit entries:**
+RateLimitEntry records are admin-only (read). Navigate to Settings to view
+current rate limit configuration. The gateway checks rate limits on every
+authenticated request via `checkRateLimit` in gatewayCore.ts.
 
 ---
 
