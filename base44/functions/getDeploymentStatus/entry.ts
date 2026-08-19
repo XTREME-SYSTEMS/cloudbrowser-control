@@ -10,10 +10,18 @@ import { DEPLOYMENT_VERSION, DEPLOYED_AT, SCHEMA_VERSION, FUNCTION_REGISTRY } fr
 async function invokeForVersion(base44, functionName, payload) {
   try {
     const res = await base44.asServiceRole.functions.invoke(functionName, payload);
-    return { status: res.status, __v: res.data?.__v };
+    if (res?.data?.__v) return { status: res.status, __v: res.data.__v };
+    if (res?.__v) return { status: res.status, __v: res.__v };
+    if (res?.json && typeof res.json === "function") {
+      try {
+        const body = await res.clone().json();
+        return { status: res.status, __v: body?.__v };
+      } catch {}
+    }
+    return { status: res?.status, __v: undefined };
   } catch (e) {
     const data = e.data || e.response?.data || e.response?._data || {};
-    return { status: e.status || e.response?.status || 500, __v: data.__v };
+    return { status: e.status || e.response?.status || 500, __v: data.__v || e.__v };
   }
 }
 

@@ -4,6 +4,7 @@ import { calculateJobCost } from "../../shared/costCalculator.ts";
 import { logAudit } from "../../shared/auditLogger.ts";
 import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+// v5.0.0 — deployment refresh
 
 // Compute SHA-256 content hash for artifact integrity
 async function computeContentHash(base64Data) {

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+// v5.0.0 — deployment refresh
 
 // ═══════════════════════════════════════════════
 // Inbound webhook — HMAC-SHA256 required, fail-closed (v5)

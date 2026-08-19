@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+// v5.0.0 — deployment refresh
 import {
   hashKey, deriveClientIP, ipAllowed, checkRateLimit, matchRoute, ROUTE_SCOPES, dispatch
 } from "../../shared/gatewayCore.ts";

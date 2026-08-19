@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+// v5.0.0 — deployment refresh
 
 // ═══════════════════════════════════════════════
 // Engine Connection — SECURITY HARDENED v4

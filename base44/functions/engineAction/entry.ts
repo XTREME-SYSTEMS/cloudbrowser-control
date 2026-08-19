@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+// v5.0.0 — deployment refresh
 
 export default async function(req) {
   try {

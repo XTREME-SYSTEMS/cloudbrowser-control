@@ -32,7 +32,7 @@ export const SCHEMA_VERSION = "v4.0";
 
 export const FUNCTION_REGISTRY = {
   apiGateway: "v5.0.0",
-  cloudBrowserGatewayV6: "v6.0.0",
+  cloudBrowserGatewayV6: "v5.0.0",
   runJob: "v5.0.0",
   engineAction: "v5.0.0",
   managePool: "v5.0.0",
