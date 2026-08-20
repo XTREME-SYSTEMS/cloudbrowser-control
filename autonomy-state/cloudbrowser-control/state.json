@@ -2,7 +2,7 @@
   "project_id": "cloudbrowser-control",
   "repo": "XTREME-SYSTEMS/cloudbrowser-control",
   "staging_app_id": "6a8688c834cf23adb0937741",
-  "state": "MONITORING",
+  "state": "INFRA_BLOCKED",
   "current_phase": "BRANCH_BUILD_VALIDATION",
   "candidate_branch": "autonomous/cloudbrowser-control-v1",
   "base_sha": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
@@ -16,14 +16,19 @@
   "hour_bucket": null,
   "active_work_packet_id": null,
   "work_packet_attempt": 0,
-  "latest_validation_run_id": null,
+  "latest_validation_run_id": "STG_20260820050246_LWJ0C",
   "latest_quality_score": null,
-  "last_release_gate_result": "NOT_VERIFIED",
+  "last_release_gate_result": "FAIL_RUNTIME_BLOCKED",
   "blocking_failures": [
     {
       "type": "INFRA_BLOCKED",
       "signature": "fortress-engine-unset",
       "message": "Fortress Staging latest evidence has 9 blocked checks because the preview browser engine is unset."
+    },
+    {
+      "type": "GOVERNANCE_BLOCKED",
+      "signature": "fortress-source-sha-drift",
+      "message": "Fortress Staging evidence is stamped d739613 while the autonomous candidate is 2fbd05ff471b6dd1575a600449f4827cba83feca."
     },
     {
       "type": "INFRA_BLOCKED",
@@ -41,11 +46,11 @@
   "last_clean_at": null,
   "critical_count": 0,
   "high_count": 0,
-  "deployment_drift_count": null,
+  "deployment_drift_count": 1,
   "approval_required": false,
   "autonomous_mutation_enabled": false,
   "release_ready": false,
   "rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
-  "receipt_chain": [],
-  "updated_at": "2026-08-20T06:31:39Z"
+  "receipt_chain": ["validation-bootstrap-20260820T063200Z"],
+  "updated_at": "2026-08-20T06:33:00Z"
 }
