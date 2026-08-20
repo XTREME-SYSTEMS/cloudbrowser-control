@@ -1,9 +1,9 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { executeJob, JobRunnerError } from "../../shared/jobRunner.ts";
 
-export default async function(req) {
+export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
-    // Service-role: called by workflow, no user context
     const body = await req.json();
     const { scheduleId } = body;
 
@@ -12,8 +12,11 @@ export default async function(req) {
     if (!schedule.enabled) return Response.json({ ok: false, reason: "Schedule disabled" });
 
     const template = schedule.job_template || {};
+    const projectId = template.project_id || template.projectId || null;
+    if (!projectId) {
+      return Response.json({ error: "Scheduled job template must include project_id" }, { status: 400 });
+    }
 
-    // Create job from template
     const job = await base44.asServiceRole.entities.Job.create({
       name: template.name || `Scheduled: ${schedule.name}`,
       status: "queued",
@@ -22,36 +25,37 @@ export default async function(req) {
       max_retries: template.max_retries || 3,
       session_config: template.session_config || {},
       tags: ["scheduled"],
-      started_at: new Date().toISOString(),
+      project_id: projectId,
     });
 
-    // Create steps from template
     const steps = template.steps || [];
     if (steps.length > 0) {
-      await base44.asServiceRole.entities.Step.bulkCreate(
-        steps.map((s, i) => ({
-          job_id: job.id,
-          order: i,
-          name: s.name || "",
-          action_type: s.action_type,
-          selector: s.selector || "",
-          value: s.value || "",
-          options: s.options || {},
-        }))
-      );
+      await base44.asServiceRole.entities.Step.bulkCreate(steps.map((s, i) => ({
+        job_id: job.id,
+        order: i,
+        name: s.name || "",
+        action_type: s.action_type,
+        selector: s.selector || "",
+        value: s.value || "",
+        options: s.options || {},
+      })));
     }
 
-    // Invoke runJob
-    await base44.asServiceRole.functions.invoke("runJob", { jobId: job.id });
+    const result = await executeJob(base44, {
+      jobId: job.id,
+      authorizedProjectId: projectId,
+      actor: { id: `schedule:${scheduleId}`, full_name: schedule.name || "Schedule", role: "schedule" },
+      idempotencyKey: `schedule:${scheduleId}:job:${job.id}`,
+    });
 
-    // Update schedule
     await base44.asServiceRole.entities.Schedule.update(scheduleId, {
       last_run: new Date().toISOString(),
       run_count: (schedule.run_count || 0) + 1,
     });
 
-    return Response.json({ ok: true, jobId: job.id });
+    return Response.json({ ok: result.ok, jobId: job.id, result });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = error instanceof JobRunnerError ? error.status : 500;
+    return Response.json({ error: error.message }, { status });
   }
 }

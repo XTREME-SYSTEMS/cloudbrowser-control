@@ -1,12 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { decrypt } from "../../shared/crypto.ts";
+import { executeJob, JobRunnerError } from "../../shared/jobRunner.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
-// v5.0.0 — deployment refresh
-
-// ═══════════════════════════════════════════════
-// Inbound webhook — HMAC-SHA256 required, fail-closed (v5)
-// Uses encrypted secret from secret_encrypted field (not plaintext)
-// ═══════════════════════════════════════════════
 
 async function hmacSha256(secret, message) {
   const enc = new TextEncoder();
@@ -30,43 +25,30 @@ export default async function (req) {
     const body = await req.json();
     const { job_id, signature, timestamp, event_id, payload } = body;
 
-    // Fail-closed: require signature first
-    if (!signature) {
-      return Response.json({ error: "Webhook signature required", __v: DEPLOYMENT_VERSION }, { status: 401 });
-    }
-    if (!timestamp) {
-      return Response.json({ error: "Webhook timestamp required", __v: DEPLOYMENT_VERSION }, { status: 401 });
-    }
+    if (!signature) return Response.json({ error: "Webhook signature required", __v: DEPLOYMENT_VERSION }, { status: 401 });
+    if (!timestamp) return Response.json({ error: "Webhook timestamp required", __v: DEPLOYMENT_VERSION }, { status: 401 });
 
-    // Replay protection
     const ts = parseInt(timestamp, 10);
     if (isNaN(ts) || Math.abs(Date.now() - ts) > REPLAY_WINDOW_MS) {
       return Response.json({ error: "Webhook timestamp outside replay window", __v: DEPLOYMENT_VERSION }, { status: 401 });
     }
 
-    // Idempotency check
     if (event_id) {
       const seen = await base44.asServiceRole.entities.WebhookDelivery.filter({ event: `idempotency:${event_id}` });
-      if (seen.length > 0) {
-        return Response.json({ ok: true, idempotent: true, message: "Already processed", __v: DEPLOYMENT_VERSION });
-      }
+      if (seen.length > 0) return Response.json({ ok: true, idempotent: true, message: "Already processed", __v: DEPLOYMENT_VERSION });
     }
 
-    // Verify HMAC against all active webhooks — decrypt secret before signing
     const webhooks = await base44.asServiceRole.entities.Webhook.filter({ active: true });
     let verifiedWebhook = null;
     const message = `${timestamp}.${event_id || ""}.${JSON.stringify(payload || {})}`;
 
-    for (const w of webhooks) {
-      let signingSecret = null;
-      // V1.1 F-17: encrypted secret only — no plaintext fallback (fail-closed)
-      if (w.secret_encrypted) {
-        signingSecret = await decrypt(w.secret_encrypted);
-      }
+    for (const webhook of webhooks) {
+      if (!webhook.secret_encrypted) continue;
+      const signingSecret = await decrypt(webhook.secret_encrypted).catch(() => null);
       if (!signingSecret) continue;
       const expected = await hmacSha256(signingSecret, message);
       if (timingSafeEqual(signature, expected)) {
-        verifiedWebhook = w;
+        verifiedWebhook = webhook;
         break;
       }
     }
@@ -86,21 +68,32 @@ export default async function (req) {
     }
 
     if (!job_id) return Response.json({ error: "job_id required", __v: DEPLOYMENT_VERSION }, { status: 400 });
+    if (!verifiedWebhook.project_id) {
+      return Response.json({ error: "Webhook must be project-scoped", __v: DEPLOYMENT_VERSION }, { status: 403 });
+    }
 
     const job = await base44.asServiceRole.entities.Job.get(job_id);
     if (!job) return Response.json({ error: "Job not found", __v: DEPLOYMENT_VERSION }, { status: 404 });
-
-    // V1.1 F-06: webhook project scoping — job must belong to the verified webhook's project
-    if (verifiedWebhook.project_id && job.project_id && verifiedWebhook.project_id !== job.project_id) {
+    if (!job.project_id || verifiedWebhook.project_id !== job.project_id) {
       await base44.asServiceRole.entities.WebhookDelivery.create({
-        webhook_id: verifiedWebhook.id, event: "project_mismatch",
-        payload: { job_id, webhook_project: verifiedWebhook.project_id, job_project: job.project_id },
-        response_status: 403, response_body: "Job/project mismatch", attempts: 1, success: false, duration_ms: 0,
+        webhook_id: verifiedWebhook.id,
+        event: "project_mismatch",
+        payload: { job_id },
+        response_status: 403,
+        response_body: "Job/project mismatch",
+        attempts: 1,
+        success: false,
+        duration_ms: 0,
       }).catch(() => {});
       return Response.json({ error: "Job does not belong to webhook project", __v: DEPLOYMENT_VERSION }, { status: 403 });
     }
 
-    const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: job_id, project_id: verifiedWebhook.project_id });
+    const result = await executeJob(base44, {
+      jobId: job_id,
+      authorizedProjectId: verifiedWebhook.project_id,
+      actor: { id: `webhook:${verifiedWebhook.id}`, full_name: verifiedWebhook.name || "Webhook", role: "webhook" },
+      idempotencyKey: event_id ? `webhook:${verifiedWebhook.id}:${event_id}` : `webhook:${verifiedWebhook.id}:job:${job_id}`,
+    });
 
     if (event_id) {
       await base44.asServiceRole.entities.WebhookDelivery.create({
@@ -116,6 +109,7 @@ export default async function (req) {
 
     return Response.json({ success: true, job_id, verified_webhook: verifiedWebhook.name, result, __v: DEPLOYMENT_VERSION });
   } catch (error) {
-    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
+    const status = error instanceof JobRunnerError ? error.status : 500;
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status });
   }
 }

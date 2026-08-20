@@ -1,8 +1,4 @@
-// ═══════════════════════════════════════════════
-// Gateway Core — shared gateway logic for all gateway identities
-// Extracted to avoid duplication between apiGateway and cloudBrowserGatewayV6.
-// Plain module — no Deno.serve, just exports.
-// ═══════════════════════════════════════════════
+import { executeJob, JobRunnerError } from "./jobRunner.ts";
 
 export async function hashKey(key) {
   const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
@@ -53,38 +49,25 @@ export async function checkRateLimit(base44, keyHash, limitPerMinute) {
     { key_hash: keyHash, window_start: windowStart },
     { $inc: { count: 1 } }
   );
-
   const updatedCount = updateResult.updated ?? updateResult.modified_count ?? 0;
 
   if (updatedCount === 0) {
     try {
-      await base44.asServiceRole.entities.RateLimitEntry.create({
-        key_hash: keyHash,
-        window_start: windowStart,
-        count: 1,
-      });
+      await base44.asServiceRole.entities.RateLimitEntry.create({ key_hash: keyHash, window_start: windowStart, count: 1 });
       return true;
     } catch (e) { /* race — fall through */ }
   }
 
-  const entries = await base44.asServiceRole.entities.RateLimitEntry.filter({
-    key_hash: keyHash,
-    window_start: windowStart,
-  });
-
+  const entries = await base44.asServiceRole.entities.RateLimitEntry.filter({ key_hash: keyHash, window_start: windowStart });
   if (entries.length === 0) return true;
-
   const totalCount = entries.reduce((sum, e) => sum + (e.count || 0), 0);
 
   if (entries.length > 1) {
     await base44.asServiceRole.entities.RateLimitEntry.update(entries[0].id, { count: totalCount });
-    for (let i = 1; i < entries.length; i++) {
-      await base44.asServiceRole.entities.RateLimitEntry.delete(entries[i].id).catch(() => {});
-    }
+    for (let i = 1; i < entries.length; i++) await base44.asServiceRole.entities.RateLimitEntry.delete(entries[i].id).catch(() => {});
   }
 
   const allowed = totalCount <= limitPerMinute;
-  // V1.1 F-10: don't let rejected requests over-count and extend the block window
   if (!allowed) {
     await base44.asServiceRole.entities.RateLimitEntry.updateMany(
       { key_hash: keyHash, window_start: windowStart },
@@ -108,8 +91,6 @@ export const ROUTE_SCOPES = {
   "GET:/projects": "projects:read",
 };
 
-// V1.1 AM-4: per-action capability scopes. A key must hold the specific
-// capability in addition to the route's base scope to invoke dangerous actions.
 export const ACTION_CAPABILITIES = {
   evaluate: "sessions:evaluate",
   extract_json: "sessions:evaluate",
@@ -147,11 +128,13 @@ export function matchRoute(method, rawPath) {
   return null;
 }
 
-// Shared dispatch — used by all gateway identities.
-// `gatewayIdentity` is injected into every response for propagation proof.
 export async function dispatch(base44, route, params, data, keyRecord, requestId, gatewayIdentity, enginePost, engineDelete, isEngineConfigured) {
   function errResp(status, error) {
     return Response.json({ error, request_id: requestId, gateway: gatewayIdentity }, { status });
+  }
+
+  if (route !== "GET:/health" && !keyRecord?.project_id) {
+    return errResp(403, "Project-scoped API key required");
   }
 
   switch (route) {
@@ -160,23 +143,15 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
 
     case "GET:/sessions": {
       const allSessions = await base44.asServiceRole.entities.Session.list("-created_date", 50);
-      const sessions = keyRecord.project_id
-        ? allSessions.filter((s) => s.project_id === keyRecord.project_id)
-        : allSessions;
+      const sessions = allSessions.filter((s) => s.project_id === keyRecord.project_id);
       return Response.json({ sessions, request_id: requestId, gateway: gatewayIdentity });
     }
 
     case "POST:/sessions": {
-      if (!await isEngineConfigured()) {
-        return errResp(503, "Browser engine not configured");
-      }
-      // V1.1 AM-4: CDP and proxy are privileged session capabilities
-      if (data.enable_cdp && !(keyRecord.scopes || []).includes("sessions:cdp")) {
-        return errResp(403, "Insufficient capability. Required: sessions:cdp");
-      }
-      if (data.proxy && !(keyRecord.scopes || []).includes("sessions:proxy")) {
-        return errResp(403, "Insufficient capability. Required: sessions:proxy");
-      }
+      if (!await isEngineConfigured()) return errResp(503, "Browser engine not configured");
+      if (data.enable_cdp && !(keyRecord.scopes || []).includes("sessions:cdp")) return errResp(403, "Insufficient capability. Required: sessions:cdp");
+      if (data.proxy && !(keyRecord.scopes || []).includes("sessions:proxy")) return errResp(403, "Insufficient capability. Required: sessions:proxy");
+
       let engineRes;
       try {
         engineRes = await enginePost("/sessions", {
@@ -202,9 +177,7 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       }
 
       const runtimeSessionId = engineRes.sessionId;
-      if (!runtimeSessionId) {
-        return errResp(502, "Engine returned no runtime session ID");
-      }
+      if (!runtimeSessionId) return errResp(502, "Engine returned no runtime session ID");
 
       const session = await base44.asServiceRole.entities.Session.create({
         session_id: runtimeSessionId,
@@ -230,10 +203,10 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
           created_at: engineRes.createdAt,
           expires_at: engineRes.expiresAt,
           config_version: engineRes.configVersion,
-          project_id: keyRecord.project_id || data.project_id,
+          project_id: keyRecord.project_id,
         },
         started_at: new Date().toISOString(),
-        project_id: keyRecord.project_id || data.project_id,
+        project_id: keyRecord.project_id,
       });
 
       return Response.json({
@@ -250,26 +223,18 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
 
     case "GET:/sessions/:id": {
       const session = await base44.asServiceRole.entities.Session.get(params.id);
-      if (!session) return errResp(404, "Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id)
-        return errResp(404, "Session not found");
+      if (!session || session.project_id !== keyRecord.project_id) return errResp(404, "Session not found");
       return Response.json({ session, request_id: requestId, gateway: gatewayIdentity });
     }
 
     case "POST:/sessions/:id/action": {
       const session = await base44.asServiceRole.entities.Session.get(params.id);
-      if (!session) return errResp(404, "Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id)
-        return errResp(404, "Session not found");
+      if (!session || session.project_id !== keyRecord.project_id) return errResp(404, "Session not found");
       if (!session.session_id) return errResp(409, "Session has no runtime ID — cannot execute action");
-
       if (!await isEngineConfigured()) return errResp(503, "Browser engine not configured");
 
-      // V1.1 AM-4: dangerous-action capability authorization
       const cap = requiredCapability(data.action_type);
-      if (cap && !(keyRecord.scopes || []).includes(cap)) {
-        return errResp(403, `Insufficient capability. Required: ${cap}`);
-      }
+      if (cap && !(keyRecord.scopes || []).includes(cap)) return errResp(403, `Insufficient capability. Required: ${cap}`);
 
       let engineRes;
       try {
@@ -290,51 +255,31 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
           status: "idle",
         }).catch(() => {});
       }
-
       return Response.json({ result: engineRes, request_id: requestId, gateway: gatewayIdentity });
     }
 
     case "DELETE:/sessions/:id": {
       const session = await base44.asServiceRole.entities.Session.get(params.id);
-      if (!session) return errResp(404, "Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id)
-        return errResp(404, "Session not found");
+      if (!session || session.project_id !== keyRecord.project_id) return errResp(404, "Session not found");
 
       let runtimeClosed = false;
       let closeError = null;
-
       if (session.session_id && await isEngineConfigured()) {
-        try {
-          await engineDelete(`/sessions/${session.session_id}`);
-          runtimeClosed = true;
-        } catch (err) {
-          closeError = err.message;
-          runtimeClosed = true;
-        }
-      } else {
-        runtimeClosed = true;
-      }
+        try { await engineDelete(`/sessions/${session.session_id}`); runtimeClosed = true; }
+        catch (err) { closeError = err.message; runtimeClosed = true; }
+      } else runtimeClosed = true;
 
       await base44.asServiceRole.entities.Session.update(params.id, {
         status: "ended",
         ended_at: new Date().toISOString(),
         metadata: { ...session.metadata, termination_reason: closeError || "closed", runtime_closed: runtimeClosed },
       });
-
-      return Response.json({
-        success: true,
-        runtime_closed: runtimeClosed,
-        close_error: closeError,
-        request_id: requestId,
-        gateway: gatewayIdentity,
-      });
+      return Response.json({ success: true, runtime_closed: runtimeClosed, close_error: closeError, request_id: requestId, gateway: gatewayIdentity });
     }
 
     case "GET:/jobs": {
       const allJobs = await base44.asServiceRole.entities.Job.list("-created_date", 50);
-      const jobs = keyRecord.project_id
-        ? allJobs.filter((j) => j.project_id === keyRecord.project_id)
-        : allJobs;
+      const jobs = allJobs.filter((j) => j.project_id === keyRecord.project_id);
       return Response.json({ jobs, request_id: requestId, gateway: gatewayIdentity });
     }
 
@@ -346,49 +291,50 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
         session_config: data.session_config || {},
         tags: data.tags || [],
         steps_count: data.steps?.length || 0,
-        project_id: keyRecord.project_id || data.project_id,
+        project_id: keyRecord.project_id,
       });
       if (data.steps?.length) {
-        await base44.asServiceRole.entities.Step.bulkCreate(
-          data.steps.map((s, i) => ({
-            job_id: job.id,
-            order: i,
-            name: s.name || `Step ${i + 1}`,
-            action_type: s.action_type,
-            selector: s.selector,
-            value: s.value,
-            options: s.options,
-            description: s.description,
-          }))
-        );
+        await base44.asServiceRole.entities.Step.bulkCreate(data.steps.map((s, i) => ({
+          job_id: job.id,
+          order: i,
+          name: s.name || `Step ${i + 1}`,
+          action_type: s.action_type,
+          selector: s.selector,
+          value: s.value,
+          options: s.options,
+          description: s.description,
+        })));
       }
       return Response.json({ job, request_id: requestId, gateway: gatewayIdentity }, { status: 201 });
     }
 
     case "POST:/jobs/:id/run": {
       const job = await base44.asServiceRole.entities.Job.get(params.id);
-      if (!job) return errResp(404, "Job not found");
-      if (keyRecord.project_id && job.project_id !== keyRecord.project_id)
-        return errResp(404, "Job not found");
-      const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: params.id, project_id: keyRecord.project_id });
-      return Response.json({ ...(result.data || result), request_id: requestId, gateway: gatewayIdentity });
+      if (!job || job.project_id !== keyRecord.project_id) return errResp(404, "Job not found");
+      try {
+        const result = await executeJob(base44, {
+          jobId: params.id,
+          authorizedProjectId: keyRecord.project_id,
+          actor: { id: `api-key:${keyRecord.id}`, full_name: keyRecord.name || "API Key", role: "api_key" },
+          idempotencyKey: data.idempotency_key || `job:${params.id}`,
+        });
+        return Response.json({ ...result, request_id: requestId, gateway: gatewayIdentity });
+      } catch (error) {
+        if (error instanceof JobRunnerError) return errResp(error.status, error.message);
+        return errResp(500, error.message);
+      }
     }
 
     case "GET:/jobs/:id/results": {
       const job = await base44.asServiceRole.entities.Job.get(params.id);
-      if (!job) return errResp(404, "Job not found");
-      if (keyRecord.project_id && job.project_id !== keyRecord.project_id)
-        return errResp(404, "Job not found");
+      if (!job || job.project_id !== keyRecord.project_id) return errResp(404, "Job not found");
       const results = await base44.asServiceRole.entities.Result.filter({ job_id: params.id });
       return Response.json({ results, request_id: requestId, gateway: gatewayIdentity });
     }
 
     case "GET:/projects": {
-      const allProjects = await base44.asServiceRole.entities.Project.list("-created_date", 50);
-      const projects = keyRecord.project_id
-        ? allProjects.filter((p) => p.id === keyRecord.project_id)
-        : allProjects;
-      return Response.json({ projects, request_id: requestId, gateway: gatewayIdentity });
+      const project = await base44.asServiceRole.entities.Project.get(keyRecord.project_id);
+      return Response.json({ projects: project ? [project] : [], request_id: requestId, gateway: gatewayIdentity });
     }
 
     default:
