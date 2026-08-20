@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - fortress/v1.1-enterprise-integration
+      - fortress/v1.1
     paths-ignore:
       - docs/FORTRESS_ENTERPRISE_INTEGRATION_RECEIPT.md
 
@@ -188,7 +188,7 @@ jobs:
           fi
       - uses: actions/checkout@v4
         with:
-          ref: fortress/v1.1-enterprise-integration
+          ref: fortress/v1.1
           fetch-depth: 0
       - name: Persist integration receipt
         run: |
@@ -220,8 +220,8 @@ jobs:
           git add docs/FORTRESS_ENTERPRISE_INTEGRATION_RECEIPT.md
           if ! git diff --cached --quiet; then
             git commit -m "ci: record Fortress enterprise integration receipt"
-            git pull --rebase origin fortress/v1.1-enterprise-integration
-            git push origin HEAD:fortress/v1.1-enterprise-integration
+            git pull --rebase origin fortress/v1.1
+            git push origin HEAD:fortress/v1.1
           fi
       - name: Enforce aggregate
         run: test "${{ steps.gate.outputs.overall }}" = PASS
