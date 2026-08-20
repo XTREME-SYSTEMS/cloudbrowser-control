@@ -3,7 +3,7 @@ import os from "os";
 import { chromium } from "playwright";
 import {
   ALLOW_CDP, DEFAULT_EGRESS_POLICY, DEFAULT_TIMEOUT, EXTENSION_BASE,
-  MAX_SESSIONS, POOL_SIZE, SESSION_TTL_MS, VIDEO_DIR,
+  MAX_SESSIONS, POOL_SIZE, SESSION_TTL_MS, VIDEO_DIR, WARM_POOL_INSTANCE_BUDGET,
 } from "./config.js";
 import { installEgressGuard, validateEgressUrl } from "../ssrf.js";
 
@@ -13,6 +13,8 @@ export const savedStates = new Map();
 let cdpPortCounter = 9222;
 let shuttingDown = false;
 let lastPoolError = null;
+let warmPoolPromise = null;
+let warmPoolLaunchFailures = 0;
 
 const stealthScript = `
 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -142,19 +144,48 @@ export async function closeSession(id, reason = "ended") {
   return true;
 }
 
-export async function warmPool() {
-  if (shuttingDown) return;
-  while (pool.length < POOL_SIZE && sessions.size < MAX_SESSIONS) {
+export function activeSessionCount() {
+  let active = 0;
+  for (const session of sessions.values()) if (session.status !== "pooled") active++;
+  return active;
+}
+
+export function desiredWarmCount() {
+  const active = activeSessionCount();
+  const byInstanceBudget = Math.max(0, WARM_POOL_INSTANCE_BUDGET - active);
+  const byMaxSessions = Math.max(0, MAX_SESSIONS - active);
+  return Math.min(POOL_SIZE, byInstanceBudget, byMaxSessions);
+}
+
+async function rebalanceWarmPool() {
+  while (!shuttingDown) {
+    const desired = desiredWarmCount();
+    if (pool.length <= desired) break;
+    const id = pool[pool.length - 1];
+    await closeSession(id, "pool_rebalanced");
+  }
+
+  while (!shuttingDown) {
+    const desired = desiredWarmCount();
+    if (pool.length >= desired || sessions.size >= MAX_SESSIONS) break;
     try {
       const session = await createSession({ usePool: false }, "pooled");
       pool.push(session.id);
       lastPoolError = null;
     } catch (error) {
+      warmPoolLaunchFailures++;
       lastPoolError = error.message;
       console.error("Warm pool launch failed:", error.message);
       break;
     }
   }
+}
+
+export function warmPool() {
+  if (shuttingDown) return Promise.resolve();
+  if (warmPoolPromise) return warmPoolPromise;
+  warmPoolPromise = rebalanceWarmPool().finally(() => { warmPoolPromise = null; });
+  return warmPoolPromise;
 }
 
 export function checkoutPooledSession() {
@@ -171,17 +202,31 @@ export function checkoutPooledSession() {
 }
 
 export function poolError() { return lastPoolError; }
+export function poolMetrics() {
+  return {
+    warm_count: pool.length,
+    warm_target: desiredWarmCount(),
+    warm_budget: WARM_POOL_INSTANCE_BUDGET,
+    active_sessions: activeSessionCount(),
+    total_sessions: sessions.size,
+    launch_failures: warmPoolLaunchFailures,
+    replenishing: Boolean(warmPoolPromise),
+  };
+}
 export function setShuttingDown(value) { shuttingDown = Boolean(value); }
 export function isShuttingDown() { return shuttingDown; }
 export function runtimeIdentity() { return { uid: process.getuid?.(), gid: process.getgid?.(), home: os.homedir() }; }
-export function healthStatus() { return process.uptime() > 30 && pool.length < POOL_SIZE ? "degraded" : "healthy"; }
+export function healthStatus() {
+  const target = desiredWarmCount();
+  return process.uptime() > 30 && pool.length < target ? "degraded" : "healthy";
+}
 
 export function startMaintenance() {
   setInterval(() => {
     const now = Date.now();
     for (const [id, session] of sessions) {
       if (session.status === "pooled") continue;
-      if (now - session.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").catch(() => {});
+      if (now - session.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").then(() => warmPool()).catch(() => {});
     }
   }, 60000).unref();
   setInterval(() => warmPool().catch(() => {}), 30000).unref();
