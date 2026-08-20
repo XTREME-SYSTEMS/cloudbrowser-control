@@ -1,0 +1,21 @@
+# Fortress Enterprise Integration Receipt
+
+- Tested commit: da47f306ac77553bde2fc77d6aa11ee5a433364d
+- Workflow run: 32336596798
+- Security contracts: failure
+- Quality and supply chain: success
+- Hardened runtime smoke: success
+- Concurrency/lifecycle soak: failure
+- Overall: FAIL
+- Chromium sandbox disabled flags: FORBIDDEN
+- DNS-pinned final outbound sockets: REQUIRED
+- Playwright request guard: REQUIRED
+- Service workers: BLOCKED
+- Warm pool target idle: 3
+- Browser launch concurrency: 1
+- PID limit under test: 256
+- Network-layer destination firewall: NOT VERIFIED, defense in depth still recommended
+- Base44 Test Data integration: NOT EXECUTED by this workflow
+- Railway staging: NOT EXECUTED by this workflow
+- Production deploy: NOT EXECUTED
+- Main write/merge: NOT EXECUTED
