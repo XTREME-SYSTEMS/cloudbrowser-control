@@ -167,16 +167,16 @@ jobs:
           cat > docs/FORTRESS_EPHEMERAL_CI_RECEIPT.md <<EOF
           # Fortress Ephemeral CI Receipt
 
-          - Tested commit: `${{ github.sha }}`
-          - Workflow run: `${{ github.run_id }}`
-          - Run attempt: `${{ github.run_attempt }}`
-          - Source/security gates: `${{ needs.source-gates.result }}`
-          - Hardened container/browser smoke: `${{ needs.container-smoke.result }}`
-          - Overall ephemeral validation: `${{ steps.status.outputs.overall }}`
-          - Production deployment: `NOT EXECUTED`
-          - Main merge/write: `NOT EXECUTED`
-          - Production secrets/data: `NOT USED`
-          - DNS-rebinding TOCTOU: `NOT VERIFIED` unless separate network-layer evidence exists
+          - Tested commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Run attempt: ${{ github.run_attempt }}
+          - Source/security gates: ${{ needs.source-gates.result }}
+          - Hardened container/browser smoke: ${{ needs.container-smoke.result }}
+          - Overall ephemeral validation: ${{ steps.status.outputs.overall }}
+          - Production deployment: NOT EXECUTED
+          - Main merge/write: NOT EXECUTED
+          - Production secrets/data: NOT USED
+          - DNS-rebinding TOCTOU: NOT VERIFIED unless separate network-layer evidence exists
 
           This receipt proves only the GitHub Actions ephemeral environment represented by this run. It does not prove Railway staging or production readiness.
           EOF
