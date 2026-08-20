@@ -6,6 +6,7 @@ import {
   MAX_SESSIONS, POOL_SIZE, SESSION_TTL_MS, VIDEO_DIR,
 } from "./config.js";
 import { installEgressGuard, validateEgressUrl } from "../ssrf.js";
+import { createPinnedEgressProxy } from "../egress-proxy.js";
 
 export const sessions = new Map();
 export const pool = [];
@@ -54,70 +55,96 @@ export async function locate(page, selector) {
 }
 
 export async function createBrowserContext(opts = {}) {
-  const launchArgs = ["--no-sandbox", "--disable-dev-shm-usage"];
+  const policy = sessionPolicy(opts);
+  const egressProxy = await createPinnedEgressProxy({ policy, upstreamProxy: opts.proxy });
+  const launchArgs = ["--no-sandbox", "--disable-dev-shm-usage", "--proxy-bypass-list=<-loopback>"];
   if (opts.blockedResources?.includes("images")) launchArgs.push("--blink-settings=imagesEnabled=false");
-  if (opts.userDataDir !== undefined && opts.userDataDir !== null) throw new Error("userDataDir is prohibited; only ephemeral profiles are allowed");
+  if (opts.userDataDir !== undefined && opts.userDataDir !== null) {
+    await egressProxy.close().catch(() => {});
+    throw new Error("userDataDir is prohibited; only ephemeral profiles are allowed");
+  }
 
   if (opts.extensions?.length) {
     for (const extensionId of opts.extensions) {
       if (typeof extensionId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(extensionId)) {
+        await egressProxy.close().catch(() => {});
         throw new Error("Invalid extension identifier; filesystem paths are prohibited");
       }
       const safePath = `${EXTENSION_BASE}/${extensionId}`;
-      if (!fs.existsSync(safePath)) throw new Error(`Extension not installed: ${extensionId}`);
+      if (!fs.existsSync(safePath)) {
+        await egressProxy.close().catch(() => {});
+        throw new Error(`Extension not installed: ${extensionId}`);
+      }
       launchArgs.push(`--load-extension=${safePath}`, `--disable-extensions-except=${safePath}`);
     }
   }
 
   let cdpUrl = null;
   if (opts.enableCDP) {
-    if (!ALLOW_CDP) throw new Error("CDP disabled by engine policy");
+    if (!ALLOW_CDP) {
+      await egressProxy.close().catch(() => {});
+      throw new Error("CDP disabled by engine policy");
+    }
     const cdpPort = cdpPortCounter++;
     launchArgs.push(`--remote-debugging-port=${cdpPort}`);
     cdpUrl = `http://127.0.0.1:${cdpPort}`;
   }
 
   fs.mkdirSync(VIDEO_DIR, { recursive: true });
-  const browser = await chromium.launch({ headless: true, args: launchArgs });
-  const contextOptions = {
-    viewport: opts.viewport || { width: 1280, height: 720 },
-    userAgent: opts.userAgent,
-    locale: opts.locale,
-    timezoneId: opts.timezone,
-    geolocation: opts.geolocation,
-    extraHTTPHeaders: opts.headers,
-  };
-  if (opts.proxy) contextOptions.proxy = { server: opts.proxy.server, username: opts.proxy.username, password: opts.proxy.password };
-  if (opts.recordVideo) contextOptions.recordVideo = { dir: VIDEO_DIR };
+  let browser;
+  let context;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: launchArgs,
+      proxy: { server: egressProxy.url },
+    });
+    browser.on("disconnected", () => { egressProxy.close().catch(() => {}); });
+    const contextOptions = {
+      viewport: opts.viewport || { width: 1280, height: 720 },
+      userAgent: opts.userAgent,
+      locale: opts.locale,
+      timezoneId: opts.timezone,
+      geolocation: opts.geolocation,
+      extraHTTPHeaders: opts.headers,
+      serviceWorkers: "block",
+    };
+    if (opts.recordVideo) contextOptions.recordVideo = { dir: VIDEO_DIR };
 
-  const context = await browser.newContext(contextOptions);
-  await context.addInitScript(stealthScript);
-  await installEgressGuard(context, sessionPolicy(opts), opts.blockedResources || [], opts.networkMocks || []);
-  const page = await context.newPage();
+    context = await browser.newContext(contextOptions);
+    await context.addInitScript(stealthScript);
+    await installEgressGuard(context, policy, opts.blockedResources || [], opts.networkMocks || []);
+    const page = await context.newPage();
 
-  if (opts.cookies?.length) await context.addCookies(normalizeCookies(opts.cookies));
-  if (opts.storageState?.origins) {
-    for (const origin of opts.storageState.origins) {
-      const verdict = await validateEgressUrl(origin.origin, sessionPolicy(opts));
-      if (!verdict.ok) throw new Error(`Storage origin rejected: ${verdict.error}`);
-      await page.goto(origin.origin, { waitUntil: "domcontentloaded", timeout: DEFAULT_TIMEOUT });
-      for (const { name, key, value } of origin.localStorage || []) {
-        await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: name ?? key, v: value });
+    if (opts.cookies?.length) await context.addCookies(normalizeCookies(opts.cookies));
+    if (opts.storageState?.origins) {
+      for (const origin of opts.storageState.origins) {
+        const verdict = await validateEgressUrl(origin.origin, policy);
+        if (!verdict.ok) throw new Error(`Storage origin rejected: ${verdict.error}`);
+        await page.goto(origin.origin, { waitUntil: "domcontentloaded", timeout: DEFAULT_TIMEOUT });
+        for (const { name, key, value } of origin.localStorage || []) {
+          await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: name ?? key, v: value });
+        }
       }
     }
-  }
 
-  return { browser, context, page, cdpUrl };
+    return { browser, context, page, cdpUrl, egressProxy };
+  } catch (error) {
+    try { await context?.close(); } catch {}
+    try { await browser?.close(); } catch {}
+    try { await egressProxy.close(); } catch {}
+    throw error;
+  }
 }
 
 export async function createSession(opts = {}, status = "idle") {
-  const { browser, context, page, cdpUrl } = await createBrowserContext(opts);
+  const { browser, context, page, cdpUrl, egressProxy } = await createBrowserContext(opts);
   const id = uid();
   const session = {
     id, browser, context, page, status, url: "", title: "",
     lastActivity: Date.now(), createdAt: Date.now(), consoleLogs: [], networkLogs: [],
     recordVideo: Boolean(opts.recordVideo), cdpUrl, egressPolicy: sessionPolicy(opts), tabs: [page],
-    isPooled: status === "pooled",
+    isPooled: status === "pooled", egressProxy,
   };
   page.on("console", (msg) => session.consoleLogs.push({ type: msg.type(), text: msg.text(), time: Date.now() }));
   page.on("pageerror", (error) => session.consoleLogs.push({ type: "error", text: error.message, time: Date.now() }));
@@ -136,6 +163,7 @@ export async function closeSession(id, reason = "ended") {
   session.status = reason;
   try { await session.context?.close(); } catch {}
   try { await session.browser?.close(); } catch {}
+  try { await session.egressProxy?.close(); } catch {}
   sessions.delete(id);
   const index = pool.indexOf(id);
   if (index >= 0) pool.splice(index, 1);
