@@ -1,0 +1,45 @@
+{
+  "name": "Private Capital Intelligence Fallback",
+  "description": "Safe Base44 fallback heartbeat. Runs every 5 minutes and invokes runIntelligenceCycle, which only executes the full intelligence cycle on every 12th five-minute tick. Vercel Workflow remains the target scheduler authority.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "private_capital_intelligence_fallback",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_private_capital_intelligence": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runIntelligenceCycle",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run Private Capital intelligence heartbeat",
+            "description": "Function self-gates to one full intelligence cycle per hour"
+          }
+        }
+      }
+    ]
+  }
+}
