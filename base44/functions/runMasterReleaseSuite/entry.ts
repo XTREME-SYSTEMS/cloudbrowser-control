@@ -119,7 +119,6 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "Security", "Rate limiting returns 429", async () => {
-      // Verified by original suite — check if it passed
       return originalSuite.categories?.["Security"]?.passed > 0 ? true : { error: "Rate limit test in original suite did not pass" };
     });
 
@@ -141,7 +140,6 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "Secrets", "Proxy schema has no plaintext password field", async () => {
-      // Verify by creating a proxy via saveProxy and checking returned fields
       const res = await base44.asServiceRole.functions.invoke("saveProxy", {
         name: "SCHEMA_TEST_" + runId, server: "schema.test:8080", password: "test_pass"
       });
@@ -177,7 +175,6 @@ export default async function (req) {
     // RLS + TENANT ISOLATION
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "RLS", "Session entity has RLS configured", async () => {
-      // RLS is active — verify by checking that Session records have the fields RLS relies on
       const testSession = await base44.asServiceRole.entities.Session.create({ status: "pending", project_id: "rls_verify_" + runId });
       const hasOwnerId = testSession.created_by_id !== undefined;
       const hasProjectId = testSession.project_id !== undefined;
@@ -186,11 +183,9 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "Tenant Isolation", "Cross-tenant session access denied", async () => {
-      // Verified by the full runTenantIsolationTests suite — this is a quick spot check
       const projectA = await base44.asServiceRole.entities.Project.create({ name: "RLS_A_" + runId, status: "active" });
       const projectB = await base44.asServiceRole.entities.Project.create({ name: "RLS_B_" + runId, status: "active" });
       const sessionA = await base44.asServiceRole.entities.Session.create({ status: "pending", project_id: projectA.id });
-      // Simulate gateway filter: Tenant B (projectB) should NOT see Tenant A's session
       const allSessions = await base44.asServiceRole.entities.Session.list("-created_date", 50);
       const tenantBView = allSessions.filter((s) => s.project_id === projectB.id);
       const leaked = tenantBView.some((s) => s.id === sessionA.id);
@@ -204,7 +199,6 @@ export default async function (req) {
     // ARTIFACTS
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Artifacts", "Artifact entity has required fields", async () => {
-      // Verify by creating a test artifact and checking returned fields
       const testArtifact = await base44.asServiceRole.entities.Artifact.create({
         artifact_id: "test_" + runId, type: "json", storage_key: "test_key",
         content_hash: "abc123", access_policy: "private", retention_days: 30,
@@ -218,7 +212,6 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "Artifacts", "Screenshot artifacts created during jobs", async () => {
-      // Verified by original suite job run test
       return originalSuite.categories?.["Jobs"]?.passed > 0 ? true : { error: "Job test in original suite did not pass" };
     });
 
@@ -245,10 +238,8 @@ export default async function (req) {
     // DISTRIBUTED RELIABILITY
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Distributed Reliability", "Single-worker mode enforced", async () => {
-      // Engine runs as single worker — multi-worker requires Redis (protected action)
       const engineConfigured = !!(secrets.get("ENGINE_URL") && secrets.get("ENGINE_API_KEY"));
       if (!engineConfigured) return { error: "Engine not configured" };
-      // Check that engine reports single worker
       try {
         const health = await engineGet("/health");
         return health.worker_id ? true : { error: "No worker_id in engine health" };
@@ -256,7 +247,6 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "Distributed Reliability", "Rate limiter is database-backed (not process-local)", async () => {
-      // Verify RateLimitEntry entity exists and has records
       const entries = await base44.asServiceRole.entities.RateLimitEntry.list("-created_date", 1);
       return entries.length > 0 ? true : { error: "No RateLimitEntry records — rate limiter may be process-local" };
     });
@@ -265,7 +255,6 @@ export default async function (req) {
     // RECOVERY
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Recovery", "Orphan session cleanup function exists", async () => {
-      // Function exists if it responds (even with error)
       return FUNCTION_REGISTRY["reapExpired"] || FUNCTION_REGISTRY["recoverOrphans"] ? true : { error: "No recovery function in registry" };
     });
 
@@ -277,7 +266,6 @@ export default async function (req) {
     // SETTINGS
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Settings", "Setting entity has truth fields", async () => {
-      // Verify by creating a test setting and checking returned fields
       const testSetting = await base44.asServiceRole.entities.Setting.create({
         setting_key: "test_" + runId, category: "system", scope_type: "platform",
         desired_value: "test", effective_value: "test", actual_runtime_value: "test",
@@ -307,7 +295,6 @@ export default async function (req) {
     // LIVE VIEW, AI RUNTIME, MCP — check for implementation
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Live View", "Live view share token mechanism exists", async () => {
-      // Verify by creating a test session and checking for share_token field
       const testSession = await base44.asServiceRole.entities.Session.create({ status: "pending" });
       const hasShareToken = Object.keys(testSession).includes("share_token");
       await base44.asServiceRole.entities.Session.delete(testSession.id).catch(() => {});
@@ -325,7 +312,6 @@ export default async function (req) {
     await runCategoryTest(base44, runId, "MCP", "MCP browser_start tool works", async () => {
       if (!await isEngineConfigured()) return { error: "Engine not configured — cannot test MCP browser tools" };
       try {
-        // Create a test API key for MCP
         const testKey = "cb_live_" + Array.from(crypto.getRandomValues(new Uint8Array(16))).map((b) => b.toString(16).padStart(2, "0")).join("");
         const testKeyHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(testKey)))).map((b) => b.toString(16).padStart(2, "0")).join("");
         const keyRec = await base44.asServiceRole.entities.ApiKey.create({
@@ -338,7 +324,6 @@ export default async function (req) {
         const data = r.data || r;
         await base44.asServiceRole.entities.ApiKey.delete(keyRec.id).catch(() => {});
         if (data.session_id) {
-          // Cleanup the session
           await base44.asServiceRole.entities.Session.delete(data.session_id).catch(() => {});
           return true;
         }
@@ -350,8 +335,6 @@ export default async function (req) {
     // CODE QUALITY
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Code Quality", "No plaintext secrets in entity schemas", async () => {
-      // Verified by the Secrets category tests — if proxy/webhook schemas have encrypted fields, code quality passes
-      // This is a composite check that depends on the Secrets tests passing
       const secretsResults = await base44.asServiceRole.entities.TestResult.filter({
         run_id: runId, score_category: "Secrets", status: "pass"
       });
@@ -366,7 +349,6 @@ export default async function (req) {
     // ROLLBACK
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Rollback", "Setting entity has rollback_value field", async () => {
-      // Verify by creating a test setting and checking for rollback_value field
       const testSetting = await base44.asServiceRole.entities.Setting.create({
         setting_key: "rollback_test_" + runId, category: "system", scope_type: "platform",
         rollback_value: "test_rollback",
@@ -376,9 +358,11 @@ export default async function (req) {
       return hasRollback ? true : { error: "No rollback_value on Setting" };
     });
 
-    await runCategoryTest(base44, runId, "Rollback", "JobVersion entity exists for job rollback", async () => {
+    await runCategoryTest(base44, runId, "Rollback", "JobVersion entity query is operational", async () => {
       const versions = await base44.asServiceRole.entities.JobVersion.list("-created_date", 1);
-      return true; // Entity exists — pass
+      return Array.isArray(versions)
+        ? true
+        : { error: "JobVersion query did not return a list" };
     });
 
     // ═══════════════════════════════════════════════
@@ -452,7 +436,6 @@ export default async function (req) {
     // AI RUNTIME CLASSIFICATION (Phase 11)
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "AI ACT", "browser_act executes real action", async () => {
-      // If MCP Black-Box category passed, ACT/OBSERVE/EXTRACT are all proven
       const mcpBbResults = await base44.asServiceRole.entities.TestResult.filter({
         run_id: runId, score_category: "MCP Black-Box", status: "pass",
       });
@@ -478,18 +461,20 @@ export default async function (req) {
     // ═══════════════════════════════════════════════
     // LIVE VIEW CLASSIFICATION (Phase 13)
     // ═══════════════════════════════════════════════
-    await runCategoryTest(base44, runId, "Screenshot Live View", "Screenshot polling mode verified", async () => {
-      // LiveView.jsx polls screenshots every 3 seconds — this is screenshot mode
-      // Verified by the existing Live View test (share_token exists)
-      return true;
+    await runCategoryTest(base44, runId, "Screenshot Live View", "Screenshot evidence available for polling", async () => {
+      const screenshots = await base44.asServiceRole.entities.Screenshot.list("-created_date", 1);
+      if (!Array.isArray(screenshots)) return { error: "Screenshot query did not return a list" };
+      if (screenshots.length === 0) return { error: "No Screenshot evidence available for Live View polling" };
+      const latest = screenshots[0];
+      return latest.file_url && latest.taken_at
+        ? true
+        : { error: "Latest Screenshot is missing file_url or taken_at" };
     });
 
     // Real-time Interactive Live View is a V2 ROADMAP ITEM — not a V1 blocker. Excluded from V1 matrix.
 
     // ═══════════════════════════════════════════════
     // BUILD / LINT / TYPECHECK (Phase 5) — externally verified
-    // The backend sandbox cannot run npm commands; results are passed in
-    // from the operator who ran them in the local/CI Node environment.
     // ═══════════════════════════════════════════════
     await runCategoryTest(base44, runId, "Build", "npm run build passes", async () => {
       return qualityGates.build === true ? true : { error: "Build not verified — pass quality_gates.build=true" };
@@ -504,10 +489,6 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "CI/CD", "GitHub Actions release gate (.github/workflows/release-gate.yml green run)", async () => {
-      // PHASE 2 HARDENING: CI/CD PASS requires an actual green GitHub Actions run
-      // from the real workflow file committed at .github/workflows/release-gate.yml.
-      // Caller-supplied booleans (quality_gates.cicd) are NOT accepted as evidence.
-      // This test queries the actual GitHub Actions API to verify the real receipt.
       const RELEASE_SHA = "ef241948fa4a1433785b1a59088fd5deabc4fed8";
       const repo = "XTREME-SYSTEMS/cloudbrowser-control";
       try {
@@ -542,7 +523,6 @@ export default async function (req) {
       else categoryResults[cat].status = "FAIL";
     }
 
-    // Determine overall status
     const totalTests = results.length;
     const passedTests = results.filter((r) => r.status === "pass").length;
     const failedTests = results.filter((r) => r.status === "fail").length;
@@ -552,7 +532,6 @@ export default async function (req) {
       ? "RELEASE GATE VERIFIED"
       : "NOT READY";
 
-    // Identify protected actions
     const protectedActions = [
       { action: "RLS Activation", reason: "Production RLS activation requires explicit approval", impact: "Tenant isolation" },
       { action: "Secret Data Migration", reason: "Encrypting existing plaintext Proxy/Webhook records requires production data migration", impact: "Security" },
