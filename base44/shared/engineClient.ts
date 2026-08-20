@@ -30,6 +30,20 @@ export async function getEngineConfig() {
   const urlOverride = await loadUrlOverride();
   const url = urlOverride || secrets.get("ENGINE_URL");
 
+  // V1.1 F-28: validate engine URL host — reject private/loopback/metadata
+  if (url) {
+    try {
+      const parsed = new URL(url);
+      const h = parsed.hostname.toLowerCase();
+      const blocked = h === "localhost" || h === "127.0.0.1" || h === "::1" ||
+        h === "169.254.169.254" || h.endsWith(".internal") || h.endsWith(".local") ||
+        /^10\./.test(h) || /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) || /^192\.168\./.test(h);
+      if (blocked) throw new Error(`Engine URL host blocked (SSRF guard): ${h}`);
+    } catch (e) {
+      throw new Error(`Invalid engine URL: ${e.message}`);
+    }
+  }
+
   // 2. API KEY: ALWAYS from encrypted secrets vault — NEVER from DB
   const key = secrets.get("ENGINE_API_KEY");
 
@@ -61,14 +75,26 @@ export async function getEngineKeyFingerprint() {
 // Generic authenticated fetch — key always from secrets, never from DB
 export async function engineFetch(path, options = {}) {
   const { baseUrl, key } = await getEngineConfig();
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": key,
-      ...(options.headers || {}),
-    },
-  });
+  // V1.1 F-12: 30s timeout via AbortController to prevent hung-engine cascades
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  let res;
+  try {
+    res = await fetch(`${baseUrl}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        ...(options.headers || {}),
+      },
+      signal: controller.signal,
+    });
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === "AbortError") throw new Error("Engine request timed out (30s)");
+    throw e;
+  }
+  clearTimeout(timeout);
   const text = await res.text();
   let body;
   try { body = JSON.parse(text); } catch { body = text; }

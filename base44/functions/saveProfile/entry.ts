@@ -10,6 +10,11 @@ import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   try {
+    // V1.1 F-04: admin-only authorization
+    const user = await base44.auth.me().catch(() => null);
+    if (!user || user.role !== "admin") {
+      return Response.json({ error: "Admin role required", __v: DEPLOYMENT_VERSION }, { status: 403 });
+    }
     const body = await req.json();
     const { id, name, description, user_data_dir, cookies, storage_state } = body;
 
@@ -51,7 +56,6 @@ export default async function (req) {
       action = "create";
     }
 
-    const user = await base44.auth.me().catch(() => null);
     await logAudit(base44, user || { id: "system", full_name: "System" }, action, "profile", result.id, `Profile "${name}" ${action}`);
 
     const safe = { ...result, cookies_encrypted: undefined, storage_state_encrypted: undefined };

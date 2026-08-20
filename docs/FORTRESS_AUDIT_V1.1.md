@@ -13,6 +13,82 @@
 
 ---
 
+## Amendments Addendum (Operator-Authorized V1.1 Boundary)
+
+The following amendments are incorporated into this control document before any
+V1.1 coding begins. They refine, expand, and reclassify findings per the
+operator's authorized boundary. Where an amendment conflicts with the original
+finding text below, the amendment controls.
+
+**AM-1 — F-01 Reclassification.** F-01 is reclassified as **unrestricted
+browser-context code execution / authorization failure**, NOT host-level Node.js
+RCE. The `evaluate` action executes JavaScript inside the Chromium page context
+(sandboxed to the page origin), not in the Node.js engine process. The risk is
+unauthorized arbitrary code execution within the browser context (DOM/credential
+access, page-side network requests) due to insufficient scope granularity —
+not operating-system command execution. Classification remains CRITICAL for
+authorization impact, but the blast radius is the browser context, not the host.
+
+**AM-2 — SSRF Hardening Expansion.** SSRF hardening (F-02, F-03) is expanded to
+cover, at minimum: (a) DNS resolution at validation time; (b) DNS-rebinding
+protection (resolved-IP check + IP pinning where supported); (c) HTTP redirect
+chain re-validation; (d) browser subresource requests (images, scripts, fonts,
+iframes, XHR/fetch initiated by page content); (e) iframe/resource requests;
+(f) page-side `fetch`/`XHR` egress; (g) IPv4 private/reserved ranges
+(RFC1918, CGNAT 100.64/10, 0/8, 127/8, 224/4); (h) IPv6 private/reserved ranges
+(fc/fd, fe80/10, ::1, ::); (i) cloud metadata endpoints
+(169.254.169.254, metadata.google.internal, fd00:ec2::254); (j) loopback and
+link-local; (k) network-layer egress enforcement where the platform (Railway)
+supports it. A shared resolved-IP allowlist is the authoritative check.
+
+**AM-3 — CORS Fail-Closed.** The engine CORS policy must fail closed: an empty
+or unconfigured `CORS_ALLOWLIST` must NOT permit arbitrary browser Origins. The
+current behavior (`!origin || CORS_ALLOWLIST.length === 0 || includes(origin)`)
+allows all origins when the allowlist is empty. New behavior: when the allowlist
+is empty, only same-origin (no `Origin` header) requests are allowed; any
+cross-origin request is rejected. (New finding F-31.)
+
+**AM-4 — Dangerous-Action Capability Authorization.** Capability controls are
+expanded beyond `evaluate` to cover all privileged browser-state and
+resource actions. Each requires a distinct capability scope, enforced at the
+gateway and MCP layer:
+- `evaluate` / `extract_json` (with evaluateFn) / MCP `browser_observe` → `sessions:evaluate`
+- cookies/storage (`set_cookies`, `import_cookies`, `export_cookies`, `set_local_storage`, `save_state`, `restore_state`) → `sessions:storage`
+- `upload_file` → `sessions:upload`
+- `download` → `sessions:download`
+- `enable_cdp` / CDP attach → `sessions:cdp`
+- proxy configuration on a session → `sessions:proxy`
+- `solve_captcha` → `sessions:captcha`
+- `mock_response` / network mocking → `sessions:network_mock`
+- `crawl` → `sessions:crawl`
+A key must hold the specific capability scope; `sessions:write` alone is no
+longer sufficient for these actions. (Expands F-01, F-05.)
+
+**AM-5 — Container/Browser Isolation Moved Forward.** Container hardening
+(F-29) is moved from P3 into the core Fortress release (P0/P1). The engine
+container must run: non-root user; dropped Linux capabilities; `no-new-privileges`;
+read-only root filesystem where compatible with Chromium; ephemeral writable
+temp storage (tmpfs for `/tmp`, video dir, profile dir); CPU/memory/PID limits;
+and the strongest Chromium/container sandbox supported by the Railway runtime.
+
+**AM-6 — P0 Preservation.** All existing P0 findings remain P0: MCP scope
+enforcement (F-05), direct-function authorization (F-04), runJob tenant
+authorization (F-06), runJob idempotency (F-06), cryptographic tokens (F-07),
+caller-supplied path rejection (F-08), context secret non-disclosure (F-09),
+and SSRF DNS/redirect hardening (F-02, F-03).
+
+**AM-7 — P1/P2 Preservation.** P1 hardening and essential P2 controls are
+preserved: branch protection (F-21), dependency scanning (F-20), SBOM (F-20),
+alerting (F-27), DR runbook (F-22), engine timeout (F-12), quotas (F-15),
+artifact isolation (F-14), fail-closed webhook behavior (F-17, F-18).
+
+**AM-8 — Fortress Release Matrix Expansion.** The matrix is expanded from 35 to
+39 minimum gates by adding: (36) Browser subresource SSRF block; (37) CORS
+fail-closed; (38) Dangerous-action capability authorization; (39) Runtime/
+container isolation verification. See Part C.
+
+---
+
 ## Classification Legend
 
 | Class | Meaning |
@@ -661,8 +737,12 @@ on 3 consecutive runs, with V1.0 rollback proven.
 | 33 | CI/CD (GitHub Actions) | CI/CD | Green run on V1.1 SHA | SUCCESS |
 | 34 | Critical defects | Quality | 0 critical | 0 |
 | 35 | High defects | Quality | 0 high | 0 |
+| 36 | Browser subresource SSRF block | SSRF | Page-side fetch/XHR/iframe to private IP → blocked at engine | Blocked |
+| 37 | CORS fail-closed | Security | Empty CORS_ALLOWLIST + cross-origin Origin → rejected | 403 |
+| 38 | Dangerous-action capability authorization | Authorization | Key lacking per-action capability scope → action 403 | 403 per action |
+| 39 | Runtime/container isolation verification | Isolation | Container runs non-root, no-new-privs, dropped caps, read-only root, resource limits | Verified |
 
-**Fortress Release Gate:** 35/35 PASS on 3 consecutive runs + V1.0 rollback
+**Fortress Release Gate:** 39/39 PASS on 3 consecutive runs + V1.0 rollback
 proven (gate 27) → **V1.1 PRODUCTION FORTRESS VERIFIED**.
 
 ---

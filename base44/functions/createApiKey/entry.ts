@@ -5,6 +5,8 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    // V1.1 F-04: admin-only authorization
+    if (user.role !== "admin") return Response.json({ error: "Admin role required" }, { status: 403 });
 
     const body = await req.json();
     const name = body.name || "Default";

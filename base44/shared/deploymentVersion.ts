@@ -26,8 +26,8 @@
 //   - apiGateway: database-backed rate limiting via RateLimitEntry entity
 // ═══════════════════════════════════════════════
 
-export const DEPLOYMENT_VERSION = "v5.0.0";
-export const DEPLOYED_AT = "2026-08-18T22:15:00Z";
+export const DEPLOYMENT_VERSION = "v6.0.0";
+export const DEPLOYED_AT = "2026-08-20T00:00:00Z";
 export const SCHEMA_VERSION = "v4.0";
 
 export const FUNCTION_REGISTRY = {
@@ -54,6 +54,7 @@ export const FUNCTION_REGISTRY = {
   getObservabilityMetrics: "v5.0.0",
   recoverOrphans: "v5.0.0",
   runMasterReleaseSuite: "v5.0.0",
+  runFortressMatrix: "v6.0.0",
   reapExpired: "v5.0.0",
   reconcileSettings: "v5.0.0",
   calculateCost: "v5.0.0",

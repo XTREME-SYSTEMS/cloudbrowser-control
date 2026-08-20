@@ -59,11 +59,9 @@ export default async function (req) {
 
     for (const w of webhooks) {
       let signingSecret = null;
+      // V1.1 F-17: encrypted secret only — no plaintext fallback (fail-closed)
       if (w.secret_encrypted) {
         signingSecret = await decrypt(w.secret_encrypted);
-      } else if (w.secret) {
-        // Legacy plaintext fallback (for records not yet migrated)
-        signingSecret = w.secret;
       }
       if (!signingSecret) continue;
       const expected = await hmacSha256(signingSecret, message);
@@ -92,7 +90,17 @@ export default async function (req) {
     const job = await base44.asServiceRole.entities.Job.get(job_id);
     if (!job) return Response.json({ error: "Job not found", __v: DEPLOYMENT_VERSION }, { status: 404 });
 
-    const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: job_id });
+    // V1.1 F-06: webhook project scoping — job must belong to the verified webhook's project
+    if (verifiedWebhook.project_id && job.project_id && verifiedWebhook.project_id !== job.project_id) {
+      await base44.asServiceRole.entities.WebhookDelivery.create({
+        webhook_id: verifiedWebhook.id, event: "project_mismatch",
+        payload: { job_id, webhook_project: verifiedWebhook.project_id, job_project: job.project_id },
+        response_status: 403, response_body: "Job/project mismatch", attempts: 1, success: false, duration_ms: 0,
+      }).catch(() => {});
+      return Response.json({ error: "Job does not belong to webhook project", __v: DEPLOYMENT_VERSION }, { status: 403 });
+    }
+
+    const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: job_id, project_id: verifiedWebhook.project_id });
 
     if (event_id) {
       await base44.asServiceRole.entities.WebhookDelivery.create({

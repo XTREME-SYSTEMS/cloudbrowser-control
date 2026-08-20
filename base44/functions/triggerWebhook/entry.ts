@@ -15,8 +15,28 @@ async function hmacSha256(secret, message) {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// SSRF guard — block private/loopback/metadata/CGNAT/IPv6-private
-function isBlockedUrl(urlStr) {
+// V1.1 F-02: IP-level blocklist for resolved addresses
+function isBlockedIp(ip) {
+  if (!ip) return true;
+  const v4 = ip.split(".").map(Number);
+  if (v4.length === 4 && v4.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) {
+    const [a, b] = v4;
+    if (a === 10 || a === 127 || a === 0) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a >= 224) return true;
+    return false;
+  }
+  const h = ip.toLowerCase();
+  if (h === "::1" || h === "::") return true;
+  if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
+  return false;
+}
+
+// SSRF guard — block private/loopback/metadata/CGNAT/IPv6-private + DNS resolution (V1.1 F-02)
+async function isBlockedUrl(urlStr) {
   try {
     const parsed = new URL(urlStr);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return true;
@@ -33,6 +53,17 @@ function isBlockedUrl(urlStr) {
       if (a === 192 && b === 168) return true;
       if (a === 100 && b >= 64 && b <= 127) return true;
       if (a >= 224) return true;
+    }
+    // V1.1 F-02: DNS resolution (Deno) — defeats rebinding; guarded for portability
+    if (typeof Deno !== "undefined" && Deno.resolveDns) {
+      try {
+        const a4 = await Deno.resolveDns(h, "A");
+        if (a4.some((ip) => isBlockedIp(ip))) return true;
+      } catch (e) {}
+      try {
+        const a6 = await Deno.resolveDns(h, "AAAA");
+        if (a6.some((ip) => isBlockedIp(ip))) return true;
+      } catch (e) {}
     }
     return false;
   } catch { return true; }
@@ -56,7 +87,7 @@ export default async function (req) {
     let dlqCount = 0;
 
     for (const webhook of matching) {
-      if (isBlockedUrl(webhook.url)) {
+      if (await isBlockedUrl(webhook.url)) {
         await base44.asServiceRole.entities.WebhookDelivery.create({
           webhook_id: webhook.id, event,
           payload: { event, data: payload, error: "URL blocked by SSRF policy" },
@@ -71,13 +102,19 @@ export default async function (req) {
       const eventId = "evt_" + timestamp + "_" + Math.random().toString(36).slice(2, 8);
       const message = `${timestamp}.${eventId}.${JSON.stringify(payload || {})}`;
 
-      // Decrypt the signing secret if encrypted version exists
+      // V1.1 F-17/F-18: encrypted secret only; fail-closed on decrypt failure
       let signingSecret = null;
       if (webhook.secret_encrypted) {
         signingSecret = await decrypt(webhook.secret_encrypted);
-      } else if (webhook.secret) {
-        // Legacy plaintext fallback (for records not yet migrated)
-        signingSecret = webhook.secret;
+        if (!signingSecret) {
+          await base44.asServiceRole.entities.WebhookDelivery.create({
+            webhook_id: webhook.id, event,
+            payload: { event, data: payload, error: "Decrypt failed — secret corrupted" },
+            response_status: 0, response_body: "Decrypt failed", attempts: 1, success: false, duration_ms: 0,
+          });
+          failed++;
+          continue;
+        }
       }
 
       const signature = signingSecret ? await hmacSha256(signingSecret, message) : null;
