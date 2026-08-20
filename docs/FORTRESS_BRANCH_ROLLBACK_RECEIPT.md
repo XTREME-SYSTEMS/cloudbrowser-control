@@ -1,9 +1,9 @@
 # Fortress Branch Rollback Rehearsal Receipt
 
-- Candidate commit: bfc45a70d00fce273b0a97f507944037382f8202
-- Workflow run: 32401313115
+- Candidate commit: d19c5135ee2e43ff74c9f2b925556af3184d0dd7
+- Workflow run: 32406416583
 - Rollback runtime target: 91f516c2feb002103de37268dfcb72cb9ded73f6
-- Branch rollback rehearsal: success
+- Branch rollback rehearsal: cancelled
 - Rollback target rebuild: required
 - Hardened container boot: required
 - Chromium readiness: required
