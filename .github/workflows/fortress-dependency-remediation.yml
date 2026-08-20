@@ -42,7 +42,7 @@ jobs:
           node -e "const a=require('/tmp/audit-before.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
 
       - name: Apply npm-supported non-force lockfile fixes
-        run: npm audit fix --package-lock-only --ignore-scripts
+        run: npm audit fix --package-lock-only --ignore-scripts || true
 
       - name: Enforce lockfile-only mutation
         run: |
