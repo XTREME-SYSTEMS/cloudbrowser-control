@@ -80,7 +80,7 @@ check('SSRF resolver is injectable for pinned transport', has(src.ssrf, 'resolve
 check('SSRF resolves all DNS answers verbatim', has(src.ssrf, 'resolver(hostname, { all: true, verbatim: true })'));
 check('SSRF rejects if any resolved address is blocked', has(src.ssrf, 'addresses.some((entry) => isBlockedIp(entry.address))'));
 check('browser egress guard intercepts every request', has(src.ssrf, 'context.route("**/*"'));
-check('pinned proxy resolves and selects validated IP', has(src.egressProxy, 'resolvePinnedTarget') && has(src.egressProxy, 'address: verdict.addresses[0]'));
+check('pinned proxy resolves and selects validated IP', has(src.egressProxy, 'resolvePinnedTarget') && has(src.egressProxy, 'const address = verdict.addresses[0]') && has(src.egressProxy, 'address,'));
 check('pinned proxy opens final socket to validated IP', has(src.egressProxy, 'address: target.address') && has(src.egressProxy, 'openSocket'));
 check('HTTPS CONNECT uses pinned IP authority', has(src.egressProxy, 'const authority = `${bracketHost(target.address)}:${target.port}`'));
 check('runtime forces Chromium through local pinned proxy', has(src.runtime, 'proxy: { server: egressProxy.url }'));
