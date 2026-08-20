@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { resolvePinnedTarget } from '../browser-engine/egress-proxy.js';
+import { isBlockedIp } from '../browser-engine/ssrf.js';
+const checks=[]; async function check(name,fn){try{const detail=await fn();checks.push({name,status:'PASS',detail});console.log(`PASS: ${name}`);}catch(error){checks.push({name,status:'FAIL',detail:error.message});console.error(`FAIL: ${name} :: ${error.message}`);}}
+function sequenceResolver(sequence){let calls=0;const resolver=async()=>sequence[Math.min(calls++,sequence.length-1)];resolver.calls=()=>calls;return resolver;}
+await check('pinned resolver uses one validated resolution',async()=>{const resolver=sequenceResolver([[{address:'8.8.8.8',family:4}],[{address:'169.254.169.254',family:4}]]);const target=await resolvePinnedTarget('https://rebinding.example/',{},resolver);assert.equal(target.address,'8.8.8.8');assert.equal(resolver.calls(),1);return {address:target.address,resolver_calls:resolver.calls()};});
+await check('mixed public/private answers fail closed',async()=>{const resolver=sequenceResolver([[{address:'8.8.8.8',family:4},{address:'10.0.0.5',family:4}]]);await assert.rejects(()=>resolvePinnedTarget('https://mixed.example/',{},resolver),/Resolved address blocked/);});
+await check('private answer cannot pin',async()=>{const resolver=sequenceResolver([[{address:'127.0.0.1',family:4}]]);await assert.rejects(()=>resolvePinnedTarget('https://private.example/',{},resolver),/Resolved address blocked/);});
+await check('custom port denied before pinning',async()=>{const resolver=sequenceResolver([[{address:'8.8.8.8',family:4}]]);await assert.rejects(()=>resolvePinnedTarget('https://public.example:22/',{},resolver),/Port 22 not allowed/);});
+await check('public IPv6 target pins once',async()=>{const resolver=sequenceResolver([[{address:'2606:4700:4700::1111',family:6}]]);const target=await resolvePinnedTarget('https://ipv6.example/',{},resolver);assert.equal(target.family,6);assert.equal(resolver.calls(),1);return target.address;});
+for(const ip of ['192.0.2.1','198.18.0.1','198.51.100.1','203.0.113.1','2001:db8::1','ff02::1']) await check(`reserved/special ${ip} blocked`,async()=>assert.equal(isBlockedIp(ip),true));
+const failed=checks.filter((x)=>x.status==='FAIL');console.log(JSON.stringify({suite:'fortress-pinned-egress',total:checks.length,pass:checks.length-failed.length,fail:failed.length,checks},null,2));if(failed.length)process.exit(1);
