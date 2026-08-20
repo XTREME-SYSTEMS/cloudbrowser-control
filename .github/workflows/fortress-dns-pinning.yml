@@ -1,0 +1,140 @@
+name: Fortress DNS Pinning Validation
+
+on:
+  push:
+    branches:
+      - fortress/v1.1-dns-pinning
+    paths-ignore:
+      - docs/FORTRESS_DNS_PINNING_RECEIPT.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fortress-dns-pinning-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  ENGINE_API_KEY: fortress_dns_ci_key_0123456789abcdef0123456789abcdef
+
+jobs:
+  pinning-contracts:
+    name: DNS Pinning Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Syntax
+        run: |
+          node --check browser-engine/ssrf.js
+          node --check browser-engine/egress-proxy.js
+          node --check browser-engine/engine/runtime.js
+          node --check ci/fortress-pinned-egress.mjs
+      - name: Pinned resolver adversarial tests
+        run: node ci/fortress-pinned-egress.mjs
+      - name: SSRF adversarial vectors
+        run: node ci/fortress-ssrf-adversarial.mjs
+      - name: Enterprise source contracts
+        run: node ci/fortress-enterprise-contracts.mjs
+      - name: Existing Fortress static suite
+        run: node ci/fortress-core-static.mjs
+
+  browser-integration:
+    name: Browser Pinned-Egress Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Build hardened browser image
+        run: docker build --pull -t cloudbrowser-fortress-dns ./browser-engine
+      - name: Start hardened container
+        run: |
+          docker run -d --name fortress-engine-dns -p 127.0.0.1:8080:8080 \
+            --read-only \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --tmpfs /home/engine:rw,nosuid,size=64m \
+            --tmpfs /data:rw,nosuid,size=64m \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 --memory=2g --cpus=2 \
+            -e ENGINE_API_KEY="$ENGINE_API_KEY" \
+            -e CORS_ALLOWLIST="https://allowed.invalid" \
+            -e POOL_SIZE=3 -e MAX_SESSIONS=10 -e DEFAULT_TIMEOUT=20000 \
+            cloudbrowser-fortress-dns
+      - name: Wait for liveness
+        run: |
+          for i in $(seq 1 60); do curl --silent --fail http://127.0.0.1:8080/liveness >/dev/null && exit 0; sleep 2; done
+          docker logs fortress-engine-dns
+          exit 1
+      - name: Runtime restrictions
+        run: |
+          test "$(docker exec fortress-engine-dns id -u)" != "0"
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' fortress-engine-dns)" = "true"
+          docker inspect --format '{{json .HostConfig.CapDrop}}' fortress-engine-dns | grep -q ALL
+          docker inspect --format '{{json .HostConfig.SecurityOpt}}' fortress-engine-dns | grep -q no-new-privileges
+      - name: Existing black-box browser smoke over pinned transport
+        run: node ci/fortress-engine-smoke.mjs
+      - name: Concurrent and repeated lifecycle soak over pinned transport
+        run: node ci/fortress-engine-soak.mjs
+      - name: Graceful drain
+        run: |
+          docker stop -t 10 fortress-engine-dns
+          test "$(docker inspect --format '{{.State.ExitCode}}' fortress-engine-dns)" = "0"
+      - name: Logs
+        if: always()
+        run: docker logs fortress-engine-dns 2>&1 || true
+
+  aggregate:
+    name: DNS Pinning Aggregate Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [pinning-contracts, browser-integration]
+    steps:
+      - name: Compute result
+        id: result
+        run: |
+          if [ "${{ needs.pinning-contracts.result }}" = success ] && [ "${{ needs.browser-integration.result }}" = success ]; then
+            echo "overall=PASS" >> "$GITHUB_OUTPUT"
+          else
+            echo "overall=FAIL" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1-dns-pinning
+          fetch-depth: 0
+      - name: Persist branch receipt
+        run: |
+          cat > docs/FORTRESS_DNS_PINNING_RECEIPT.md <<EOF_RECEIPT
+          # Fortress DNS Pinning Receipt
+
+          - Tested commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Pinning/source contracts: ${{ needs.pinning-contracts.result }}
+          - Browser integration and soak: ${{ needs.browser-integration.result }}
+          - Overall: ${{ steps.result.outputs.overall }}
+          - Final outbound connection model: validated DNS answer selected and connected by IP through local egress proxy
+          - Playwright request guard: ENABLED as defense in depth
+          - Service workers: BLOCKED
+          - Network-layer destination firewall: NOT VERIFIED / still recommended defense in depth
+          - Production deploy: NOT EXECUTED
+          - Main write/merge: NOT EXECUTED
+          EOF_RECEIPT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FORTRESS_DNS_PINNING_RECEIPT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: record Fortress DNS pinning receipt"
+            git pull --rebase origin fortress/v1.1-dns-pinning
+            git push origin HEAD:fortress/v1.1-dns-pinning
+          fi
+      - name: Enforce result
+        run: test "${{ steps.result.outputs.overall }}" = PASS
