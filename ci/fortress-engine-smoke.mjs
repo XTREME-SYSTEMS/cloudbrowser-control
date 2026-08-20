@@ -139,7 +139,7 @@ if (sessionId) {
   });
 
   await check("page-side fetch to loopback is blocked", async () => {
-    const fn = `async () => { try { await fetch('http://127.0.0.1:8080/health'); return 'UNEXPECTED_ALLOWED'; } catch { return 'BLOCKED'; } }`;
+    const fn = `(async () => { try { await fetch('http://127.0.0.1:8080/health'); return 'UNEXPECTED_ALLOWED'; } catch { return 'BLOCKED'; } })`;
     const { response, data } = await request(`/sessions/${sessionId}/execute`, {
       method: "POST",
       body: { action_type: "evaluate", options: { fn } },
