@@ -45,26 +45,36 @@ const plannerSchema = {
   required: ['decision','reason_code','evidence_ids','risk_class','work_packet','validation_plan','approval_required','next_state'],
   properties: {
     decision: { type: 'string', enum: [...DECISIONS] }, reason_code: { type: 'string' }, evidence_ids: { type: 'array', items: { type: 'string' } }, risk_class: { type: 'string', enum: ['READ_ONLY','BRANCH_SAFE','PROTECTED'] },
-    work_packet: { anyOf: [{ type: 'null' }, workPacketSchema] }, validation_plan: { type: 'array', items: { type: 'string' } }, approval_required: { type: 'boolean' }, next_state: { type: 'string' }
+    work_packet: { anyOf: [{ type: 'null' }, workPacketSchema] }, validation_plan: { type: 'array', items: { type: 'string' } }, approval_required: { type: 'boolean' }, next_state: { type: 'string', enum: ['MONITORING','REPAIR_REQUIRED','INFRA_BLOCKED','APPROVAL_REQUIRED'] }
   }
 };
 
+function validatePlannerDecision(value) {
+  if (!DECISIONS.has(value.decision)) throw new Error('Planner emitted unsupported decision');
+  if (value.work_packet) validateWorkPacket(value.work_packet);
+  if (value.decision === 'WORK_PACKET' && value.risk_class !== 'BRANCH_SAFE') throw new Error('WORK_PACKET must be BRANCH_SAFE');
+  if (value.decision === 'WORK_PACKET' && !value.work_packet) throw new Error('WORK_PACKET decision missing work packet');
+  if (value.decision !== 'WORK_PACKET' && value.work_packet) throw new Error('Non-work decision may not include work packet');
+  if (value.decision === 'APPROVAL_REQUIRED' && !value.approval_required) throw new Error('Approval decision must set approval_required');
+  if (value.decision === 'READY_FOR_APPROVAL') {
+    if (!value.approval_required) throw new Error('READY_FOR_APPROVAL must request operator approval');
+    if (value.next_state !== 'MONITORING') throw new Error('Planner cannot promote durable state to release-ready');
+  }
+  return value;
+}
+
 export async function planNext({ apiKey, primaryModel, fallbackModel, evidence }) {
   if (!apiKey) return { decision: { decision: 'BLOCKED', reason_code: 'OPENAI_API_KEY_MISSING', evidence_ids: [], risk_class: 'READ_ONLY', work_packet: null, validation_plan: [], approval_required: false, next_state: 'INFRA_BLOCKED' }, meta: { blocked: true } };
-  const system = `You are CloudBrowser Autonomous Engineering Planner. Source truth is the supplied immutable evidence. Choose the smallest safe next action. Exactly one work packet maximum. Never write main/master, deploy production, change secrets, perform destructive data/schema operations, spend money, message customers, or claim tests passed without receipts. Prefer VALIDATE_ONLY when evidence is ambiguous. WORK_PACKET must target ${PROJECT.candidateBranch} or another autonomous/ or repair/ branch and must set deployment_allowed, main_write_allowed, production_allowed, and secret_change_allowed to false.`;
+  const system = `You are CloudBrowser Autonomous Engineering Planner. Source truth is the supplied immutable evidence. Choose the smallest safe next action. Exactly one work packet maximum. Never write main/master, deploy production, change secrets, perform destructive data/schema operations, spend money, message customers, or claim tests passed without receipts. Prefer VALIDATE_ONLY when evidence is ambiguous. WORK_PACKET must target ${PROJECT.candidateBranch} or another autonomous/ or repair/ branch and must set deployment_allowed, main_write_allowed, production_allowed, secret_change_allowed, and operator_approval_required to false. READY_FOR_APPROVAL is advisory only: set next_state=MONITORING because only the independent validator may transition durable state to READY_FOR_OPERATOR_APPROVAL.`;
   let first;
   try {
     first = await structuredResponse(apiKey, primaryModel, 'cloudbrowser_planner_decision', plannerSchema, system, evidence);
   } catch (firstError) {
     if (!fallbackModel) throw firstError;
     const fallback = await structuredResponse(apiKey, fallbackModel, 'cloudbrowser_planner_decision', plannerSchema, system, evidence);
-    const value = fallback.value;
-    if (value.work_packet) validateWorkPacket(value.work_packet);
-    return { decision: value, meta: { model: fallback.model, response_id: fallback.response_id, fallback: true, first_error: firstError.message } };
+    return { decision: validatePlannerDecision(fallback.value), meta: { model: fallback.model, response_id: fallback.response_id, fallback: true, first_error: firstError.message } };
   }
-  if (first.value.work_packet) validateWorkPacket(first.value.work_packet);
-  if (first.value.risk_class === 'PROTECTED' && first.value.decision === 'WORK_PACKET') throw new Error('Planner attempted protected work packet');
-  return { decision: first.value, meta: { model: first.model, response_id: first.response_id, fallback: false } };
+  return { decision: validatePlannerDecision(first.value), meta: { model: first.model, response_id: first.response_id, fallback: false } };
 }
 
 const editSchema = {
