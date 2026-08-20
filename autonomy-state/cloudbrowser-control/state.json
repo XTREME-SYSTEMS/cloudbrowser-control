@@ -1,0 +1,51 @@
+{
+  "project_id": "cloudbrowser-control",
+  "repo": "XTREME-SYSTEMS/cloudbrowser-control",
+  "staging_app_id": "6a8688c834cf23adb0937741",
+  "state": "MONITORING",
+  "current_phase": "BRANCH_BUILD_VALIDATION",
+  "candidate_branch": "autonomous/cloudbrowser-control-v1",
+  "base_sha": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
+  "candidate_sha": "2fbd05ff471b6dd1575a600449f4827cba83feca",
+  "next_engineering_run_at": null,
+  "engineering_interval_minutes": 60,
+  "lease_owner": null,
+  "lease_acquired_at": null,
+  "lease_expires_at": null,
+  "lease_heartbeat_at": null,
+  "hour_bucket": null,
+  "active_work_packet_id": null,
+  "work_packet_attempt": 0,
+  "latest_validation_run_id": null,
+  "latest_quality_score": null,
+  "last_release_gate_result": "NOT_VERIFIED",
+  "blocking_failures": [
+    {
+      "type": "INFRA_BLOCKED",
+      "signature": "fortress-engine-unset",
+      "message": "Fortress Staging latest evidence has 9 blocked checks because the preview browser engine is unset."
+    },
+    {
+      "type": "INFRA_BLOCKED",
+      "signature": "vercel-project-not-resolved",
+      "message": "No CloudBrowser Vercel project was identified in the currently returned linked-team project listing."
+    }
+  ],
+  "failure_signatures": {},
+  "repair_attempts": {},
+  "last_failure_signature": null,
+  "failure_streak": 0,
+  "anti_thrash_triggered": false,
+  "consecutive_clean_passes": 0,
+  "last_clean_sha": null,
+  "last_clean_at": null,
+  "critical_count": 0,
+  "high_count": 0,
+  "deployment_drift_count": null,
+  "approval_required": false,
+  "autonomous_mutation_enabled": false,
+  "release_ready": false,
+  "rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
+  "receipt_chain": [],
+  "updated_at": "2026-08-20T06:31:39Z"
+}
