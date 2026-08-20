@@ -15,6 +15,9 @@ let shuttingDown = false;
 let lastPoolError = null;
 let warmPoolPromise = null;
 let warmPoolLaunchFailures = 0;
+let browserLaunchTail = Promise.resolve();
+let browserLaunchQueued = 0;
+let browserLaunchActive = 0;
 
 const stealthScript = `
 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -55,6 +58,23 @@ export async function locate(page, selector) {
   return page.locator(selector).first();
 }
 
+async function launchChromium(options) {
+  browserLaunchQueued++;
+  let release;
+  const turn = new Promise((resolve) => { release = resolve; });
+  const previous = browserLaunchTail;
+  browserLaunchTail = browserLaunchTail.then(() => turn);
+  await previous;
+  browserLaunchQueued--;
+  browserLaunchActive++;
+  try {
+    return await chromium.launch(options);
+  } finally {
+    browserLaunchActive--;
+    release();
+  }
+}
+
 export async function createBrowserContext(opts = {}) {
   const launchArgs = ["--no-sandbox", "--disable-dev-shm-usage"];
   if (opts.blockedResources?.includes("images")) launchArgs.push("--blink-settings=imagesEnabled=false");
@@ -80,7 +100,7 @@ export async function createBrowserContext(opts = {}) {
   }
 
   fs.mkdirSync(VIDEO_DIR, { recursive: true });
-  const browser = await chromium.launch({ headless: true, args: launchArgs });
+  const browser = await launchChromium({ headless: true, args: launchArgs });
   const contextOptions = {
     viewport: opts.viewport || { width: 1280, height: 720 },
     userAgent: opts.userAgent,
@@ -129,6 +149,7 @@ export async function createSession(opts = {}, status = "idle") {
     if (entry) entry.status = response.status();
   });
   sessions.set(id, session);
+  if (status !== "pooled") queueMicrotask(() => warmPool().catch(() => {}));
   return session;
 }
 
@@ -211,6 +232,8 @@ export function poolMetrics() {
     total_sessions: sessions.size,
     launch_failures: warmPoolLaunchFailures,
     replenishing: Boolean(warmPoolPromise),
+    launch_active: browserLaunchActive,
+    launch_queued: browserLaunchQueued,
   };
 }
 export function setShuttingDown(value) { shuttingDown = Boolean(value); }
