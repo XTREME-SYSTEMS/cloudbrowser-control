@@ -1,0 +1,66 @@
+{
+  "receipt_id": "validation-final-20260820T064400Z",
+  "type": "VALIDATION",
+  "project": "cloudbrowser-control",
+  "candidate_branch": "autonomous/cloudbrowser-control-v1",
+  "candidate_sha": "afd742a0247c0c27e0d9ef154ac0399cb8f93db8",
+  "environment": "fortress-staging",
+  "github": {
+    "autonomy_validation": {
+      "run_id": 32340709583,
+      "status": "completed",
+      "conclusion": "success",
+      "worker_tests": "9/9",
+      "jobs": ["Code Quality Gate", "Security Audit", "Browser Engine Syntax", "Autonomy Worker"]
+    },
+    "release_gate": {
+      "run_id": 32340709573,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": ["Code Quality Gate", "Security Audit", "Browser Engine Syntax Check", "Release Gate Status"]
+    },
+    "main_sha": "1da8c5bf4c20581606d2ec746b5fc892aaafe598",
+    "main_protected": false,
+    "draft_pr": 2
+  },
+  "fortress_staging": {
+    "app_id": "6a8688c834cf23adb0937741",
+    "latest_run_id": "STG_20260820050246_LWJ0C",
+    "exact_source_sha": "d739613",
+    "engine_connected": false,
+    "total": 114,
+    "pass": 105,
+    "fail": 0,
+    "blocked": 9,
+    "certification": "not_certified",
+    "certification_id": "CERT_20260820050253",
+    "reason": "only 1/3 qualifying runs; 9 checks blocked because preview engine is unset"
+  },
+  "mandatory_runtime_suites": {
+    "runTestSuite": "23/23 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runMasterReleaseSuite": "47/47 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runDeployedTenantIsolationTests": "18/18 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runMcpBlackBox": "18/18 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runContextBlackBox": "11/11 REQUIRED_NOT_EXECUTED_ON_CANDIDATE"
+  },
+  "vercel": {
+    "team_id": "team_kRZgAZTW6LlJqG3UjuIb8xVi",
+    "cloudbrowser_project": "NOT_RESOLVED",
+    "project_lookup": "404",
+    "cron_activated": false,
+    "environment_configured": false
+  },
+  "rollback": {
+    "base44_checkpoint_id": "6a869d15424a0aeccc87ec53",
+    "base44_checkpoint_commit": "496689133367316367a513f0389f65e66964f21d",
+    "git_rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e"
+  },
+  "quality_score": null,
+  "release_gate_status": "FAIL_RUNTIME_BLOCKED",
+  "clean_pass_count": 0,
+  "autonomous_mutation_enabled": false,
+  "release_ready": false,
+  "next_action": "Resolve isolated Vercel project and non-production environment values, connect Fortress Staging to a candidate preview engine/source SHA, expose the five mandatory staging suite endpoints, then activate the 5-minute heartbeat in preview only.",
+  "timestamp": "2026-08-20T06:44:00Z",
+  "content_hash": "214e7cc5d2b45ba03044e7f45964f8ea913f47a3d62ea22bb25ef4217e01c842"
+}
