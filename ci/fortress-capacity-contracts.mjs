@@ -1,15 +1,20 @@
 import fs from 'node:fs';
 const runtime = fs.readFileSync('browser-engine/engine/runtime.js', 'utf8');
+const app = fs.readFileSync('browser-engine/engine/app.js', 'utf8');
 const config = fs.readFileSync('browser-engine/engine/config.js', 'utf8');
 const soak = fs.readFileSync('ci/fortress-engine-soak.mjs', 'utf8');
 const checks=[]; function check(name, condition){checks.push({name,status:condition?'PASS':'FAIL'});console[condition?'log':'error'](`${condition?'PASS':'FAIL'}: ${name}`);}
 check('warm pool single-flight', runtime.includes('if (warmPoolPromise) return warmPoolPromise'));
+check('warm replenishment debounced', runtime.includes('export function scheduleWarmPool(delayMs = 250)') && runtime.includes('warmPoolTimer'));
+check('pool launch yields to browser launch pressure', runtime.includes('browserLaunchActive > 0 || browserLaunchQueued > 0'));
 check('dynamic warm target accounts for active sessions', runtime.includes('WARM_POOL_INSTANCE_BUDGET - active'));
 check('rebalance drains excess warm sessions', runtime.includes('pool_rebalanced'));
-check('fresh active sessions request rebalance', runtime.includes('if (status !== "pooled") queueMicrotask(() => warmPool()'));
+check('fresh active sessions schedule rebalance', runtime.includes('if (status !== "pooled") scheduleWarmPool()'));
+check('pooled checkout schedules refill', app.includes('scheduleWarmPool();'));
 check('Chromium launches serialized', runtime.includes('async function launchChromium(options)') && runtime.includes('await previous') && runtime.includes('return await chromium.launch(options)'));
 check('single direct chromium.launch call', (runtime.match(/chromium\.launch\(/g)||[]).length===1);
 check('launch queue metrics exposed', runtime.includes('launch_active: browserLaunchActive') && runtime.includes('launch_queued: browserLaunchQueued'));
+check('scheduled refill metric exposed', runtime.includes('replenish_scheduled: Boolean(warmPoolTimer)'));
 check('pool metrics expose pressure', ['active_sessions:','warm_target:','launch_failures:','replenishing:'].every((x)=>runtime.includes(x)));
 check('health uses dynamic warm target', runtime.includes('const target = desiredWarmCount()') && runtime.includes('pool.length < target'));
 check('warm budget configurable', config.includes('WARM_POOL_INSTANCE_BUDGET'));
