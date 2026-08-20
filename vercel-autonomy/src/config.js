@@ -32,6 +32,13 @@ export function env() {
     stagingRunUrl: process.env.BASE44_STAGING_RUN_URL || null,
     stagingCertifyUrl: process.env.BASE44_STAGING_CERTIFY_URL || null,
     stagingToken: process.env.BASE44_STAGING_AUTH_TOKEN || null,
+    suiteUrls: {
+      runtime: process.env.CLOUDBROWSER_STAGING_RUNTIME_SUITE_URL || null,
+      master: process.env.CLOUDBROWSER_STAGING_MASTER_SUITE_URL || null,
+      tenant: process.env.CLOUDBROWSER_STAGING_TENANT_SUITE_URL || null,
+      mcp: process.env.CLOUDBROWSER_STAGING_MCP_SUITE_URL || null,
+      context: process.env.CLOUDBROWSER_STAGING_CONTEXT_SUITE_URL || null,
+    },
     validationContractVersion: process.env.VALIDATION_CONTRACT_VERSION || 'cloudbrowser-v1',
     scoringContractVersion: process.env.SCORING_CONTRACT_VERSION || 'cloudbrowser-v1',
   };
