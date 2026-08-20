@@ -100,12 +100,20 @@ check("docker-shared-playwright-path", () => assert.match(dockerfile, /PLAYWRIGH
 check("docker-non-root", () => assert.match(dockerfile, /USER engine/));
 check("docker-browser-ownership", () => assert.match(dockerfile, /chown -R engine:engine[^\n]*\/ms-playwright/));
 
-check("dns-rebinding-not-self-certified", () => assert.match(SSRF_LIMITATION, /Network-layer private-range egress denial or resolver pinning/));
+check("dns-rebinding-status-is-evidence-scoped", () => {
+  if (/Final outbound TCP connections are DNS-pinned/i.test(SSRF_LIMITATION)) {
+    assert.match(SSRF_LIMITATION, /network-layer destination denial remains recommended/i);
+    assert.match(SSRF_LIMITATION, /separately verified/i);
+  } else {
+    assert.match(SSRF_LIMITATION, /Network-layer private-range egress denial or resolver pinning/i);
+  }
+});
 
 console.log(JSON.stringify({
   suite: "fortress-core-static",
   status: "PASS",
   passed,
-  dns_rebinding_toctou: "EXTERNAL_EVIDENCE_REQUIRED",
+  dns_rebinding_transport: /Final outbound TCP connections are DNS-pinned/i.test(SSRF_LIMITATION) ? "PINNED_TRANSPORT_PRESENT" : "EXTERNAL_EVIDENCE_REQUIRED",
+  network_layer_destination_denial: "EXTERNAL_EVIDENCE_REQUIRED",
   staging_required: true,
 }, null, 2));
