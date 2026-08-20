@@ -15,11 +15,16 @@ check('warm pool clears single-flight promise after completion', runtime.include
 check('dynamic warm target accounts for active sessions', runtime.includes('WARM_POOL_INSTANCE_BUDGET - active'));
 check('dynamic warm target also respects MAX_SESSIONS', runtime.includes('MAX_SESSIONS - active'));
 check('rebalance drains excess pooled sessions', runtime.includes('pool_rebalanced'));
+check('fresh active sessions request pool rebalance', runtime.includes('if (status !== "pooled") queueMicrotask(() => warmPool()'));
 check('warm launches stop at dynamic desired target', runtime.includes('pool.length >= desired'));
 check('warm launch failures are counted', runtime.includes('warmPoolLaunchFailures++'));
+check('Chromium launches are serialized through a global launch queue', runtime.includes('async function launchChromium(options)') && runtime.includes('await previous') && runtime.includes('return await chromium.launch(options)'));
+check('direct chromium.launch calls are centralized', (runtime.match(/chromium\.launch\(/g) || []).length === 1);
+check('launch queue metrics are exposed', runtime.includes('launch_active: browserLaunchActive') && runtime.includes('launch_queued: browserLaunchQueued'));
 check('pool metrics expose active, target, failures, and replenishing state', ['active_sessions:', 'warm_target:', 'launch_failures:', 'replenishing:'].every((needle) => runtime.includes(needle)));
 check('health uses dynamic warm target instead of static pool size', runtime.includes('const target = desiredWarmCount()') && runtime.includes('pool.length < target'));
 check('warm budget is separately configurable', config.includes('WARM_POOL_INSTANCE_BUDGET'));
+check('default warm budget reserves active-session headroom', config.includes('POOL_SIZE + 1'));
 check('warm budget is clamped to MAX_SESSIONS', config.includes('Math.min(MAX_SESSIONS'));
 check('engine config rejects invalid pool sizing', config.includes('POOL_SIZE must be an integer between 0 and MAX_SESSIONS'));
 check('soak requests have explicit timeout', soak.includes('AbortSignal.timeout(REQUEST_TIMEOUT_MS)'));
