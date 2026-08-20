@@ -1,7 +1,7 @@
 # Fortress DNS Pinning Receipt
 
-- Tested commit: 38c1f7cb780ad68f145491c650b70260e3175c41
-- Workflow run: 32335871279
+- Tested commit: 42e293704db04ab94ef22928e75edb161732fe33
+- Workflow run: 32336233525
 - Pinning/source contracts: failure
 - Browser integration and soak: failure
 - Overall: FAIL
