@@ -1,0 +1,45 @@
+{
+  "receipt_id": "validation-bootstrap-20260820T063200Z",
+  "type": "VALIDATION",
+  "project": "cloudbrowser-control",
+  "candidate_branch": "autonomous/cloudbrowser-control-v1",
+  "candidate_sha": "2fbd05ff471b6dd1575a600449f4827cba83feca",
+  "environment": "fortress-staging",
+  "github": {
+    "autonomy_validation": {
+      "run_id": 32339968710,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": ["Code Quality Gate", "Security Audit", "Browser Engine Syntax", "Autonomy Worker"]
+    },
+    "release_gate": {
+      "run_id": 32339968734,
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": ["Code Quality Gate", "Security Audit", "Browser Engine Syntax Check", "Release Gate Status"]
+    },
+    "main_protected": false
+  },
+  "fortress_staging": {
+    "app_id": "6a8688c834cf23adb0937741",
+    "latest_run_id": "STG_20260820050246_LWJ0C",
+    "exact_source_sha": "d739613",
+    "engine_connected": false,
+    "total": 114,
+    "pass": 105,
+    "fail": 0,
+    "blocked": 9,
+    "certification": "not_certified",
+    "reason": "preview engine unset and only one of three qualifying runs exists"
+  },
+  "rollback": {
+    "base44_checkpoint_id": "6a869d15424a0aeccc87ec53",
+    "base44_checkpoint_commit": "496689133367316367a513f0389f65e66964f21d",
+    "git_rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e"
+  },
+  "release_gate_status": "FAIL_RUNTIME_BLOCKED",
+  "vercel_project_status": "UNRESOLVED_IN_LINKED_PROJECT_LIST",
+  "next_action": "Connect an isolated non-production Vercel project, provide environment values outside GitHub, and connect Fortress Staging to the candidate preview browser engine before runtime activation.",
+  "content_hash": "ce5c73f07b693ee600cd242804472eadf021a3a56e35c6d9845e97d760a90b7b",
+  "timestamp": "2026-08-20T06:32:00Z"
+}
