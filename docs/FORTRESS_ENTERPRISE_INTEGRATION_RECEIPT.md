@@ -1,12 +1,12 @@
 # Fortress Enterprise Integration Receipt
 
-- Tested commit: ea2c2cf66bd522730fa59f80f7dc49a481e9c663
-- Workflow run: 32336976903
-- Security contracts: failure
-- Quality and supply chain: cancelled
-- Hardened runtime smoke: cancelled
-- Concurrency/lifecycle soak: cancelled
-- Overall: FAIL
+- Tested commit: 91f516c2feb002103de37268dfcb72cb9ded73f6
+- Workflow run: 32337059171
+- Security contracts: success
+- Quality and supply chain: success
+- Hardened runtime smoke: success
+- Concurrency/lifecycle soak: success
+- Overall: PASS
 - Chromium sandbox disabled flags: FORBIDDEN
 - DNS-pinned final outbound sockets: REQUIRED
 - Playwright request guard: REQUIRED
