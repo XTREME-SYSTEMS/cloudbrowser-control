@@ -1,0 +1,44 @@
+{
+  "receipt_id": "mcp-vercel-provisioning-20260820T064600Z",
+  "type": "MCP_ACTION",
+  "project": "cloudbrowser-control",
+  "target_system": "vercel",
+  "target_project": "cloudbrowser-autonomy-preview",
+  "team_id": "team_kRZgAZTW6LlJqG3UjuIb8xVi",
+  "root_directory": "vercel-autonomy",
+  "production": false,
+  "deployment_requested": false,
+  "secret_values_used": false,
+  "attempts": [
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-preview-20260820",
+      "mode": "dry_run",
+      "status": "dry_run_complete",
+      "framework": "other",
+      "rollback": "delete_project_if_created"
+    },
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-preview-20260820",
+      "mode": "execute",
+      "status": "blocked_by_policy"
+    },
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-preview-20260820-execute2",
+      "mode": "execute",
+      "status": "failed",
+      "error_code": "invalid_framework",
+      "framework": "other"
+    },
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-preview-noframework-20260820",
+      "mode": "dry_run",
+      "status": "dry_run_complete",
+      "auto_detect_framework": "nextjs",
+      "executed": false,
+      "reason_not_executed": "Next.js preset does not match the framework-agnostic worker package."
+    }
+  ],
+  "result": "BLOCKED_WITHOUT_MUTATION",
+  "next_action": "Provision a Vercel project with framework preset Other/no-framework using a provider surface that accepts that configuration, root it at vercel-autonomy, and keep deployment preview-only.",
+  "timestamp": "2026-08-20T06:46:00Z"
+}
