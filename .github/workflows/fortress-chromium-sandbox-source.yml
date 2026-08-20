@@ -1,0 +1,124 @@
+name: Fortress Chromium Sandbox Source Validation
+
+on:
+  push:
+    branches:
+      - fortress/v1.1-chromium-sandbox
+    paths-ignore:
+      - docs/FORTRESS_CHROMIUM_SANDBOX_SOURCE_RECEIPT.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fortress-chromium-sandbox-source-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  ENGINE_API_KEY: fortress_sandbox_source_ci_key_0123456789abcdef0123456789abcdef
+
+jobs:
+  source-and-runtime:
+    name: Sandbox Source And Runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Require sandbox flags absent in source
+        run: |
+          if grep -R --line-number --fixed-strings -- '--no-sandbox' browser-engine; then exit 1; fi
+          if grep -R --line-number --fixed-strings -- '--disable-setuid-sandbox' browser-engine; then exit 1; fi
+          node --check browser-engine/engine/runtime.js
+      - name: Build source image
+        run: docker build --pull -t cloudbrowser-fortress-sandbox-source ./browser-engine
+      - name: Start hardened source image
+        run: |
+          docker run -d --name fortress-engine-sandbox-source -p 127.0.0.1:8080:8080 \
+            --read-only \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --tmpfs /home/engine:rw,nosuid,size=64m \
+            --tmpfs /data:rw,nosuid,size=64m \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 --memory=2g --cpus=2 \
+            -e ENGINE_API_KEY="$ENGINE_API_KEY" \
+            -e CORS_ALLOWLIST="https://allowed.invalid" \
+            -e POOL_SIZE=3 -e MAX_SESSIONS=10 -e DEFAULT_TIMEOUT=15000 \
+            cloudbrowser-fortress-sandbox-source
+      - name: Require liveness
+        run: |
+          for i in $(seq 1 60); do curl --silent --fail http://127.0.0.1:8080/liveness >/dev/null && exit 0; sleep 2; done
+          docker logs fortress-engine-sandbox-source
+          exit 1
+      - name: Require Chromium readiness
+        run: curl --silent --fail http://127.0.0.1:8080/readiness | tee /tmp/readiness.json | grep -q '"browser_launch":"verified"'
+      - name: Require pool 3/3
+        run: |
+          for i in $(seq 1 60); do
+            POOL=$(curl --silent --fail -H "x-api-key: $ENGINE_API_KEY" http://127.0.0.1:8080/pool || true)
+            echo "$POOL"
+            echo "$POOL" | grep -q '"warmCount":3' && exit 0
+            sleep 2
+          done
+          docker logs fortress-engine-sandbox-source
+          exit 1
+      - name: Browser smoke
+        run: node ci/fortress-engine-smoke.mjs
+      - name: Require runtime restrictions
+        run: |
+          test "$(docker exec fortress-engine-sandbox-source id -u)" != "0"
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' fortress-engine-sandbox-source)" = "true"
+          docker inspect --format '{{json .HostConfig.CapDrop}}' fortress-engine-sandbox-source | grep -q ALL
+          docker inspect --format '{{json .HostConfig.SecurityOpt}}' fortress-engine-sandbox-source | grep -q no-new-privileges
+      - name: Graceful drain
+        run: |
+          docker stop -t 10 fortress-engine-sandbox-source
+          test "$(docker inspect --format '{{.State.ExitCode}}' fortress-engine-sandbox-source)" = "0"
+      - name: Logs
+        if: always()
+        run: docker logs fortress-engine-sandbox-source 2>&1 || true
+
+  receipt:
+    name: Sandbox Source Receipt
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [source-and-runtime]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1-chromium-sandbox
+          fetch-depth: 0
+      - name: Persist result
+        run: |
+          cat > docs/FORTRESS_CHROMIUM_SANDBOX_SOURCE_RECEIPT.md <<EOF_RECEIPT
+          # Fortress Chromium Sandbox Source Receipt
+
+          - Tested commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Source/runtime validation: ${{ needs.source-and-runtime.result }}
+          - --no-sandbox in browser-engine source: FORBIDDEN
+          - --disable-setuid-sandbox in browser-engine source: FORBIDDEN
+          - Non-root runtime: REQUIRED
+          - Chromium readiness: REQUIRED
+          - Pool 3/3: REQUIRED
+          - Browser smoke: REQUIRED
+          - Read-only rootfs: REQUIRED
+          - Capabilities dropped: REQUIRED
+          - No-new-privileges: REQUIRED
+          - Production deploy: NOT EXECUTED
+          - Main write/merge: NOT EXECUTED
+          EOF_RECEIPT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FORTRESS_CHROMIUM_SANDBOX_SOURCE_RECEIPT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: record Chromium sandbox source receipt"
+            git pull --rebase origin fortress/v1.1-chromium-sandbox
+            git push origin HEAD:fortress/v1.1-chromium-sandbox
+          fi
+      - name: Enforce result
+        run: test "${{ needs.source-and-runtime.result }}" = success
