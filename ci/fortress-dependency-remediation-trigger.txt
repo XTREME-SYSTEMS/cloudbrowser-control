@@ -1,0 +1,1 @@
+Trigger non-force package-lock-only dependency remediation after GitHub Actions run 32330005996 identified five HIGH root dependency advisories. Production/main are out of scope.
