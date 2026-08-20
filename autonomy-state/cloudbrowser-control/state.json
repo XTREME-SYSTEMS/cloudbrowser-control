@@ -41,9 +41,9 @@
   "autonomous_mutation_enabled": false,
   "release_ready": false,
   "rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
-  "receipt_chain": ["validation-bootstrap-20260820T063200Z","validation-final-20260820T064400Z","validation-final-20260820T064600Z","mcp-vercel-provisioning-20260820T064600Z","vercel-null-framework-discovery-20260820T065500Z"],
+  "receipt_chain": ["validation-bootstrap-20260820T063200Z","validation-final-20260820T064400Z","validation-final-20260820T064600Z","mcp-vercel-provisioning-20260820T064600Z","vercel-null-framework-discovery-20260820T065500Z","overnight-continuation-20260820T065700Z"],
   "github_validation": {"candidate_sha":"cdbd05060e1e5ebb17779097dc25790ed96b8c29","autonomy_validation_run_id":32340868945,"autonomy_validation":"success","release_gate_run_id":32340868942,"release_gate":"success","autonomy_worker_tests":"10/10"},
   "vercel_provisioning": {"project_created":false,"required_framework":null,"required_framework_label":"Other/no-framework","direct_project_lookup":"404","inventory_match":false,"dry_run_job":"cloudbrowser-autonomy-vercel-null-framework-20260820","live_attempt":"blocked_invalid_payload","provider_default_observed":"nextjs","identical_retry_allowed":false,"receipt_id":"vercel-null-framework-discovery-20260820T065500Z"},
-  "overnight_continuation": {"requested":true,"safe_scope":"read, validate, branch/sandbox/dry-run and explicitly approved non-production preview wiring only","mutation_must_remain_disabled_until_full_runtime_validation":true,"stop_state":"READY_FOR_OPERATOR_APPROVAL"},
-  "updated_at": "2026-08-20T06:56:00Z"
+  "overnight_continuation": {"requested":true,"enabled":true,"schedule":"hourly","timing_mode":"condition_watch","safe_scope":"read, validate, branch/sandbox/dry-run and explicitly approved non-production preview wiring only","mutation_must_remain_disabled_until_full_runtime_validation":true,"notify_only_on_material_change":true,"stop_state":"READY_FOR_OPERATOR_APPROVAL","receipt_id":"overnight-continuation-20260820T065700Z"},
+  "updated_at": "2026-08-20T06:58:00Z"
 }
