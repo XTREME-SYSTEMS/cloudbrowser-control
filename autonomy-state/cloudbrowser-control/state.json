@@ -64,7 +64,8 @@
   "receipt_chain": [
     "validation-bootstrap-20260820T063200Z",
     "validation-final-20260820T064400Z",
-    "validation-final-20260820T064600Z"
+    "validation-final-20260820T064600Z",
+    "mcp-vercel-provisioning-20260820T064600Z"
   ],
   "github_validation": {
     "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
@@ -79,7 +80,8 @@
     "dry_run_job": "cloudbrowser-autonomy-vercel-preview-20260820",
     "live_attempt": "failed_invalid_framework",
     "auto_detect_framework": "nextjs",
-    "auto_detect_executed": false
+    "auto_detect_executed": false,
+    "receipt_id": "mcp-vercel-provisioning-20260820T064600Z"
   },
-  "updated_at": "2026-08-20T06:46:00Z"
+  "updated_at": "2026-08-20T06:46:30Z"
 }
