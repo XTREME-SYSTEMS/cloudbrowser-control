@@ -1,7 +1,7 @@
 # Fortress Enterprise Integration Receipt
 
-- Tested commit: 260f2f80c789b66a6b7376a2243e46634cbf1040
-- Workflow run: 32336951446
+- Tested commit: ea2c2cf66bd522730fa59f80f7dc49a481e9c663
+- Workflow run: 32336976903
 - Security contracts: failure
 - Quality and supply chain: cancelled
 - Hardened runtime smoke: cancelled
