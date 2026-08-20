@@ -9,7 +9,7 @@ on:
       - docs/FORTRESS_*_RECEIPT.md
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: fortress-release-readiness-${{ github.ref }}
@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Require canonical Fortress integration wiring
         run: |
           grep -q -- '- fortress/v1.1' .github/workflows/fortress-enterprise-integration.yml
@@ -45,6 +47,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Fail closed if main moved from operator-approved baseline
         run: |
           ACTUAL_MAIN=$(git ls-remote origin refs/heads/main | awk '{print $1}')
@@ -90,11 +93,14 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs: [canonical-branch-contract, production-baseline-guard, main-protection-guard]
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: fortress/v1.1
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Observe governance state and persist fail-closed receipt
         id: state
