@@ -15,6 +15,7 @@ let cdpPortCounter = 9222;
 let shuttingDown = false;
 let lastPoolError = null;
 let warmPoolPromise = null;
+let warmPoolTimer = null;
 let warmPoolLaunchFailures = 0;
 let browserLaunchTail = Promise.resolve();
 let browserLaunchQueued = 0;
@@ -84,13 +85,8 @@ export async function createBrowserContext(opts = {}) {
     browser = await launchChromium({ headless: true, args: launchArgs, proxy: { server: egressProxy.url } });
     browser.on("disconnected", () => { egressProxy.close().catch(() => {}); });
     const contextOptions = {
-      viewport: opts.viewport || { width: 1280, height: 720 },
-      userAgent: opts.userAgent,
-      locale: opts.locale,
-      timezoneId: opts.timezone,
-      geolocation: opts.geolocation,
-      extraHTTPHeaders: opts.headers,
-      serviceWorkers: "block",
+      viewport: opts.viewport || { width: 1280, height: 720 }, userAgent: opts.userAgent, locale: opts.locale,
+      timezoneId: opts.timezone, geolocation: opts.geolocation, extraHTTPHeaders: opts.headers, serviceWorkers: "block",
     };
     if (opts.recordVideo) contextOptions.recordVideo = { dir: VIDEO_DIR };
     context = await browser.newContext(contextOptions);
@@ -124,7 +120,7 @@ export async function createSession(opts = {}, status = "idle") {
   page.on("request", (request) => session.networkLogs.push({ method: request.method(), url: request.url(), type: request.resourceType(), time: Date.now() }));
   page.on("response", (response) => { const entry = session.networkLogs.find((item) => item.url === response.url() && !item.status); if (entry) entry.status = response.status(); });
   sessions.set(id, session);
-  if (status !== "pooled") queueMicrotask(() => warmPool().catch(() => {}));
+  if (status !== "pooled") scheduleWarmPool();
   return session;
 }
 
@@ -155,6 +151,7 @@ async function rebalanceWarmPool() {
   while (!shuttingDown) {
     const desired = desiredWarmCount();
     if (pool.length >= desired || sessions.size >= MAX_SESSIONS) break;
+    if (browserLaunchActive > 0 || browserLaunchQueued > 0) { scheduleWarmPool(250); break; }
     try {
       const session = await createSession({ usePool: false }, "pooled");
       pool.push(session.id);
@@ -173,21 +170,22 @@ export function warmPool() {
   warmPoolPromise = rebalanceWarmPool().finally(() => { warmPoolPromise = null; });
   return warmPoolPromise;
 }
+export function scheduleWarmPool(delayMs = 250) {
+  if (shuttingDown) return;
+  if (warmPoolTimer) clearTimeout(warmPoolTimer);
+  warmPoolTimer = setTimeout(() => { warmPoolTimer = null; warmPool().catch(() => {}); }, Math.max(0, Number(delayMs) || 0));
+  warmPoolTimer.unref?.();
+}
 export function checkoutPooledSession() {
   while (pool.length) {
-    const id = pool.shift();
-    const session = sessions.get(id);
-    if (!session) continue;
-    session.status = "idle";
-    session.isPooled = false;
-    session.lastActivity = Date.now();
-    return session;
+    const id = pool.shift(); const session = sessions.get(id); if (!session) continue;
+    session.status = "idle"; session.isPooled = false; session.lastActivity = Date.now(); return session;
   }
   return null;
 }
 export function poolError() { return lastPoolError; }
-export function poolMetrics() { return { warm_count: pool.length, warm_target: desiredWarmCount(), warm_budget: WARM_POOL_INSTANCE_BUDGET, active_sessions: activeSessionCount(), total_sessions: sessions.size, launch_failures: warmPoolLaunchFailures, replenishing: Boolean(warmPoolPromise), launch_active: browserLaunchActive, launch_queued: browserLaunchQueued }; }
-export function setShuttingDown(value) { shuttingDown = Boolean(value); }
+export function poolMetrics() { return { warm_count: pool.length, warm_target: desiredWarmCount(), warm_budget: WARM_POOL_INSTANCE_BUDGET, active_sessions: activeSessionCount(), total_sessions: sessions.size, launch_failures: warmPoolLaunchFailures, replenishing: Boolean(warmPoolPromise), replenish_scheduled: Boolean(warmPoolTimer), launch_active: browserLaunchActive, launch_queued: browserLaunchQueued }; }
+export function setShuttingDown(value) { shuttingDown = Boolean(value); if (shuttingDown && warmPoolTimer) { clearTimeout(warmPoolTimer); warmPoolTimer = null; } }
 export function isShuttingDown() { return shuttingDown; }
 export function runtimeIdentity() { return { uid: process.getuid?.(), gid: process.getgid?.(), home: os.homedir() }; }
 export function healthStatus() { const target = desiredWarmCount(); return process.uptime() > 30 && pool.length < target ? "degraded" : "healthy"; }
@@ -196,7 +194,7 @@ export function startMaintenance() {
     const now = Date.now();
     for (const [id, session] of sessions) {
       if (session.status === "pooled") continue;
-      if (now - session.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").then(() => warmPool()).catch(() => {});
+      if (now - session.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").then(() => scheduleWarmPool()).catch(() => {});
     }
   }, 60000).unref();
   setInterval(() => warmPool().catch(() => {}), 30000).unref();
