@@ -1,0 +1,116 @@
+{
+  "name": "IntelligenceSignal",
+  "type": "object",
+  "properties": {
+    "signal_id": {
+      "type": "string"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "first_detected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "score": {
+      "type": "number"
+    },
+    "capital_impact": {
+      "type": "number"
+    },
+    "urgency": {
+      "type": "number"
+    },
+    "novelty": {
+      "type": "number"
+    },
+    "actionability": {
+      "type": "number"
+    },
+    "source_authority": {
+      "type": "number"
+    },
+    "corroboration": {
+      "type": "number"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "competitive_scarcity": {
+      "type": "number"
+    },
+    "lead_time_advantage": {
+      "type": "number"
+    },
+    "estimated_capital_impact": {
+      "type": "string"
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "predicted_outcome": {
+      "type": "string"
+    },
+    "action_window": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "review_status": {
+      "type": "string",
+      "enum": [
+        "archive",
+        "watch",
+        "meaningful",
+        "high_value",
+        "exceptional"
+      ],
+      "default": "watch"
+    },
+    "scoring_version": {
+      "type": "string",
+      "default": "1.0.0"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "signal_id",
+    "title",
+    "first_detected_at",
+    "score"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

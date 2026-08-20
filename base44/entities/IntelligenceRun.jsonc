@@ -1,0 +1,127 @@
+{
+  "name": "IntelligenceRun",
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "cycle_type": {
+      "type": "string",
+      "enum": [
+        "heartbeat",
+        "hourly_intelligence",
+        "backtest",
+        "manual"
+      ],
+      "default": "hourly_intelligence"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "completed",
+        "partial",
+        "failed"
+      ],
+      "default": "running"
+    },
+    "sources_eligible": {
+      "type": "number",
+      "default": 0
+    },
+    "sources_attempted": {
+      "type": "number",
+      "default": 0
+    },
+    "sources_successful": {
+      "type": "number",
+      "default": 0
+    },
+    "failures": {
+      "type": "number",
+      "default": 0
+    },
+    "new_snapshots": {
+      "type": "number",
+      "default": 0
+    },
+    "changed_sources": {
+      "type": "number",
+      "default": 0
+    },
+    "events_created": {
+      "type": "number",
+      "default": 0
+    },
+    "signals_created": {
+      "type": "number",
+      "default": 0
+    },
+    "high_value_signals": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "scheduler_tick": {
+      "type": "number"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "run_id",
+    "cycle_type",
+    "started_at",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

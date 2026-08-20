@@ -1,0 +1,79 @@
+{
+  "name": "IntelligenceSnapshot",
+  "type": "object",
+  "properties": {
+    "snapshot_id": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checksum": {
+      "type": "string"
+    },
+    "content_excerpt": {
+      "type": "string"
+    },
+    "structured_data": {
+      "type": "object"
+    },
+    "changed_from_previous": {
+      "type": "boolean",
+      "default": false
+    },
+    "evidence_url": {
+      "type": "string"
+    },
+    "artifact_id": {
+      "type": "string"
+    },
+    "retrieval_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "unchanged",
+        "blocked",
+        "failed"
+      ],
+      "default": "success"
+    },
+    "http_status": {
+      "type": "number"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "snapshot_id",
+    "source_id",
+    "captured_at",
+    "retrieval_status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

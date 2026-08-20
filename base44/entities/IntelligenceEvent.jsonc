@@ -1,0 +1,106 @@
+{
+  "name": "IntelligenceEvent",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "entity_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "geography": {
+      "type": "string"
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "latest_seen": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "estimated_event_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_count": {
+      "type": "number",
+      "default": 0
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "watch",
+        "developing",
+        "confirmed",
+        "disproved",
+        "archived"
+      ],
+      "default": "watch"
+    },
+    "verified_facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "title",
+    "first_seen"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

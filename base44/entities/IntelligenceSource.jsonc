@@ -1,0 +1,111 @@
+{
+  "name": "IntelligenceSource",
+  "type": "object",
+  "properties": {
+    "source_id": {
+      "type": "string"
+    },
+    "source_name": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "geography": {
+      "type": "string"
+    },
+    "authority_score": {
+      "type": "number"
+    },
+    "expected_frequency": {
+      "type": "string"
+    },
+    "access_method": {
+      "type": "string",
+      "enum": [
+        "api",
+        "rss",
+        "http",
+        "browser",
+        "pdf"
+      ]
+    },
+    "terms_status": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "review",
+        "blocked"
+      ],
+      "default": "review"
+    },
+    "last_checked": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "next_eligible_check": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "health": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "degraded",
+        "blocked",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "failure_count": {
+      "type": "number",
+      "default": 0
+    },
+    "priority": {
+      "type": "number",
+      "default": 50
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "source_id",
+    "source_name",
+    "url",
+    "category",
+    "access_method"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
