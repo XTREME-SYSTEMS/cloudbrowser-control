@@ -1,0 +1,15 @@
+# CODEOWNERS — CloudBrowser Control
+# Every path requires review from the release approver before merge to main.
+# This file enables GitHub's "Require review from Code Owners" branch-protection rule.
+
+* @xps-admin
+
+# Critical runtime surfaces — explicit ownership
+/base44/            @xps-admin
+/base44/functions/  @xps-admin
+/base44/shared/     @xps-admin
+/base44/entities/   @xps-admin
+/browser-engine/    @xps-admin
+/src/               @xps-admin
+/docs/              @xps-admin
+/.github/           @xps-admin
