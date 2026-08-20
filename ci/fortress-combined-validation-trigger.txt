@@ -1,0 +1,1 @@
+Trigger exact-head combined Fortress ephemeral validation after non-force dependency remediation. Branch-only validation marker. Production/main remain out of scope.
