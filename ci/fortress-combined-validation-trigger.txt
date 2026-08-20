@@ -1,1 +1,1 @@
-Trigger exact-head combined Fortress ephemeral validation after non-force dependency remediation. Branch-only validation marker. Production/main remain out of scope.
+Trigger canonical fortress/v1.1 enterprise validation after promotion of the green integrated runtime. Runtime source is inherited unchanged from tested SHA 91f516c2feb002103de37268dfcb72cb9ded73f6. Production/main remain out of scope.
