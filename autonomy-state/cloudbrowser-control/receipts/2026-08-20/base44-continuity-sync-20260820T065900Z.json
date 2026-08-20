@@ -1,0 +1,19 @@
+{
+  "receipt_id": "base44-continuity-sync-20260820T065900Z",
+  "type": "CONTINUITY_SYNC",
+  "project": "cloudbrowser-control",
+  "target_system": "AUTO BUILDER ORCHESTRATOR",
+  "app_id": "6a4ae522852a5e08bfa42450",
+  "records": {
+    "ProjectRegistry": "6a86a5554f81a2dc1d4d0deb",
+    "WorkflowRegistry": "6a86a55cdeba8f60b65a78d7",
+    "ValidationRegistry": "6a86a56c06beb7c0e3e8f246",
+    "ReceiptRegistry": "6a86a5726c65dab1c36797f3"
+  },
+  "state": "STAGING_RUNTIME_INTEGRATION_BLOCKED",
+  "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
+  "overnight_continuation": "enabled_hourly_condition_watch",
+  "autonomous_mutation_enabled": false,
+  "release_ready": false,
+  "timestamp": "2026-08-20T06:59:00Z"
+}
