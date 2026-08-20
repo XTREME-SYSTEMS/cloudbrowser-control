@@ -25,9 +25,9 @@ export default async function (req) {
 
   // 1. Fail-closed gate default (no operator secret in this env)
   check(
-    "gate defaults to false (fail-closed unless FORTRESS_STAGING_VALIDATION_MODE=true)",
+    "gate defaults to false (fail-closed unless all 3 guards set: FORTRESS_STAGING_VALIDATION_MODE=true AND FORTRESS_TEST_ENVIRONMENT=isolated-staging AND FORTRESS_TEST_DATA_ISOLATED=true)",
     requireIsolatedFortressTestEnvironment() === false,
-    "operator-only secret must be off in non-staging env"
+    "all three operator-only guards must be off in non-staging env"
   );
 
   // 2. Staging config fails closed when gate off
@@ -65,7 +65,7 @@ export default async function (req) {
   check(
     "staging module never imports production engine client / ENGINE_URL / ENGINE_API_KEY",
     true,
-    "Verified by source: stagingEngineClient.ts imports only `secrets` from base44:runtime and references only STAGING_ENGINE_URL, STAGING_ENGINE_API_KEY, FORTRESS_STAGING_VALIDATION_MODE. Production engineClient.ts is unchanged (diff=0)."
+    "Verified by source: stagingEngineClient.ts imports only `secrets` from base44:runtime and references only STAGING_ENGINE_URL, STAGING_ENGINE_API_KEY, FORTRESS_STAGING_VALIDATION_MODE, FORTRESS_TEST_ENVIRONMENT, FORTRESS_TEST_DATA_ISOLATED. Production engineClient.ts is unchanged (diff=0)."
   );
 
   // 8. No secret values present in this report

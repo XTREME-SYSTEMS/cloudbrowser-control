@@ -15,16 +15,28 @@ import { secrets } from "base44:runtime";
 //    It NEVER falls back to production credentials.
 //
 // Gate: requireIsolatedFortressTestEnvironment() returns true ONLY when
-// the secret FORTRESS_STAGING_VALIDATION_MODE === "true". Secrets are
-// settable only by operators via the secure secret channel — never by
-// gateway, jobs, UI, or customer traffic.
+// ALL THREE operator-only guards are set to exact values:
+//   FORTRESS_STAGING_VALIDATION_MODE === "true"
+//   FORTRESS_TEST_ENVIRONMENT       === "isolated-staging"
+//   FORTRESS_TEST_DATA_ISOLATED     === "true"
+// Secrets are settable only by operators via the secure secret channel —
+// never by gateway, jobs, UI, or customer traffic. Any missing/wrong
+// value => false => staging access fails closed.
 // ═══════════════════════════════════════════════
 
 export const STAGING_ENGINE_CONFIGURATION_REQUIRED = "STAGING_ENGINE_CONFIGURATION_REQUIRED";
 
-/** Operator-only fail-closed gate. true ONLY when FORTRESS_STAGING_VALIDATION_MODE === "true". */
+/** Operator-only fail-closed gate. true ONLY when ALL THREE guards are set:
+ *  FORTRESS_STAGING_VALIDATION_MODE === "true"
+ *  FORTRESS_TEST_ENVIRONMENT       === "isolated-staging"
+ *  FORTRESS_TEST_DATA_ISOLATED     === "true"
+ *  Any missing/wrong value => false => staging access fails closed. */
 export function requireIsolatedFortressTestEnvironment() {
-  return secrets.get("FORTRESS_STAGING_VALIDATION_MODE") === "true";
+  return (
+    secrets.get("FORTRESS_STAGING_VALIDATION_MODE") === "true" &&
+    secrets.get("FORTRESS_TEST_ENVIRONMENT") === "isolated-staging" &&
+    secrets.get("FORTRESS_TEST_DATA_ISOLATED") === "true"
+  );
 }
 
 /**
