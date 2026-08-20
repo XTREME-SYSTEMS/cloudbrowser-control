@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - fortress/v1.1
+    paths-ignore:
+      - docs/FORTRESS_EPHEMERAL_CI_RECEIPT.md
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: fortress-ephemeral-${{ github.ref }}
@@ -145,8 +147,51 @@ jobs:
       - container-smoke
     if: always()
     steps:
+      - name: Compute status
+        id: status
+        run: |
+          if [ "${{ needs.source-gates.result }}" = "success" ] && [ "${{ needs.container-smoke.result }}" = "success" ]; then
+            echo "overall=PASS" >> "$GITHUB_OUTPUT"
+          else
+            echo "overall=FAIL" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1
+          fetch-depth: 0
+
+      - name: Persist branch-only validation receipt
+        run: |
+          mkdir -p docs
+          cat > docs/FORTRESS_EPHEMERAL_CI_RECEIPT.md <<EOF
+          # Fortress Ephemeral CI Receipt
+
+          - Tested commit: `${{ github.sha }}`
+          - Workflow run: `${{ github.run_id }}`
+          - Run attempt: `${{ github.run_attempt }}`
+          - Source/security gates: `${{ needs.source-gates.result }}`
+          - Hardened container/browser smoke: `${{ needs.container-smoke.result }}`
+          - Overall ephemeral validation: `${{ steps.status.outputs.overall }}`
+          - Production deployment: `NOT EXECUTED`
+          - Main merge/write: `NOT EXECUTED`
+          - Production secrets/data: `NOT USED`
+          - DNS-rebinding TOCTOU: `NOT VERIFIED` unless separate network-layer evidence exists
+
+          This receipt proves only the GitHub Actions ephemeral environment represented by this run. It does not prove Railway staging or production readiness.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FORTRESS_EPHEMERAL_CI_RECEIPT.md
+          if git diff --cached --quiet; then
+            echo "Receipt unchanged"
+          else
+            git commit -m "ci: record Fortress ephemeral validation receipt"
+            git pull --rebase origin fortress/v1.1
+            git push origin HEAD:fortress/v1.1
+          fi
+
       - name: Enforce all ephemeral gates
         run: |
-          test "${{ needs.source-gates.result }}" = "success"
-          test "${{ needs.container-smoke.result }}" = "success"
+          test "${{ steps.status.outputs.overall }}" = "PASS"
           echo "FORTRESS EPHEMERAL VALIDATION PASS"
