@@ -1,0 +1,62 @@
+{
+  "receipt_id": "validation-final-20260820T064600Z",
+  "type": "VALIDATION",
+  "project": "cloudbrowser-control",
+  "candidate_branch": "autonomous/cloudbrowser-control-v1",
+  "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
+  "environment": "fortress-staging",
+  "github": {
+    "autonomy_validation": {"run_id": 32340868945, "status": "completed", "conclusion": "success", "worker_tests": "10/10"},
+    "release_gate": {"run_id": 32340868942, "status": "completed", "conclusion": "success"},
+    "main_sha": "1da8c5bf4c20581606d2ec746b5fc892aaafe598",
+    "main_protected": false,
+    "draft_pr": 2
+  },
+  "fortress_staging": {
+    "app_id": "6a8688c834cf23adb0937741",
+    "latest_run_id": "STG_20260820050246_LWJ0C",
+    "exact_source_sha": "d739613",
+    "engine_connected": false,
+    "total": 114,
+    "pass": 105,
+    "fail": 0,
+    "blocked": 9,
+    "certification": "not_certified",
+    "certification_id": "CERT_20260820050253",
+    "required_runs": 3,
+    "qualifying_runs": 1
+  },
+  "mandatory_runtime_suites": {
+    "runTestSuite": "23/23 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runMasterReleaseSuite": "47/47 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runDeployedTenantIsolationTests": "18/18 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runMcpBlackBox": "18/18 REQUIRED_NOT_EXECUTED_ON_CANDIDATE",
+    "runContextBlackBox": "11/11 REQUIRED_NOT_EXECUTED_ON_CANDIDATE"
+  },
+  "vercel": {
+    "team_id": "team_kRZgAZTW6LlJqG3UjuIb8xVi",
+    "existing_cloudbrowser_project_lookup": "404",
+    "project_created": false,
+    "dry_run_job": "cloudbrowser-autonomy-vercel-preview-20260820",
+    "first_execute_status": "blocked_by_policy",
+    "second_execute_job": "cloudbrowser-autonomy-vercel-preview-20260820-execute2",
+    "second_execute_status": "failed_invalid_framework",
+    "auto_detect_dry_run": "cloudbrowser-autonomy-vercel-preview-noframework-20260820",
+    "auto_detect_framework": "nextjs",
+    "auto_detect_executed": false,
+    "reason": "Worker package requires framework-agnostic Vercel Functions/Workflow behavior; adapter rejects framework=other and auto-detect proposes incorrect Next.js preset. No unsafe workaround executed."
+  },
+  "rollback": {
+    "base44_checkpoint_id": "6a869d15424a0aeccc87ec53",
+    "base44_checkpoint_commit": "496689133367316367a513f0389f65e66964f21d",
+    "git_rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e"
+  },
+  "quality_score": null,
+  "release_gate_status": "FAIL_RUNTIME_BLOCKED",
+  "clean_pass_count": 0,
+  "autonomous_mutation_enabled": false,
+  "release_ready": false,
+  "next_action": "Provision a framework-agnostic non-production Vercel project rooted at vercel-autonomy, configure environment values outside GitHub, connect Fortress Staging to a candidate preview browser engine/source SHA, expose the five mandatory staging suite endpoints, then activate the preview heartbeat.",
+  "timestamp": "2026-08-20T06:46:00Z",
+  "content_hash": "560dbb8a8ca4806b6bff3168a3a4df5a90eea2b38936a45092dcff810b04a9af"
+}
