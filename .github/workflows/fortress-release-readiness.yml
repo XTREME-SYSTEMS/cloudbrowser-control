@@ -1,0 +1,103 @@
+name: Fortress Release Readiness
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fortress/v1.1
+    paths-ignore:
+      - docs/FORTRESS_*_RECEIPT.md
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fortress-release-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APPROVED_MAIN_BASELINE: 1da8c5bf4c20581606d2ec746b5fc892aaafe598
+
+jobs:
+  canonical-branch-contract:
+    name: Canonical Fortress Branch Contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require canonical Fortress integration wiring
+        run: |
+          grep -q -- '- fortress/v1.1' .github/workflows/fortress-enterprise-integration.yml
+          grep -q 'docs/FORTRESS_\*_RECEIPT.md' .github/workflows/fortress-enterprise-integration.yml
+          grep -q 'node ci/fortress-pinned-egress.mjs' .github/workflows/fortress-enterprise-integration.yml
+          grep -q 'node ci/fortress-capacity-contracts.mjs' .github/workflows/fortress-enterprise-integration.yml
+          grep -q -- '--pids-limit=256' .github/workflows/fortress-enterprise-integration.yml
+          echo 'PASS: canonical Fortress integration wiring present'
+
+  production-baseline-guard:
+    name: Production Baseline Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fail closed if main moved from operator-approved baseline
+        run: |
+          ACTUAL_MAIN=$(git ls-remote origin refs/heads/main | awk '{print $1}')
+          echo "approved_main_baseline=$APPROVED_MAIN_BASELINE"
+          echo "observed_main=$ACTUAL_MAIN"
+          if [ -z "$ACTUAL_MAIN" ]; then
+            echo 'FAIL: could not resolve origin/main'
+            exit 1
+          fi
+          if [ "$ACTUAL_MAIN" != "$APPROVED_MAIN_BASELINE" ]; then
+            echo 'FAIL: production branch drift detected; operator reconciliation required before release'
+            exit 1
+          fi
+          echo 'PASS: production branch matches approved baseline'
+
+  main-protection-guard:
+    name: Main Protection Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require GitHub main branch protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/branches/main" \
+            -o /tmp/main-branch.json
+          node <<'NODE'
+          const fs = require('fs');
+          const branch = JSON.parse(fs.readFileSync('/tmp/main-branch.json', 'utf8'));
+          console.log(`main_protected=${branch.protected === true}`);
+          if (branch.protected !== true) {
+            console.error('FAIL: main is not protected; release remains HOLD');
+            process.exit(1);
+          }
+          console.log('PASS: main branch protection enabled');
+          NODE
+
+  release-readiness:
+    name: Fortress Release Readiness Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [canonical-branch-contract, production-baseline-guard, main-protection-guard]
+    steps:
+      - name: Fail closed on governance blocker
+        run: |
+          echo "canonical_branch_contract=${{ needs.canonical-branch-contract.result }}"
+          echo "production_baseline_guard=${{ needs.production-baseline-guard.result }}"
+          echo "main_protection_guard=${{ needs.main-protection-guard.result }}"
+          if [ "${{ needs.canonical-branch-contract.result }}" = success ] && \
+             [ "${{ needs.production-baseline-guard.result }}" = success ] && \
+             [ "${{ needs.main-protection-guard.result }}" = success ]; then
+            echo 'RELEASE_READINESS=TECHNICAL_GOVERNANCE_GATE_PASS'
+          else
+            echo 'RELEASE_READINESS=HOLD'
+            exit 1
+          fi
