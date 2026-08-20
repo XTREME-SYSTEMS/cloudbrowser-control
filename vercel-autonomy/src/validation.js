@@ -107,8 +107,16 @@ export async function collectValidation({ github, candidateSha, stagingStatusUrl
     certification = await fetchJson(stagingCertifyUrl, stagingToken, { method: 'POST', body: JSON.stringify({ source_sha: candidateSha, environment: 'staging' }) }).catch((error) => ({ error: error.message }));
   }
 
+  const resolvedSuiteUrls = {
+    runtime: suiteUrls.runtime || process.env.CLOUDBROWSER_STAGING_RUNTIME_SUITE_URL || null,
+    master: suiteUrls.master || process.env.CLOUDBROWSER_STAGING_MASTER_SUITE_URL || null,
+    tenant: suiteUrls.tenant || process.env.CLOUDBROWSER_STAGING_TENANT_SUITE_URL || null,
+    mcp: suiteUrls.mcp || process.env.CLOUDBROWSER_STAGING_MCP_SUITE_URL || null,
+    context: suiteUrls.context || process.env.CLOUDBROWSER_STAGING_CONTEXT_SUITE_URL || null,
+  };
+
   const suiteEntries = await Promise.all(Object.keys(SUITE_SPECS).map(async (name) => {
-    const url = suiteUrls?.[name] || null;
+    const url = resolvedSuiteUrls[name];
     const payload = url
       ? await fetchJson(url, stagingToken, { method: 'POST', body: JSON.stringify({ source_sha: candidateSha, environment: 'staging' }) }).catch((error) => ({ error: error.message }))
       : null;
