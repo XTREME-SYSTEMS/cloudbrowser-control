@@ -79,7 +79,7 @@ export function validateWorkPacket(packet) {
   for (const key of required) if (packet?.[key] === undefined || packet?.[key] === null) throw new Error(`Invalid work packet: missing ${key}`);
   assertBranchSafe(packet.working_branch);
   if (packet.project_id !== 'cloudbrowser-control') throw new Error('Work packet project mismatch');
-  if (packet.deployment_allowed || packet.main_write_allowed || packet.production_allowed || packet.secret_change_allowed) throw new Error('Protected capability requested');
+  if (packet.deployment_allowed || packet.main_write_allowed || packet.production_allowed || packet.secret_change_allowed || packet.operator_approval_required) throw new Error('Protected capability requested');
   if (!Array.isArray(packet.allowed_paths) || !packet.allowed_paths.length) throw new Error('Work packet requires allowed_paths');
   if (!Array.isArray(packet.acceptance_criteria) || !packet.acceptance_criteria.length) throw new Error('Work packet requires acceptance criteria');
   if (packet.allowed_paths.some((path) => IMMUTABLE_CONTROL_PATHS.some((prefix) => pathMatches(path, prefix)))) throw new Error('Work packet may not target governance control paths');
