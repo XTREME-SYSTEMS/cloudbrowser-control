@@ -1,11 +1,11 @@
 # Fortress Ephemeral CI Receipt
 
-- Tested commit: 8eeb97a2acefbeafe21c400313699d047f6d4f8b
-- Workflow run: 32401257841
+- Tested commit: bfc45a70d00fce273b0a97f507944037382f8202
+- Workflow run: 32401313107
 - Run attempt: 1
-- Source/security gates: failure
+- Source/security gates: success
 - Hardened container/browser smoke: success
-- Overall ephemeral validation: FAIL
+- Overall ephemeral validation: PASS
 - Production deployment: NOT EXECUTED
 - Main merge/write: NOT EXECUTED
 - Production secrets/data: NOT USED
