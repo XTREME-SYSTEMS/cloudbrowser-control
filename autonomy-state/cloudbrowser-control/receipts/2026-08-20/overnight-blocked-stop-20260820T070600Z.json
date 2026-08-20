@@ -1,0 +1,39 @@
+{
+  "receipt_id": "overnight-blocked-stop-20260820T070600Z",
+  "project_id": "cloudbrowser-control",
+  "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
+  "phase": "STAGING_RUNTIME_INTEGRATION_BLOCKED",
+  "checked_at": "2026-08-20T07:06:00Z",
+  "verified": {
+    "draft_pr_2_open": true,
+    "draft_pr_head_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
+    "autonomy_validation_run_32340868945": "success",
+    "release_gate_run_32340868942": "success",
+    "vercel_project_cloudbrowser_autonomy_preview": "404_not_found",
+    "vercel_inventory_match": false,
+    "auto_builder_control_plane_health": "ok",
+    "fortress_latest_run_id": "STG_20260820050246_LWJ0C",
+    "fortress_exact_source_sha": "d739613",
+    "fortress_engine_connected": false,
+    "fortress_totals": {"total": 114, "pass": 105, "fail": 0, "blocked": 9}
+  },
+  "blocker": {
+    "signature": "vercel-framework-null-adapter-blocked",
+    "status": "unchanged",
+    "required_condition": "A preview-only Vercel project rooted at vercel-autonomy must be created or exposed with framework=null (Other/no-framework). Next.js is not acceptable.",
+    "why_execution_stopped": "No compatible project exists and the currently available governed project-creation adapter has no verified change that would preserve framework=null. Retrying the identical failed path is prohibited by anti-thrash rules. Fortress cannot be wired or re-certified until a preview engine exists."
+  },
+  "safe_actions_not_executed": [
+    "No production deployment",
+    "No main/master write or merge",
+    "No secret mutation or exposure",
+    "No identical Vercel provisioning retry",
+    "No Fortress evidence rewrite without a real candidate preview",
+    "No heartbeat activation before preview verification",
+    "No autonomous mutation enablement before full runtime validation"
+  ],
+  "operator_or_provider_action_required": "Create/expose cloudbrowser-autonomy-preview through a provider surface that preserves framework=null, or repair the governed Vercel adapter to preserve null without changing the CloudBrowser control plane. Then resume from this receipt.",
+  "rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
+  "autonomous_mutation_enabled": false,
+  "release_ready": false
+}
