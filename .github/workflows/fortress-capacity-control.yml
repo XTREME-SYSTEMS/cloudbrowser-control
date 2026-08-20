@@ -64,7 +64,7 @@ jobs:
             --pids-limit=256 --memory=2g --cpus=2 \
             -e ENGINE_API_KEY="$ENGINE_API_KEY" \
             -e CORS_ALLOWLIST="https://allowed.invalid" \
-            -e POOL_SIZE=3 -e MAX_SESSIONS=10 -e WARM_POOL_INSTANCE_BUDGET=5 \
+            -e POOL_SIZE=3 -e MAX_SESSIONS=10 -e WARM_POOL_INSTANCE_BUDGET=4 \
             -e DEFAULT_TIMEOUT=20000 \
             cloudbrowser-fortress-capacity
       - name: Wait for liveness
@@ -120,7 +120,8 @@ jobs:
           - PID limit under test: 256
           - Pool size: 3
           - Max sessions: 10
-          - Warm-pool instance budget: 5
+          - Warm-pool instance budget: 4
+          - Browser launch concurrency: 1
           - Four concurrent active-session workload: REQUIRED
           - Production deploy: NOT EXECUTED
           - Main write/merge: NOT EXECUTED
