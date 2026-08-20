@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+const runtime = fs.readFileSync('browser-engine/engine/runtime.js', 'utf8');
+const config = fs.readFileSync('browser-engine/engine/config.js', 'utf8');
+const soak = fs.readFileSync('ci/fortress-engine-soak.mjs', 'utf8');
+const checks=[]; function check(name, condition){checks.push({name,status:condition?'PASS':'FAIL'});console[condition?'log':'error'](`${condition?'PASS':'FAIL'}: ${name}`);}
+check('warm pool single-flight', runtime.includes('if (warmPoolPromise) return warmPoolPromise'));
+check('dynamic warm target accounts for active sessions', runtime.includes('WARM_POOL_INSTANCE_BUDGET - active'));
+check('rebalance drains excess warm sessions', runtime.includes('pool_rebalanced'));
+check('fresh active sessions request rebalance', runtime.includes('if (status !== "pooled") queueMicrotask(() => warmPool()'));
+check('Chromium launches serialized', runtime.includes('async function launchChromium(options)') && runtime.includes('await previous') && runtime.includes('return await chromium.launch(options)'));
+check('single direct chromium.launch call', (runtime.match(/chromium\.launch\(/g)||[]).length===1);
+check('launch queue metrics exposed', runtime.includes('launch_active: browserLaunchActive') && runtime.includes('launch_queued: browserLaunchQueued'));
+check('pool metrics expose pressure', ['active_sessions:','warm_target:','launch_failures:','replenishing:'].every((x)=>runtime.includes(x)));
+check('health uses dynamic warm target', runtime.includes('const target = desiredWarmCount()') && runtime.includes('pool.length < target'));
+check('warm budget configurable', config.includes('WARM_POOL_INSTANCE_BUDGET'));
+check('warm budget clamped', config.includes('Math.min(MAX_SESSIONS'));
+check('pool sizing validated', config.includes('POOL_SIZE must be an integer between 0 and MAX_SESSIONS'));
+check('soak requests bounded', soak.includes('AbortSignal.timeout(REQUEST_TIMEOUT_MS)'));
+check('four concurrent active sessions retained', soak.includes('four concurrent sessions isolate and close cleanly'));
+const failed=checks.filter((x)=>x.status==='FAIL'); console.log(JSON.stringify({suite:'fortress-capacity-contracts',total:checks.length,pass:checks.length-failed.length,fail:failed.length,checks},null,2)); if(failed.length)process.exit(1);
