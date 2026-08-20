@@ -5,7 +5,7 @@ on:
     branches:
       - fortress/v1.1
     paths-ignore:
-      - docs/FORTRESS_EPHEMERAL_CI_RECEIPT.md
+      - docs/FORTRESS_*_RECEIPT.md
 
 permissions:
   contents: write
