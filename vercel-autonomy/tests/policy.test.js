@@ -16,8 +16,8 @@ test('work packet path allowlist and immutable governance paths are enforced', (
   assert.throws(() => assertPathAllowed('.github/workflows/autonomy-validation.yml', ['.github'], []));
 });
 
-test('safe work packet accepts explicit false secret-change policy', () => {
-  const packet = {
+function safePacket(overrides = {}) {
+  return {
     work_packet_id: 'WP-test-001',
     project_id: 'cloudbrowser-control',
     goal: 'Fix a bounded UI regression',
@@ -35,18 +35,31 @@ test('safe work packet accepts explicit false secret-change policy', () => {
     main_write_allowed: false,
     production_allowed: false,
     secret_change_allowed: false,
-    operator_approval_required: false
+    operator_approval_required: false,
+    ...overrides,
   };
-  assert.doesNotThrow(() => validateWorkPacket(packet));
+}
+
+test('safe work packet accepts explicit false protected policy flags', () => {
+  assert.doesNotThrow(() => validateWorkPacket(safePacket()));
+});
+
+test('approval-required work packet cannot execute autonomously', () => {
+  assert.throws(() => validateWorkPacket(safePacket({ operator_approval_required: true })));
 });
 
 test('work packet cannot target autonomy governance controls', () => {
-  const packet = {
-    work_packet_id: 'WP-test-002', project_id: 'cloudbrowser-control', goal: 'Alter policy', starting_sha: 'abc123', working_branch: 'autonomous/cloudbrowser-control-v1',
-    allowed_paths: ['vercel-autonomy/src/policy.js'], forbidden_paths: [], acceptance_criteria: ['change policy'], required_tests: [], regression_scope: [], max_files_changed: 1, max_attempts: 1, rollback_reference: 'abc123',
-    deployment_allowed: false, main_write_allowed: false, production_allowed: false, secret_change_allowed: false, operator_approval_required: false
-  };
-  assert.throws(() => validateWorkPacket(packet));
+  assert.throws(() => validateWorkPacket(safePacket({
+    work_packet_id: 'WP-test-002',
+    goal: 'Alter policy',
+    allowed_paths: ['vercel-autonomy/src/policy.js'],
+    forbidden_paths: [],
+    acceptance_criteria: ['change policy'],
+    required_tests: [],
+    regression_scope: [],
+    max_files_changed: 1,
+    max_attempts: 1,
+  })));
 });
 
 test('clean validation requires every hard gate', () => {
