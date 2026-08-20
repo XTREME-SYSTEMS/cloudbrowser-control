@@ -12,13 +12,31 @@ const workflows = [
   '.github/workflows/fortress-release-readiness.yml',
   '.github/workflows/fortress-rollback-rehearsal.yml',
 ];
-const writerJobs = new Map([
-  ['.github/workflows/fortress-dependency-remediation.yml', 'safe-lockfile-remediation'],
-  ['.github/workflows/fortress-enterprise-integration.yml', 'aggregate'],
-  ['.github/workflows/fortress-enterprise-parallel.yml', 'enterprise-gate'],
-  ['.github/workflows/fortress-ephemeral-validation.yml', 'validation-status'],
-  ['.github/workflows/fortress-release-readiness.yml', 'release-readiness'],
-  ['.github/workflows/fortress-rollback-rehearsal.yml', 'receipt'],
+const writerPolicies = new Map([
+  ['.github/workflows/fortress-dependency-remediation.yml', {
+    job: 'safe-lockfile-remediation',
+    paths: ['package-lock.json', 'docs/FORTRESS_DEPENDENCY_REMEDIATION_RECEIPT.md'],
+  }],
+  ['.github/workflows/fortress-enterprise-integration.yml', {
+    job: 'aggregate',
+    paths: ['docs/FORTRESS_ENTERPRISE_INTEGRATION_RECEIPT.md'],
+  }],
+  ['.github/workflows/fortress-enterprise-parallel.yml', {
+    job: 'enterprise-gate',
+    paths: ['docs/FORTRESS_ENTERPRISE_PARALLEL_RECEIPT.md'],
+  }],
+  ['.github/workflows/fortress-ephemeral-validation.yml', {
+    job: 'validation-status',
+    paths: ['docs/FORTRESS_EPHEMERAL_CI_RECEIPT.md'],
+  }],
+  ['.github/workflows/fortress-release-readiness.yml', {
+    job: 'release-readiness',
+    paths: ['docs/FORTRESS_RELEASE_READINESS_RECEIPT.md'],
+  }],
+  ['.github/workflows/fortress-rollback-rehearsal.yml', {
+    job: 'receipt',
+    paths: ['docs/FORTRESS_BRANCH_ROLLBACK_RECEIPT.md'],
+  }],
 ]);
 const broadPushWorkflows = workflows.filter((file) => !file.endsWith('fortress-dependency-remediation.yml'));
 const checks = [];
@@ -69,6 +87,10 @@ function checkoutPolicies(blockText) {
   return results;
 }
 
+function gitAddCommands(blockText) {
+  return [...blockText.matchAll(/^\s+(git add\s+.+?)\s*$/gm)].map((m) => m[1].trim());
+}
+
 for (const file of workflows) {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   const actionUses = [...text.matchAll(/^\s*-\s+uses:\s+([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)@([^\s#]+)/gm)]
@@ -84,7 +106,8 @@ for (const file of workflows) {
   check(`${file} workflow default token is contents read`, /^permissions:\n  contents: read\s*$/m.test(text));
 
   const blocks = jobBlocks(text);
-  const writerJob = writerJobs.get(file);
+  const policy = writerPolicies.get(file);
+  const writerJob = policy.job;
   const writerBlock = blocks.get(writerJob)?.join('\n') || '';
   check(`${file} writer job ${writerJob} alone receives contents write`, /^    permissions:\n      contents: write\s*$/m.test(writerBlock));
 
@@ -105,6 +128,14 @@ for (const file of workflows) {
   }
   check(`${file} read-only checkouts disable persisted credentials`, readOnlyCheckoutCount === 0 || readOnlyCheckoutSafe, `count=${readOnlyCheckoutCount}`);
   check(`${file} writer checkout explicitly preserves push credential only in writer job`, writerCheckoutCount > 0 && writerCheckoutSafe, `count=${writerCheckoutCount}`);
+
+  const addCommands = gitAddCommands(writerBlock);
+  const expectedAdd = `git add ${policy.paths.join(' ')}`;
+  check(`${file} writer stages only approved paths`, addCommands.length === 1 && addCommands[0] === expectedAdd, addCommands.join(' | '));
+  check(`${file} writer has no broad git staging`, !/^\s*git add\s+(?:\.|-A|--all)(?:\s|$)/m.test(writerBlock));
+  check(`${file} writer has no commit-all shortcut`, !/^\s*git commit\b[^\n]*(?:\s-a(?:\s|$)|--all(?:\s|$))/m.test(writerBlock));
+  check(`${file} writer checkout is pinned to fortress/v1.1`, /\n\s+ref:\s+fortress\/v1\.1\s*(?:\n|$)/.test(writerBlock));
+  check(`${file} writer pushes only HEAD to fortress/v1.1`, /git push origin HEAD:fortress\/v1\.1/.test(writerBlock) && !/^\s*git push\b[^\n]*(?:--force|-f(?:\s|$)|--mirror|--all|\bmain\b)/m.test(writerBlock));
 }
 
 for (const file of broadPushWorkflows) {
