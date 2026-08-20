@@ -9,7 +9,7 @@ import {
 import {
   checkoutPooledSession, closeSession, createBrowserContext, createSession,
   healthStatus, isShuttingDown, pool, poolError, runtimeIdentity, sessions,
-  setShuttingDown, startMaintenance, warmPool,
+  scheduleWarmPool, setShuttingDown, startMaintenance, warmPool,
 } from "./runtime.js";
 import { executeAction } from "./actions.js";
 import { SSRF_LIMITATION } from "../ssrf.js";
@@ -76,9 +76,10 @@ export function createApp() {
   app.get("/liveness", (req, res) => res.json({ ok: true, worker_id: WORKER_ID }));
   app.get("/readiness", async (req, res) => {
     try {
-      const { browser, context } = await createBrowserContext({ usePool: false });
+      const { browser, context, egressProxy } = await createBrowserContext({ usePool: false });
       await context.close();
       await browser.close();
+      await egressProxy?.close().catch(() => {});
       res.json({ ok: true, browser_launch: "verified", runtime_user: runtimeIdentity(), worker_id: WORKER_ID });
     } catch (error) {
       res.status(503).json({ ok: false, error: error.message, runtime_user: runtimeIdentity(), worker_id: WORKER_ID });
@@ -104,7 +105,7 @@ export function createApp() {
       if (opts.usePool && !hasCallerOptions(opts)) {
         const pooled = checkoutPooledSession();
         if (pooled) {
-          warmPool().catch(() => {});
+          scheduleWarmPool();
           return res.json({ sessionId: pooled.id, status: "idle", fromPool: true, workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, createdAt: new Date(pooled.createdAt).toISOString(), expiresAt: new Date(pooled.createdAt + SESSION_TTL_MS).toISOString() });
         }
       }
@@ -142,7 +143,7 @@ export function createApp() {
       } catch {}
     }
     const closed = await closeSession(req.params.id, "ended");
-    warmPool().catch(() => {});
+    scheduleWarmPool();
     return res.json({ ok: true, closed, videoBase64, worker_id: WORKER_ID });
   });
 
@@ -163,7 +164,7 @@ export function createApp() {
     catch (error) { return res.status(500).json({ error: error.message }); }
   });
   app.get("/pool", (req, res) => res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, warmCount: pool.length, maxSessions: MAX_SESSIONS, activeSessions: sessions.size, workerId: WORKER_ID, region: REGION, lastError: poolError() }));
-  app.post("/pool/warm", async (req, res) => { await warmPool(); return res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID, lastError: poolError() }); });
+  app.post("/pool/warm", async (req, res) => { scheduleWarmPool(0); return res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID, lastError: poolError() }); });
   app.post("/pool/drain", async (req, res) => { while (pool.length) await closeSession(pool[0], "drained"); return res.json({ poolSize: 0, workerId: WORKER_ID }); });
 
   return app;
