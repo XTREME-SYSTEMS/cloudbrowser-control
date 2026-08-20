@@ -1,7 +1,7 @@
 # Fortress Branch Rollback Rehearsal Receipt
 
-- Candidate commit: 658744d9b81202ffa885f60858b7141fbe62e3ca
-- Workflow run: 32411431533
+- Candidate commit: ec5f01ce32a646b9330622c2266cef23826f043a
+- Workflow run: 32417441246
 - Rollback runtime target: 91f516c2feb002103de37268dfcb72cb9ded73f6
 - Branch rollback rehearsal: success
 - Rollback target rebuild: required
