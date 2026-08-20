@@ -1,12 +1,18 @@
 const BASE = process.env.FORTRESS_ENGINE_URL || 'http://127.0.0.1:8080';
 const API_KEY = process.env.ENGINE_API_KEY;
+const REQUEST_TIMEOUT_MS = Number(process.env.FORTRESS_REQUEST_TIMEOUT_MS || 45000);
 if (!API_KEY) throw new Error('ENGINE_API_KEY is required');
 
 async function req(path, { method = 'GET', body, auth = true } = {}) {
   const headers = {};
   if (auth) headers['x-api-key'] = API_KEY;
   if (body !== undefined) headers['content-type'] = 'application/json';
-  const response = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const response = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
   const text = await response.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
