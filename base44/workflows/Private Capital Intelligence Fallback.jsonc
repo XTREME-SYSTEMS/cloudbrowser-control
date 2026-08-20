@@ -13,7 +13,7 @@
       "interval_value": null,
       "interval_unit": null,
       "interval_anchor": null,
-      "ends_type": "on",
+      "ends_type": "on_date",
       "ends_on_date": "2026-08-20T18:23:00Z",
       "ends_after_count": null
     }
