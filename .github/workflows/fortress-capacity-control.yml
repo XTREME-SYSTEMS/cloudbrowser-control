@@ -1,0 +1,137 @@
+name: Fortress Capacity Control Validation
+
+on:
+  push:
+    branches:
+      - fortress/v1.1-capacity-control
+    paths-ignore:
+      - docs/FORTRESS_CAPACITY_CONTROL_RECEIPT.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fortress-capacity-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  ENGINE_API_KEY: fortress_capacity_ci_key_0123456789abcdef0123456789abcdef
+
+jobs:
+  contracts:
+    name: Capacity Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Syntax
+        run: |
+          node --check browser-engine/engine/config.js
+          node --check browser-engine/engine/runtime.js
+          node --check ci/fortress-engine-soak.mjs
+          node --check ci/fortress-capacity-contracts.mjs
+      - name: Capacity source contracts
+        run: node ci/fortress-capacity-contracts.mjs
+      - name: Existing Fortress static suite
+        run: node ci/fortress-core-static.mjs
+
+  constrained-soak:
+    name: Constrained PID Soak
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Build browser image
+        run: docker build --pull -t cloudbrowser-fortress-capacity ./browser-engine
+      - name: Start resource-constrained container
+        run: |
+          docker run -d --name fortress-engine-capacity -p 127.0.0.1:8080:8080 \
+            --read-only \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --tmpfs /home/engine:rw,nosuid,size=64m \
+            --tmpfs /data:rw,nosuid,size=64m \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 --memory=2g --cpus=2 \
+            -e ENGINE_API_KEY="$ENGINE_API_KEY" \
+            -e CORS_ALLOWLIST="https://allowed.invalid" \
+            -e POOL_SIZE=3 -e MAX_SESSIONS=10 -e WARM_POOL_INSTANCE_BUDGET=5 \
+            -e DEFAULT_TIMEOUT=20000 \
+            cloudbrowser-fortress-capacity
+      - name: Wait for liveness
+        run: |
+          for i in $(seq 1 60); do curl --silent --fail http://127.0.0.1:8080/liveness >/dev/null && exit 0; sleep 2; done
+          docker logs fortress-engine-capacity
+          exit 1
+      - name: Verify hard runtime limits
+        run: |
+          test "$(docker exec fortress-engine-capacity id -u)" != "0"
+          test "$(docker inspect --format '{{.HostConfig.PidsLimit}}' fortress-engine-capacity)" = "256"
+          test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' fortress-engine-capacity)" = "true"
+          docker inspect --format '{{json .HostConfig.CapDrop}}' fortress-engine-capacity | grep -q ALL
+          docker inspect --format '{{json .HostConfig.SecurityOpt}}' fortress-engine-capacity | grep -q no-new-privileges
+      - name: Reproduce prior failure workload
+        run: node ci/fortress-engine-soak.mjs
+      - name: Graceful drain
+        run: |
+          docker stop -t 10 fortress-engine-capacity
+          test "$(docker inspect --format '{{.State.ExitCode}}' fortress-engine-capacity)" = "0"
+      - name: Logs
+        if: always()
+        run: docker logs fortress-engine-capacity 2>&1 || true
+
+  aggregate:
+    name: Capacity Aggregate Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [contracts, constrained-soak]
+    steps:
+      - name: Compute result
+        id: result
+        run: |
+          if [ "${{ needs.contracts.result }}" = success ] && [ "${{ needs.constrained-soak.result }}" = success ]; then
+            echo "overall=PASS" >> "$GITHUB_OUTPUT"
+          else
+            echo "overall=FAIL" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1-capacity-control
+          fetch-depth: 0
+      - name: Persist capacity receipt
+        run: |
+          cat > docs/FORTRESS_CAPACITY_CONTROL_RECEIPT.md <<EOF_RECEIPT
+          # Fortress Capacity Control Receipt
+
+          - Tested commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Capacity contracts: ${{ needs.contracts.result }}
+          - Constrained PID soak: ${{ needs.constrained-soak.result }}
+          - Overall: ${{ steps.result.outputs.overall }}
+          - PID limit under test: 256
+          - Pool size: 3
+          - Max sessions: 10
+          - Warm-pool instance budget: 5
+          - Four concurrent active-session workload: REQUIRED
+          - Production deploy: NOT EXECUTED
+          - Main write/merge: NOT EXECUTED
+          EOF_RECEIPT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FORTRESS_CAPACITY_CONTROL_RECEIPT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: record Fortress capacity-control receipt"
+            git pull --rebase origin fortress/v1.1-capacity-control
+            git push origin HEAD:fortress/v1.1-capacity-control
+          fi
+      - name: Enforce result
+        run: test "${{ steps.result.outputs.overall }}" = PASS
