@@ -20,31 +20,11 @@
   "latest_quality_score": null,
   "last_release_gate_result": "FAIL_RUNTIME_BLOCKED",
   "blocking_failures": [
-    {
-      "type": "INFRA_BLOCKED",
-      "signature": "fortress-engine-unset",
-      "message": "Fortress Staging has 9 blocked checks because its preview browser engine is unset."
-    },
-    {
-      "type": "GOVERNANCE_BLOCKED",
-      "signature": "fortress-source-sha-drift",
-      "message": "Fortress Staging evidence is stamped d739613 while the autonomous candidate is cdbd05060e1e5ebb17779097dc25790ed96b8c29."
-    },
-    {
-      "type": "INFRA_BLOCKED",
-      "signature": "vercel-framework-adapter-blocked",
-      "message": "No existing CloudBrowser Vercel project resolved. Governed provisioning dry-run succeeded, but live framework=other was rejected by the adapter and auto-detect proposed an incorrect Next.js preset. No unsafe project was created."
-    },
-    {
-      "type": "INFRA_BLOCKED",
-      "signature": "mandatory-staging-suite-endpoints-unresolved",
-      "message": "The five required non-production runtime suite endpoints have not been exposed for the candidate, so 23/23, 47/47, 18/18, 18/18, and 11/11 cannot yet be evidenced."
-    },
-    {
-      "type": "GOVERNANCE_BLOCKED",
-      "signature": "main-branch-unprotected",
-      "message": "GitHub main remains unprotected with required status-check enforcement off. This is a release blocker, not a branch-build blocker."
-    }
+    {"type":"INFRA_BLOCKED","signature":"fortress-engine-unset","message":"Fortress Staging has 9 blocked checks because its preview browser engine is unset."},
+    {"type":"GOVERNANCE_BLOCKED","signature":"fortress-source-sha-drift","message":"Fortress Staging evidence is stamped d739613 while the autonomous candidate is cdbd05060e1e5ebb17779097dc25790ed96b8c29."},
+    {"type":"INFRA_BLOCKED","signature":"vercel-framework-adapter-blocked","message":"No existing CloudBrowser Vercel project resolved. Governed provisioning dry-run succeeded, but live framework=other was rejected by the adapter and auto-detect proposed an incorrect Next.js preset. No unsafe project was created."},
+    {"type":"INFRA_BLOCKED","signature":"mandatory-staging-suite-endpoints-unresolved","message":"The five required non-production runtime suite endpoints have not been exposed for the candidate, so 23/23, 47/47, 18/18, 18/18, and 11/11 cannot yet be evidenced."},
+    {"type":"GOVERNANCE_BLOCKED","signature":"main-branch-unprotected","message":"GitHub main remains unprotected with required status-check enforcement off. This is a release blocker, not a branch-build blocker."}
   ],
   "failure_signatures": {},
   "repair_attempts": {},
@@ -61,27 +41,8 @@
   "autonomous_mutation_enabled": false,
   "release_ready": false,
   "rollback_reference": "8f3b25e8c4de6f74068d6bf5b72fc7d9b4f0b61e",
-  "receipt_chain": [
-    "validation-bootstrap-20260820T063200Z",
-    "validation-final-20260820T064400Z",
-    "validation-final-20260820T064600Z",
-    "mcp-vercel-provisioning-20260820T064600Z"
-  ],
-  "github_validation": {
-    "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
-    "autonomy_validation_run_id": 32340868945,
-    "autonomy_validation": "success",
-    "release_gate_run_id": 32340868942,
-    "release_gate": "success",
-    "autonomy_worker_tests": "10/10"
-  },
-  "vercel_provisioning": {
-    "project_created": false,
-    "dry_run_job": "cloudbrowser-autonomy-vercel-preview-20260820",
-    "live_attempt": "failed_invalid_framework",
-    "auto_detect_framework": "nextjs",
-    "auto_detect_executed": false,
-    "receipt_id": "mcp-vercel-provisioning-20260820T064600Z"
-  },
-  "updated_at": "2026-08-20T06:46:30Z"
+  "receipt_chain": ["validation-bootstrap-20260820T063200Z","validation-final-20260820T064400Z","validation-final-20260820T064600Z","mcp-vercel-provisioning-20260820T064600Z"],
+  "github_validation": {"candidate_sha":"cdbd05060e1e5ebb17779097dc25790ed96b8c29","autonomy_validation_run_id":32340868945,"autonomy_validation":"success","release_gate_run_id":32340868942,"release_gate":"success","autonomy_worker_tests":"10/10"},
+  "vercel_provisioning": {"project_created":false,"dry_run_job":"cloudbrowser-autonomy-vercel-preview-20260820","live_attempt":"failed_invalid_framework","auto_detect_framework":"nextjs","auto_detect_executed":false,"receipt_id":"mcp-vercel-provisioning-20260820T064600Z"},
+  "updated_at": "2026-08-20T06:47:00Z"
 }
