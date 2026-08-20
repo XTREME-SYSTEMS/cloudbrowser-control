@@ -1,0 +1,53 @@
+{
+  "receipt_id": "vercel-null-framework-discovery-20260820T065500Z",
+  "type": "MCP_VALIDATION",
+  "project": "cloudbrowser-control",
+  "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
+  "target_system": "vercel",
+  "target_project": "cloudbrowser-autonomy-preview",
+  "production": false,
+  "deployment_requested": false,
+  "secret_mutation_requested": false,
+  "findings": [
+    {
+      "status": "VERIFIED",
+      "finding": "No CloudBrowser autonomy project is present in the currently returned Vercel team project inventory and direct lookup of cloudbrowser-autonomy-preview returns 404."
+    },
+    {
+      "status": "VERIFIED",
+      "finding": "Current Vercel documentation states framework=null selects the Other/no-framework preset."
+    },
+    {
+      "status": "VERIFIED",
+      "finding": "AUTO BUILDER dry-run accepts a custom create_vercel_project action carrying framework=null without changing it."
+    },
+    {
+      "status": "BLOCKED",
+      "finding": "AUTO BUILDER live provisioning normalizes through top-level fields, ignores the custom null target, and falls back toward nextjs or rejects incomplete payloads. No Vercel project was created."
+    }
+  ],
+  "attempts": [
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-null-framework-20260820",
+      "mode": "dry_run",
+      "status": "dry_run_complete",
+      "framework": null
+    },
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-null-framework-20260820-execute",
+      "mode": "execute",
+      "status": "blocked_invalid_payload",
+      "provider_default_observed": "nextjs",
+      "project_created": false
+    },
+    {
+      "job_id": "cloudbrowser-autonomy-vercel-null-payload-20260820",
+      "mode": "dry_run",
+      "status": "dry_run_complete",
+      "payload_framework": null,
+      "provider_default_observed": "nextjs"
+    }
+  ],
+  "safe_next_action": "Do not retry the same adapter path until connector/provider behavior changes. Search for an existing compatible project or a provider surface that can create a Vercel project with framework=null; otherwise remain validation-only.",
+  "timestamp": "2026-08-20T06:55:00Z"
+}
