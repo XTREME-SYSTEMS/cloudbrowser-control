@@ -1,7 +1,7 @@
 # Fortress Enterprise Parallel Receipt
 
-- Tested commit: 011a2315890b7ddaa75441168d832a2e9a1da70f
-- Workflow run: 32361440889
+- Tested commit: 859fd4ad02e4dcf6eda8155e955a01032c07241e
+- Workflow run: 32372193696
 - Source contracts: success
 - Code quality: success
 - Supply chain: success
