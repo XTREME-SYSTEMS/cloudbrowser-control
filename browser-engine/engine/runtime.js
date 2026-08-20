@@ -14,6 +14,7 @@ let cdpPortCounter = 9222;
 let shuttingDown = false;
 let lastPoolError = null;
 let warmPoolPromise = null;
+let warmPoolTimer = null;
 let warmPoolLaunchFailures = 0;
 let browserLaunchTail = Promise.resolve();
 let browserLaunchQueued = 0;
@@ -149,7 +150,7 @@ export async function createSession(opts = {}, status = "idle") {
     if (entry) entry.status = response.status();
   });
   sessions.set(id, session);
-  if (status !== "pooled") queueMicrotask(() => warmPool().catch(() => {}));
+  if (status !== "pooled") scheduleWarmPool();
   return session;
 }
 
@@ -189,6 +190,10 @@ async function rebalanceWarmPool() {
   while (!shuttingDown) {
     const desired = desiredWarmCount();
     if (pool.length >= desired || sessions.size >= MAX_SESSIONS) break;
+    if (browserLaunchActive > 0 || browserLaunchQueued > 0) {
+      scheduleWarmPool(250);
+      break;
+    }
     try {
       const session = await createSession({ usePool: false }, "pooled");
       pool.push(session.id);
@@ -207,6 +212,16 @@ export function warmPool() {
   if (warmPoolPromise) return warmPoolPromise;
   warmPoolPromise = rebalanceWarmPool().finally(() => { warmPoolPromise = null; });
   return warmPoolPromise;
+}
+
+export function scheduleWarmPool(delayMs = 250) {
+  if (shuttingDown) return;
+  if (warmPoolTimer) clearTimeout(warmPoolTimer);
+  warmPoolTimer = setTimeout(() => {
+    warmPoolTimer = null;
+    warmPool().catch(() => {});
+  }, Math.max(0, Number(delayMs) || 0));
+  warmPoolTimer.unref?.();
 }
 
 export function checkoutPooledSession() {
@@ -232,11 +247,18 @@ export function poolMetrics() {
     total_sessions: sessions.size,
     launch_failures: warmPoolLaunchFailures,
     replenishing: Boolean(warmPoolPromise),
+    replenish_scheduled: Boolean(warmPoolTimer),
     launch_active: browserLaunchActive,
     launch_queued: browserLaunchQueued,
   };
 }
-export function setShuttingDown(value) { shuttingDown = Boolean(value); }
+export function setShuttingDown(value) {
+  shuttingDown = Boolean(value);
+  if (shuttingDown && warmPoolTimer) {
+    clearTimeout(warmPoolTimer);
+    warmPoolTimer = null;
+  }
+}
 export function isShuttingDown() { return shuttingDown; }
 export function runtimeIdentity() { return { uid: process.getuid?.(), gid: process.getgid?.(), home: os.homedir() }; }
 export function healthStatus() {
@@ -249,7 +271,7 @@ export function startMaintenance() {
     const now = Date.now();
     for (const [id, session] of sessions) {
       if (session.status === "pooled") continue;
-      if (now - session.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").then(() => warmPool()).catch(() => {});
+      if (now - session.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").then(() => scheduleWarmPool()).catch(() => {});
     }
   }, 60000).unref();
   setInterval(() => warmPool().catch(() => {}), 30000).unref();
