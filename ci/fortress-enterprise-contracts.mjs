@@ -10,6 +10,8 @@ const src = {
   mcp: read('base44/functions/mcpTools/entry.ts'),
   runJob: read('base44/functions/runJob/entry.ts'),
   ssrf: read('browser-engine/ssrf.js'),
+  egressProxy: read('browser-engine/egress-proxy.js'),
+  runtime: read('browser-engine/engine/runtime.js'),
   dockerfile: read('browser-engine/Dockerfile'),
   matrix: read('base44/functions/runFortressMatrix/entry.ts'),
 };
@@ -74,10 +76,17 @@ check('MCP browser_observe enforces evaluate capability', has(src.mcp, 'required
 check('MCP browser_extract enforces extraction capability', has(src.mcp, 'requiredCapability(extractType)'));
 check('MCP artifact read enforces project ownership', has(src.mcp, 'artifact.project_id !== keyRecord.project_id'));
 
-check('SSRF resolves all DNS answers verbatim', has(src.ssrf, 'dns.lookup(hostname, { all: true, verbatim: true })'));
+check('SSRF resolver is injectable for pinned transport', has(src.ssrf, 'resolver = dns.lookup'));
+check('SSRF resolves all DNS answers verbatim', has(src.ssrf, 'resolver(hostname, { all: true, verbatim: true })'));
 check('SSRF rejects if any resolved address is blocked', has(src.ssrf, 'addresses.some((entry) => isBlockedIp(entry.address))'));
 check('browser egress guard intercepts every request', has(src.ssrf, 'context.route("**/*"'));
-check('DNS-rebinding TOCTOU limitation remains explicit', has(src.ssrf, 'Chromium resolves independently after route.continue()'));
+check('pinned proxy resolves and selects validated IP', has(src.egressProxy, 'resolvePinnedTarget') && has(src.egressProxy, 'address: verdict.addresses[0]'));
+check('pinned proxy opens final socket to validated IP', has(src.egressProxy, 'address: target.address') && has(src.egressProxy, 'openSocket'));
+check('HTTPS CONNECT uses pinned IP authority', has(src.egressProxy, 'const authority = `${bracketHost(target.address)}:${target.port}`'));
+check('runtime forces Chromium through local pinned proxy', has(src.runtime, 'proxy: { server: egressProxy.url }'));
+check('runtime removes implicit Chromium loopback proxy bypass', has(src.runtime, '--proxy-bypass-list=<-loopback>'));
+check('service workers blocked from bypassing request controls', has(src.runtime, 'serviceWorkers: "block"'));
+check('SSRF status documents network layer as defense in depth', has(src.ssrf, 'Final outbound TCP connections are DNS-pinned'));
 
 check('container uses deterministic Playwright path', has(src.dockerfile, 'PLAYWRIGHT_BROWSERS_PATH=/ms-playwright'));
 check('container creates fixed non-root UID 10001', /useradd[^\n]*--uid\s+10001[^\n]*engine/.test(src.dockerfile));
