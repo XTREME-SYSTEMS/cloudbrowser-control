@@ -54,7 +54,7 @@ export async function locate(page, selector) {
 }
 
 export async function createBrowserContext(opts = {}) {
-  const launchArgs = ["--no-sandbox", "--disable-dev-shm-usage"];
+  const launchArgs = ["--disable-dev-shm-usage"];
   if (opts.blockedResources?.includes("images")) launchArgs.push("--blink-settings=imagesEnabled=false");
   if (opts.userDataDir !== undefined && opts.userDataDir !== null) throw new Error("userDataDir is prohibited; only ephemeral profiles are allowed");
 
