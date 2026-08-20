@@ -29,3 +29,19 @@ This receipt proves only the GitHub Actions ephemeral environment represented by
 - Main drift attribution: commits 324ce8293ef9dba97296123ee4dc9315796364b7 and b1bb5af6b93b46aeb3e5edd762f70be6d3777336 were authored/committed by base44-builder[bot] and add unrelated Intelligence entities/function/workflow
 - Main write/merge by this automation: NOT EXECUTED
 - Production deploy/mutation by this automation: NOT EXECUTED
+
+## Automation audit 2026-08-20T12:52Z
+
+- Starting fortress/v1.1 HEAD: cc1d5050120fcab2cb0074abb86b85bc0d963c0d
+- Starting main HEAD: b1bb5af6b93b46aeb3e5edd762f70be6d3777336
+- Production Base44 read-only schema inspection: 40 entities observed; IntelligenceEvent, IntelligenceRun, IntelligenceSignal, IntelligenceSnapshot, and IntelligenceSource are present, consistent with the two base44-builder[bot] main-drift commits and not part of the approved production baseline.
+- Latest stored Runtime Evidence Test Suite v2 score: 23/23 PASS, 100%, run_id run_1787192455421_lnj3lr.
+- Latest production engine health observation at 2026-08-20T12:50:12.600Z: healthy, engine_version 3.0.0, pool 3/3, max_sessions 10, worker 24a3da65-305d-458e-805f-8cc94dac0371.
+- Canonical Fortress runtime candidate remains 91f516c2feb002103de37268dfcb72cb9ded73f6 and is NOT deployed to production; production engine version 3.0.0 is direct evidence that the Fortress candidate has not been promoted.
+- Base44 connector still exposes production entities but no positively verifiable Test Data selector/environment identity. No synthetic records were created.
+- Current-candidate Fortress 39/39: NOT CERTIFIED.
+- Current-candidate V1 47/47: NOT CERTIFIED.
+- Live isolated Railway/Test Data path: BLOCKED by unavailable/ unverifiable non-production environment control surface.
+- This commit is receipt-only and is intended to trigger a fresh branch-safe validation cycle without changing runtime source.
+- Main write/merge by this automation: NOT EXECUTED.
+- Production deploy/mutation by this automation: NOT EXECUTED.
