@@ -1,6 +1,6 @@
 export const ACTION_CAPABILITIES = Object.freeze({
   evaluate: "sessions:evaluate",
-  extract_json: "sessions*evaluate",
+  extract_json: "sessions:evaluate",
   set_cookies: "sessions:storage",
   import_cookies: "sessions:storage",
   export_cookies: "sessions:storage",
