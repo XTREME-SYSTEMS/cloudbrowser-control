@@ -1,7 +1,7 @@
 # Fortress Enterprise Integration Receipt
 
-- Tested commit: 9c9e0a3bae2b4fd7339595af111f146d80c16162
-- Workflow run: 32377188148
+- Tested commit: b2cc9f5ee66566979575d7581ccad1b528eca728
+- Workflow run: 32395706924
 - Security contracts: success
 - Quality and supply chain: success
 - Hardened runtime smoke: success
