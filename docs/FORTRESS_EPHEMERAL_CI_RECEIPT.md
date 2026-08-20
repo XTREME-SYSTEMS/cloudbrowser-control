@@ -1,7 +1,7 @@
 # Fortress Ephemeral CI Receipt
 
-- Tested commit: 91f516c2feb002103de37268dfcb72cb9ded73f6
-- Workflow run: 32337188267
+- Tested commit: cae73fee70bd2d61be0e560288b4dd16522a921f
+- Workflow run: 32337271735
 - Run attempt: 1
 - Source/security gates: success
 - Hardened container/browser smoke: success
