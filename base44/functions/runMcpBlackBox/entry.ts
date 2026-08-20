@@ -1,11 +1,13 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { hashKey, genKey, runTest as runTestShared } from "../../shared/testUtils.ts";
+import { requireIsolatedFortressTestEnvironment, stagingFixtureName } from "../../shared/liveTestGuard.ts";
 
 // ═══════════════════════════════════════════════
 // MCP Black-Box Tests — Phase 12
 // Tests every active MCP tool for auth, authorization, runtime action,
 // expected response, telemetry, cleanup, and failure behavior.
+// Synthetic records are forbidden unless isolated staging is explicitly verified.
 // ═══════════════════════════════════════════════
 
 async function callMcp(base44, tool, params, apiKey) {
@@ -24,6 +26,11 @@ async function runTest(base44, runId, testName, maxPoints, testFn) {
 }
 
 export default async function (req) {
+  const guard = await requireIsolatedFortressTestEnvironment();
+  if (!guard.ok) {
+    return Response.json({ ...guard, __v: DEPLOYMENT_VERSION }, { status: guard.status });
+  }
+
   const base44 = createClientFromRequest(req);
   const { secrets } = await import("base44:runtime");
   const engineConfigured = !!(secrets.get("ENGINE_URL") && secrets.get("ENGINE_API_KEY"));
@@ -31,12 +38,20 @@ export default async function (req) {
   try {
     const runId = "mcp_bb_" + Date.now();
 
-    // Create test API key
+    // Create an isolated project-scoped test key with only the capabilities this suite exercises.
+    const testProject = await base44.asServiceRole.entities.Project.create({
+      name: stagingFixtureName("MCP_PROJECT", runId), status: "active",
+    });
     const testKey = genKey();
     const testKeyHash = await hashKey(testKey);
     const keyRec = await base44.asServiceRole.entities.ApiKey.create({
-      name: "MCP_BB_" + runId, key_prefix: testKey.slice(0, 12), key_hash: testKeyHash,
-      scopes: ["sessions:read", "sessions:write", "jobs:read", "jobs:write", "projects:read"], active: true,
+      name: stagingFixtureName("MCP_KEY", runId), key_prefix: testKey.slice(0, 12), key_hash: testKeyHash,
+      scopes: [
+        "sessions:read", "sessions:write", "sessions:evaluate", "sessions:storage",
+        "jobs:read", "jobs:write", "projects:read", "contexts:write", "artifacts:read",
+      ],
+      active: true,
+      project_id: testProject.id,
     });
 
     let sessionId = null;
@@ -56,7 +71,7 @@ export default async function (req) {
 
     await runTest(base44, runId, "MCP: Unknown tool rejected", 2, async () => {
       const r = await callMcp(base44, "unknown_tool", {}, testKey);
-      return r.status === 500 || r.error?.includes("Unknown") ? true : { error: `Expected unknown tool error, got ${r.status}` };
+      return r.status === 400 || r.error?.includes("Unknown") ? true : { error: `Expected unknown tool error, got ${r.status}` };
     });
 
     // ── Browser lifecycle tests ──
@@ -77,7 +92,7 @@ export default async function (req) {
       return true;
     });
 
-    await runTest(base44, runId, "MCP: browser_act executes action", 2, async () => {
+    await runTest(base44, runId, "MCP: browser_act executes scoped evaluate action", 2, async () => {
       if (!engineConfigured || !sessionId) return { error: "No session" };
       const r = await callMcp(base44, "browser_act", {
         session_id: sessionId, action_type: "evaluate", options: { fn: "() => 42" }
@@ -131,7 +146,8 @@ export default async function (req) {
     // ── Context tests ──
     await runTest(base44, runId, "MCP: context_create creates context", 2, async () => {
       const r = await callMcp(base44, "context_create", {
-        name: "MCP_TEST_CTX", cookies: [{ name: "test", value: "abc", domain: "example.com" }]
+        name: stagingFixtureName("MCP_CONTEXT", runId),
+        cookies: [{ name: "test", value: "abc", domain: "example.com" }]
       }, testKey);
       if (!r.ok) return { error: `context_create failed: ${r.error}` };
       if (!r.data?.context_id) return { error: "No context_id" };
@@ -139,13 +155,13 @@ export default async function (req) {
       return true;
     });
 
-    await runTest(base44, runId, "MCP: context_use returns decrypted state", 2, async () => {
+    await runTest(base44, runId, "MCP: context_use does not disclose decrypted state", 3, async () => {
       if (!contextId) return { error: "No context" };
       const r = await callMcp(base44, "context_use", { context_id: contextId }, testKey);
       if (!r.ok) return { error: `context_use failed: ${r.error}` };
-      if (!r.data?.cookies) return { error: "No cookies returned — decrypt failed" };
-      if (!Array.isArray(r.data.cookies)) return { error: "Cookies not an array" };
-      return true;
+      if (Object.prototype.hasOwnProperty.call(r.data || {}, "cookies")) return { error: "context_use disclosed cookies" };
+      if (Object.prototype.hasOwnProperty.call(r.data || {}, "storage_state")) return { error: "context_use disclosed storage_state" };
+      return r.data?.auth_state ? true : { error: "Safe context metadata missing auth_state" };
     });
 
     await runTest(base44, runId, "MCP: context_use on nonexistent context fails", 1, async () => {
@@ -157,16 +173,16 @@ export default async function (req) {
       if (!contextId) return { error: "No context" };
       const r = await callMcp(base44, "context_delete", { context_id: contextId }, testKey);
       if (!r.ok) return { error: `context_delete failed: ${r.error}` };
-      // Verify it's gone
       const r2 = await callMcp(base44, "context_use", { context_id: contextId }, testKey);
       return !r2.ok ? true : { error: "Context still accessible after deletion" };
     });
 
     // ── Artifact test ──
     await runTest(base44, runId, "MCP: artifact_get returns artifact metadata", 2, async () => {
-      // Create a test artifact first
       const art = await base44.asServiceRole.entities.Artifact.create({
-        artifact_id: "mcp_test_" + runId, type: "json", storage_key: "test_key",
+        artifact_id: stagingFixtureName("MCP_ARTIFACT", runId),
+        type: "json",
+        storage_key: stagingFixtureName("MCP_STORAGE", runId),
         content_hash: "abc123", access_policy: "private", retention_days: 30,
         project_id: keyRec.project_id,
       });
@@ -186,7 +202,6 @@ export default async function (req) {
 
     // ── Telemetry test ──
     await runTest(base44, runId, "MCP: AuditLog created for tool call", 2, async () => {
-      // The mcpTools function creates an AuditLog entry for each call
       const logs = await base44.asServiceRole.entities.AuditLog.filter({
         entity_type: "mcp_tool",
       });
@@ -199,6 +214,7 @@ export default async function (req) {
       await callMcp(base44, "browser_end", { session_id: sessionId }, testKey);
     }
     await base44.asServiceRole.entities.ApiKey.delete(keyRec.id).catch(() => {});
+    await base44.asServiceRole.entities.Project.delete(testProject.id).catch(() => {});
 
     // ── Score ──
     const results = await base44.asServiceRole.entities.TestResult.filter({ run_id: runId });
@@ -210,6 +226,8 @@ export default async function (req) {
     return Response.json({
       run_id: runId, total_tests: total, passed, failed, score,
       engine_configured: engineConfigured,
+      test_environment: guard.environment,
+      isolated_data_verified: guard.isolated_data_verified,
       __v: DEPLOYMENT_VERSION,
     });
   } catch (error) {

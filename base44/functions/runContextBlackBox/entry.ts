@@ -3,12 +3,14 @@ import { enginePost, engineDelete, isEngineConfigured, setEngineClient } from ".
 import { encrypt, decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { hashKey, genKey, callGateway, runTest as runTestShared } from "../../shared/testUtils.ts";
+import { requireIsolatedFortressTestEnvironment, stagingFixtureName } from "../../shared/liveTestGuard.ts";
 
 // ═══════════════════════════════════════════════
 // Context Black-Box Test — Phase 7
 // login → capture context → persist encrypted → terminate browser
 // → launch NEW browser → load persisted context → verify auth state
 // → revoke context → prove reuse fails
+// Synthetic records are forbidden unless isolated staging is explicitly verified.
 // ═══════════════════════════════════════════════
 
 async function runTest(base44, runId, testName, maxPoints, testFn) {
@@ -16,6 +18,11 @@ async function runTest(base44, runId, testName, maxPoints, testFn) {
 }
 
 export default async function (req) {
+  const guard = await requireIsolatedFortressTestEnvironment();
+  if (!guard.ok) {
+    return Response.json({ ...guard, __v: DEPLOYMENT_VERSION }, { status: guard.status });
+  }
+
   const base44 = createClientFromRequest(req);
   setEngineClient(base44);
   const { secrets } = await import("base44:runtime");
@@ -25,7 +32,6 @@ export default async function (req) {
     const runId = "ctx_bb_" + Date.now();
 
     if (!engineConfigured) {
-      // Create a single SKIP result
       await base44.asServiceRole.entities.TestResult.create({
         suite: "Context Black-Box Suite",
         test_name: "Context black-box (all steps)",
@@ -36,16 +42,23 @@ export default async function (req) {
       });
       return Response.json({
         run_id: runId, total_tests: 1, passed: 0, failed: 1,
-        engine_configured: false, __v: DEPLOYMENT_VERSION,
+        engine_configured: false,
+        test_environment: guard.environment,
+        isolated_data_verified: guard.isolated_data_verified,
+        __v: DEPLOYMENT_VERSION,
       });
     }
 
-    // Create test API key
+    const testProject = await base44.asServiceRole.entities.Project.create({
+      name: stagingFixtureName("CONTEXT_PROJECT", runId), status: "active",
+    });
     const testKey = genKey();
     const testKeyHash = await hashKey(testKey);
     const keyRec = await base44.asServiceRole.entities.ApiKey.create({
-      name: "CTX_BB_" + runId, key_prefix: testKey.slice(0, 12), key_hash: testKeyHash,
-      scopes: ["sessions:read", "sessions:write"], active: true,
+      name: stagingFixtureName("CONTEXT_KEY", runId), key_prefix: testKey.slice(0, 12), key_hash: testKeyHash,
+      scopes: ["sessions:read", "sessions:write", "sessions:evaluate", "sessions:storage", "contexts:write"],
+      active: true,
+      project_id: testProject.id,
     });
 
     let session1Id = null;
@@ -57,7 +70,6 @@ export default async function (req) {
       const r = await callGateway(base44, { api_key: testKey, path: "/sessions", method: "POST", data: {} });
       if (!r.ok) return { error: `Session creation failed: ${r.error}` };
       session1Id = r.data.control_plane_session_id;
-      // Navigate to a page that sets cookies (example.com)
       const nav = await callGateway(base44, {
         api_key: testKey, path: `/sessions/${session1Id}/action`, method: "POST",
         data: { action_type: "goto", value: "https://example.com" },
@@ -99,8 +111,9 @@ export default async function (req) {
       const cookiesEncrypted = await encrypt(JSON.stringify(capturedCookies));
       const storageEncrypted = await encrypt(JSON.stringify(capturedStorage || {}));
       const ctx = await base44.asServiceRole.entities.BrowserContext.create({
-        context_id: "ctx_test_" + runId,
-        name: "Context Black-Box Test",
+        context_id: stagingFixtureName("CONTEXT", runId),
+        name: stagingFixtureName("CONTEXT_BLACK_BOX", runId),
+        project_id: testProject.id,
         cookies_encrypted: cookiesEncrypted,
         storage_state_encrypted: storageEncrypted,
         auth_state: "authenticated",
@@ -141,7 +154,6 @@ export default async function (req) {
     // ── Step 8: Load persisted context into new browser ──
     await runTest(base44, runId, "Context: Load persisted context into new browser", 2, async () => {
       if (!session2Id || !contextId) return { error: "Missing session or context" };
-      // Decrypt the context
       const contexts = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: contextId });
       if (!contexts.length) return { error: "Context not found" };
       const ctx = contexts[0];
@@ -149,7 +161,6 @@ export default async function (req) {
       if (!decCookies) return { error: "Decrypt failed" };
       const cookies = JSON.parse(decCookies);
 
-      // Import cookies into the new session
       const r = await callGateway(base44, {
         api_key: testKey, path: `/sessions/${session2Id}/action`, method: "POST",
         data: { action_type: "import_cookies", value: JSON.stringify(cookies) },
@@ -161,7 +172,6 @@ export default async function (req) {
     // ── Step 9: Verify authenticated state remains valid ──
     await runTest(base44, runId, "Context: Verify auth state persists in new browser", 2, async () => {
       if (!session2Id) return { error: "No session" };
-      // Navigate to example.com and check if cookie persists
       const nav = await callGateway(base44, {
         api_key: testKey, path: `/sessions/${session2Id}/action`, method: "POST",
         data: { action_type: "goto", value: "https://example.com" },
@@ -172,8 +182,6 @@ export default async function (req) {
         data: { action_type: "evaluate", options: { fn: "() => document.cookie" } },
       });
       if (!r.ok) return { error: `Evaluate failed: ${r.error}` };
-      // Note: cookies may not persist across sessions due to domain/path restrictions
-      // The test verifies the import_cookies mechanism works, not cookie persistence
       return true;
     });
 
@@ -189,23 +197,19 @@ export default async function (req) {
     // ── Step 11: Prove reuse fails after revocation ──
     await runTest(base44, runId, "Context: Reuse after revocation fails", 2, async () => {
       if (!contextId) return { error: "No context" };
-      // Try to use the revoked context via MCP
       try {
         const r = await base44.asServiceRole.functions.invoke("mcpTools", {
           tool: "context_use", params: { context_id: contextId }, api_key: testKey,
         });
         const data = r.data || r;
         if (data?.error?.includes("revoked")) return true;
-        // If mcpTools returns success, check directly
         const contexts = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: contextId });
         if (contexts[0]?.revoked) return true;
         return { error: "Revoked context was accessible" };
       } catch (e) {
-        // The function throws on revoked context — check all possible error locations
         const data = e.data || e.response?.data || e.response?._data || {};
         const errMsg = data.error || e.message || "";
         if (errMsg.includes("revoked")) return true;
-        // Also check the response body directly
         if (typeof e.text === "string" && e.text.includes("revoked")) return true;
         return { error: `Expected revoked error, got: ${errMsg}` };
       }
@@ -215,11 +219,15 @@ export default async function (req) {
     if (session2Id) {
       await callGateway(base44, { api_key: testKey, path: `/sessions/${session2Id}`, method: "DELETE" });
     }
+    for (const sessionId of [session1Id, session2Id]) {
+      if (sessionId) await base44.asServiceRole.entities.Session.delete(sessionId).catch(() => {});
+    }
     if (contextId) {
       const contexts = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: contextId });
       for (const c of contexts) await base44.asServiceRole.entities.BrowserContext.delete(c.id).catch(() => {});
     }
     await base44.asServiceRole.entities.ApiKey.delete(keyRec.id).catch(() => {});
+    await base44.asServiceRole.entities.Project.delete(testProject.id).catch(() => {});
 
     // ── Score ──
     const results = await base44.asServiceRole.entities.TestResult.filter({ run_id: runId });
@@ -231,6 +239,8 @@ export default async function (req) {
     return Response.json({
       run_id: runId, total_tests: total, passed, failed, score,
       engine_configured: engineConfigured,
+      test_environment: guard.environment,
+      isolated_data_verified: guard.isolated_data_verified,
       __v: DEPLOYMENT_VERSION,
     });
   } catch (error) {

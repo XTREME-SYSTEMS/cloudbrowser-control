@@ -1,12 +1,14 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { hashKey, genKey, callGateway, runTest as runTestShared } from "../../shared/testUtils.ts";
+import { requireIsolatedFortressTestEnvironment, stagingFixtureName } from "../../shared/liveTestGuard.ts";
 
 // ═══════════════════════════════════════════════
 // DEPLOYED Tenant Isolation Black-Box Test
 // Tests the REAL deployed cloudBrowserGatewayV6.
 // Service-role is used ONLY for setup/cleanup/evidence.
 // All access-control execution goes through the deployed gateway.
+// Synthetic records are forbidden unless isolated staging is explicitly verified.
 // ═══════════════════════════════════════════════
 
 async function runTest(base44, runId, testName, maxPoints, testFn) {
@@ -14,6 +16,11 @@ async function runTest(base44, runId, testName, maxPoints, testFn) {
 }
 
 export default async function (req) {
+  const guard = await requireIsolatedFortressTestEnvironment();
+  if (!guard.ok) {
+    return Response.json({ ...guard, __v: DEPLOYMENT_VERSION }, { status: guard.status });
+  }
+
   const base44 = createClientFromRequest(req);
 
   try {
@@ -21,10 +28,10 @@ export default async function (req) {
 
     // ── Setup: Two projects, two API keys bound to different projects ──
     const projectA = await base44.asServiceRole.entities.Project.create({
-      name: "DeployTenantA_" + runId, status: "active",
+      name: stagingFixtureName("DEPLOY_TENANT_A", runId), status: "active",
     });
     const projectB = await base44.asServiceRole.entities.Project.create({
-      name: "DeployTenantB_" + runId, status: "active",
+      name: stagingFixtureName("DEPLOY_TENANT_B", runId), status: "active",
     });
 
     const keyA = genKey();
@@ -33,12 +40,12 @@ export default async function (req) {
     const hashB = await hashKey(keyB);
 
     const keyRecA = await base44.asServiceRole.entities.ApiKey.create({
-      name: "DEPLOY_TENANT_A_" + runId, key_prefix: keyA.slice(0, 12), key_hash: hashA,
+      name: stagingFixtureName("DEPLOY_TENANT_KEY_A", runId), key_prefix: keyA.slice(0, 12), key_hash: hashA,
       scopes: ["sessions:read", "sessions:write", "jobs:read", "jobs:write", "projects:read"],
       active: true, project_id: projectA.id,
     });
     const keyRecB = await base44.asServiceRole.entities.ApiKey.create({
-      name: "DEPLOY_TENANT_B_" + runId, key_prefix: keyB.slice(0, 12), key_hash: hashB,
+      name: stagingFixtureName("DEPLOY_TENANT_KEY_B", runId), key_prefix: keyB.slice(0, 12), key_hash: hashB,
       scopes: ["sessions:read", "sessions:write", "jobs:read", "jobs:write", "projects:read"],
       active: true, project_id: projectB.id,
     });
@@ -52,11 +59,11 @@ export default async function (req) {
     // ── Setup: Create sessions via service role (setup only, not access control) ──
     const sessionA = await base44.asServiceRole.entities.Session.create({
       status: "idle", project_id: projectA.id, target_url: "https://example.com",
-      session_id: "runtime_test_a_" + runId,
+      session_id: stagingFixtureName("RUNTIME_SESSION_A", runId),
     });
     const sessionB = await base44.asServiceRole.entities.Session.create({
       status: "idle", project_id: projectB.id, target_url: "https://example.com",
-      session_id: "runtime_test_b_" + runId,
+      session_id: stagingFixtureName("RUNTIME_SESSION_B", runId),
     });
 
     // ── Setup: Create jobs via the gateway (no engine needed for POST /jobs) ──
@@ -65,7 +72,7 @@ export default async function (req) {
     await runTest(base44, runId, "Setup: Key A creates Job A via gateway", 1, async () => {
       const r = await callGateway(base44, {
         api_key: keyA, path: "/jobs", method: "POST",
-        data: { name: "Job A", start_url: "https://example.com", steps: [] },
+        data: { name: stagingFixtureName("JOB_A", runId), start_url: "https://example.com", steps: [] },
       });
       if (r.ok && r.data?.job?.id) { jobAId = r.data.job.id; return true; }
       return { error: `Key A job creation failed: ${r.error}` };
@@ -74,7 +81,7 @@ export default async function (req) {
     await runTest(base44, runId, "Setup: Key B creates Job B via gateway", 1, async () => {
       const r = await callGateway(base44, {
         api_key: keyB, path: "/jobs", method: "POST",
-        data: { name: "Job B", start_url: "https://example.com", steps: [] },
+        data: { name: stagingFixtureName("JOB_B", runId), start_url: "https://example.com", steps: [] },
       });
       if (r.ok && r.data?.job?.id) { jobBId = r.data.job.id; return true; }
       return { error: `Key B job creation failed: ${r.error}` };
@@ -221,6 +228,8 @@ export default async function (req) {
       positive_tests: { total: positiveTests.length, passed: positivePassed },
       deployed_tenant_isolation_verified: negativePassed === negativeTests.length && positivePassed === positiveTests.length,
       gateway_identity: "cloudBrowserGatewayV6",
+      test_environment: guard.environment,
+      isolated_data_verified: guard.isolated_data_verified,
       __v: DEPLOYMENT_VERSION,
     });
   } catch (error) {
