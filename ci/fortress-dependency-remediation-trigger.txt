@@ -1,1 +1,1 @@
-Retrigger non-force package-lock-only dependency remediation after allowing npm audit fix to report residual non-HIGH advisories while preserving the final zero-HIGH release gate. Production/main remain out of scope.
+Retrigger non-force package-lock-only dependency remediation after immutable GitHub Actions pinning. Goal: remove remaining low/moderate advisories where npm can do so without force or manifest/runtime changes; preserve final zero-HIGH/CRITICAL gate and keep production/main out of scope. 2026-08-20 Fortress run.
