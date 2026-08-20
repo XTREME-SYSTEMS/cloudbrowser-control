@@ -1,6 +1,6 @@
 # CODEOWNERS — CloudBrowser Control
 # Every path requires review from the release approver before merge to main.
-# This file enables GitHub's "Require review from Code Owners" branch-protection rule.
+# Enables GitHub's "Require review from Code Owners" branch-protection rule.
 
 * @xps-admin
 
