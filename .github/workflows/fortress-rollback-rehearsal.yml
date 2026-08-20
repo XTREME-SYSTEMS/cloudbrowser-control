@@ -1,0 +1,145 @@
+name: Fortress Branch Rollback Rehearsal
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fortress/v1.1
+    paths-ignore:
+      - docs/FORTRESS_*_RECEIPT.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fortress-rollback-rehearsal-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  ENGINE_API_KEY: fortress_rollback_ci_key_0123456789abcdef0123456789abcdef
+  ROLLBACK_RUNTIME_SHA: 91f516c2feb002103de37268dfcb72cb9ded73f6
+
+jobs:
+  branch-rollback-rehearsal:
+    name: Branch Rollback Rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Verify rollback target lineage
+        run: |
+          git cat-file -e "$ROLLBACK_RUNTIME_SHA^{commit}"
+          git merge-base --is-ancestor "$ROLLBACK_RUNTIME_SHA" "${{ github.sha }}"
+          echo "candidate_sha=${{ github.sha }}"
+          echo "rollback_runtime_sha=$ROLLBACK_RUNTIME_SHA"
+
+      - name: Materialize rollback target without moving any branch
+        run: git worktree add --detach /tmp/cloudbrowser-rollback "$ROLLBACK_RUNTIME_SHA"
+
+      - name: Rebuild rollback target
+        working-directory: /tmp/cloudbrowser-rollback
+        run: |
+          npm ci
+          npm run build
+          npm run lint
+          npm run typecheck
+          node ci/fortress-core-static.mjs
+          node ci/fortress-enterprise-contracts.mjs
+
+      - name: Build rollback browser image
+        working-directory: /tmp/cloudbrowser-rollback
+        run: docker build --pull -t cloudbrowser-fortress-rollback ./browser-engine
+
+      - name: Start rollback target under Fortress containment
+        run: |
+          docker run -d --name fortress-rollback -p 127.0.0.1:8080:8080 \
+            --read-only \
+            --tmpfs /tmp:rw,nosuid,size=256m \
+            --tmpfs /home/engine:rw,nosuid,size=64m \
+            --tmpfs /data:rw,nosuid,size=64m \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 --memory=2g --cpus=2 \
+            -e ENGINE_API_KEY="$ENGINE_API_KEY" \
+            -e CORS_ALLOWLIST="https://allowed.invalid" \
+            -e POOL_SIZE=3 -e MAX_SESSIONS=10 -e WARM_POOL_INSTANCE_BUDGET=4 \
+            -e DEFAULT_TIMEOUT=20000 \
+            cloudbrowser-fortress-rollback
+
+      - name: Require recovered liveness, Chromium readiness, and pool 3/3
+        run: |
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:8080/liveness >/dev/null; then break; fi
+            sleep 2
+          done
+          curl --silent --fail http://127.0.0.1:8080/liveness >/dev/null
+          curl --silent --fail http://127.0.0.1:8080/readiness | tee /tmp/rollback-readiness.json | grep -q '"browser_launch":"verified"'
+          for i in $(seq 1 60); do
+            POOL=$(curl --silent --fail -H "x-api-key: $ENGINE_API_KEY" http://127.0.0.1:8080/pool || true)
+            echo "$POOL"
+            echo "$POOL" | grep -q '"warmCount":3' && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Re-run runtime smoke on rollback target
+        working-directory: /tmp/cloudbrowser-rollback
+        run: node ci/fortress-engine-smoke.mjs
+
+      - name: Require clean rollback drain
+        run: |
+          docker stop -t 10 fortress-rollback
+          test "$(docker inspect --format '{{.State.ExitCode}}' fortress-rollback)" = "0"
+
+      - name: Rollback target logs
+        if: always()
+        run: docker logs fortress-rollback 2>&1 || true
+
+  receipt:
+    name: Persist Branch Rollback Receipt
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [branch-rollback-rehearsal]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1
+          fetch-depth: 0
+      - name: Write evidence receipt
+        run: |
+          cat > docs/FORTRESS_BRANCH_ROLLBACK_RECEIPT.md <<EOF_RECEIPT
+          # Fortress Branch Rollback Rehearsal Receipt
+
+          - Candidate commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Rollback runtime target: $ROLLBACK_RUNTIME_SHA
+          - Branch rollback rehearsal: ${{ needs.branch-rollback-rehearsal.result }}
+          - Rollback target rebuild: required
+          - Hardened container boot: required
+          - Chromium readiness: required
+          - Warm pool recovery: 3/3 required
+          - Runtime smoke: required
+          - Graceful drain: required
+          - Branch ref moved: NO
+          - Main write/merge: NOT EXECUTED
+          - Railway staging rollback: NOT EXECUTED
+          - Production rollback/deploy: NOT EXECUTED
+          EOF_RECEIPT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FORTRESS_BRANCH_ROLLBACK_RECEIPT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: record Fortress branch rollback rehearsal"
+            git pull --rebase origin fortress/v1.1
+            git push origin HEAD:fortress/v1.1
+          fi
+      - name: Enforce rehearsal
+        run: test "${{ needs.branch-rollback-rehearsal.result }}" = success
