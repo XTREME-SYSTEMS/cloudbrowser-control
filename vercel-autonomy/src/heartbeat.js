@@ -30,6 +30,7 @@ async function acquireLease(store, owner, now, mutationEnabled) {
   let acquired = false;
   const result = await store.mutate((state) => {
     if (!mutationEnabled || !state.autonomous_mutation_enabled || state.approval_required || state.release_ready) return state;
+    if (['PAUSED', 'FAILED_SAFE', 'READY_FOR_OPERATOR_APPROVAL'].includes(state.state)) return state;
     if (!due(state, now) || leaseActive(state, now)) return state;
     state.state = 'PLANNING';
     state.lease_owner = owner;
@@ -46,6 +47,7 @@ async function acquireLease(store, owner, now, mutationEnabled) {
 async function updateValidationState(store, validation, now) {
   return store.mutate((state) => {
     state.candidate_sha = validation.candidate_sha;
+    state.latest_validation_run_id = validation.staging?.run?.run_id || state.latest_validation_run_id || null;
     state.latest_quality_score = validation.quality_score;
     state.last_release_gate_result = validation.clean_pass ? 'PASS' : 'FAIL';
     state.critical_count = validation.critical_findings;
@@ -59,6 +61,9 @@ async function updateValidationState(store, validation, now) {
       state.last_clean_sha = validation.candidate_sha;
       state.last_clean_at = now.toISOString();
       state.blocking_failures = [];
+      state.last_failure_signature = null;
+      state.failure_streak = 0;
+      state.anti_thrash_triggered = false;
       if (state.consecutive_clean_passes >= PROJECT.requiredCleanPasses) {
         state.state = 'READY_FOR_OPERATOR_APPROVAL';
         state.release_ready = true;
@@ -72,11 +77,35 @@ async function updateValidationState(store, validation, now) {
       state.consecutive_clean_passes = 0;
       state.last_clean_sha = null;
       const failure = classifyFailure(validation);
-      state.blocking_failures = [failure];
-      state.state = failure.type === 'INFRA_BLOCKED' ? 'INFRA_BLOCKED' : 'REPAIR_REQUIRED';
+      const total = (state.failure_signatures?.[failure.signature] || 0) + 1;
+      state.failure_signatures = { ...(state.failure_signatures || {}), [failure.signature]: total };
+      state.repair_attempts = { ...(state.repair_attempts || {}), [failure.signature]: total };
+      state.failure_streak = state.last_failure_signature === failure.signature ? (state.failure_streak || 0) + 1 : 1;
+      state.last_failure_signature = failure.signature;
+      state.blocking_failures = [{ ...failure, occurrences: total, consecutive: state.failure_streak }];
+      if (state.failure_streak >= 2) {
+        state.state = 'PAUSED';
+        state.anti_thrash_triggered = true;
+        state.autonomous_mutation_enabled = false;
+        state.next_engineering_run_at = null;
+      } else {
+        state.state = failure.type === 'INFRA_BLOCKED' ? 'INFRA_BLOCKED' : 'REPAIR_REQUIRED';
+      }
     }
     return state;
   }, `autonomy: record validation ${validation.candidate_sha.slice(0, 12)}`);
+}
+
+async function releaseFailedLease(store, now, error) {
+  return store.mutate((state) => {
+    state.state = 'INFRA_BLOCKED';
+    state.blocking_failures = [{ type: 'INFRA_BLOCKED', signature: sha256(String(error?.message || error)), message: 'Recoverable agent/workflow failure; see incident receipt.' }];
+    state.lease_owner = null;
+    state.lease_expires_at = null;
+    state.lease_heartbeat_at = null;
+    state.next_engineering_run_at = addMinutes(now, PROJECT.intervalMinutes).toISOString();
+    return state;
+  }, 'autonomy: release lease after recoverable workflow failure');
 }
 
 export async function runHeartbeat(input = {}) {
@@ -87,6 +116,7 @@ export async function runHeartbeat(input = {}) {
   const store = new GitHubStateStore(github);
   await store.ensure();
 
+  const preValidation = (await store.read()).state;
   const candidateSha = await github.getBranchSha(PROJECT.candidateBranch);
   const validation = await collectValidation({
     github, candidateSha,
@@ -96,11 +126,35 @@ export async function runHeartbeat(input = {}) {
     stagingToken: cfg.stagingToken
   });
   const validationReceipt = await writeReceipt(github, 'VALIDATION', { candidate_sha: candidateSha, environment: 'fortress-staging', validation });
+  const scoreReceipt = await writeReceipt(github, 'SCORE', {
+    candidate_sha: candidateSha,
+    validation_receipt: validationReceipt.id,
+    quality_score: validation.quality_score,
+    pass_rate: validation.pass_rate,
+    release_gate_status: validation.clean_pass ? 'PASS' : 'FAIL'
+  });
   let state = (await updateValidationState(store, validation, now)).state;
-  await writeReceipt(github, 'HEARTBEAT', { candidate_sha: candidateSha, state: state.state, validation_receipt: validationReceipt.id, quality_score: validation.quality_score });
+  await writeReceipt(github, 'STATE_TRANSITION', { from: preValidation.state, to: state.state, reason: validation.clean_pass ? 'VALIDATION_CLEAN' : 'VALIDATION_NOT_CLEAN', candidate_sha: candidateSha });
+  await writeReceipt(github, 'HEARTBEAT', { candidate_sha: candidateSha, state: state.state, validation_receipt: validationReceipt.id, score_receipt: scoreReceipt.id, quality_score: validation.quality_score });
 
-  if (state.release_ready || state.approval_required || state.state === 'READY_FOR_OPERATOR_APPROVAL') {
+  if (!validation.clean_pass && state.blocking_failures?.length) {
+    await writeReceipt(github, 'REPAIR', {
+      candidate_sha: candidateSha,
+      action: state.anti_thrash_triggered ? 'BLOCKED_ANTI_THRASH' : 'REPAIR_REQUIRED',
+      failure: state.blocking_failures[0],
+      next_state: state.state
+    });
+  }
+
+  if (state.release_ready || state.state === 'READY_FOR_OPERATOR_APPROVAL') {
+    await writeReceipt(github, 'COMPLETION', { candidate_sha: candidateSha, clean_passes: state.consecutive_clean_passes, state: 'READY_FOR_OPERATOR_APPROVAL' });
     return { status: 'READY_FOR_OPERATOR_APPROVAL', candidate_sha: candidateSha, validation, state };
+  }
+  if (state.state === 'PAUSED' || state.state === 'FAILED_SAFE') {
+    return { status: 'BLOCKED', reason: state.anti_thrash_triggered ? 'ANTI_THRASH' : state.state, candidate_sha: candidateSha, validation, state };
+  }
+  if (state.approval_required || state.state === 'APPROVAL_REQUIRED') {
+    return { status: 'APPROVAL_REQUIRED', candidate_sha: candidateSha, validation, state };
   }
   if (!cfg.mutationEnabled) return { status: 'VALIDATION_ONLY', reason: 'AUTONOMY_MUTATION_ENABLED is not true', candidate_sha: candidateSha, validation, state };
 
@@ -112,53 +166,65 @@ export async function runHeartbeat(input = {}) {
   if (!lease.acquired) return { status: 'MONITORING', candidate_sha: candidateSha, validation, state: lease.state };
   state = lease.state;
   const leaseReceipt = await writeReceipt(github, 'LEASE', { lease_owner: owner, hour_bucket: state.hour_bucket, expires_at: state.lease_expires_at, candidate_sha: candidateSha });
+  await writeReceipt(github, 'STATE_TRANSITION', { from: preValidation.state, to: 'PLANNING', reason: 'HOURLY_LEASE_ACQUIRED', lease_receipt: leaseReceipt.id, candidate_sha: candidateSha });
 
-  const evidence = {
-    project: state,
-    operator_constraints: { production: false, main_write: false, deployment: false, secrets: false, max_work_packets: 1, max_repair_attempts: PROJECT.maxRepairAttempts },
-    repo: { full_name: PROJECT.repo, base_sha: state.base_sha, candidate_branch: PROJECT.candidateBranch, candidate_sha: candidateSha },
-    staging: { app_id: PROJECT.stagingAppId, health: validation.staging?.status || null, drift: validation.drift },
-    validation: { latest_run_id: validation.staging?.run?.run_id || null, score: validation.quality_score, failed_tests: state.blocking_failures, critical_count: validation.critical_findings, high_count: validation.high_findings, clean_pass_count: state.consecutive_clean_passes },
-    open_work_packets: state.active_work_packet_id ? [state.active_work_packet_id] : [],
-    recent_receipts: [validationReceipt.id, leaseReceipt.id],
-    budget: { max_work_packets: 1, max_repair_attempts: PROJECT.maxRepairAttempts }
-  };
+  try {
+    const evidence = {
+      project: state,
+      operator_constraints: { production: false, main_write: false, deployment: false, secrets: false, max_work_packets: 1, max_repair_attempts: PROJECT.maxRepairAttempts },
+      repo: { full_name: PROJECT.repo, base_sha: state.base_sha, candidate_branch: PROJECT.candidateBranch, candidate_sha: candidateSha },
+      staging: { app_id: PROJECT.stagingAppId, health: validation.staging?.status || null, drift: validation.drift },
+      validation: { latest_run_id: validation.staging?.run?.run_id || null, score: validation.quality_score, failed_tests: state.blocking_failures, critical_count: validation.critical_findings, high_count: validation.high_findings, clean_pass_count: state.consecutive_clean_passes },
+      open_work_packets: state.active_work_packet_id ? [state.active_work_packet_id] : [],
+      recent_receipts: [validationReceipt.id, scoreReceipt.id, leaseReceipt.id],
+      budget: { max_work_packets: 1, max_repair_attempts: PROJECT.maxRepairAttempts }
+    };
 
-  const planned = await planNext({ apiKey: cfg.openaiApiKey, primaryModel: cfg.primaryModel, fallbackModel: cfg.fallbackModel, evidence });
-  const decisionReceipt = await writeReceipt(github, 'AGENT_DECISION', { candidate_sha: candidateSha, decision: planned.decision, routing: planned.meta });
+    const planned = await planNext({ apiKey: cfg.openaiApiKey, primaryModel: cfg.primaryModel, fallbackModel: cfg.fallbackModel, evidence });
+    const decisionReceipt = await writeReceipt(github, 'AGENT_DECISION', { candidate_sha: candidateSha, decision: planned.decision, routing: planned.meta });
 
-  if (planned.decision.decision === 'WORK_PACKET') {
-    const packet = { ...planned.decision.work_packet, working_branch: PROJECT.candidateBranch, starting_sha: candidateSha, deployment_allowed: false, main_write_allowed: false, production_allowed: false, secret_change_allowed: false };
-    await writeReceipt(github, 'WORK_PACKET', { packet, decision_receipt: decisionReceipt.id });
-    state = (await store.mutate((s) => { s.state = 'EXECUTING_BRANCH_WORK'; s.active_work_packet_id = packet.work_packet_id; s.work_packet_attempt = (s.work_packet_attempt || 0) + 1; return s; }, `autonomy: execute ${packet.work_packet_id}`)).state;
-    const execution = await executeCodingPacket({ github, apiKey: cfg.openaiApiKey, model: cfg.codexModel, packet });
-    const newSha = await github.getBranchSha(PROJECT.candidateBranch);
-    await writeReceipt(github, 'CODE_EXECUTION', { work_packet_id: packet.work_packet_id, starting_sha: candidateSha, candidate_sha: newSha, execution });
+    if (planned.decision.decision === 'WORK_PACKET') {
+      const packet = { ...planned.decision.work_packet, working_branch: PROJECT.candidateBranch, starting_sha: candidateSha, deployment_allowed: false, main_write_allowed: false, production_allowed: false, secret_change_allowed: false };
+      await writeReceipt(github, 'WORK_PACKET', { packet, decision_receipt: decisionReceipt.id });
+      state = (await store.mutate((s) => { s.state = 'EXECUTING_BRANCH_WORK'; s.active_work_packet_id = packet.work_packet_id; s.work_packet_attempt = (s.work_packet_attempt || 0) + 1; return s; }, `autonomy: execute ${packet.work_packet_id}`)).state;
+      const execution = await executeCodingPacket({ github, apiKey: cfg.openaiApiKey, model: cfg.codexModel, packet });
+      const newSha = await github.getBranchSha(PROJECT.candidateBranch);
+      await writeReceipt(github, 'CODE_EXECUTION', { work_packet_id: packet.work_packet_id, starting_sha: candidateSha, candidate_sha: newSha, execution });
+      state = (await store.mutate((s) => {
+        s.state = 'VALIDATING';
+        s.candidate_sha = newSha;
+        s.active_work_packet_id = null;
+        s.lease_owner = null;
+        s.lease_expires_at = null;
+        s.lease_heartbeat_at = null;
+        s.next_engineering_run_at = addMinutes(now, PROJECT.intervalMinutes).toISOString();
+        s.consecutive_clean_passes = 0;
+        s.last_clean_sha = null;
+        s.last_failure_signature = null;
+        s.failure_streak = 0;
+        s.anti_thrash_triggered = false;
+        s.release_ready = false;
+        s.approval_required = false;
+        return s;
+      }, `autonomy: await validation ${packet.work_packet_id}`)).state;
+      await writeReceipt(github, 'STATE_TRANSITION', { from: 'EXECUTING_BRANCH_WORK', to: 'VALIDATING', reason: 'CODE_EXECUTION_COMPLETE', work_packet_id: packet.work_packet_id, candidate_sha: newSha });
+      return { status: 'WORK_PACKET_EXECUTED', work_packet_id: packet.work_packet_id, candidate_sha: newSha, execution, state };
+    }
+
     state = (await store.mutate((s) => {
-      s.state = 'VALIDATING';
-      s.candidate_sha = newSha;
-      s.active_work_packet_id = null;
+      s.state = planned.decision.next_state || (planned.decision.decision === 'APPROVAL_REQUIRED' ? 'APPROVAL_REQUIRED' : 'MONITORING');
+      if (planned.decision.decision === 'APPROVAL_REQUIRED') s.approval_required = true;
       s.lease_owner = null;
       s.lease_expires_at = null;
       s.lease_heartbeat_at = null;
       s.next_engineering_run_at = addMinutes(now, PROJECT.intervalMinutes).toISOString();
-      s.consecutive_clean_passes = 0;
-      s.last_clean_sha = null;
-      s.release_ready = false;
-      s.approval_required = false;
       return s;
-    }, `autonomy: await validation ${packet.work_packet_id}`)).state;
-    return { status: 'WORK_PACKET_EXECUTED', work_packet_id: packet.work_packet_id, candidate_sha: newSha, execution, state };
+    }, `autonomy: planner ${planned.decision.decision}`)).state;
+    await writeReceipt(github, 'STATE_TRANSITION', { from: 'PLANNING', to: state.state, reason: `PLANNER_${planned.decision.decision}`, decision_receipt: decisionReceipt.id, candidate_sha: candidateSha });
+    return { status: planned.decision.decision, decision: planned.decision, state };
+  } catch (error) {
+    await writeReceipt(github, 'INCIDENT', { candidate_sha: candidateSha, lease_owner: owner, class: 'RECOVERABLE_WORKFLOW_ERROR', error: { message: error?.message || String(error), name: error?.name || 'Error' } });
+    state = (await releaseFailedLease(store, now, error)).state;
+    return { status: 'INFRA_BLOCKED', candidate_sha: candidateSha, error: 'Recoverable workflow failure; see incident receipt.', state };
   }
-
-  state = (await store.mutate((s) => {
-    s.state = planned.decision.next_state || (planned.decision.decision === 'APPROVAL_REQUIRED' ? 'APPROVAL_REQUIRED' : 'MONITORING');
-    if (planned.decision.decision === 'APPROVAL_REQUIRED') s.approval_required = true;
-    s.lease_owner = null;
-    s.lease_expires_at = null;
-    s.lease_heartbeat_at = null;
-    s.next_engineering_run_at = addMinutes(now, PROJECT.intervalMinutes).toISOString();
-    return s;
-  }, `autonomy: planner ${planned.decision.decision}`)).state;
-  return { status: planned.decision.decision, decision: planned.decision, state };
 }
