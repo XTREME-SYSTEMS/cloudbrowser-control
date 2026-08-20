@@ -1,10 +1,10 @@
 # Fortress Enterprise Parallel Receipt
 
-- Tested commit: 801a512da363dcaeb8cfadd9a6fe60f0b5ac01d0
-- Workflow run: 32417272456
+- Tested commit: 38c92013a44986c8640025c7837655ec8555f57d
+- Workflow run: 32417310511
 - Source contracts: success
-- Code quality: cancelled
-- Supply chain: cancelled
+- Code quality: success
+- Supply chain: success
 - Hardened container smoke: cancelled
 - Hardened container soak: cancelled
 - Overall: FAIL
