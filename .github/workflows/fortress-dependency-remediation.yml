@@ -1,0 +1,106 @@
+name: Fortress Dependency Remediation
+
+on:
+  push:
+    branches:
+      - fortress/v1.1
+    paths:
+      - ci/fortress-dependency-remediation-trigger.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fortress-dependency-remediation
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  safe-lockfile-remediation:
+    name: Non-force lockfile remediation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Verify starting lockfile installs
+        run: npm ci
+
+      - name: Record pre-fix audit counts
+        run: |
+          npm audit --json > /tmp/audit-before.json || true
+          node -e "const a=require('/tmp/audit-before.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
+
+      - name: Apply npm-supported non-force lockfile fixes
+        run: npm audit fix --package-lock-only --ignore-scripts
+
+      - name: Enforce lockfile-only mutation
+        run: |
+          CHANGED=$(git status --short | awk '{print $2}' | grep -v '^package-lock.json$' || true)
+          if [ -n "$CHANGED" ]; then
+            echo "Unexpected files changed by dependency remediation:"
+            echo "$CHANGED"
+            exit 1
+          fi
+          git diff -- package-lock.json
+
+      - name: Install remediated graph
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Fortress static/adversarial checks
+        run: node ci/fortress-core-static.mjs
+
+      - name: Require zero HIGH dependency findings
+        run: npm audit --audit-level=high
+
+      - name: Record post-fix audit counts
+        run: |
+          npm audit --json > /tmp/audit-after.json || true
+          node -e "const a=require('/tmp/audit-after.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
+
+      - name: Persist remediated lockfile and receipt
+        run: |
+          COUNTS=$(node -e "const a=require('/tmp/audit-after.json'); const v=a.metadata?.vulnerabilities||{}; process.stdout.write(JSON.stringify(v))")
+          cat > docs/FORTRESS_DEPENDENCY_REMEDIATION_RECEIPT.md <<EOF
+          # Fortress Dependency Remediation Receipt
+
+          - Source branch: fortress/v1.1
+          - Trigger commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Remediation mode: npm audit fix --package-lock-only --ignore-scripts
+          - Force mode: NOT USED
+          - Post-fix audit counts: $COUNTS
+          - npm ci: PASS
+          - Build: PASS
+          - Lint: PASS
+          - Typecheck: PASS
+          - Fortress static checks: PASS
+          - HIGH dependency gate: PASS
+          - Production deployment: NOT EXECUTED
+          - Main merge/write: NOT EXECUTED
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json docs/FORTRESS_DEPENDENCY_REMEDIATION_RECEIPT.md
+          git commit -m "security: remediate nonbreaking dependency advisories"
+          git pull --rebase origin fortress/v1.1
+          git push origin HEAD:fortress/v1.1
