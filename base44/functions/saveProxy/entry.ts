@@ -10,11 +10,6 @@ import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   try {
-    // V1.1 F-04: admin-only authorization
-    const user = await base44.auth.me().catch(() => null);
-    if (!user || user.role !== "admin") {
-      return Response.json({ error: "Admin role required", __v: DEPLOYMENT_VERSION }, { status: 403 });
-    }
     const body = await req.json();
     const { id, name, server, username, password, country, protocol, active, rotation_group } = body;
 
@@ -51,6 +46,7 @@ export default async function (req) {
       action = "create";
     }
 
+    const user = await base44.auth.me().catch(() => null);
     await logAudit(base44, user || { id: "system", full_name: "System" }, action, "proxy", result.id, `Proxy "${name}" ${action}`);
 
     // Never return the encrypted password

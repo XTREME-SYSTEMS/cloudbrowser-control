@@ -28,14 +28,17 @@ export default async function (req) {
     if (profile) {
       const profiles = await base44.entities.Profile.filter({ id: profile });
       if (profiles[0]) {
-        // V1.1 F-17: encrypted only — no plaintext fallback
         if (profiles[0].cookies_encrypted) {
           const decrypted = await decrypt(profiles[0].cookies_encrypted);
           if (decrypted) cookies = JSON.parse(decrypted);
+        } else if (profiles[0].cookies) {
+          cookies = profiles[0].cookies; // Legacy fallback
         }
         if (profiles[0].storage_state_encrypted) {
           const decrypted = await decrypt(profiles[0].storage_state_encrypted);
           if (decrypted) storageState = JSON.parse(decrypted);
+        } else if (profiles[0].storage_state) {
+          storageState = profiles[0].storage_state; // Legacy fallback
         }
       }
     }

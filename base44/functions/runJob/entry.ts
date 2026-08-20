@@ -47,7 +47,7 @@ export default async function(req) {
     const user = await base44.auth.me().catch(() => null);
 
     const body = await req.json();
-    const { jobId, project_id, idempotency_key } = body;
+    const { jobId } = body;
 
     if (!await isEngineConfigured()) {
       return Response.json({ error: "Browser engine not configured. Set BROWSER_ENGINE_URL and BROWSER_ENGINE_API_KEY in Settings → Secrets." }, { status: 503 });
@@ -57,33 +57,8 @@ export default async function(req) {
     const job = await base44.asServiceRole.entities.Job.get(jobId);
     if (!job) return Response.json({ error: "Job not found", __v: DEPLOYMENT_VERSION }, { status: 404 });
 
-    // V1.1 F-06: tenant authorization — caller project must match job project (admin bypasses)
-    const isAdmin = user?.role === "admin";
-    if (!isAdmin && project_id && job.project_id && job.project_id !== project_id) {
-      return Response.json({ error: "Forbidden: job belongs to a different project", __v: DEPLOYMENT_VERSION }, { status: 403 });
-    }
-
-    // V1.1 F-06: idempotency — reject duplicate run while job is already running
-    if (idempotency_key && job.status === "running") {
-      return Response.json({ error: "Job already running", idempotency_key, __v: DEPLOYMENT_VERSION }, { status: 409 });
-    }
-
     const steps = await base44.asServiceRole.entities.Step.filter({ job_id: jobId });
     steps.sort((a, b) => a.order - b.order);
-
-    // V1.1 F-15: enforce step/duration caps from SystemSettings
-    const settings = await base44.asServiceRole.entities.SystemSettings.list("-created_date", 1).catch(() => []);
-    const sysSet = settings[0] || {};
-    const maxSteps = sysSet.max_steps_per_job || 100;
-    const maxDurationMin = sysSet.max_job_duration_min || 30;
-    if (steps.length > maxSteps) {
-      await base44.asServiceRole.entities.Job.update(jobId, {
-        status: "failed", error_message: `Step count ${steps.length} exceeds max ${maxSteps}`,
-        completed_at: new Date().toISOString(),
-      });
-      return Response.json({ error: `Step count exceeds max (${maxSteps})`, __v: DEPLOYMENT_VERSION }, { status: 400 });
-    }
-    const jobDeadline = Date.now() + maxDurationMin * 60 * 1000;
 
     // Mark job running
     await base44.asServiceRole.entities.Job.update(jobId, {
@@ -156,12 +131,6 @@ export default async function(req) {
     // Execute each step
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-      // V1.1 F-15: global job duration cap
-      if (Date.now() > jobDeadline) {
-        failed = true;
-        errorMsg = `Job exceeded max duration (${maxDurationMin} min)`;
-        break;
-      }
       try {
         // Handle screenshot/PDF specially (upload + store)
         if (step.action_type === "screenshot") {

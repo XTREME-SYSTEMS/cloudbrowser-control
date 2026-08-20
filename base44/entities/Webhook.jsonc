@@ -53,10 +53,6 @@
         "discord"
       ],
       "default": "generic"
-    },
-    "project_id": {
-      "type": "string",
-      "description": "Project this webhook is bound to (V1.1 F-06 \u2014 used for inbound job/project scoping)"
     }
   },
   "required": [

@@ -45,14 +45,11 @@ if (!fs.existsSync(VIDEO_DIR)) fs.mkdirSync(VIDEO_DIR, { recursive: true });
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // V1.1 AM-3: FAIL-CLOSED. Same-origin (no Origin header) always allowed.
-    // Cross-origin requires an explicit CORS_ALLOWLIST entry. Empty allowlist
-    // rejects ALL cross-origin requests.
-    if (!origin) return callback(null, true);
-    if (CORS_ALLOWLIST.length > 0 && CORS_ALLOWLIST.includes(origin)) {
+    // Allow same-origin (no origin) and allowlisted origins
+    if (!origin || CORS_ALLOWLIST.length === 0 || CORS_ALLOWLIST.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS (fail-closed)`));
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -126,55 +123,13 @@ function isBlockedHost(hostname) {
   return false;
 }
 
-// V1.1 F-02: IP-level blocklist for resolved addresses (IPv4 + IPv6)
-function isBlockedIp(ip) {
-  if (!ip) return true;
-  const v4 = ip.split(".").map(Number);
-  if (v4.length === 4 && v4.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) {
-    const [a, b] = v4;
-    if (a === 10) return true;
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 100 && b >= 64 && b <= 127) return true;
-    if (a === 0) return true;
-    if (a === 127) return true;
-    if (a >= 224) return true;
-    if (a === 169 && b === 254) return true; // link-local + cloud metadata
-    return false;
-  }
-  const h = ip.toLowerCase();
-  if (h === "::1" || h === "::") return true;
-  if (h.startsWith("fe80:")) return true;
-  if (h.startsWith("fc") || h.startsWith("fd")) return true;
-  if (h.startsWith("fd00:ec2::")) return true; // AWS IPv6 IMDS
-  return false;
-}
-
-// V1.1 F-02: resolve hostname and reject if any resolved IP is private/loopback/
-// metadata. Fail-closed on resolution failure. Defeats DNS rebinding (TOCTOU).
-async function resolveAndCheck(hostname) {
-  if (!hostname) return true;
-  if (isBlockedHost(hostname)) return true;
-  try {
-    const dnsP = await import("dns");
-    const addrs = await dnsP.promises.lookup(hostname, { all: true });
-    if (!addrs.length) return true;
-    return addrs.some((a) => isBlockedIp(a.address));
-  } catch (e) {
-    return true; // fail-closed
-  }
-}
-
-async function validateTargetUrl(urlStr) {
+function validateTargetUrl(urlStr) {
   if (!urlStr || typeof urlStr !== "string") return { ok: false, error: "URL required" };
   let parsed;
   try { parsed = new URL(urlStr); } catch { return { ok: false, error: "Invalid URL" }; }
   if (ENFORCE_HTTPS && parsed.protocol !== "https:") return { ok: false, error: "HTTPS required by policy" };
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return { ok: false, error: "Only http/https allowed" };
   if (isBlockedHost(parsed.hostname)) return { ok: false, error: `Blocked host: ${parsed.hostname}` };
-  // V1.1 F-02: DNS resolution + rebinding check (fail-closed)
-  const dnsBlocked = await resolveAndCheck(parsed.hostname);
-  if (dnsBlocked) return { ok: false, error: `Blocked host (DNS): ${parsed.hostname}` };
   return { ok: true, parsed };
 }
 
@@ -190,12 +145,7 @@ let cdpPortCounter = 9222;
 const workerStartedAt = Date.now();
 let heartbeatSeq = 0;
 
-function uid() {
-  // V1.1 F-07: cryptographically secure session ID (128 bits)
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return "sess_" + Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+function uid() { return "sess_" + Math.random().toString(36).slice(2) + Date.now().toString(36); }
 function getNextCdpPort() { return cdpPortCounter++; }
 
 // ═══════════════════════════════════════════════
@@ -310,8 +260,8 @@ async function crawl(page, options) {
     if (visited.has(url)) continue;
     if (depth > maxDepth) continue;
 
-    const validation = await validateTargetUrl(url);
-      if (!validation.ok) continue;
+    const validation = validateTargetUrl(url);
+    if (!validation.ok) continue;
     if (new URL(url).hostname !== domainFilter) continue;
 
     visited.add(url);
@@ -444,9 +394,8 @@ app.post("/sessions", async (req, res) => {
   try {
     const opts = req.body || {};
 
-    // V1.1 F-13: bypass pool when caller-specific options are provided
-    const hasCallerOptions = !!(opts.proxy || opts.headers || opts.blockedResources?.length || opts.networkMocks?.length || opts.cookies?.length || opts.storageState || opts.extensions?.length || opts.enableCDP || opts.recordVideo);
-    if (opts.usePool && !hasCallerOptions && pool.length > 0) {
+    // Use pool if available
+    if (opts.usePool && pool.length > 0) {
       const pooledId = pool.shift();
       const s = sessions.get(pooledId);
       if (s) {
@@ -467,25 +416,16 @@ app.post("/sessions", async (req, res) => {
     if (opts.blockedResources?.includes("images")) launchArgs.push("--blink-settings=imagesEnabled=false");
 
     // Extensions
-    // V1.1 F-08: reject caller-supplied extension paths (arbitrary code load risk).
-    // Only extension IDs (alphanumeric) from a fixed admin-controlled base are allowed.
-    const EXTENSION_BASE = process.env.EXTENSION_DIR || "/data/extensions";
     if (opts.extensions?.length > 0) {
       for (const ext of opts.extensions) {
-        if (typeof ext !== "string" || !/^[a-zA-Z0-9_-]+$/.test(ext)) continue;
-        const safePath = `${EXTENSION_BASE}/${ext}`;
-        if (fs.existsSync(safePath)) {
-          launchArgs.push(`--load-extension=${safePath}`);
-          launchArgs.push(`--disable-extensions-except=${safePath}`);
-        }
+        launchArgs.push(`--load-extension=${ext}`);
+        launchArgs.push(`--disable-extensions-except=${ext}`);
       }
     }
 
     // CDP — internal only, never exposed as externally usable
     let cdpUrl = null;
-    // V1.1 F-19: CDP gated by ALLOW_CDP env (admin policy). Default off.
-    const ALLOW_CDP = process.env.ALLOW_CDP === "true";
-    if (opts.enableCDP && ALLOW_CDP) {
+    if (opts.enableCDP) {
       const cdpPort = getNextCdpPort();
       launchArgs.push(`--remote-debugging-port=${cdpPort}`);
       cdpUrl = `http://127.0.0.1:${cdpPort}`; // internal only
@@ -500,12 +440,15 @@ app.post("/sessions", async (req, res) => {
     if (opts.recordVideo) contextOptions.recordVideo = { dir: VIDEO_DIR };
 
     let browser, context, page;
-    // V1.1 F-08: ignore caller-supplied userDataDir (path-traversal risk).
-    // Always use an ephemeral non-persistent context.
-    browser = await chromium.launch({ headless: true, args: launchArgs });
-    context = await browser.newContext(contextOptions);
-    await context.addInitScript(stealthScript);
-    page = await context.newPage();
+    if (opts.userDataDir) {
+      context = await chromium.launchPersistentContext(opts.userDataDir, { headless: true, args: launchArgs, ...contextOptions });
+      page = context.pages()[0] || await context.newPage();
+    } else {
+      browser = await chromium.launch({ headless: true, args: launchArgs });
+      context = await browser.newContext(contextOptions);
+      await context.addInitScript(stealthScript);
+      page = await context.newPage();
+    }
 
     // Restore cookies/storage if provided (resume / context)
     if (opts.cookies?.length) await context.addCookies(opts.cookies);
@@ -524,21 +467,13 @@ app.post("/sessions", async (req, res) => {
       }
     }
 
-    // V1.1 AM-2/F-03: SSRF route guard — validate every request's host (covers
-    // subresources, iframes, page-side fetch/XHR, and redirect targets).
-    // Also applies caller blockedResources. Always installed (fail-closed).
-    context.route("**/*", (route) => {
-      const req = route.request();
-      try {
-        const u = new URL(req.url());
-        if (isBlockedHost(u.hostname)) return route.abort();
-      } catch (e) {}
-      if (opts.blockedResources?.length > 0) {
-        const type = req.resourceType();
-        if (opts.blockedResources.includes(type)) return route.abort();
-      }
-      return route.continue();
-    });
+    // Block resources
+    if (opts.blockedResources?.length > 0) {
+      context.route("**/*", (route) => {
+        const type = route.request().resourceType();
+        return opts.blockedResources.includes(type) ? route.abort() : route.continue();
+      });
+    }
 
     const id = uid();
     const session = {
@@ -599,7 +534,7 @@ app.post("/sessions/:id/execute", async (req, res) => {
       if (action_type === "crawl" && !options.startUrl) {
         // crawl uses page.url() as starting point; if about:blank, crawl will handle gracefully
       } else {
-        const validation = await validateTargetUrl(targetUrl);
+        const validation = validateTargetUrl(targetUrl);
         if (!validation.ok) { s.status = "idle"; return res.status(400).json({ ok: false, action_type, error: `URL rejected: ${validation.error}` }); }
       }
     }
@@ -686,7 +621,7 @@ app.post("/sessions/:id/execute", async (req, res) => {
       case "capture_response": { result.data = await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.responseStatus || 200); break; }
       case "solve_captcha": { result.data = await solveCaptcha(page, options); break; }
       case "mock_response": { await page.route(options.url, (route) => route.fulfill({ status: options.status || 200, contentType: options.contentType || "application/json", body: options.body || "" })); result.data = { mocked: options.url }; break; }
-      case "save_state": { const cookies = await s.context.cookies(); const storageState = await s.context.storageState(); const stateToken = "state_" + crypto.randomUUID(); savedStates.set(stateToken, { cookies, storageState, url: s.url, title: s.title }); result.data = { stateToken, url: s.url }; break; }
+      case "save_state": { const cookies = await s.context.cookies(); const storageState = await s.context.storageState(); const stateToken = "state_" + Math.random().toString(36).slice(2); savedStates.set(stateToken, { cookies, storageState, url: s.url, title: s.title }); result.data = { stateToken, url: s.url }; break; }
       case "restore_state": { const state = savedStates.get(options.stateToken); if (!state) throw new Error("State not found"); if (state.cookies) await s.context.addCookies(state.cookies); if (state.storageState?.origins) { for (const origin of state.storageState.origins) { for (const { key, value: val } of origin.localStorage || []) { await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: key, v: val }); } } } if (state.url) await page.goto(state.url); result.data = { restored: true, url: state.url }; break; }
       case "crawl": { result.data = await crawl(page, options); break; }
       case "paginate": { result.data = await paginate(page, options); break; }
@@ -744,7 +679,7 @@ app.get("/sessions", (req, res) => {
 app.post("/sessions/:id/share", async (req, res) => {
   const s = sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: "Session not found" });
-  const shareToken = crypto.randomUUID();
+  const shareToken = Math.random().toString(36).slice(2);
   s.shareToken = shareToken;
   res.json({ shareToken, worker_id: WORKER_ID });
 });

@@ -44,27 +44,6 @@ export default async function (req) {
     // Update last_used
     base44.asServiceRole.entities.ApiKey.update(keyRecord.id, { last_used: new Date().toISOString() }).catch(() => {});
 
-    // V1.1 F-05/AM-4: per-tool scope + capability enforcement
-    const TOOL_SCOPES = {
-      browser_start: "sessions:write",
-      browser_end: "sessions:write",
-      browser_navigate: "sessions:write",
-      browser_act: "sessions:write",
-      browser_observe: "sessions:evaluate",
-      browser_extract: "sessions:write",
-      browser_screenshot: "sessions:write",
-      browser_list_tabs: "sessions:read",
-      browser_switch_tab: "sessions:write",
-      context_create: "contexts:write",
-      context_use: "contexts:write",
-      context_delete: "contexts:write",
-      artifact_get: "artifacts:read",
-    };
-    const requiredScope = TOOL_SCOPES[tool];
-    if (requiredScope && !(keyRecord.scopes || []).includes(requiredScope)) {
-      return errorResponse(403, `Insufficient scope for tool ${tool}. Required: ${requiredScope}`, requestId);
-    }
-
     // ── Route to tool handler ──
     const result = await handleTool(base44, tool, params, keyRecord, requestId);
 
@@ -235,11 +214,17 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
         lease_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
         last_used: new Date().toISOString(),
       });
-      // V1.1 F-09: decrypted state is NEVER returned to the caller. It is attached
-      // server-side to the engine session via the lease. Only lease metadata +
-      // auth_state are returned. (A future context_attach tool will pass the
-      // lease to a session by ID.)
-      return { auth_state: ctx.auth_state, lease_owner: ctx.lease_owner, lease_expires_at: ctx.lease_expires_at };
+      // Decrypt state for engine use
+      let cookies = null, storageState = null;
+      if (ctx.cookies_encrypted) {
+        const dec = await decrypt(ctx.cookies_encrypted);
+        if (dec) cookies = JSON.parse(dec);
+      }
+      if (ctx.storage_state_encrypted) {
+        const dec = await decrypt(ctx.storage_state_encrypted);
+        if (dec) storageState = JSON.parse(dec);
+      }
+      return { cookies, storage_state: storageState, auth_state: ctx.auth_state };
     }
 
     case "context_delete": {
@@ -255,8 +240,8 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const artifacts = await base44.asServiceRole.entities.Artifact.filter({ artifact_id: params.artifact_id });
       if (!artifacts.length) throw new Error("Artifact not found");
       const artifact = artifacts[0];
-      // V1.1 F-14: scope private AND project artifacts by key project; only public skips
-      if (artifact.access_policy !== "public" && keyRecord.project_id && artifact.project_id !== keyRecord.project_id) {
+      // Check access policy — private artifacts require same project
+      if (artifact.access_policy === "private" && keyRecord.project_id && artifact.project_id !== keyRecord.project_id) {
         throw new Error("Access denied — artifact belongs to different project");
       }
       return {

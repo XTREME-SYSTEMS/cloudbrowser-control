@@ -83,15 +83,7 @@ export async function checkRateLimit(base44, keyHash, limitPerMinute) {
     }
   }
 
-  const allowed = totalCount <= limitPerMinute;
-  // V1.1 F-10: don't let rejected requests over-count and extend the block window
-  if (!allowed) {
-    await base44.asServiceRole.entities.RateLimitEntry.updateMany(
-      { key_hash: keyHash, window_start: windowStart },
-      { $inc: { count: -1 } }
-    ).catch(() => {});
-  }
-  return allowed;
+  return totalCount <= limitPerMinute;
 }
 
 export const ROUTE_SCOPES = {
@@ -107,28 +99,6 @@ export const ROUTE_SCOPES = {
   "GET:/jobs/:id/results": "jobs:read",
   "GET:/projects": "projects:read",
 };
-
-// V1.1 AM-4: per-action capability scopes. A key must hold the specific
-// capability in addition to the route's base scope to invoke dangerous actions.
-export const ACTION_CAPABILITIES = {
-  evaluate: "sessions:evaluate",
-  extract_json: "sessions:evaluate",
-  set_cookies: "sessions:storage",
-  import_cookies: "sessions:storage",
-  export_cookies: "sessions:storage",
-  set_local_storage: "sessions:storage",
-  save_state: "sessions:storage",
-  restore_state: "sessions:storage",
-  upload_file: "sessions:upload",
-  download: "sessions:download",
-  solve_captcha: "sessions:captcha",
-  mock_response: "sessions:network_mock",
-  crawl: "sessions:crawl",
-};
-
-export function requiredCapability(actionType) {
-  return ACTION_CAPABILITIES[actionType] || null;
-}
 
 export function matchRoute(method, rawPath) {
   const parts = (rawPath || "").split("/").filter(Boolean);
@@ -169,13 +139,6 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
     case "POST:/sessions": {
       if (!await isEngineConfigured()) {
         return errResp(503, "Browser engine not configured");
-      }
-      // V1.1 AM-4: CDP and proxy are privileged session capabilities
-      if (data.enable_cdp && !(keyRecord.scopes || []).includes("sessions:cdp")) {
-        return errResp(403, "Insufficient capability. Required: sessions:cdp");
-      }
-      if (data.proxy && !(keyRecord.scopes || []).includes("sessions:proxy")) {
-        return errResp(403, "Insufficient capability. Required: sessions:proxy");
       }
       let engineRes;
       try {
@@ -264,12 +227,6 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       if (!session.session_id) return errResp(409, "Session has no runtime ID — cannot execute action");
 
       if (!await isEngineConfigured()) return errResp(503, "Browser engine not configured");
-
-      // V1.1 AM-4: dangerous-action capability authorization
-      const cap = requiredCapability(data.action_type);
-      if (cap && !(keyRecord.scopes || []).includes(cap)) {
-        return errResp(403, `Insufficient capability. Required: ${cap}`);
-      }
 
       let engineRes;
       try {
@@ -370,7 +327,7 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       if (!job) return errResp(404, "Job not found");
       if (keyRecord.project_id && job.project_id !== keyRecord.project_id)
         return errResp(404, "Job not found");
-      const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: params.id, project_id: keyRecord.project_id });
+      const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: params.id });
       return Response.json({ ...(result.data || result), request_id: requestId, gateway: gatewayIdentity });
     }
 
