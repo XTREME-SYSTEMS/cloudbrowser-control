@@ -9,7 +9,7 @@ import {
 import {
   checkoutPooledSession, closeSession, createBrowserContext, createSession,
   healthStatus, isShuttingDown, pool, poolError, runtimeIdentity, sessions,
-  setShuttingDown, startMaintenance, warmPool,
+  scheduleWarmPool, setShuttingDown, startMaintenance,
 } from "./runtime.js";
 import { executeAction } from "./actions.js";
 import { SSRF_LIMITATION } from "../ssrf.js";
@@ -32,42 +32,31 @@ function hasCallerOptions(opts) {
 export function createApp() {
   assertEngineConfig();
   const app = express();
-
-  app.use(cors({
+  const corsOptions = {
     origin(origin, callback) {
       if (!origin) return callback(null, true);
-      if (CORS_ALLOWLIST.length > 0 && CORS_ALLOWLIST.includes(origin)) return callback(null, true);
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+      if (CORS_ALLOWLIST.length === 0) return callback(new Error("CORS disabled: no origins configured"));
+      if (CORS_ALLOWLIST.includes(origin)) return callback(null, true);
+      return callback(new Error("Origin not allowed"));
     },
-    methods: ["GET", "POST", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
-    credentials: false,
-    maxAge: 600,
-  }));
-  app.use(express.json({ limit: UPLOAD_MAX_BYTES }));
-  app.use((req, res, next) => {
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("Referrer-Policy", "no-referrer");
-    res.setHeader("Cache-Control", "no-store");
-    res.setHeader("X-Engine-Version", ENGINE_VERSION);
-    res.setHeader("X-Worker-Id", WORKER_ID);
-    res.setHeader("X-Region", REGION);
-    next();
-  });
+    credentials: true,
+  };
+  app.use(cors(corsOptions));
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ extended: false, limit: "2mb" }));
+
   app.use((req, res, next) => {
     if (["/health", "/liveness", "/readiness"].includes(req.path)) return next();
-    const key = req.headers["x-api-key"] || String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-    if (!key || !timingSafeEqual(key, ENGINE_API_KEY)) return res.status(401).json({ error: "Unauthorized" });
-    next();
+    const key = req.headers["x-api-key"] || "";
+    if (!key || !timingSafeEqual(String(key), ENGINE_API_KEY)) return res.status(401).json({ error: "Unauthorized" });
+    return next();
   });
 
   let heartbeatSeq = 0;
   app.get("/health", (req, res) => {
     const status = healthStatus();
     res.status(status === "healthy" ? 200 : 503).json({
-      ok: status === "healthy", status, uptime: process.uptime(), worker_id: WORKER_ID,
-      region: REGION, engine_version: ENGINE_VERSION, schema_version: SCHEMA_VERSION,
+      status, worker_id: WORKER_ID, region: REGION, engine_version: ENGINE_VERSION, schema_version: SCHEMA_VERSION,
       config_version: CONFIG_VERSION, runtime_user: runtimeIdentity(), active_sessions: sessions.size,
       max_sessions: MAX_SESSIONS, pool_size: pool.length, pool_capacity: POOL_SIZE,
       pool_error: poolError(), ssrf_limitation: SSRF_LIMITATION, timestamp: new Date().toISOString(),
@@ -104,7 +93,7 @@ export function createApp() {
       if (opts.usePool && !hasCallerOptions(opts)) {
         const pooled = checkoutPooledSession();
         if (pooled) {
-          warmPool().catch(() => {});
+          scheduleWarmPool();
           return res.json({ sessionId: pooled.id, status: "idle", fromPool: true, workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, createdAt: new Date(pooled.createdAt).toISOString(), expiresAt: new Date(pooled.createdAt + SESSION_TTL_MS).toISOString() });
         }
       }
@@ -142,53 +131,31 @@ export function createApp() {
       } catch {}
     }
     const closed = await closeSession(req.params.id, "ended");
-    warmPool().catch(() => {});
+    scheduleWarmPool();
     return res.json({ ok: true, closed, videoBase64, worker_id: WORKER_ID });
   });
 
   app.get("/sessions", (req, res) => {
     const list = [...sessions.values()].map((session) => ({ sessionId: session.id, status: session.status, url: session.url, title: session.title, createdAt: session.createdAt, lastActivity: session.lastActivity, recordVideo: session.recordVideo, workerId: WORKER_ID, region: REGION }));
-    return res.json({ sessions: list, count: list.length, workerId: WORKER_ID });
+    res.json({ sessions: list });
   });
-  app.post("/sessions/:id/share", (req, res) => {
-    const session = sessions.get(req.params.id);
-    if (!session) return res.status(404).json({ error: "Session not found" });
-    session.shareToken = crypto.randomUUID();
-    return res.json({ shareToken: session.shareToken, worker_id: WORKER_ID });
+
+  app.get("/pool", (req, res) => res.json({ warmCount: pool.length, capacity: POOL_SIZE, activeSessions: sessions.size, workerId: WORKER_ID }));
+  app.post("/pool/warm", async (req, res) => { scheduleWarmPool(0); res.json({ ok: true, warmCount: pool.length, capacity: POOL_SIZE, workerId: WORKER_ID }); });
+  app.post("/pool/clear", async (req, res) => {
+    for (const id of [...pool]) await closeSession(id, "pool_cleared");
+    res.json({ ok: true, warmCount: pool.length, workerId: WORKER_ID });
   });
-  app.get("/sessions/:id/screenshot", async (req, res) => {
-    const session = sessions.get(req.params.id);
-    if (!session) return res.status(404).json({ error: "Session not found" });
-    try { const buffer = await session.page.screenshot({ type: "png" }); return res.json({ base64: buffer.toString("base64"), mimeType: "image/png", url: session.url, title: session.title, worker_id: WORKER_ID }); }
-    catch (error) { return res.status(500).json({ error: error.message }); }
-  });
-  app.get("/pool", (req, res) => res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, warmCount: pool.length, maxSessions: MAX_SESSIONS, activeSessions: sessions.size, workerId: WORKER_ID, region: REGION, lastError: poolError() }));
-  app.post("/pool/warm", async (req, res) => { await warmPool(); return res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID, lastError: poolError() }); });
-  app.post("/pool/drain", async (req, res) => { while (pool.length) await closeSession(pool[0], "drained"); return res.json({ poolSize: 0, workerId: WORKER_ID }); });
+
+  app.get("/config/limits", (req, res) => res.json({ uploadMaxBytes: UPLOAD_MAX_BYTES, maxSessions: MAX_SESSIONS, sessionTtlMs: SESSION_TTL_MS, poolCapacity: POOL_SIZE, workerId: WORKER_ID }));
+  app.get("/shutdown-status", (req, res) => res.json({ shutting_down: isShuttingDown(), active_sessions: sessions.size, pool_size: pool.length, worker_id: WORKER_ID }));
 
   return app;
 }
 
-export function startEngine() {
-  const app = createApp();
-  startMaintenance();
-  const server = app.listen(PORT, () => {
-    console.log(`Browser engine v${ENGINE_VERSION} running on port ${PORT} (worker: ${WORKER_ID}, region: ${REGION})`);
-    console.log(`Max sessions: ${MAX_SESSIONS}, pool target: ${POOL_SIZE}, runtime uid: ${process.getuid?.()}`);
-  });
-
-  async function shutdown(signal) {
-    if (isShuttingDown()) return;
-    setShuttingDown(true);
-    console.log(`Received ${signal}; draining ${sessions.size} browser session(s)`);
-    const forceExit = setTimeout(() => process.exit(1), 10000);
-    forceExit.unref();
-    for (const id of [...sessions.keys()]) await closeSession(id, "shutdown");
-    await new Promise((resolve) => server.close(resolve));
-    clearTimeout(forceExit);
-    process.exit(0);
-  }
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  return server;
+export async function shutdown() {
+  if (isShuttingDown()) return;
+  setShuttingDown(true);
+  const ids = [...sessions.keys()];
+  await Promise.all(ids.map((id) => closeSession(id, "shutdown")));
 }
