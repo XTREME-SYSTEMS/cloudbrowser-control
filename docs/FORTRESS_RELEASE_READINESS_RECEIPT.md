@@ -1,7 +1,7 @@
 # Fortress Release Readiness Receipt
 
-- Candidate commit: 8eeb97a2acefbeafe21c400313699d047f6d4f8b
-- Workflow run: 32401257962
+- Candidate commit: bfc45a70d00fce273b0a97f507944037382f8202
+- Workflow run: 32401313056
 - Canonical branch contract: success
 - Approved main baseline: 1da8c5bf4c20581606d2ec746b5fc892aaafe598
 - Observed main: b1bb5af6b93b46aeb3e5edd762f70be6d3777336
