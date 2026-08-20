@@ -12,11 +12,61 @@ const workflows = [
   '.github/workflows/fortress-release-readiness.yml',
   '.github/workflows/fortress-rollback-rehearsal.yml',
 ];
+const writerJobs = new Map([
+  ['.github/workflows/fortress-dependency-remediation.yml', 'safe-lockfile-remediation'],
+  ['.github/workflows/fortress-enterprise-integration.yml', 'aggregate'],
+  ['.github/workflows/fortress-enterprise-parallel.yml', 'enterprise-gate'],
+  ['.github/workflows/fortress-ephemeral-validation.yml', 'validation-status'],
+  ['.github/workflows/fortress-release-readiness.yml', 'release-readiness'],
+  ['.github/workflows/fortress-rollback-rehearsal.yml', 'receipt'],
+]);
 const broadPushWorkflows = workflows.filter((file) => !file.endsWith('fortress-dependency-remediation.yml'));
 const checks = [];
 function check(name, condition, detail = null) {
   checks.push({ name, status: condition ? 'PASS' : 'FAIL', detail });
   console[condition ? 'log' : 'error'](`${condition ? 'PASS' : 'FAIL'}: ${name}${detail ? ` - ${detail}` : ''}`);
+}
+
+function jobBlocks(text) {
+  const lines = text.split('\n');
+  const blocks = new Map();
+  let inJobs = false;
+  let current = null;
+  for (const line of lines) {
+    if (line === 'jobs:') {
+      inJobs = true;
+      current = null;
+      continue;
+    }
+    if (!inJobs) continue;
+    const jobMatch = line.match(/^  ([A-Za-z0-9_-]+):\s*$/);
+    if (jobMatch) {
+      current = jobMatch[1];
+      blocks.set(current, []);
+      continue;
+    }
+    if (current) blocks.get(current).push(line);
+  }
+  return blocks;
+}
+
+function checkoutPolicies(blockText) {
+  const lines = blockText.split('\n');
+  const results = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!/^\s*-\s+uses:\s+actions\/checkout@/.test(lines[i])) continue;
+    let persist = null;
+    for (let j = i + 1; j < Math.min(lines.length, i + 8); j += 1) {
+      if (/^\s*-\s+/.test(lines[j])) break;
+      const match = lines[j].match(/^\s+persist-credentials:\s*(true|false)\s*$/);
+      if (match) {
+        persist = match[1] === 'true';
+        break;
+      }
+    }
+    results.push(persist);
+  }
+  return results;
 }
 
 for (const file of workflows) {
@@ -31,6 +81,30 @@ for (const file of workflows) {
   }
   check(`${file} all external actions use full 40-char SHAs`, actionUses.length > 0 && actionUses.every((x) => /^[0-9a-f]{40}$/i.test(x.ref)), actionUses.map((x) => `${x.action}@${x.ref}`).join(','));
   check(`${file} has no mutable checkout/setup-node uses`, !actionUses.some((x) => (x.action === 'actions/checkout' || x.action === 'actions/setup-node') && /^v\d+/i.test(x.ref)));
+  check(`${file} workflow default token is contents read`, /^permissions:\n  contents: read\s*$/m.test(text));
+
+  const blocks = jobBlocks(text);
+  const writerJob = writerJobs.get(file);
+  const writerBlock = blocks.get(writerJob)?.join('\n') || '';
+  check(`${file} writer job ${writerJob} alone receives contents write`, /^    permissions:\n      contents: write\s*$/m.test(writerBlock));
+
+  let readOnlyCheckoutCount = 0;
+  let readOnlyCheckoutSafe = true;
+  let writerCheckoutCount = 0;
+  let writerCheckoutSafe = true;
+  for (const [jobName, lines] of blocks) {
+    const policies = checkoutPolicies(lines.join('\n'));
+    if (jobName === writerJob) {
+      writerCheckoutCount += policies.length;
+      writerCheckoutSafe = writerCheckoutSafe && policies.every((persist) => persist === true);
+    } else {
+      readOnlyCheckoutCount += policies.length;
+      readOnlyCheckoutSafe = readOnlyCheckoutSafe && policies.every((persist) => persist === false);
+      check(`${file} non-writer job ${jobName} has no contents write escalation`, !/^    permissions:\n      contents: write\s*$/m.test(lines.join('\n')));
+    }
+  }
+  check(`${file} read-only checkouts disable persisted credentials`, readOnlyCheckoutCount === 0 || readOnlyCheckoutSafe, `count=${readOnlyCheckoutCount}`);
+  check(`${file} writer checkout explicitly preserves push credential only in writer job`, writerCheckoutCount > 0 && writerCheckoutSafe, `count=${writerCheckoutCount}`);
 }
 
 for (const file of broadPushWorkflows) {
