@@ -4,6 +4,7 @@ import { assertBranchSafe } from './policy.js';
 const apiBase = 'https://api.github.com';
 const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
 const unb64 = (s) => Buffer.from(s, 'base64').toString('utf8');
+const encodeRefPath = (ref) => ref.split('/').map(encodeURIComponent).join('/');
 
 export class GitHubClient {
   constructor(token) {
@@ -35,7 +36,7 @@ export class GitHubClient {
   repoPath(path) { return `/repos/${this.owner}/${this.repo}${path}`; }
 
   async getBranchSha(branch) {
-    const data = await this.request(this.repoPath(`/git/ref/heads/${encodeURIComponent(branch)}`));
+    const data = await this.request(this.repoPath(`/git/ref/heads/${encodeRefPath(branch)}`));
     return data.object.sha;
   }
 
@@ -116,6 +117,9 @@ export class GitHubStateStore {
         blocking_failures: [],
         failure_signatures: {},
         repair_attempts: {},
+        last_failure_signature: null,
+        failure_streak: 0,
+        anti_thrash_triggered: false,
         consecutive_clean_passes: 0,
         last_clean_sha: null,
         last_clean_at: null,
