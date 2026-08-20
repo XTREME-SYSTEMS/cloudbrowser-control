@@ -9,7 +9,7 @@ on:
       - docs/FORTRESS_*_RECEIPT.md
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: fortress-release-readiness-${{ github.ref }}
@@ -88,16 +88,59 @@ jobs:
     if: always()
     needs: [canonical-branch-contract, production-baseline-guard, main-protection-guard]
     steps:
-      - name: Fail closed on governance blocker
+      - uses: actions/checkout@v4
+        with:
+          ref: fortress/v1.1
+          fetch-depth: 0
+
+      - name: Observe governance state and persist fail-closed receipt
+        id: state
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "canonical_branch_contract=${{ needs.canonical-branch-contract.result }}"
-          echo "production_baseline_guard=${{ needs.production-baseline-guard.result }}"
-          echo "main_protection_guard=${{ needs.main-protection-guard.result }}"
-          if [ "${{ needs.canonical-branch-contract.result }}" = success ] && \
-             [ "${{ needs.production-baseline-guard.result }}" = success ] && \
-             [ "${{ needs.main-protection-guard.result }}" = success ]; then
-            echo 'RELEASE_READINESS=TECHNICAL_GOVERNANCE_GATE_PASS'
-          else
-            echo 'RELEASE_READINESS=HOLD'
-            exit 1
+          ACTUAL_MAIN=$(git ls-remote origin refs/heads/main | awk '{print $1}')
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/branches/main" \
+            -o /tmp/main-branch.json
+          MAIN_PROTECTED=$(node -e "const d=require('/tmp/main-branch.json'); process.stdout.write(String(d.protected===true))")
+
+          OVERALL=PASS
+          if [ "${{ needs.canonical-branch-contract.result }}" != success ] || \
+             [ "${{ needs.production-baseline-guard.result }}" != success ] || \
+             [ "${{ needs.main-protection-guard.result }}" != success ]; then
+            OVERALL=HOLD
           fi
+
+          cat > docs/FORTRESS_RELEASE_READINESS_RECEIPT.md <<EOF_RECEIPT
+          # Fortress Release Readiness Receipt
+
+          - Candidate commit: ${{ github.sha }}
+          - Workflow run: ${{ github.run_id }}
+          - Canonical branch contract: ${{ needs.canonical-branch-contract.result }}
+          - Approved main baseline: $APPROVED_MAIN_BASELINE
+          - Observed main: $ACTUAL_MAIN
+          - Production baseline guard: ${{ needs.production-baseline-guard.result }}
+          - Main protected: $MAIN_PROTECTED
+          - Main protection guard: ${{ needs.main-protection-guard.result }}
+          - Release readiness: $OVERALL
+          - Main write/merge by this workflow: NOT EXECUTED
+          - Production deploy: NOT EXECUTED
+          EOF_RECEIPT
+
+          echo "overall=$OVERALL" >> "$GITHUB_OUTPUT"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FORTRESS_RELEASE_READINESS_RECEIPT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: record Fortress release readiness receipt"
+            git pull --rebase origin fortress/v1.1
+            git push origin HEAD:fortress/v1.1
+          fi
+
+      - name: Enforce release readiness
+        run: |
+          echo "RELEASE_READINESS=${{ steps.state.outputs.overall }}"
+          test "${{ steps.state.outputs.overall }}" = PASS
