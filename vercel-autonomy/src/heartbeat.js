@@ -56,10 +56,14 @@ async function updateValidationState(store, validation, now) {
 
     if (validation.clean_pass) {
       const separated = !state.last_clean_at || (now.getTime() - new Date(state.last_clean_at).getTime()) >= 5 * 60000;
-      if (state.last_clean_sha === validation.candidate_sha && separated) state.consecutive_clean_passes += 1;
-      else if (state.last_clean_sha !== validation.candidate_sha) state.consecutive_clean_passes = 1;
-      state.last_clean_sha = validation.candidate_sha;
-      state.last_clean_at = now.toISOString();
+      if (state.last_clean_sha !== validation.candidate_sha) {
+        state.consecutive_clean_passes = 1;
+        state.last_clean_sha = validation.candidate_sha;
+        state.last_clean_at = now.toISOString();
+      } else if (separated) {
+        state.consecutive_clean_passes += 1;
+        state.last_clean_at = now.toISOString();
+      }
       state.blocking_failures = [];
       state.last_failure_signature = null;
       state.failure_streak = 0;
@@ -76,6 +80,7 @@ async function updateValidationState(store, validation, now) {
     } else {
       state.consecutive_clean_passes = 0;
       state.last_clean_sha = null;
+      state.last_clean_at = null;
       const failure = classifyFailure(validation);
       const total = (state.failure_signatures?.[failure.signature] || 0) + 1;
       state.failure_signatures = { ...(state.failure_signatures || {}), [failure.signature]: total };
@@ -83,7 +88,13 @@ async function updateValidationState(store, validation, now) {
       state.failure_streak = state.last_failure_signature === failure.signature ? (state.failure_streak || 0) + 1 : 1;
       state.last_failure_signature = failure.signature;
       state.blocking_failures = [{ ...failure, occurrences: total, consecutive: state.failure_streak }];
-      if (state.failure_streak >= 2) {
+
+      if (failure.type === 'GOVERNANCE_BLOCKED') {
+        state.state = 'PAUSED';
+        state.anti_thrash_triggered = false;
+        state.autonomous_mutation_enabled = false;
+        state.next_engineering_run_at = null;
+      } else if (state.failure_streak >= 2) {
         state.state = 'PAUSED';
         state.anti_thrash_triggered = true;
         state.autonomous_mutation_enabled = false;
@@ -119,11 +130,13 @@ export async function runHeartbeat(input = {}) {
   const preValidation = (await store.read()).state;
   const candidateSha = await github.getBranchSha(PROJECT.candidateBranch);
   const validation = await collectValidation({
-    github, candidateSha,
+    github,
+    candidateSha,
     stagingStatusUrl: cfg.stagingStatusUrl,
     stagingRunUrl: cfg.stagingRunUrl,
     stagingCertifyUrl: cfg.stagingCertifyUrl,
-    stagingToken: cfg.stagingToken
+    stagingToken: cfg.stagingToken,
+    suiteUrls: cfg.suiteUrls,
   });
   const validationReceipt = await writeReceipt(github, 'VALIDATION', { candidate_sha: candidateSha, environment: 'fortress-staging', validation });
   const scoreReceipt = await writeReceipt(github, 'SCORE', {
@@ -138,9 +151,12 @@ export async function runHeartbeat(input = {}) {
   await writeReceipt(github, 'HEARTBEAT', { candidate_sha: candidateSha, state: state.state, validation_receipt: validationReceipt.id, score_receipt: scoreReceipt.id, quality_score: validation.quality_score });
 
   if (!validation.clean_pass && state.blocking_failures?.length) {
+    const action = state.state === 'PAUSED'
+      ? (state.anti_thrash_triggered ? 'BLOCKED_ANTI_THRASH' : 'BLOCKED_GOVERNANCE')
+      : 'REPAIR_REQUIRED';
     await writeReceipt(github, 'REPAIR', {
       candidate_sha: candidateSha,
-      action: state.anti_thrash_triggered ? 'BLOCKED_ANTI_THRASH' : 'REPAIR_REQUIRED',
+      action,
       failure: state.blocking_failures[0],
       next_state: state.state
     });
@@ -151,7 +167,8 @@ export async function runHeartbeat(input = {}) {
     return { status: 'READY_FOR_OPERATOR_APPROVAL', candidate_sha: candidateSha, validation, state };
   }
   if (state.state === 'PAUSED' || state.state === 'FAILED_SAFE') {
-    return { status: 'BLOCKED', reason: state.anti_thrash_triggered ? 'ANTI_THRASH' : state.state, candidate_sha: candidateSha, validation, state };
+    const reason = state.anti_thrash_triggered ? 'ANTI_THRASH' : (state.blocking_failures?.[0]?.type || state.state);
+    return { status: 'BLOCKED', reason, candidate_sha: candidateSha, validation, state };
   }
   if (state.approval_required || state.state === 'APPROVAL_REQUIRED') {
     return { status: 'APPROVAL_REQUIRED', candidate_sha: candidateSha, validation, state };
@@ -200,6 +217,7 @@ export async function runHeartbeat(input = {}) {
         s.next_engineering_run_at = addMinutes(now, PROJECT.intervalMinutes).toISOString();
         s.consecutive_clean_passes = 0;
         s.last_clean_sha = null;
+        s.last_clean_at = null;
         s.last_failure_signature = null;
         s.failure_streak = 0;
         s.anti_thrash_triggered = false;
