@@ -1,0 +1,38 @@
+{
+  "receipt_id": "overnight-continuation-20260820T065700Z",
+  "type": "AUTONOMY_CONTINUATION",
+  "project": "cloudbrowser-control",
+  "candidate_branch": "autonomous/cloudbrowser-control-v1",
+  "candidate_sha": "cdbd05060e1e5ebb17779097dc25790ed96b8c29",
+  "state_branch": "autonomy/state-cloudbrowser-control",
+  "schedule": "hourly",
+  "mode": "condition_watch",
+  "enabled": true,
+  "notification_policy": "Notify only on material blocker change, newly distinct safe action result, genuine operator-only intervention, or READY_FOR_OPERATOR_APPROVAL.",
+  "authorized_scope": [
+    "read and validate connected source truth",
+    "dry-run provider actions",
+    "branch/sandbox/draft writes",
+    "explicitly approved non-production preview wiring",
+    "runtime validation and receipt/state updates"
+  ],
+  "prohibited_scope": [
+    "main or master writes or merge",
+    "production deployment",
+    "production data or schema mutation",
+    "secret disclosure or secret-value storage in repo",
+    "spend",
+    "public publishing",
+    "customer messaging"
+  ],
+  "hard_rules": {
+    "vercel_framework": null,
+    "vercel_framework_label": "Other/no-framework",
+    "nextjs_substitution_allowed": false,
+    "repeat_identical_failed_adapter_path": false,
+    "autonomous_mutation_before_full_runtime_green": false,
+    "required_clean_passes": 3,
+    "stop_state": "READY_FOR_OPERATOR_APPROVAL"
+  },
+  "timestamp": "2026-08-20T06:57:00Z"
+}
