@@ -1,1 +1,3 @@
 Trigger canonical fortress/v1.1 enterprise validation after promotion of the green integrated runtime. Runtime source is inherited unchanged from tested SHA 91f516c2feb002103de37268dfcb72cb9ded73f6. Production/main remain out of scope.
+
+Autonomous certification repeat trigger: 2026-08-20T07:20:47Z. Re-run all branch-safe validation against the current Fortress candidate without changing runtime behavior.
