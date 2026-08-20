@@ -8,7 +8,7 @@ on:
       - ci/fortress-dependency-remediation-trigger.txt
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: fortress-dependency-remediation
@@ -22,11 +22,14 @@ jobs:
     name: Non-force lockfile remediation
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: fortress/v1.1
           fetch-depth: 0
+          persist-credentials: true
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
