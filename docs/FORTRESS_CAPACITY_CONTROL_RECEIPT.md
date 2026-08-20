@@ -1,9 +1,9 @@
 # Fortress Capacity Control Receipt
 
-- Tested commit: dd621110dc6cc67dc7311a3a18f5de49c148a5d3
-- Workflow run: 32336858423
+- Tested commit: 8b4e8bbd0869656f32d8581c4c1188dcf9bd6180
+- Workflow run: 32336903325
 - Capacity contracts: failure
-- Constrained PID soak: cancelled
+- Constrained PID soak: failure
 - Overall: FAIL
 - PID limit under test: 256
 - Pool size: 3
