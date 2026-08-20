@@ -1,12 +1,13 @@
 const BASE = process.env.FORTRESS_ENGINE_URL || 'http://127.0.0.1:8080';
 const API_KEY = process.env.ENGINE_API_KEY;
+const REQUEST_TIMEOUT_MS = Number(process.env.FORTRESS_REQUEST_TIMEOUT_MS || 45000);
 if (!API_KEY) throw new Error('ENGINE_API_KEY is required');
 
 async function req(path, { method = 'GET', body, auth = true } = {}) {
   const headers = {};
   if (auth) headers['x-api-key'] = API_KEY;
   if (body !== undefined) headers['content-type'] = 'application/json';
-  const response = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const response = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   const text = await response.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
@@ -38,14 +39,12 @@ async function execute(id, action_type, value, options = {}) {
   expect(r.response.ok && r.data?.ok !== false, `execute failed ${r.response.status}: ${JSON.stringify(r.data)}`);
   return r.data;
 }
-
 const results = [];
 async function check(name, fn) {
   const started = Date.now();
   try { const detail = await fn(); results.push({ name, status: 'PASS', ms: Date.now() - started, detail }); console.log(`PASS: ${name}`); }
   catch (error) { results.push({ name, status: 'FAIL', ms: Date.now() - started, detail: error.message }); console.error(`FAIL: ${name} :: ${error.message}`); }
 }
-
 await check('initial pool 3/3', async () => waitPool(3));
 await check('six sequential pooled lifecycle cycles recover', async () => {
   for (let i = 0; i < 6; i++) {
@@ -80,7 +79,6 @@ await check('final health remains non-root and pool-ready', async () => {
   const pool = await waitPool(3);
   return { runtime_user: health.data.runtime_user, pool };
 });
-
 const failed = results.filter((row) => row.status !== 'PASS');
 console.log(JSON.stringify({ suite: 'fortress-engine-soak', total: results.length, pass: results.length - failed.length, fail: failed.length, results }, null, 2));
 if (failed.length) process.exit(1);
