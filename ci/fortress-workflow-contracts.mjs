@@ -21,15 +21,16 @@ function check(name, condition, detail = null) {
 
 for (const file of workflows) {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
-  const checkoutRefs = [...text.matchAll(/actions\/checkout@([^\s#]+)/g)].map((m) => m[1]);
-  const setupRefs = [...text.matchAll(/actions\/setup-node@([^\s#]+)/g)].map((m) => m[1]);
+  const actionUses = [...text.matchAll(/^\s*-\s+uses:\s+([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)@([^\s#]+)/gm)]
+    .map((m) => ({ action: m[1], ref: m[2] }));
+  const checkoutRefs = actionUses.filter((x) => x.action === 'actions/checkout').map((x) => x.ref);
+  const setupRefs = actionUses.filter((x) => x.action === 'actions/setup-node').map((x) => x.ref);
   check(`${file} checkout pinned to immutable v7.0.1 SHA`, checkoutRefs.length > 0 && checkoutRefs.every((ref) => `${'actions/checkout@'}${ref}` === CHECKOUT_PIN), checkoutRefs.join(','));
   if (setupRefs.length > 0) {
     check(`${file} setup-node pinned to immutable v7.0.0 SHA`, setupRefs.every((ref) => `${'actions/setup-node@'}${ref}` === SETUP_NODE_PIN), setupRefs.join(','));
   }
-  const actionRefs = [...text.matchAll(/uses:\s+[^\s@]+@([^\s#]+)/g)].map((m) => m[1]);
-  check(`${file} all external actions use full 40-char SHAs`, actionRefs.length > 0 && actionRefs.every((ref) => /^[0-9a-f]{40}$/i.test(ref)), actionRefs.join(','));
-  check(`${file} has no mutable checkout/setup-node major tags`, !/actions\/(?:checkout|setup-node)@v\d+/i.test(text));
+  check(`${file} all external actions use full 40-char SHAs`, actionUses.length > 0 && actionUses.every((x) => /^[0-9a-f]{40}$/i.test(x.ref)), actionUses.map((x) => `${x.action}@${x.ref}`).join(','));
+  check(`${file} has no mutable checkout/setup-node uses`, !actionUses.some((x) => (x.action === 'actions/checkout' || x.action === 'actions/setup-node') && /^v\d+/i.test(x.ref)));
 }
 
 for (const file of broadPushWorkflows) {
