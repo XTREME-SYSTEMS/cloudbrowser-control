@@ -25,8 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -39,10 +39,12 @@ jobs:
           node --check browser-engine/engine/runtime.js
           node --check ci/fortress-pinned-egress.mjs
           node --check ci/fortress-capacity-contracts.mjs
+          node --check ci/fortress-workflow-contracts.mjs
           if grep -R --line-number --fixed-strings -- '--no-sandbox' browser-engine; then exit 1; fi
           if grep -R --line-number --fixed-strings -- '--disable-setuid-sandbox' browser-engine; then exit 1; fi
       - run: node ci/fortress-core-static.mjs
       - run: node ci/fortress-enterprise-contracts.mjs
+      - run: node ci/fortress-workflow-contracts.mjs
       - run: node ci/fortress-ssrf-adversarial.mjs
       - run: node ci/fortress-pinned-egress.mjs
       - run: node ci/fortress-capacity-contracts.mjs
@@ -52,8 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -74,8 +76,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: docker build --pull -t cloudbrowser-fortress-integration ./browser-engine
@@ -130,8 +132,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: docker build --pull -t cloudbrowser-fortress-integration-soak ./browser-engine
@@ -186,7 +188,7 @@ jobs:
           else
             echo "overall=FAIL" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: fortress/v1.1
           fetch-depth: 0

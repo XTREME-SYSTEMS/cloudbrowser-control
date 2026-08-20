@@ -24,13 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Require canonical Fortress integration wiring
         run: |
           grep -q -- '- fortress/v1.1' .github/workflows/fortress-enterprise-integration.yml
           grep -q 'docs/FORTRESS_\*_RECEIPT.md' .github/workflows/fortress-enterprise-integration.yml
           grep -q 'node ci/fortress-pinned-egress.mjs' .github/workflows/fortress-enterprise-integration.yml
           grep -q 'node ci/fortress-capacity-contracts.mjs' .github/workflows/fortress-enterprise-integration.yml
+          grep -q 'node ci/fortress-workflow-contracts.mjs' .github/workflows/fortress-enterprise-integration.yml
+          grep -q 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' .github/workflows/fortress-enterprise-integration.yml
+          grep -q 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' .github/workflows/fortress-enterprise-integration.yml
           grep -q -- '--pids-limit=256' .github/workflows/fortress-enterprise-integration.yml
           echo 'PASS: canonical Fortress integration wiring present'
 
@@ -39,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Fail closed if main moved from operator-approved baseline
@@ -88,7 +91,7 @@ jobs:
     if: always()
     needs: [canonical-branch-contract, production-baseline-guard, main-protection-guard]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: fortress/v1.1
           fetch-depth: 0
