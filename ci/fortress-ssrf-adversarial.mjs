@@ -58,9 +58,14 @@ await check('custom port requires explicit allowlist', async () => {
   const allowed = await validateEgressUrl('https://8.8.8.8:8443/', { allowed_ports: [8443] });
   assert.equal(allowed.ok, true, JSON.stringify(allowed));
 });
-await check('DNS rebinding limitation stays explicit', async () => {
-  assert.match(SSRF_LIMITATION, /Chromium resolves independently/i);
-  assert.match(SSRF_LIMITATION, /Network-layer private-range egress denial or resolver pinning/i);
+await check('DNS-rebinding status is explicit and evidence-scoped', async () => {
+  if (/Final outbound TCP connections are DNS-pinned/i.test(SSRF_LIMITATION)) {
+    assert.match(SSRF_LIMITATION, /network-layer destination denial remains recommended/i);
+    assert.match(SSRF_LIMITATION, /separately verified/i);
+  } else {
+    assert.match(SSRF_LIMITATION, /Chromium resolves independently/i);
+    assert.match(SSRF_LIMITATION, /Network-layer private-range egress denial or resolver pinning/i);
+  }
 });
 
 const failed = checks.filter((row) => row.status !== 'PASS');
