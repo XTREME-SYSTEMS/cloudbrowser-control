@@ -90,11 +90,27 @@ export default async function (req) {
     });
 
     await runCategoryTest(base44, runId, "Deployment Truth", "Deployment drift check", async () => {
+      // Inline parallel probe of a critical subset — avoids the nested
+      // function-invoking-function latency that causes a 524 when calling
+      // getDeploymentStatus as a sub-invoke. Each probe returns __v regardless
+      // of HTTP status; we compare against DEPLOYMENT_VERSION.
       try {
-        const res = await base44.asServiceRole.functions.invoke("getDeploymentStatus", {});
-        const data = res.data || res;
-        if (data.drift_count === 0 || data.allMatched === true) return true;
-        return { error: `Deployment drift detected: ${data.drift_count || "unknown"} functions` };
+        const probeFns = ["cloudBrowserGatewayV6", "runJob", "mcpTools", "engineHealth", "saveProxy"];
+        const probeResults = await Promise.all(
+          probeFns.map(async (fn) => {
+            try {
+              const r = await base44.asServiceRole.functions.invoke(fn, {});
+              const d = r.data || r;
+              return { fn, v: d?.__v || "MISSING" };
+            } catch (e) {
+              const d = e.data || e.response?.data || {};
+              return { fn, v: d.__v || e.__v || "MISSING" };
+            }
+          })
+        );
+        const drifted = probeResults.filter((r) => r.v !== DEPLOYMENT_VERSION);
+        if (drifted.length === 0) return true;
+        return { error: `Deployment drift: ${drifted.map((r) => `${r.fn}=${r.v}`).join(", ")}` };
       } catch (e) { return { error: e.message }; }
     });
 
