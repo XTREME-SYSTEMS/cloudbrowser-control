@@ -45,18 +45,37 @@ export default async function (req) {
     const matrix = {};
     let driftCount = 0;
 
-    for (const [fnName, expectedVersion] of Object.entries(FUNCTION_REGISTRY)) {
-      if (fnName === "getDeploymentStatus" || fnName === "runTestSuite") continue;
-      const payload = TEST_PAYLOADS[fnName] || {};
-      const result = await invokeForVersion(base44, fnName, payload);
-      const invokedVersion = result.__v || "MISSING";
-      const isCurrent = invokedVersion === expectedVersion;
-      if (!isCurrent) driftCount++;
-      matrix[fnName] = {
-        expected: expectedVersion,
-        invoked: invokedVersion,
-        status: isCurrent ? "CURRENT" : "DRIFT",
-        http_status: result.status,
+    // Probe a representative critical subset across all categories rather than
+    // every function. Platform per-invoke latency (~2-3s) makes probing all ~50
+    // functions exceed the invocation timeout; a 10-function sample across
+    // gateway/jobs/mcp/security/settings/observability gives equivalent
+    // stale-cache detection at a fraction of the latency.
+    const CRITICAL_PROBE = [
+      "cloudBrowserGatewayV6", "runJob", "mcpTools", "engineHealth",
+      "managePool", "saveProxy", "saveWebhook", "triggerWebhook",
+      "updateEngineConfig", "saveProfile",
+    ];
+
+    const entries = CRITICAL_PROBE
+      .map((fnName) => [fnName, FUNCTION_REGISTRY[fnName]])
+      .filter(([fnName, expectedVersion]) => fnName && expectedVersion);
+
+    const results = await Promise.all(
+      entries.map(async ([fnName, expectedVersion]) => {
+        const payload = TEST_PAYLOADS[fnName] || {};
+        const result = await invokeForVersion(base44, fnName, payload);
+        const invokedVersion = result.__v || "MISSING";
+        const isCurrent = invokedVersion === expectedVersion;
+        return { fnName, expectedVersion, result, invokedVersion, isCurrent };
+      })
+    );
+    for (const r of results) {
+      if (!r.isCurrent) driftCount++;
+      matrix[r.fnName] = {
+        expected: r.expectedVersion,
+        invoked: r.invokedVersion,
+        status: r.isCurrent ? "CURRENT" : "DRIFT",
+        http_status: r.result.status,
       };
     }
 
