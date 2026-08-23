@@ -22,6 +22,18 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
+
+      // If the app ID is missing, the backend will reject all requests with
+      // "Invalid id value: null". Show a clear message instead of the cryptic error.
+      if (!appParams.appId) {
+        setAuthError({
+          type: 'unknown',
+          message: 'App ID is missing. Please hard-refresh the page (Ctrl+Shift+R or Cmd+Shift+R) to clear any stale cache, then try again.'
+        });
+        setIsLoadingPublicSettings(false);
+        setIsLoadingAuth(false);
+        return;
+      }
       
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
