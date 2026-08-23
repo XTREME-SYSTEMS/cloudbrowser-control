@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Globe, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 
 const navItems = [
@@ -55,9 +55,9 @@ function SidebarContent({ onLogout }) {
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <Globe className="w-5 h-5 text-primary-foreground" />
+            <Cloud className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-heading font-semibold text-sidebar-foreground">BrowserForge</span>
+          <span className="font-heading font-semibold text-sidebar-foreground">Cloud Browser</span>
         </div>
       </div>
       <NavLinks />
@@ -105,9 +105,9 @@ export default function Layout() {
           </button>
           <div className="flex items-center gap-2 flex-1">
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Globe className="w-4 h-4 text-primary-foreground" />
+              <Cloud className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-heading font-semibold">BrowserForge</span>
+            <span className="font-heading font-semibold">Cloud Browser</span>
           </div>
           <NotificationBell />
         </header>
