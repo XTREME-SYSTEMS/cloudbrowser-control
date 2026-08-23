@@ -50,6 +50,30 @@ export const AuthProvider = ({ children }) => {
       } catch (appError) {
         console.error('App state check failed:', appError);
         
+        // If the request failed due to a stale/invalid token (ObjectNotFoundError,
+        // 401, etc.), clear the token and retry without it so the user can
+        // see the login page cleanly instead of an error screen.
+        if (appParams.token && (appError.status === 401 || appError.status === 404 || appError.data?.error_type === 'ObjectNotFoundError' || !appError.status)) {
+          clearStaleTokens();
+          // Retry without the stale token
+          try {
+            const retryClient = createAxiosClient({
+              baseURL: `/api/apps/public`,
+              headers: { 'X-App-Id': appParams.appId },
+              interceptResponses: true
+            });
+            const retrySettings = await retryClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+            setAppPublicSettings(retrySettings);
+            setIsLoadingAuth(false);
+            setIsAuthenticated(false);
+            setAuthChecked(true);
+            setIsLoadingPublicSettings(false);
+            return;
+          } catch (retryError) {
+            console.error('Retry without token also failed:', retryError);
+          }
+        }
+        
         // Handle app-level errors
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
@@ -89,6 +113,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const clearStaleTokens = () => {
+    try {
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+    } catch (e) {}
+  };
+
   const checkUserAuth = async () => {
     try {
       // Now check if the user is authenticated
@@ -100,12 +131,16 @@ export const AuthProvider = ({ children }) => {
       setAuthChecked(true);
     } catch (error) {
       console.error('User auth check failed:', error);
+      // Clear any stale/invalid tokens so the user can log in cleanly
+      clearStaleTokens();
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
+      // Don't set authError here — let the app render normally.
+      // Unauthenticated users are redirected to /login by ProtectedRoute.
+      // Only set auth_required if it's a genuine 403 (user not allowed),
+      // not a stale-token lookup failure.
+      if (error.status === 403 && error.data?.extra_data?.reason === 'auth_required') {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
