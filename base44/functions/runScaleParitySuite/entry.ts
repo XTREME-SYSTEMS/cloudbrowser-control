@@ -47,9 +47,9 @@ export default async function (req) {
   // ── Store entity (70+ locations model) ──
   track(await runTest(base44, runId, suite, "Store entity creates with quota + region + proxy", "Store Model", 2, async () => {
     const store = await base44.asServiceRole.entities.Store.create({
-      name: "Scale Test Store", store_code: "scale_test_" + runId, project_id: null,
+      name: "Scale Test Store", store_code: "scale_test_" + runId,
       region: "us-east", concurrency_limit: 7, session_creation_limit_per_min: 15,
-      proxy_id: null, proxy_rotation_group: "grp_east", status: "active",
+      proxy_rotation_group: "grp_east", status: "active",
     });
     const ok = store.id && store.concurrency_limit === 7 && store.region === "us-east";
     await base44.asServiceRole.entities.Store.delete(store.id).catch(() => {});
@@ -59,7 +59,7 @@ export default async function (req) {
   track(await runTest(base44, runId, suite, "Store RLS — admin-only create", "Store Model", 1, async () => {
     // Service role is admin — create should succeed
     const store = await base44.asServiceRole.entities.Store.create({
-      name: "RLS Test", store_code: "rls_test_" + runId, project_id: null,
+      name: "RLS Test", store_code: "rls_test_" + runId,
     });
     const ok = !!store.id;
     await base44.asServiceRole.entities.Store.delete(store.id).catch(() => {});
@@ -69,7 +69,7 @@ export default async function (req) {
   // ── Concurrency quotas ──
   track(await runTest(base44, runId, suite, "resolveQuotas returns limits + store context", "Concurrency", 2, async () => {
     const store = await base44.asServiceRole.entities.Store.create({
-      name: "Quota Store", store_code: "quota_test_" + runId, project_id: null,
+      name: "Quota Store", store_code: "quota_test_" + runId,
       region: "us-west", concurrency_limit: 9, session_creation_limit_per_min: 12, status: "active",
     });
     const q = await resolveQuotas(base44, { project_id: null }, { store_id: "quota_test_" + runId });
@@ -85,7 +85,7 @@ export default async function (req) {
   track(await runTest(base44, runId, suite, "session-creation rate limit enforced (429 on burst)", "Concurrency", 2, async () => {
     // Burst a low limit and confirm 429
     const store = await base44.asServiceRole.entities.Store.create({
-      name: "Burst Store", store_code: "burst_test_" + runId, project_id: null,
+      name: "Burst Store", store_code: "burst_test_" + runId,
       concurrency_limit: 100, session_creation_limit_per_min: 2, status: "active",
     });
     const code = "burst_test_" + runId;
@@ -100,7 +100,7 @@ export default async function (req) {
 
   track(await runTest(base44, runId, suite, "429 response includes retry-after + x-ratelimit headers", "Concurrency", 2, async () => {
     const store = await base44.asServiceRole.entities.Store.create({
-      name: "Header Store", store_code: "hdr_test_" + runId, project_id: null,
+      name: "Header Store", store_code: "hdr_test_" + runId,
       concurrency_limit: 100, session_creation_limit_per_min: 1, status: "active",
     });
     const code = "hdr_test_" + runId;

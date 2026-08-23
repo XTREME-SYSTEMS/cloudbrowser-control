@@ -12,7 +12,7 @@
     },
     "project_id": {
       "type": "string",
-      "description": "Parent project this store belongs to"
+      "description": "Parent project this store belongs to (omit for org-level stores)"
     },
     "region": {
       "type": "string",
@@ -87,8 +87,7 @@
   },
   "required": [
     "name",
-    "store_code",
-    "project_id"
+    "store_code"
   ],
   "rls": {
     "read": {
