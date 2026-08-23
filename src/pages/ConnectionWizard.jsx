@@ -3,15 +3,19 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Triangle, Github, HardDrive, Database, Sparkles, Shield, Zap, ArrowRight } from "lucide-react";
+import { Triangle, Github, HardDrive, Database, Sparkles, Shield, Zap, ArrowRight, Calendar, FileText, CheckSquare, Mail, Table } from "lucide-react";
 import IntegrationCard from "@/components/connection-wizard/IntegrationCard";
 import ConnectModal from "@/components/connection-wizard/ConnectModal";
 
 const AVAILABLE = [
-  { service_type: "vercel", name: "Vercel", description: "Deploy and manage web apps, trigger builds, and sync deployment status.", icon: Triangle, connection_mode: "secret" },
-  { service_type: "github", name: "GitHub", description: "Sync repositories, manage issues, and automate code workflows.", icon: Github, connection_mode: "shared" },
   { service_type: "googledrive", name: "Google Drive", description: "Sync files and documents, browse folders, and manage Drive content.", icon: HardDrive, connection_mode: "app_user", connector_id: "69db1e5e75a5f8c15c80cf34" },
+  { service_type: "googlecalendar", name: "Google Calendar", description: "View, create, and manage calendar events and schedules.", icon: Calendar, connection_mode: "app_user", connector_id: "69ddcb305a599e0b4a1b3cff" },
+  { service_type: "gmail", name: "Gmail", description: "Send emails, read inbox, and manage email threads.", icon: Mail, connection_mode: "app_user", connector_id: "69db200274332486fd28dd7e" },
+  { service_type: "googlesheets", name: "Google Sheets", description: "Read and write spreadsheet data, sync tables, and automate data entry.", icon: Table, connection_mode: "app_user", connector_id: "69db1fad3c50db37ad0ce8dd" },
+  { service_type: "googledocs", name: "Google Docs", description: "Create, read, and edit documents and sync content.", icon: FileText, connection_mode: "app_user", connector_id: "69ddcb7e5d965b5605cd24b4" },
+  { service_type: "googletasks", name: "Google Tasks", description: "Manage task lists and to-do items synced with Google.", icon: CheckSquare, connection_mode: "app_user", connector_id: "69db201897e4e8f9ae073be7" },
   { service_type: "supabase", name: "Supabase", description: "Read and write database schemas, run SQL, and sync table data.", icon: Database, connection_mode: "app_user", connector_id: "69e521c8418f5cecefb2567c" },
+  { service_type: "vercel", name: "Vercel", description: "Deploy and manage web apps, trigger builds, and sync deployment status.", icon: Triangle, connection_mode: "secret" },
 ];
 
 export default function ConnectionWizard() {

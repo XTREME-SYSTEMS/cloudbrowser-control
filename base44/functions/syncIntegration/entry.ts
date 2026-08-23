@@ -21,6 +21,62 @@ export default async function(req) {
       return Response.json({ files: data.files || [], count: (data.files || []).length });
     }
 
+    // ── Google Calendar sync ──
+    if (serviceType === 'googlecalendar') {
+      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69ddcb305a599e0b4a1b3cff');
+      const timeMin = new Date().toISOString();
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=50&timeMin=${timeMin}&orderBy=startTime&singleEvents=true`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(`Calendar API error: ${res.status}`);
+      const data = await res.json();
+      return Response.json({ events: data.items || [], count: (data.items || []).length });
+    }
+
+    // ── Gmail sync ──
+    if (serviceType === 'gmail') {
+      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db200274332486fd28dd7e');
+      const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(`Gmail API error: ${res.status}`);
+      const data = await res.json();
+      return Response.json({ messages: data.messages || [], count: (data.messages || []).length });
+    }
+
+    // ── Google Sheets sync ──
+    if (serviceType === 'googlesheets') {
+      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db1fad3c50db37ad0ce8dd');
+      const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(`Sheets API error: ${res.status}`);
+      const data = await res.json();
+      return Response.json({ spreadsheets: data.spreadsheets || [], count: (data.spreadsheets || []).length });
+    }
+
+    // ── Google Docs sync ──
+    if (serviceType === 'googledocs') {
+      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69ddcb7e5d965b5605cd24b4');
+      const res = await fetch('https://docs.googleapis.com/v1/documents', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(`Docs API error: ${res.status}`);
+      const data = await res.json();
+      return Response.json({ documents: data.documents || [], count: (data.documents || []).length });
+    }
+
+    // ── Google Tasks sync ──
+    if (serviceType === 'googletasks') {
+      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db201897e4e8f9ae073be7');
+      const res = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(`Tasks API error: ${res.status}`);
+      const data = await res.json();
+      return Response.json({ taskLists: data.items || [], count: (data.items || []).length });
+    }
+
     // ── Supabase sync ──
     if (serviceType === 'supabase') {
       const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69e521c8418f5cecefb2567c');
