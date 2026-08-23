@@ -146,7 +146,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
-      console.error('User auth check failed:', error);
       // Clear any stale/invalid tokens so the user can log in cleanly
       clearStaleTokens();
       setIsLoadingAuth(false);
@@ -156,7 +155,7 @@ export const AuthProvider = ({ children }) => {
       // Unauthenticated users are redirected to /login by ProtectedRoute.
       // Only set auth_required if it's a genuine 403 (user not allowed),
       // not a stale-token lookup failure.
-      if (error.status === 403 && error.data?.extra_data?.reason === 'auth_required') {
+      if (error?.status === 403 && error?.data?.extra_data?.reason === 'auth_required') {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
