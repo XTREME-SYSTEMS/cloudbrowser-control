@@ -10,39 +10,54 @@ import { secrets } from "base44:runtime";
 // Produces the Master Release Matrix across 27 categories
 // ═══════════════════════════════════════════════
 
+// Retry wrapper for TestResult persistence — transient Cloudflare 524s on
+// entity creates must not be misattributed as test failures.
+async function persistTestResult(base44, payload, maxRetries = 3) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await base44.asServiceRole.entities.TestResult.create(payload);
+    } catch (e) {
+      if (attempt === maxRetries) throw e;
+      const backoff = 500 * Math.pow(2, attempt) + Math.random() * 200;
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+}
+
 async function runCategoryTest(base44, runId, category, testName, testFn) {
   const start = Date.now();
+  // Phase 1: run the test — failures here are real test failures
+  let testResult;
+  let testError = null;
   try {
-    const result = await testFn();
-    const duration = Date.now() - start;
-    const passed = result === true || result?.pass === true;
-    await base44.asServiceRole.entities.TestResult.create({
+    testResult = await testFn();
+  } catch (e) {
+    testError = e.message;
+    testResult = { pass: false, error: e.message };
+  }
+  const duration = Date.now() - start;
+  const passed = testError === null && (testResult === true || testResult?.pass === true);
+
+  // Phase 2: persist the result with retry — persistence failures do NOT
+  // change the test outcome; the test already ran and has a real result.
+  try {
+    await persistTestResult(base44, {
       suite: "Master Release Matrix",
       test_name: `${category}: ${testName}`,
       status: passed ? "pass" : "fail",
       duration_ms: duration,
-      error_message: passed ? "" : (result?.error || "Test returned false"),
+      error_message: passed ? "" : (testResult?.error || testError || "Test returned false"),
       score_category: category,
       score_points: passed ? 1 : 0,
       max_points: 1,
       run_id: runId,
     });
-    return { pass: passed, error: passed ? null : (result?.error || "failed") };
-  } catch (e) {
-    const duration = Date.now() - start;
-    await base44.asServiceRole.entities.TestResult.create({
-      suite: "Master Release Matrix",
-      test_name: `${category}: ${testName}`,
-      status: "fail",
-      duration_ms: duration,
-      error_message: e.message,
-      score_category: category,
-      score_points: 0,
-      max_points: 1,
-      run_id: runId,
-    });
-    return { pass: false, error: e.message };
+  } catch (persistErr) {
+    // Persistence failed even after retries — log to console but don't flip
+    // the test result. The test outcome is what matters, not the audit row.
+    console.error(`TestResult persistence failed for ${category}: ${testName}: ${persistErr.message}`);
   }
+  return { pass: passed, error: passed ? null : (testResult?.error || testError || "failed") };
 }
 
 export default async function (req) {
