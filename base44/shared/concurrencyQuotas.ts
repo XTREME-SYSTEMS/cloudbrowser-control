@@ -116,8 +116,8 @@ export async function enforceConcurrencyQuota(base44, keyRecord, data) {
   // Concurrency limit (active sessions) — project/store scoped (Browserbase model).
   // Global keys (no project/store) are rate-limited but not concurrency-capped,
   // preserving baseline test behavior and avoiding cross-tenant pollution.
+  let activeCount = null;
   if (projectId || (storeId && store)) {
-    let activeCount;
     if (storeId && store) {
       activeCount = await countActiveSessionsForStore(base44, store.id);
     } else {
