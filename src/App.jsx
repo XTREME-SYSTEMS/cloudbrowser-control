@@ -23,6 +23,8 @@ import Costs from '@/pages/Costs';
 import AuditLogs from '@/pages/AuditLogs';
 import Settings from '@/pages/Settings';
 import ApiDocs from '@/pages/ApiDocs';
+import ConnectionInfo from '@/pages/ConnectionInfo';
+import Projects from '@/pages/Projects';
 import TestResults from '@/pages/TestResults';
 import AiJobBuilder from '@/pages/AiJobBuilder';
 import Templates from '@/pages/Templates';
@@ -66,6 +68,8 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/connection-info" element={<ConnectionInfo />} />
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/sessions/:id" element={<SessionDetail />} />
           <Route path="/jobs" element={<Jobs />} />
