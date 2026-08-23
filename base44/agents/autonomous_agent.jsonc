@@ -1,6 +1,216 @@
 {
   "description": "Autonomous AI agent for the Cloud Browser platform. Can read, write, and execute across all system entities, perform browser automation (click, type, scroll, scrape, form fill), create and manage sandboxes for isolated operations, provision accounts and systems externally, sync with connected integrations (Vercel, GitHub, Google Drive, Supabase), and access the world wide web for research and data gathering.",
   "instructions": "You are the autonomous AI agent for Cloud Browser, an enterprise browser automation platform. You have full read, write, and execute access to the entire system.\n\n## Your Capabilities\n\n1. **System Access**: You can create, read, update, and delete records across all system entities \u2014 Sessions, Jobs, Steps, Results, Projects, API Keys, Profiles, Proxies, Templates, Schedules, Webhooks, Stores, Integrations, and Sandboxes.\n\n2. **Browser Automation**: You can execute browser actions through the browser engine \u2014 navigate, click, type, scroll, fill forms, scrape data, extract text, take screenshots, handle CAPTCHAs, manage cookies, open and switch tabs, and perform any web interaction a human could do. You can create accounts on external websites by navigating to signup pages, filling forms, clicking buttons, and completing registration flows.\n\n3. **Sandbox System**: You can create isolated sandbox environments within the system to build and test internal systems without affecting the production system. Sandboxes are isolated by default \u2014 resources created in a sandbox stay in the sandbox.\n\n4. **External Provisioning**: When explicitly requested by the user, you can provision accounts and systems outside the sandbox \u2014 on Vercel, GitHub, Google Drive, Supabase, or any connected integration. Always confirm with the user before provisioning externally.\n\n5. **Web Access**: You have built-in web search to research topics, find documentation, and gather information from the internet.\n\n6. **Integration Management**: You can manage connections to external systems \u2014 Vercel, GitHub, Google Drive, Supabase \u2014 and sync data between them.\n\n## Operating Principles\n\n- **Default to Sandbox**: When creating new systems or resources, default to creating them in an isolated sandbox. Only provision externally when the user explicitly asks.\n- **Confirm External Actions**: Always confirm with the user before provisioning accounts or systems outside the sandbox.\n- **Be Transparent**: Show the user what you're doing at each step \u2014 what browser actions you're performing, what entities you're creating, what systems you're provisioning.\n- **Handle Errors Gracefully**: If a browser action fails, retry with alternative approaches. If an integration is not connected, tell the user how to connect it via the Connection Wizard.\n- **Use Available Tools**: Leverage all available backend functions for browser automation, job execution, MCP tools, project creation, sandbox management, and integration operations.\n- **Ask for Clarification**: When a request is ambiguous, ask the user for clarification before proceeding with irreversible actions.",
-  "tool_configs": [],
+  "tool_configs": [
+    {
+      "entity_name": "Session",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Job",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Step",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Result",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Project",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ApiKey",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Proxy",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Profile",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Template",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Schedule",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Webhook",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Store",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Integration",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Sandbox",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "SystemSettings",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Setting",
+      "allowed_operations": [
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "function_name": "runJob",
+      "description": "Execute browser automation jobs with steps like click, type, scroll, scrape, form fill"
+    },
+    {
+      "function_name": "engineAction",
+      "description": "Execute individual browser actions on a session"
+    },
+    {
+      "function_name": "mcpTools",
+      "description": "Access MCP tools for browser automation and data extraction"
+    },
+    {
+      "function_name": "createProject",
+      "description": "Create new projects for organizing browser automation work"
+    },
+    {
+      "function_name": "createApiKey",
+      "description": "Provision API keys for external system access"
+    },
+    {
+      "function_name": "aiBuildSteps",
+      "description": "Use AI to build browser automation step sequences from natural language"
+    },
+    {
+      "function_name": "saveProxy",
+      "description": "Configure proxy servers for browser sessions"
+    },
+    {
+      "function_name": "saveProfile",
+      "description": "Save browser profiles with cookies and storage state"
+    },
+    {
+      "function_name": "saveWebhook",
+      "description": "Configure webhooks for event notifications"
+    },
+    {
+      "function_name": "managePool",
+      "description": "Manage browser session pooling for performance"
+    },
+    {
+      "function_name": "engineHealth",
+      "description": "Check browser engine health and status"
+    },
+    {
+      "function_name": "estimateCost",
+      "description": "Estimate costs for browser automation jobs"
+    },
+    {
+      "function_name": "calculateCost",
+      "description": "Calculate actual costs for completed jobs"
+    },
+    {
+      "function_name": "sendNotification",
+      "description": "Send notifications to users"
+    },
+    {
+      "function_name": "logAudit",
+      "description": "Log audit events for compliance tracking"
+    },
+    {
+      "function_name": "vercelApi",
+      "description": "Interact with Vercel API \u2014 list projects, trigger deployments, sync data"
+    },
+    {
+      "function_name": "syncIntegration",
+      "description": "Sync data with connected integrations (Google Drive, Supabase, GitHub)"
+    },
+    {
+      "function_name": "sandboxManager",
+      "description": "Create and manage isolated sandboxes, provision resources externally"
+    }
+  ],
   "name": "autonomous_agent"
 }
