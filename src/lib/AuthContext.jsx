@@ -43,12 +43,12 @@ export const AuthProvider = ({ children }) => {
           'X-App-Id': appParams.appId
         },
         token: appParams.token, // Include token if available
-        interceptResponses: true
+        interceptResponses: false
       });
       
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
+        const rawResponse = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        const publicSettings = rawResponse.data;
         
         // If we got the app public settings successfully, check if user is authenticated
         if (appParams.token) {
@@ -60,35 +60,39 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
-        console.error('App state check failed:', appError);
-        
+        // With interceptResponses: false, errors are raw axios errors.
+        // Normalize to a common shape: { status, data, message }
+        const status = appError?.status || appError?.response?.status;
+        const data = appError?.data || appError?.response?.data;
+        const message = appError?.message || appError?.response?.data?.message || 'Failed to load app';
+
         // If the request failed due to a stale/invalid token (ObjectNotFoundError,
         // 401, etc.), clear the token and retry without it so the user can
         // see the login page cleanly instead of an error screen.
-        if (appParams.token && (appError.status === 401 || appError.status === 404 || appError.data?.error_type === 'ObjectNotFoundError' || !appError.status)) {
+        if (appParams.token && (status === 401 || status === 404 || data?.error_type === 'ObjectNotFoundError' || !status)) {
           clearStaleTokens();
           // Retry without the stale token
           try {
             const retryClient = createAxiosClient({
               baseURL: `/api/apps/public`,
               headers: { 'X-App-Id': appParams.appId },
-              interceptResponses: true
+              interceptResponses: false
             });
-            const retrySettings = await retryClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-            setAppPublicSettings(retrySettings);
+            const retryResponse = await retryClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+            setAppPublicSettings(retryResponse.data);
             setIsLoadingAuth(false);
             setIsAuthenticated(false);
             setAuthChecked(true);
             setIsLoadingPublicSettings(false);
             return;
           } catch (retryError) {
-            console.error('Retry without token also failed:', retryError);
+            // Retry failed — fall through to normal error handling
           }
         }
-        
+
         // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
+        if (status === 403 && data?.extra_data?.reason) {
+          const reason = data.extra_data.reason;
           if (reason === 'auth_required') {
             setAuthError({
               type: 'auth_required',
@@ -102,13 +106,13 @@ export const AuthProvider = ({ children }) => {
           } else {
             setAuthError({
               type: reason,
-              message: appError.message
+              message
             });
           }
         } else {
           setAuthError({
             type: 'unknown',
-            message: appError.message || 'Failed to load app'
+            message
           });
         }
         setIsLoadingPublicSettings(false);
