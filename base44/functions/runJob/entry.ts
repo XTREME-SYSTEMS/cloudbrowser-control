@@ -6,6 +6,34 @@ import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 // v5.0.0 — deployment refresh
 
+// H2 fix: Retry with exponential backoff for transient engine failures
+const MAX_RETRIES = 3;
+const BASE_BACKOFF_MS = 1000;
+
+function isTransientError(err) {
+  const msg = (err?.message || "").toLowerCase();
+  return msg.includes("timeout") || msg.includes("econnreset") || msg.includes("socket hang up") ||
+    msg.includes("502") || msg.includes("503") || msg.includes("504") || msg.includes("network");
+}
+
+async function withRetry(fn, stepName) {
+  let lastErr;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < MAX_RETRIES && isTransientError(err)) {
+        const backoff = BASE_BACKOFF_MS * Math.pow(2, attempt) + Math.random() * 500;
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
 // Compute SHA-256 content hash for artifact integrity
 async function computeContentHash(base64Data) {
   const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
@@ -72,7 +100,7 @@ export default async function(req) {
     let sessionId;
     try {
       const sessionConfig = job.session_config || {};
-      const engineRes = await engineFetch("/sessions", {
+      const engineRes = await withRetry(() => engineFetch("/sessions", {
         method: "POST",
         body: JSON.stringify({
           viewport: sessionConfig.viewport,
@@ -90,7 +118,7 @@ export default async function(req) {
           networkMocks: sessionConfig.networkMocks,
           usePool: sessionConfig.usePool,
         }),
-      });
+      }), "session_create");
       sessionId = engineRes.sessionId;
 
       sessionEntity = await base44.asServiceRole.entities.Session.create({
@@ -197,7 +225,7 @@ export default async function(req) {
           });
           stepResults.push(result);
         } else {
-          const engineRes = await engineFetch(`/sessions/${sessionId}/execute`, {
+          const engineRes = await withRetry(() => engineFetch(`/sessions/${sessionId}/execute`, {
             method: "POST",
             body: JSON.stringify({
               action_type: step.action_type,
@@ -205,7 +233,7 @@ export default async function(req) {
               value: step.value,
               options: step.options || {},
             }),
-          });
+          }), `step_${step.action_type}_${step.order}`);
 
           // Store extraction results
           if (["extract_text", "extract_html", "extract_attribute", "extract_table", "extract_json"].includes(step.action_type) && engineRes.data !== undefined) {

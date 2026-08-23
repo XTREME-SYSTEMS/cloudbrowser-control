@@ -853,6 +853,17 @@ app.post("/sessions/:id/share", async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════
+// Keep-alive — extend session TTL (M1 fix)
+// ═══════════════════════════════════════════════
+
+app.post("/sessions/:id/keepalive", (req, res) => {
+  const s = sessions.get(req.params.id);
+  if (!s) return res.status(404).json({ error: "Session not found" });
+  s.lastActivity = Date.now(); // Reset the TTL timer
+  res.json({ ok: true, session_id: s.id, expires_at: new Date(s.lastActivity + SESSION_TTL_MS).toISOString(), worker_id: WORKER_ID });
+});
+
+// ═══════════════════════════════════════════════
 // Screenshot (for live view)
 // ═══════════════════════════════════════════════
 
@@ -883,6 +894,32 @@ app.get("/pool", (req, res) => {
 
 app.post("/pool/warm", async (req, res) => { await warmPool(); res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID }); });
 app.post("/pool/drain", async (req, res) => { while (pool.length > 0) { const id = pool.shift(); await closeSession(id, "drained"); } res.json({ poolSize: 0, workerId: WORKER_ID }); });
+
+// ═══════════════════════════════════════════════
+// Graceful shutdown (H3 fix) — drain sessions on SIGTERM
+// ═══════════════════════════════════════════════
+
+let shuttingDown = false;
+
+async function gracefulShutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal} — draining ${sessions.size} sessions...`);
+
+  // Stop accepting new sessions
+  // Close all active sessions gracefully
+  const closePromises = [];
+  for (const [id, s] of sessions) {
+    closePromises.push(closeSession(id, "shutdown").catch(() => {}));
+  }
+  await Promise.all(closePromises);
+
+  console.log("All sessions drained. Exiting.");
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 app.listen(PORT, () => {
   console.log(`Browser engine v${ENGINE_VERSION} running on port ${PORT} (worker: ${WORKER_ID}, region: ${REGION})`);

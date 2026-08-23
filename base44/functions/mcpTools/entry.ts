@@ -1,6 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
-import { encrypt, decrypt } from "../../shared/crypto.ts";
+import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
@@ -10,10 +10,22 @@ import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 // artifact architecture, and receipts as the rest of the platform.
 // ═══════════════════════════════════════════════
 
-async function hashKey(key) {
-  const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
-  return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+// MCP tool → required API key scope mapping (C3 fix — scope enforcement)
+const TOOL_SCOPES = {
+  browser_start: "sessions:write",
+  browser_end: "sessions:write",
+  browser_navigate: "sessions:write",
+  browser_act: "sessions:write",
+  browser_observe: "sessions:read",
+  browser_extract: "sessions:read",
+  browser_screenshot: "sessions:read",
+  browser_list_tabs: "sessions:read",
+  browser_switch_tab: "sessions:write",
+  context_create: "sessions:write",
+  context_use: "sessions:read",
+  context_delete: "sessions:write",
+  artifact_get: "sessions:read",
+};
 
 function errorResponse(status, error, requestId) {
   return Response.json({ error, request_id: requestId, __v: DEPLOYMENT_VERSION }, { status });
@@ -43,6 +55,12 @@ export default async function (req) {
 
     // Update last_used
     base44.asServiceRole.entities.ApiKey.update(keyRecord.id, { last_used: new Date().toISOString() }).catch(() => {});
+
+    // ── Scope enforcement (C3 fix) ──
+    const requiredScope = TOOL_SCOPES[tool];
+    if (requiredScope && !(keyRecord.scopes || []).includes(requiredScope)) {
+      return errorResponse(403, `Insufficient scope for tool '${tool}'. Required: ${requiredScope}`, requestId);
+    }
 
     // ── Route to tool handler ──
     const result = await handleTool(base44, tool, params, keyRecord, requestId);

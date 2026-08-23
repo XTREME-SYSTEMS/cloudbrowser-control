@@ -21,10 +21,7 @@ export async function countActiveSessionsForStore(base44, storeId) {
 
 // Session-creation rate limit per minute (distinct from request rate limit)
 // Uses RateLimitEntry with a composite key hash.
-async function hashKey(key) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+import { hashKey } from "./crypto.ts";
 
 export async function checkSessionCreationRate(base44, scope, scopeId, limitPerMin) {
   const now = Date.now();

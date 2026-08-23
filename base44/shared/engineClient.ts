@@ -59,15 +59,18 @@ export async function getEngineKeyFingerprint() {
 }
 
 // Generic authenticated fetch — key always from secrets, never from DB
-export async function engineFetch(path, options = {}) {
+// L4 fix: forward x-request-id for trace propagation when provided
+export async function engineFetch(path, options = {}, requestId) {
   const { baseUrl, key } = await getEngineConfig();
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": key,
+    ...(options.headers || {}),
+  };
+  if (requestId) headers["x-request-id"] = requestId;
   const res = await fetch(`${baseUrl}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": key,
-      ...(options.headers || {}),
-    },
+    headers,
   });
   const text = await res.text();
   let body;
@@ -79,14 +82,14 @@ export async function engineFetch(path, options = {}) {
   return body;
 }
 
-export async function enginePost(path, payload) {
-  return engineFetch(path, { method: "POST", body: JSON.stringify(payload || {}) });
+export async function enginePost(path, payload, requestId) {
+  return engineFetch(path, { method: "POST", body: JSON.stringify(payload || {}) }, requestId);
 }
 
-export async function engineDelete(path) {
-  return engineFetch(path, { method: "DELETE" });
+export async function engineDelete(path, requestId) {
+  return engineFetch(path, { method: "DELETE" }, requestId);
 }
 
-export async function engineGet(path) {
-  return engineFetch(path, { method: "GET" });
+export async function engineGet(path, requestId) {
+  return engineFetch(path, { method: "GET" }, requestId);
 }
