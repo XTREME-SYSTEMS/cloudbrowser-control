@@ -74,15 +74,17 @@ export default async function (req) {
     const matched = matchRoute(requestMethod, requestPath);
     if (!matched) return errorResponse(404, `Unknown route: ${requestMethod} ${requestPath}`, requestId);
 
-    // BLOCK job-run route: dispatch would invoke production runJob (production engine).
-    // Staging job execution requires an additive staging runJob (not yet implemented).
+    // Job-run route → staging runJob (additive). NEVER production runJob.
     if (matched.route === "POST:/jobs/:id/run") {
-      return errorResponse(501, "Staging job execution not available — requires additive staging runJob (production runJob is isolated).", requestId);
-    }
-
-    const requiredScope = ROUTE_SCOPES[matched.route];
-    if (requiredScope && !(keyRecord.scopes || []).includes(requiredScope)) {
-      return errorResponse(403, `Insufficient scope. Required: ${requiredScope}`, requestId);
+      const requiredScope = ROUTE_SCOPES[matched.route];
+      if (requiredScope && !(keyRecord.scopes || []).includes(requiredScope)) {
+        return errorResponse(403, `Insufficient scope. Required: ${requiredScope}`, requestId);
+      }
+      const job = await base44.asServiceRole.entities.Job.get(matched.params.id);
+      if (!job) return errorResponse(404, "Job not found", requestId);
+      if (keyRecord.project_id && job.project_id !== keyRecord.project_id) return errorResponse(404, "Job not found", requestId);
+      const result = await base44.asServiceRole.functions.invoke("runJobStaging", { jobId: matched.params.id });
+      return Response.json({ ...(result.data || result), request_id: requestId, gateway: GATEWAY_IDENTITY, environment: "staging" });
     }
 
     return await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, stagingEnginePost, stagingEngineDelete, isStagingEngineConfigured);

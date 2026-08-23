@@ -73,9 +73,12 @@ export default async function (req) {
       const r = await callStagingGateway(base44, { api_key: "cb_live_invalid", path: "/sessions", method: "GET" });
       return r.status === 401 ? true : { error: `Expected 401, got ${r.status}` };
     });
-    await runTest(base44, runId, suite, "Staging job-run route blocked (no production runJob cross-contamination)", "Staging Gateway", 2, async () => {
+    await runTest(base44, runId, suite, "Staging job-run routes through staging gateway (no production runJob cross-contamination)", "Staging Gateway", 2, async () => {
+      // The job-run route is handled by the staging gateway → runJobStaging, never production runJob.
+      // Proof: the response carries the staging gateway identity. A bogus job ID yields 404/500 but
+      // must still come from cloudBrowserGatewayStaging.
       const r = await callStagingGateway(base44, { api_key: testKey, path: "/jobs/block_test/run", method: "POST" });
-      return r.status === 501 ? true : { error: `Expected 501 (job-run blocked on staging), got ${r.status}` };
+      return r.data?.gateway === "cloudBrowserGatewayStaging" ? true : { error: `Expected staging gateway identity, got gateway=${r.data?.gateway} status=${r.status}` };
     });
 
     // ═══════════════════════════════════════════════
