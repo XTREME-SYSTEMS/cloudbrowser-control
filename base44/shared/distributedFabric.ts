@@ -148,21 +148,92 @@ export class LocalDLQ extends DLQAdapter {
 }
 
 // ═══════════════════════════════════════════════
-// Factory: returns the appropriate adapter based on environment
+// Redis-backed adapters — activate when REDIS_URL + FORTRESS_DISTRIBUTED_MODE=true
+// Dormant otherwise (preserves single-worker baseline). Requires ioredis in the
+// runtime that imports this (engine on Railway). Base44 backend sandbox stays local.
 // ═══════════════════════════════════════════════
 
-export function createFabricAdapters() {
-  // SINGLE_WORKER_PRODUCTION MODE
-  // This platform runs in single-worker mode only. Multi-worker requires Redis.
-  const redisUrl = typeof process !== "undefined" && process.env?.REDIS_URL;
-
-  if (redisUrl) {
-    // BLOCKED: Redis adapter not yet implemented.
-    // When REDIS_URL is provisioned, implement Redis-backed adapters here.
-    throw new Error("Redis adapter not yet implemented — REDIS_URL detected but adapter is BLOCKED pending implementation");
+async function getRedis() {
+  if (typeof process === "undefined") return null;
+  const url = process.env?.REDIS_URL;
+  const distributed = process.env?.FORTRESS_DISTRIBUTED_MODE === "true";
+  if (!url || !distributed) return null;
+  try {
+    const { default: Redis } = await import("npm:ioredis@5.4.1");
+    return new Redis(url, { maxRetriesPerRequest: 3, lazyConnect: false, tls: url.startsWith("rediss://") ? {} : undefined });
+  } catch (_e) {
+    return null; // ioredis not installed in this runtime — fall back to local
   }
+}
 
-  // Local development adapters — SINGLE_WORKER only
+class RedisSessionStore extends SessionStoreAdapter {
+  constructor(redis) { super(); this.redis = redis; this.prefix = "cb:sess:"; }
+  async acquire(sessionId, ownerId, ttlMs) {
+    await this.redis.set(this.prefix + sessionId, JSON.stringify({ ownerId, acquiredAt: Date.now(), ttlMs, heartbeat: Date.now() }), "PX", ttlMs);
+    return true;
+  }
+  async release(sessionId) { await this.redis.del(this.prefix + sessionId); return true; }
+  async get(sessionId) { const v = await this.redis.get(this.prefix + sessionId); return v ? JSON.parse(v) : null; }
+  async list() { const keys = await this.redis.keys(this.prefix + "*"); const vals = await Promise.all(keys.map((k) => this.redis.get(k))); return vals.filter(Boolean).map((v) => JSON.parse(v)); }
+  async heartbeat(sessionId) { const v = await this.redis.get(this.prefix + sessionId); if (!v) return false; const o = JSON.parse(v); o.heartbeat = Date.now(); await this.redis.set(this.prefix + sessionId, JSON.stringify(o), "PX", o.ttlMs); return true; }
+}
+
+class RedisWorkerRegistry extends WorkerRegistryAdapter {
+  constructor(redis) { super(); this.redis = redis; this.prefix = "cb:worker:"; }
+  async register(workerId, metadata) { await this.redis.set(this.prefix + workerId, JSON.stringify({ ...metadata, lastHeartbeat: Date.now() }), "PX", 90000); }
+  async heartbeat(workerId) { const v = await this.redis.get(this.prefix + workerId); if (!v) return false; const o = JSON.parse(v); o.lastHeartbeat = Date.now(); await this.redis.set(this.prefix + workerId, JSON.stringify(o), "PX", 90000); return true; }
+  async deregister(workerId) { await this.redis.del(this.prefix + workerId); }
+  async list() { const keys = await this.redis.keys(this.prefix + "*"); const vals = await Promise.all(keys.map((k) => this.redis.get(k))); return keys.map((k, i) => ({ id: k.replace(this.prefix, ""), ...JSON.parse(vals[i]) })); }
+  async listByRegion(region) { return (await this.list()).filter((w) => w.region === region); }
+  async detectDeadWorkers(timeoutMs = 90000) { return (await this.list()).filter((w) => Date.now() - w.lastHeartbeat > timeoutMs); }
+}
+
+class RedisRateLimiter extends RateLimiterAdapter {
+  constructor(redis) { super(); this.redis = redis; }
+  async check(key, limit, windowMs) {
+    const now = Date.now();
+    const windowKey = `cb:rl:${key}:${Math.floor(now / windowMs)}`;
+    const count = await this.redis.incr(windowKey);
+    if (count === 1) await this.redis.pexpire(windowKey, windowMs);
+    return count <= limit;
+  }
+  async reset(key) { const keys = await this.redis.keys(`cb:rl:${key}:*`); if (keys.length) await this.redis.del(...keys); }
+}
+
+class RedisIdempotencyStore extends IdempotencyStoreAdapter {
+  constructor(redis) { super(); this.redis = redis; this.prefix = "cb:idem:"; }
+  async checkAndMark(key, ttlMs) { const r = await this.redis.set(this.prefix + key, "1", "PX", ttlMs, "NX"); return r === "OK"; }
+  async get(key) { return this.redis.get(this.prefix + key); }
+  async set(key, value, ttlMs) { await this.redis.set(this.prefix + key, value, "PX", ttlMs); }
+}
+
+class RedisDLQ extends DLQAdapter {
+  constructor(redis) { super(); this.redis = redis; this.key = "cb:dlq"; }
+  async enqueue(message) { await this.redis.rpush(this.key, JSON.stringify({ id: Date.now() + "_" + Math.random(), ...message })); }
+  async dequeue() { const v = await this.redis.lpop(this.key); return v ? JSON.parse(v) : null; }
+  async peek(limit = 10) { const vals = await this.redis.lrange(this.key, 0, limit - 1); return vals.map((v) => JSON.parse(v)); }
+  async requeue(messageId) { /* no-op — requeue handled by consumer */ }
+  async purge(messageId) { /* filter via script — best-effort */ const vals = await this.redis.lrange(this.key, 0, -1); for (const v of vals) { const m = JSON.parse(v); if (m.id === messageId) await this.redis.lrem(this.key, 1, v); } }
+}
+
+// ═══════════════════════════════════════════════
+// Factory: returns Redis adapters when REDIS_URL + FORTRESS_DISTRIBUTED_MODE=true,
+// otherwise local single-worker adapters (preserves 47/47 baseline).
+// ═══════════════════════════════════════════════
+
+export async function createFabricAdapters() {
+  const redis = await getRedis();
+  if (redis) {
+    return {
+      sessionStore: new RedisSessionStore(redis),
+      workerRegistry: new RedisWorkerRegistry(redis),
+      rateLimiter: new RedisRateLimiter(redis),
+      idempotencyStore: new RedisIdempotencyStore(redis),
+      dlq: new RedisDLQ(redis),
+      distributed: true,
+      mode: "DISTRIBUTED_REDIS",
+    };
+  }
   return {
     sessionStore: new LocalSessionStore(),
     workerRegistry: new LocalWorkerRegistry(),
@@ -171,15 +242,18 @@ export function createFabricAdapters() {
     dlq: new LocalDLQ(),
     distributed: false,
     mode: "SINGLE_WORKER_PRODUCTION",
-    warning: "SINGLE_WORKER mode — local adapters only. Multi-worker requires Redis provisioning + adapter implementation.",
+    warning: "SINGLE_WORKER mode — local adapters only. Multi-worker requires REDIS_URL + FORTRESS_DISTRIBUTED_MODE=true.",
   };
 }
 
-// Enforce single-worker mode — prevents accidental horizontal scaling
+// Enforce single-worker mode ONLY when distributed mode is not enabled.
+// When Redis is provisioned + FORTRESS_DISTRIBUTED_MODE=true, multi-worker is allowed.
 export function enforceSingleWorker() {
+  const distributed = typeof process !== "undefined" && process.env?.FORTRESS_DISTRIBUTED_MODE === "true" && !!process.env?.REDIS_URL;
+  if (distributed) return { mode: "DISTRIBUTED", worker_id: process.env?.WORKER_ID || process.env?.RAILWAY_REPLICA_ID || "distributed" };
   const workerId = typeof process !== "undefined" ? process.env?.WORKER_ID || process.env?.RAILWAY_REPLICA_ID : null;
   if (workerId && workerId !== "0" && workerId !== "1") {
-    throw new Error(`MULTI_WORKER_DETECTED: WORKER_ID=${workerId}. This platform runs in SINGLE_WORKER mode only. Scale-to-many is not supported without Redis.`);
+    throw new Error(`MULTI_WORKER_DETECTED: WORKER_ID=${workerId}. Set REDIS_URL + FORTRESS_DISTRIBUTED_MODE=true for multi-worker, else run single-worker.`);
   }
   return { mode: "SINGLE_WORKER", worker_id: workerId || "single" };
 }

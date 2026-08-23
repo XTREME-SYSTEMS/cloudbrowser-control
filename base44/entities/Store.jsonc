@@ -1,0 +1,122 @@
+{
+  "name": "Store",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Store / location label (e.g. NYC-Flagship, LA-Westfield)"
+    },
+    "store_code": {
+      "type": "string",
+      "description": "Unique human-readable code (e.g. store-001)"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Parent project this store belongs to"
+    },
+    "region": {
+      "type": "string",
+      "description": "Engine region for session affinity (e.g. us-east, us-west, eu-central)"
+    },
+    "address": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "timezone": {
+      "type": "string",
+      "default": "America/New_York"
+    },
+    "locale": {
+      "type": "string",
+      "default": "en-US"
+    },
+    "concurrency_limit": {
+      "type": "number",
+      "default": 5,
+      "description": "Max concurrent browsers for this store"
+    },
+    "session_creation_limit_per_min": {
+      "type": "number",
+      "default": 20,
+      "description": "Max new sessions per minute for this store"
+    },
+    "proxy_id": {
+      "type": "string",
+      "description": "Default proxy assigned to this store"
+    },
+    "proxy_rotation_group": {
+      "type": "string",
+      "description": "Proxy rotation group for this store"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "Default browser profile for this store"
+    },
+    "default_session_config": {
+      "type": "object",
+      "description": "Default viewport, user agent, headers, blocked resources, etc."
+    },
+    "credentials_vault_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted store credentials (logins, MFA seeds) JSON (base64). Never returned to frontend."
+    },
+    "has_credentials": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether credentials are configured (safe for frontend display)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "active_sessions": {
+      "type": "number",
+      "default": 0,
+      "description": "Current active session count (denormalized for quota checks)"
+    }
+  },
+  "required": [
+    "name",
+    "store_code",
+    "project_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

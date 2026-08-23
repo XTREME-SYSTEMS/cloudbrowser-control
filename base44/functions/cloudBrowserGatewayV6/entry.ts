@@ -4,6 +4,7 @@ import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import {
   hashKey, deriveClientIP, ipAllowed, checkRateLimit, matchRoute, ROUTE_SCOPES, dispatch
 } from "../../shared/gatewayCore.ts";
+import { enforceConcurrencyQuota } from "../../shared/concurrencyQuotas.ts";
 
 // ═══════════════════════════════════════════════
 // CloudBrowser Gateway V6 — fresh deployed identity
@@ -66,6 +67,30 @@ export default async function (req) {
     const requiredScope = ROUTE_SCOPES[matched.route];
     if (requiredScope && !(keyRecord.scopes || []).includes(requiredScope)) {
       return errorResponse(403, `Insufficient scope. Required: ${requiredScope}`, requestId);
+    }
+
+    // Browserbase parity: per-project + per-store concurrency + session-creation rate limit
+    // with 429 + retry-after + x-ratelimit headers, enforced on session creation.
+    if (matched.route === "POST:/sessions") {
+      const quota = await enforceConcurrencyQuota(base44, keyRecord, data);
+      if (quota.status === 429) {
+        return new Response(JSON.stringify({
+          error: quota.error, request_id: requestId, __v: DEPLOYMENT_VERSION, gateway: GATEWAY_IDENTITY,
+        }), {
+          status: 429,
+          headers: { "content-type": "application/json", ...(quota.headers || {}) },
+        });
+      }
+      const dispatched = await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, enginePost, engineDelete, isEngineConfigured);
+      // Attach rate-limit headers to the success response
+      if (quota.headers) {
+        const body = await dispatched.text();
+        return new Response(body, {
+          status: dispatched.status,
+          headers: { "content-type": "application/json", ...(quota.headers || {}) },
+        });
+      }
+      return dispatched;
     }
 
     return await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, enginePost, engineDelete, isEngineConfigured);

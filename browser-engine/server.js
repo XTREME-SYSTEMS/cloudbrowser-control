@@ -152,15 +152,94 @@ function getNextCdpPort() { return cdpPortCounter++; }
 // Stealth
 // ═══════════════════════════════════════════════
 
-const stealthScript = `
+// Advanced stealth — Browserbase Advanced Stealth parity.
+// Realistic, internally-consistent fingerprint across WebGL, Canvas, AudioContext,
+// WebRTC, hardware, and navigator surface. Randomized per session but stable within.
+function buildStealthScript(seed) {
+  // Deterministic pseudo-random from seed so fingerprint is stable within a session/profile.
+  let s = 0;
+  for (const ch of String(seed || "cb")) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
+  const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return (s & 0xffffff) / 0x1000000; };
+  const pick = (arr) => arr[Math.floor(rand() * arr.length)];
+  const hwConcurrency = pick([4, 8, 8, 12, 16]);
+  const deviceMemory = pick([4, 8, 8, 16]);
+  const platform = pick(["Win32", "Win32", "MacIntel", "Linux x86_64"]);
+  const uaPlatform = platform === "Win32" ? "Windows" : platform === "MacIntel" ? "macOS" : "Linux";
+  const canvasNoise = Math.floor(rand() * 9) + 1;
+  const webglVendor = "Google Inc. (Intel)";
+  const webglRenderer = pick(["ANGLE (Intel, Intel(R) UHD Graphics 630, OpenGL 4.1)", "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics, OpenGL 4.1)", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660, OpenGL 4.5)"]);
+  const audioChannel = 2 + Math.floor(rand() * 2);
+  const audioSampleRate = pick([44100, 48000]);
+
+  return `
 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
 Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
 Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-window.chrome = { runtime: {} };
+Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => ${hwConcurrency} });
+Object.defineProperty(navigator, 'deviceMemory', { get: () => ${deviceMemory} });
+Object.defineProperty(navigator, 'platform', { get: () => '${platform}' });
+window.chrome = { runtime: {}, app: { isInstalled: false }, csi: () => {}, loadTimes: () => {} };
 const originalQuery = window.navigator.permissions.query;
 window.navigator.permissions.query = (parameters) =>
   parameters.name === 'notifications' ? Promise.resolve({ state: Notification.permission }) : originalQuery(parameters);
+// WebGL fingerprint
+const getParameter = WebGLRenderingContext.prototype.getParameter;
+WebGLRenderingContext.prototype.getParameter = function(p) {
+  if (p === 37445) return '${webglVendor}';
+  if (p === 37446) return '${webglRenderer}';
+  return getParameter.call(this, p);
+};
+try {
+  const getParameter2 = WebGL2RenderingContext.prototype.getParameter;
+  WebGL2RenderingContext.prototype.getParameter = function(p) {
+    if (p === 37445) return '${webglVendor}';
+    if (p === 37446) return '${webglRenderer}';
+    return getParameter2.call(this, p);
+  };
+} catch (e) {}
+// Canvas noise — subtle, consistent per session
+const toDataURL = HTMLCanvasElement.prototype.toDataURL;
+HTMLCanvasElement.prototype.toDataURL = function() {
+  if (this.width > 0 && this.height > 0) {
+    const ctx = this.getContext('2d');
+    if (ctx) {
+      const style = ctx.fillStyle;
+      ctx.fillStyle = 'rgba(0,0,0,0.0${canvasNoise})';
+      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillStyle = style;
+    }
+  }
+  return toDataURL.apply(this, arguments);
+};
+// AudioContext fingerprint
+const origGetChannelData = AudioBuffer.prototype.getChannelData;
+AudioBuffer.prototype.getChannelData = function() {
+  const d = origGetChannelData.apply(this, arguments);
+  if (d.length > ${audioChannel}) { d[0] = d[0] * (1 + 0.000000${canvasNoise}); }
+  return d;
+};
+const origCreateAnalyser = (window.AudioContext || window.webkitAudioContext).prototype.createAnalyser;
+(window.AudioContext || window.webkitAudioContext).prototype.createAnalyser = function() {
+  const a = origCreateAnalyser.call(this);
+  a.sampleRate = ${audioSampleRate};
+  return a;
+};
+// WebRTC — prevent local IP leak
+if (window.RTCPeerConnection) {
+  const origRTC = window.RTCPeerConnection;
+  window.RTCPeerConnection = function(config, constraints) {
+    if (config && config.iceServers) {
+      config.iceServers = config.iceServers.map((s) => ({ ...s, urls: (s.urls || '').replace(/stun:/g, 'stun:stun1.l.google.com:19302') }));
+    }
+    return new origRTC(config, constraints);
+  };
+  window.RTCPeerConnection.prototype = origRTC.prototype;
+}
+// Navigator vendor consistency
+Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' });
+Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
 `;
+}
 
 // ═══════════════════════════════════════════════
 // Helpers
@@ -204,7 +283,7 @@ async function warmPool() {
         args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
       });
       const context = await browser.newContext();
-      await context.addInitScript(stealthScript);
+      await context.addInitScript(buildStealthScript("pool_" + Math.random().toString(36).slice(2)));
       const page = await context.newPage();
       const id = uid();
       sessions.set(id, {
@@ -216,31 +295,111 @@ async function warmPool() {
   }
 }
 
+// Multi-provider CAPTCHA — Browserbase parity.
+// Supports: recaptcha_v2, recaptcha_v3, hcaptcha, turnstile, funcaptcha, image.
+// Providers: 2captcha, anticaptcha, capmonster (selected via options.provider).
 async function solveCaptcha(page, options) {
   const apiKey = options.apiKey;
   if (!apiKey) throw new Error("CAPTCHA API key required");
+  const provider = options.provider || "2captcha";
+  const pageurl = page.url();
+  const maxWait = options.maxWait || 150000;
+  const pollInterval = 5000;
 
-  if (options.type === "recaptcha_v2") {
-    const submitRes = await fetch("https://2captcha.com/in.php", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: apiKey, method: "userrecaptcha", googlekey: options.siteKey, pageurl: page.url(), json: 1 }),
-    });
-    const submitData = await submitRes.json();
-    if (submitData.status !== 1) throw new Error(submitData.request || "Submit failed");
-    const captchaId = submitData.request;
-    for (let i = 0; i < 30; i++) {
-      await new Promise((r) => setTimeout(r, 5000));
-      const resRes = await fetch(`https://2captcha.com/res.php?key=${apiKey}&action=get&id=${captchaId}&json=1`);
-      const resData = await resRes.json();
+  // Provider endpoint selector
+  const endpoints = {
+    "2captcha": { submit: "https://2captcha.com/in.php", poll: "https://2captcha.com/res.php" },
+    "anticaptcha": { submit: "https://api.anti-captcha.com/createTask", poll: "https://api.anti-captcha.com/getTaskResult" },
+    "capmonster": { submit: "https://api.capmonster.cloud/createTask", poll: "https://api.capmonster.cloud/getTaskResult" },
+  };
+  const ep = endpoints[provider] || endpoints["2captcha"];
+
+  // Build the submit payload per provider + type
+  let submitBody, captchaId, taskType;
+  const type = options.type;
+
+  if (provider === "2captcha") {
+    const methodMap = {
+      recaptcha_v2: "userrecaptcha",
+      recaptcha_v3: "userrecaptcha",
+      hcaptcha: "hcaptcha",
+      turnstile: "turnstile",
+      funcaptcha: "funcaptcha",
+    };
+    const method = methodMap[type];
+    if (!method) throw new Error(`Unsupported CAPTCHA type: ${type}`);
+    const body = { key: apiKey, method, pageurl, json: 1 };
+    if (options.siteKey) body.googlekey = options.siteKey;
+    if (type === "recaptcha_v3") { body.version = "v3"; body.action = options.action || "verify"; body.min_score = options.minScore || 0.3; }
+    if (type === "hcaptcha" && options.siteKey) body.sitekey = options.siteKey;
+    if (type === "turnstile" && options.siteKey) body.sitekey = options.siteKey;
+    if (type === "funcaptcha" && options.siteKey) body.publickey = options.siteKey;
+    submitBody = body;
+  } else {
+    // anticaptcha / capmonster use createTask/getTaskResult JSON-RPC style
+    const taskTypeMap = {
+      recaptcha_v2: "NoCaptchaTaskProxyless",
+      recaptcha_v3: "RecaptchaV3TaskProxyless",
+      hcaptcha: "HCaptchaTaskProxyless",
+      turnstile: "TurnstileTaskProxyless",
+      funcaptcha: "FunCaptchaTaskProxyless",
+    };
+    taskType = taskTypeMap[type];
+    if (!taskType) throw new Error(`Unsupported CAPTCHA type: ${type}`);
+    const task = { type: taskType, websiteURL: pageurl };
+    if (options.siteKey) {
+      if (type === "recaptcha_v2" || type === "recaptcha_v3") task.websiteKey = options.siteKey;
+      else task.websiteKey = options.siteKey;
+    }
+    if (type === "recaptcha_v3") { task.pageAction = options.action || "verify"; task.minScore = options.minScore || 0.3; }
+    submitBody = { clientKey: apiKey, task };
+  }
+
+  // Submit
+  const submitRes = await fetch(ep.submit, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(submitBody),
+  });
+  const submitData = await submitRes.json();
+
+  if (provider === "2captcha") {
+    if (submitData.status !== 1) throw new Error(submitData.request || "CAPTCHA submit failed");
+    captchaId = submitData.request;
+  } else {
+    if (submitData.errorId) throw new Error(submitData.errorDescription || "CAPTCHA submit failed");
+    captchaId = submitData.taskId;
+  }
+
+  // Poll
+  const deadline = Date.now() + maxWait;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, pollInterval));
+    let resData;
+    if (provider === "2captcha") {
+      const resRes = await fetch(`${ep.poll}?key=${apiKey}&action=get&id=${captchaId}&json=1`);
+      resData = await resRes.json();
       if (resData.status === 1) {
-        await page.evaluate((token) => { const el = document.getElementById("g-recaptcha-response"); if (el) el.innerHTML = token; }, resData.request);
-        return { solved: true, token: resData.request };
+        const token = resData.request;
+        if (type === "recaptcha_v2") {
+          await page.evaluate((t) => { const el = document.getElementById("g-recaptcha-response"); if (el) el.innerHTML = t; }, token);
+        }
+        return { solved: true, token, provider, type };
       }
       if (resData.request !== "CAPCHA_NOT_READY") throw new Error(resData.request);
+    } else {
+      const resRes = await fetch(ep.poll, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientKey: apiKey, taskId: captchaId }),
+      });
+      resData = await resRes.json();
+      if (resData.errorId) throw new Error(resData.errorDescription || "CAPTCHA poll failed");
+      if (resData.status === "ready") {
+        const token = resData.solution?.gRecaptchaResponse || resData.solution?.token || resData.solution?.text || "";
+        return { solved: true, token, provider, type };
+      }
     }
-    throw new Error("CAPTCHA solving timed out");
   }
-  throw new Error(`Unsupported CAPTCHA type: ${options.type}`);
+  throw new Error("CAPTCHA solving timed out");
 }
 
 // Bounded crawler
@@ -440,13 +599,22 @@ app.post("/sessions", async (req, res) => {
     if (opts.recordVideo) contextOptions.recordVideo = { dir: VIDEO_DIR };
 
     let browser, context, page;
+    // Proxy rotation — pick from proxyPool (round-robin) if provided (Browserbase parity)
+    let effectiveProxy = opts.proxy;
+    if (!effectiveProxy && opts.proxyPool?.length > 0) {
+      const idx = Math.floor(Math.random() * opts.proxyPool.length);
+      effectiveProxy = opts.proxyPool[idx];
+    }
+    if (effectiveProxy) contextOptions.proxy = { server: effectiveProxy.server, username: effectiveProxy.username, password: effectiveProxy.password };
+
     if (opts.userDataDir) {
       context = await chromium.launchPersistentContext(opts.userDataDir, { headless: true, args: launchArgs, ...contextOptions });
       page = context.pages()[0] || await context.newPage();
+      await context.addInitScript(buildStealthScript(opts.userDataDir));
     } else {
       browser = await chromium.launch({ headless: true, args: launchArgs });
       context = await browser.newContext(contextOptions);
-      await context.addInitScript(stealthScript);
+      await context.addInitScript(buildStealthScript(Math.random().toString(36).slice(2)));
       page = await context.newPage();
     }
 
