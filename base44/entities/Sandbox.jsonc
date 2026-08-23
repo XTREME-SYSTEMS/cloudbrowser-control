@@ -1,0 +1,121 @@
+{
+  "name": "Sandbox",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "archived",
+        "provisioning",
+        "error"
+      ],
+      "default": "active"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "isolated",
+        "production",
+        "staging"
+      ],
+      "default": "isolated"
+    },
+    "config": {
+      "type": "object",
+      "description": "Sandbox configuration (resources, limits, isolation settings)"
+    },
+    "created_by_agent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this sandbox was created by the autonomous agent"
+    },
+    "parent_sandbox_id": {
+      "type": "string",
+      "description": "Parent sandbox if this is a nested sandbox"
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Resources created within this sandbox (entities, sessions, jobs, etc.)"
+    },
+    "integration_id": {
+      "type": "string",
+      "description": "Associated integration for external provisioning"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provisioned_externally": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this sandbox has been provisioned on external systems"
+    },
+    "provisioning_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "failed",
+        "not_required"
+      ],
+      "default": "not_required"
+    }
+  },
+  "required": [
+    "name",
+    "status",
+    "scope"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "name": "Integration",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "vercel",
+        "github",
+        "googledrive",
+        "supabase",
+        "custom"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "connected",
+        "disconnected",
+        "error",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "connector_id": {
+      "type": "string",
+      "description": "Workspace connector ID for OAuth-based integrations"
+    },
+    "connection_mode": {
+      "type": "string",
+      "enum": [
+        "app_user",
+        "byo_shared",
+        "shared",
+        "secret"
+      ],
+      "default": "app_user"
+    },
+    "config": {
+      "type": "object",
+      "description": "Integration-specific configuration (sync preferences, project mappings, etc.)"
+    },
+    "credentials_encrypted": {
+      "type": "string",
+      "description": "AES-GCM encrypted credentials JSON (base64). Never returned to frontend."
+    },
+    "has_credentials": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether credentials are configured (safe for frontend display)"
+    },
+    "sync_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_synced": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sandbox_id": {
+      "type": "string",
+      "description": "Associated sandbox for isolated operations"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "service_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
