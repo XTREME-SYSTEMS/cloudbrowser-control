@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CopyBlock from "@/components/CopyBlock";
+import CaptchaSolverCard from "@/components/CaptchaSolverCard";
 import {
   Key, Plus, RefreshCw, Eye, EyeOff, Plug, Folder, ExternalLink, Package, Copy,
 } from "lucide-react";
@@ -119,6 +120,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* CAPTCHA SOLVER */}
+      <CaptchaSolverCard />
 
       {/* FULL CONNECTION PACKAGE — the main thing */}
       <Card>
