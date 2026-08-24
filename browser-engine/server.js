@@ -355,11 +355,23 @@ async function solveCaptcha(page, options) {
     submitBody = { clientKey: apiKey, task };
   }
 
-  // Submit
-  const submitRes = await fetch(ep.submit, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(submitBody),
-  });
+  // Submit — 2captcha's in.php endpoint is more reliable with form-encoded data.
+  // JSON POST to in.php can inconsistently drop fields (ERROR_KEY_DOES_NOT_EXIST).
+  // anticaptcha/capmonster use JSON-RPC, so keep JSON for those.
+  let submitRes;
+  if (provider === "2captcha") {
+    const formBody = new URLSearchParams();
+    for (const [k, v] of Object.entries(submitBody)) formBody.append(k, String(v));
+    submitRes = await fetch(ep.submit, {
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formBody.toString(),
+    });
+  } else {
+    submitRes = await fetch(ep.submit, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(submitBody),
+    });
+  }
   const submitData = await submitRes.json();
 
   if (provider === "2captcha") {
@@ -671,6 +683,9 @@ app.post("/sessions", async (req, res) => {
       const s = sessions.get(pooledId);
       if (s) {
         s.status = "idle"; s.isPooled = false; s.lastActivity = Date.now();
+        // Merge per-session opts that pooled sessions don't have yet
+        // (captcha solver config, proxy, headers, etc.)
+        s.captchaSolver = opts.captchaSolver || null;
         warmPool();
         return res.json({
           sessionId: s.id, status: "idle", fromPool: true,
