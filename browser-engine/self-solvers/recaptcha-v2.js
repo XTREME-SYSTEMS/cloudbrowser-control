@@ -12,12 +12,14 @@ export async function solveReCaptchaV2(page, maxWait) {
   if (existingToken) return { solved: true, token: existingToken };
 
   // ── Step 2: Find the reCAPTCHA anchor iframe ──
-  let anchorFrame = findFrame(page, "recaptcha/api2/anchor");
+  // The iframe element may be attached before its content loads — page.frames()
+  // won't match the URL pattern until the frame navigates away from about:blank.
+  // Poll for up to 10s until the frame URL contains the pattern.
+  let anchorFrame = await findFrameAsync(page, "recaptcha/api2/anchor", 10000);
   if (!anchorFrame) {
-    try {
-      await page.waitForSelector('iframe[src*="recaptcha/api2/anchor"]', { timeout: 8000, state: "attached" });
-    } catch { /* might still be loading */ }
-    anchorFrame = findFrame(page, "recaptcha/api2/anchor");
+    // Fallback: try broader pattern (some Google pages use /recaptcha/api2/anchor,
+    // others use /recaptcha/anchor without the api2 segment)
+    anchorFrame = await findFrameAsync(page, "recaptcha/anchor", 3000);
   }
   if (!anchorFrame) throw new Error("reCAPTCHA anchor iframe not found");
 
@@ -69,7 +71,7 @@ export async function solveReCaptchaV2(page, maxWait) {
     }
 
     // Check if image challenge iframe appeared
-    const challengeFrame = findFrame(page, "recaptcha/api2/bframe");
+    const challengeFrame = await findFrameAsync(page, "recaptcha/api2/bframe", 2000);
     if (challengeFrame && !challengeDetected) {
       challengeDetected = true;
       // ── Try audio challenge ──
@@ -218,6 +220,18 @@ async function transcribeAudio(audioBuffer) {
 // ── Helpers ──
 function findFrame(page, urlPattern) {
   return page.frames().find(f => f.url().includes(urlPattern));
+}
+
+// Poll for a frame whose URL contains urlPattern — handles the case where
+// the iframe is attached but its content hasn't loaded yet (URL is about:blank).
+async function findFrameAsync(page, urlPattern, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const frame = page.frames().find(f => f.url().includes(urlPattern));
+    if (frame) return frame;
+    await sleep(300);
+  }
+  return null;
 }
 
 function sleep(ms) {
