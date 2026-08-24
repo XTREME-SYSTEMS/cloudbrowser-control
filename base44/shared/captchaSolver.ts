@@ -22,6 +22,16 @@ export async function getCaptchaCredentials(base44) {
     return null;
   }
 
+  // Strip whitespace/newlines that may have been introduced during secret detection
+  const cleanKey = apiKey.trim();
+  
+  // Validate: 2captcha keys are 32-char alphanumeric. If the key starts with "6L"
+  // and is ~40 chars, it's likely a Google reCAPTCHA site key, not a 2captcha API key.
+  // This happens when the platform auto-detects a site key in chat and saves it.
+  if (cleanKey.startsWith("6L") && cleanKey.length > 35) {
+    console.warn(`[captchaSolver] WARNING: API key looks like a reCAPTCHA site key (starts with "6L", ${cleanKey.length} chars). 2captcha keys are 32 chars. Current key will likely be rejected by 2captcha.`);
+  }
+
   let provider = "2captcha";
   try {
     const settings = await base44.asServiceRole.entities.SystemSettings.list("-created_date", 1);
@@ -32,7 +42,7 @@ export async function getCaptchaCredentials(base44) {
     // SystemSettings not yet configured — use default provider
   }
 
-  return { apiKey, provider };
+  return { apiKey: cleanKey, provider };
 }
 
 /**

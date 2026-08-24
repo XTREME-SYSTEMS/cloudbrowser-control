@@ -443,10 +443,10 @@ async function solveCaptcha(page, options) {
 // Detects reCAPTCHA v2, hCaptcha, and Cloudflare Turnstile.
 // Providers: "self" (browser-based, no API key needed), "2captcha", "anticaptcha", "capmonster".
 async function autoSolveCaptcha(page, solverConfig) {
-  if (!solverConfig) return { detected: false, solved: false };
+  if (!solverConfig) return { detected: false, solved: false, reason: "no_solver_config" };
   // Self-solver doesn't need an API key — only external providers do
   const provider = solverConfig.provider || "2captcha";
-  if (provider !== "self" && !solverConfig.apiKey) return { detected: false, solved: false };
+  if (provider !== "self" && !solverConfig.apiKey) return { detected: false, solved: false, reason: "no_api_key" };
 
   // Wait for reCAPTCHA/hCaptcha/Turnstile iframes to render.
   // On Google's /sorry/ page and demo pages, the iframe loads asynchronously
