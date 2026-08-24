@@ -1,260 +1,237 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import Timeline from "@/components/onboarding/Timeline";
+import CopyBlock from "@/components/CopyBlock";
 import {
-  Search, Eye, ClipboardCheck, Repeat, ArrowRight, ArrowLeft,
-  Loader2, CheckCircle, Sparkles, ExternalLink, Rocket,
+  Key, Plus, RefreshCw, Eye, EyeOff, Plug, Folder, ExternalLink, Package, Copy,
 } from "lucide-react";
 
-const GOALS = [
-  { id: "scraping", label: "Scrape Data", icon: Search, desc: "Extract product info, prices, listings, articles" },
-  { id: "monitoring", label: "Monitor Changes", icon: Eye, desc: "Watch a page and get alerted when it changes" },
-  { id: "testing", label: "Test a Website", icon: ClipboardCheck, desc: "Run checks against a site to verify it works" },
-  { id: "automation", label: "Automate a Task", icon: Repeat, desc: "Fill forms, click through flows, schedule recurring runs" },
-];
+const GATEWAY_PATH = "/api/functions/cloudBrowserGatewayV6";
+const MCP_PATH = "/api/functions/mcpTools";
+const DEFAULT_SCOPES = ["sessions:read", "sessions:write", "jobs:read", "jobs:write"];
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [completed, setCompleted] = useState([]);
-  const [goal, setGoal] = useState(null);
-  const [url, setUrl] = useState("");
-  const [details, setDetails] = useState("");
+  const [apiKeys, setApiKeys] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [createdKey, setCreatedKey] = useState(null);
+  const [showKey, setShowKey] = useState(true);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [templates, setTemplates] = useState([]);
 
-  useEffect(() => {
-    base44.entities.Template.list("-created_date", 50).then(setTemplates).catch(() => {});
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://app.base44.app";
+  const gatewayUrl = origin + GATEWAY_PATH;
+  const mcpUrl = origin + MCP_PATH;
+
+  const load = useCallback(async () => {
+    try {
+      const [keys, projs] = await Promise.all([
+        base44.entities.ApiKey.list("-created_date", 50).catch(() => []),
+        base44.entities.Project.list("-created_date", 50).catch(() => []),
+      ]);
+      setApiKeys(keys);
+      setProjects(projs);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const next = () => {
-    setCompleted((c) => [...new Set([...c, step])]);
-    setStep((s) => s + 1);
-  };
-  const back = () => setStep((s) => Math.max(0, s - 1));
+  useEffect(() => { load(); }, [load]);
 
-  // Step 3 → 4: kick off generation
-  const startGeneration = async () => {
-    setCompleted((c) => [...new Set([...c, 2])]);
-    setStep(3);
+  const generateKey = async () => {
     setGenerating(true);
-    setError(null);
-
-    const goalLabel = GOALS.find((g) => g.id === goal)?.label || goal;
-    const prompt = `${goalLabel}: Go to ${url}. ${details}`;
-
     try {
-      // 1. Try template match by category
-      let matchedTemplate = templates.find((t) => t.category === goal);
-
-      let stepsData;
-      if (matchedTemplate) {
-        stepsData = {
-          start_url: url,
-          steps: matchedTemplate.steps,
-          source: "template",
-          template_name: matchedTemplate.name,
-        };
-      } else {
-        // 2. Fall back to AI generation
-        const res = await base44.functions.invoke("aiBuildSteps", { prompt });
-        stepsData = { ...res.data, source: "ai" };
-      }
-
-      // 3. Create a Job with the generated steps
-      const job = await base44.entities.Job.create({
-        name: `${goalLabel} — ${new URL(url).hostname}`,
-        status: "queued",
-        start_url: url,
-        steps_count: stepsData.steps?.length || 0,
-        tags: [goal, stepsData.source],
+      const res = await base44.functions.invoke("createApiKey", {
+        name: newKeyName || `Key ${new Date().toLocaleDateString()}`,
+        scopes: DEFAULT_SCOPES,
       });
-
-      // 4. Create Steps linked to the job
-      if (stepsData.steps?.length) {
-        await base44.entities.Step.bulkCreate(
-          stepsData.steps.map((s, i) => ({
-            job_id: job.id,
-            order: i,
-            name: s.name || s.action_type,
-            action_type: s.action_type,
-            selector: s.selector,
-            value: s.value,
-            options: s.options,
-          }))
-        );
+      const data = res.data || res;
+      if (data.api_key) {
+        setCreatedKey(data.api_key);
+        setShowKey(true);
+        setNewKeyName("");
+        load();
       }
-
-      setResult({ job, stepsData });
-      setCompleted((c) => [...new Set([...c, 3])]);
-      setStep(4);
-    } catch (e) {
-      setError(e.response?.data?.error || e.message || "Generation failed");
-    } finally {
-      setGenerating(false);
-    }
+    } catch (e) { alert(e.response?.data?.error || e.message); }
+    finally { setGenerating(false); }
   };
 
-  const reset = () => {
-    setStep(0);
-    setCompleted([]);
-    setGoal(null);
-    setUrl("");
-    setDetails("");
-    setResult(null);
-    setError(null);
+  const regenerate = async (key) => {
+    if (!confirm("Regenerate this key? The old key stops working immediately.")) return;
+    try {
+      await base44.entities.ApiKey.update(key.id, { active: false }).catch(() => {});
+      const res = await base44.functions.invoke("createApiKey", {
+        name: `${key.name} (regenerated)`,
+        scopes: key.scopes || DEFAULT_SCOPES,
+        project_id: key.project_id,
+      });
+      const data = res.data || res;
+      if (data.api_key) {
+        setCreatedKey(data.api_key);
+        setShowKey(true);
+        load();
+      }
+    } catch (e) { alert(e.response?.data?.error || e.message); }
   };
+
+  // The full connection package — everything another project needs in one block
+  const activeKey = createdKey || "<generate a key below>";
+  const connectionPackage = [
+    `# CloudBrowser Control — Connection Package`,
+    `# Paste these into the other project's environment / secrets`,
+    ``,
+    `CLOUDBROWSER_GATEWAY_URL=${gatewayUrl}`,
+    `CLOUDBROWSER_MCP_URL=${mcpUrl}`,
+    `CLOUDBROWSER_API_KEY=${activeKey}`,
+  ].join("\n");
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-4">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-2xl md:text-3xl font-heading font-bold">Welcome — let's set up your automation</h1>
-        <p className="text-muted-foreground mt-1">Answer a few questions and we'll build it for you.</p>
+      <div>
+        <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><Plug className="w-6 h-6" />Connection Hub</h1>
+        <p className="text-muted-foreground mt-1">Everything another project needs to connect to CloudBrowser — all in one place.</p>
       </div>
 
-      {/* Timeline */}
-      <Timeline current={step} completed={completed} />
+      {/* NEW KEY BANNER */}
+      {createdKey && (
+        <Card className="border-amber-300">
+          <CardContent className="pt-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-amber-800">New API key — copy it now, it won't be shown again!</span>
+              <Button size="sm" variant="ghost" onClick={() => setShowKey(!showKey)}>{showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 p-2 rounded bg-amber-50 border font-mono text-xs sm:text-sm break-all">
+                {showKey ? createdKey : "cb_live_••••••••••••••••••••••••••••••••••••••••"}
+              </code>
+              <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(createdKey); }}>
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setCreatedKey(null)}>Done</Button>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Step content */}
+      {/* FULL CONNECTION PACKAGE — the main thing */}
       <Card>
-        <CardContent className="pt-6">
-          {/* STEP 1 — Goal */}
-          {step === 0 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">What do you want to do today?</h2>
-                <p className="text-sm text-muted-foreground">Pick the option that best matches your goal.</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {GOALS.map((g) => {
-                  const Icon = g.icon;
-                  const selected = goal === g.id;
-                  return (
-                    <button
-                      key={g.id}
-                      onClick={() => setGoal(g.id)}
-                      className={`flex items-start gap-3 p-4 rounded-lg border text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40 hover:bg-muted/30"}`}
-                    >
-                      <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
-                      <div>
-                        <div className="font-medium">{g.label}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{g.desc}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={next} disabled={!goal}>Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
-              </div>
-            </div>
-          )}
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><Package className="w-5 h-5" />Full Connection Package</CardTitle>
+          <CardDescription>Copy this entire block and hand it to the other project. That's all they need.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CopyBlock text={connectionPackage} label="Environment variables / secrets" />
+          <div className="mt-3 p-3 rounded-md bg-blue-50 border border-blue-200 text-xs text-blue-800">
+            <strong>Auth:</strong> Every request needs <code>Authorization: Bearer &lt;CLOUDBROWSER_API_KEY&gt;</code>.
+            Create sessions via the Gateway URL (geo/proxy), then drive them via the MCP URL (navigate/extract/screenshot).
+            Full integration guide: <Link to="/connection-info" className="underline">Connection Info</Link>.
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* STEP 2 — Target URL */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">What website do you want to target?</h2>
-                <p className="text-sm text-muted-foreground">Enter the full URL of the page to start from.</p>
-              </div>
-              <div>
-                <Label>Target URL</Label>
-                <Input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com/products"
-                  type="url"
-                  autoFocus
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={back}><ArrowLeft className="w-4 h-4 mr-1" />Back</Button>
-                <Button onClick={next} disabled={!url || !url.startsWith("http")}>Continue <ArrowRight className="w-4 h-4 ml-1" /></Button>
-              </div>
-            </div>
-          )}
+      {/* ENDPOINTS */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Endpoints</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <CopyBlock label="Gateway URL — create geo-targeted sessions" text={gatewayUrl} />
+          <CopyBlock label="MCP Tools URL — navigate, extract, screenshot, close" text={mcpUrl} />
+          <CopyBlock label="Authorization header (on every request)" text="Authorization: Bearer <CLOUDBROWSER_API_KEY>" />
+        </CardContent>
+      </Card>
 
-          {/* STEP 3 — Details */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">Describe what you want to extract or do</h2>
-                <p className="text-sm text-muted-foreground">The more specific you are, the better the result. We'll try a template first, then use AI if needed.</p>
-              </div>
-              <div>
-                <Label>Instructions</Label>
-                <Textarea
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  rows={4}
-                  placeholder="e.g. Extract the top 20 product names, prices, and ratings. Sort by price low to high."
-                  autoFocus
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={back}><ArrowLeft className="w-4 h-4 mr-1" />Back</Button>
-                <Button onClick={startGeneration} disabled={!details.trim()}>Generate & Build <Sparkles className="w-4 h-4 ml-1" /></Button>
-              </div>
+      {/* API KEYS */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><Key className="w-5 h-5" />API Keys</CardTitle>
+          <CardDescription>Keys are shown in plaintext only once — at creation or regeneration. Copy immediately.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Create new */}
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Label>Key name (optional)</Label>
+              <Input value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g. SEO Generator" />
             </div>
-          )}
+            <Button onClick={generateKey} disabled={generating}>
+              {generating ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+              Generate Key
+            </Button>
+          </div>
 
-          {/* STEP 4 — Generating */}
-          {step === 3 && (
-            <div className="py-12 text-center space-y-4">
-              <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary" />
-              <div>
-                <h2 className="text-lg font-semibold">Building your automation…</h2>
-                <p className="text-sm text-muted-foreground">
-                  {templates.some((t) => t.category === goal)
-                    ? "Found a matching template — applying it now."
-                    : "No template matched — generating steps with AI."}
-                </p>
-              </div>
-              {error && (
-                <div className="p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-700">
-                  {error}
-                  <Button variant="ghost" size="sm" className="ml-2" onClick={reset}>Start over</Button>
+          {/* Existing keys */}
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : apiKeys.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No keys yet — generate one above.</p>
+          ) : (
+            <div className="space-y-2">
+              {apiKeys.map((k) => (
+                <div key={k.id} className="flex items-center justify-between p-3 rounded-md border">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{k.name}</span>
+                      {k.active ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">active</span>
+                      ) : (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">inactive</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                      {k.key_prefix}… · scopes: {(k.scopes || []).join(", ")}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => regenerate(k)}>
+                    <RefreshCw className="w-3 h-3 mr-1" /> Regenerate
+                  </Button>
                 </div>
-              )}
+              ))}
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          {/* STEP 5 — Launch */}
-          {step === 4 && result && (
-            <div className="space-y-5">
-              <div className="text-center py-4">
-                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+      {/* PROJECTS */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base"><Folder className="w-5 h-5" />Projects</CardTitle>
+              <CardDescription>Each project groups sessions, jobs, and costs. Manage full details on the Projects page.</CardDescription>
+            </div>
+            <Link to="/projects"><Button variant="outline" size="sm">Manage <ExternalLink className="w-3 h-3 ml-1" /></Button></Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : projects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No projects yet. <Link to="/projects" className="underline">Create one</Link>.</p>
+          ) : (
+            <div className="space-y-2">
+              {projects.map((p) => (
+                <div key={p.id} className="flex items-center justify-between p-3 rounded-md border">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`w-2.5 h-2.5 rounded-full bg-${p.color || "blue"}-500 shrink-0`} />
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">{p.name}</div>
+                      {p.description && <div className="text-xs text-muted-foreground truncate">{p.description}</div>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {p.status === "archived" && <span className="text-xs text-muted-foreground">archived</span>}
+                    <Link to="/projects"><Button variant="ghost" size="sm">Details</Button></Link>
+                  </div>
                 </div>
-                <h2 className="text-lg font-semibold mt-3">Your automation is ready!</h2>
-                <p className="text-sm text-muted-foreground">
-                  Built via {result.stepsData.source === "template" ? `template "${result.stepsData.template_name}"` : "AI generation"} · {result.stepsData.steps?.length || 0} steps
-                </p>
-              </div>
-
-              <div className="p-3 rounded-md bg-muted/40 border space-y-1">
-                <div className="text-sm font-medium">{result.job.name}</div>
-                <div className="text-xs text-muted-foreground font-mono truncate">{result.job.start_url}</div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Button onClick={() => navigate(`/jobs/${result.job.id}`)}>
-                  <ExternalLink className="w-4 h-4 mr-1" /> View Job Details
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/jobs")}>
-                  <Rocket className="w-4 h-4 mr-1" /> Go to Jobs
-                </Button>
-                <Button variant="ghost" onClick={reset}>Build Another</Button>
-              </div>
+              ))}
             </div>
           )}
         </CardContent>
