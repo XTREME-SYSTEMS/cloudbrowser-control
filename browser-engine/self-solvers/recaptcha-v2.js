@@ -15,11 +15,15 @@ export async function solveReCaptchaV2(page, maxWait) {
   // The iframe element may be attached before its content loads — page.frames()
   // won't match the URL pattern until the frame navigates away from about:blank.
   // Poll for up to 10s until the frame URL contains the pattern.
-  let anchorFrame = await findFrameAsync(page, "recaptcha/api2/anchor", 10000);
+  // Match both standard (api2/anchor) and enterprise (enterprise/anchor) reCAPTCHA
+  let anchorFrame = await findFrameAsync(page, [
+    "recaptcha/api2/anchor",
+    "recaptcha/enterprise/anchor",
+  ], 10000);
   if (!anchorFrame) {
-    // Fallback: try broader pattern (some Google pages use /recaptcha/api2/anchor,
-    // others use /recaptcha/anchor without the api2 segment)
-    anchorFrame = await findFrameAsync(page, "recaptcha/anchor", 3000);
+    // Last resort: any recaptcha iframe with "anchor" in the URL
+    anchorFrame = await findFrameAsync(page, "recaptcha", 3000);
+    if (anchorFrame && !anchorFrame.url().includes("anchor")) anchorFrame = null;
   }
   if (!anchorFrame) throw new Error("reCAPTCHA anchor iframe not found");
 
@@ -71,7 +75,10 @@ export async function solveReCaptchaV2(page, maxWait) {
     }
 
     // Check if image challenge iframe appeared
-    const challengeFrame = await findFrameAsync(page, "recaptcha/api2/bframe", 2000);
+    const challengeFrame = await findFrameAsync(page, [
+      "recaptcha/api2/bframe",
+      "recaptcha/enterprise/bframe",
+    ], 2000);
     if (challengeFrame && !challengeDetected) {
       challengeDetected = true;
       // ── Try audio challenge ──
@@ -88,8 +95,12 @@ export async function solveReCaptchaV2(page, maxWait) {
 // ── Get reCAPTCHA token from the page ──
 async function getReCaptchaToken(page) {
   return page.evaluate(() => {
+    // Standard reCAPTCHA v2: #g-recaptcha-response
+    // Enterprise reCAPTCHA: may use g-recaptcha-response or a numeric ID variant
     const el = document.getElementById("g-recaptcha-response") 
-      || document.querySelector('textarea[name="g-recaptcha-response"]');
+      || document.querySelector('textarea[name="g-recaptcha-response"]')
+      || document.querySelector('textarea[id^="g-recaptcha-response"]')
+      || document.querySelector('textarea[name^="g-recaptcha-response"]');
     return el && el.value && el.value.length > 10 ? el.value : null;
   }).catch(() => null);
 }
@@ -224,11 +235,15 @@ function findFrame(page, urlPattern) {
 
 // Poll for a frame whose URL contains urlPattern — handles the case where
 // the iframe is attached but its content hasn't loaded yet (URL is about:blank).
+// urlPattern can be a single string or an array of strings (matches ANY).
 async function findFrameAsync(page, urlPattern, timeoutMs) {
+  const patterns = Array.isArray(urlPattern) ? urlPattern : [urlPattern];
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const frame = page.frames().find(f => f.url().includes(urlPattern));
-    if (frame) return frame;
+    for (const p of patterns) {
+      const frame = page.frames().find(f => f.url().includes(p));
+      if (frame) return frame;
+    }
     await sleep(300);
   }
   return null;
