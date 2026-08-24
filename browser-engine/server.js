@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import fs from "fs";
 import { chromium } from "playwright";
+// Self-hosted CAPTCHA solver — zero external API dependency.
+import { solveCaptchaSelf } from './captcha-self-solver.js';
+
 
 const app = express();
 
@@ -438,8 +441,12 @@ async function solveCaptcha(page, options) {
 // Auto-detect and solve captchas on the current page.
 // Called after navigation when session.captchaSolver is configured.
 // Detects reCAPTCHA v2, hCaptcha, and Cloudflare Turnstile.
+// Providers: "self" (browser-based, no API key needed), "2captcha", "anticaptcha", "capmonster".
 async function autoSolveCaptcha(page, solverConfig) {
-  if (!solverConfig || !solverConfig.apiKey) return { detected: false, solved: false };
+  if (!solverConfig) return { detected: false, solved: false };
+  // Self-solver doesn't need an API key — only external providers do
+  const provider = solverConfig.provider || "2captcha";
+  if (provider !== "self" && !solverConfig.apiKey) return { detected: false, solved: false };
 
   // Wait for reCAPTCHA/hCaptcha/Turnstile iframes to render.
   // On Google's /sorry/ page and demo pages, the iframe loads asynchronously
@@ -508,7 +515,10 @@ async function autoSolveCaptcha(page, solverConfig) {
       type: captcha.type,
       siteKey: captcha.siteKey,
     };
-    const result = await solveCaptcha(page, solveOptions);
+    // Route to self-solver or external API based on provider
+    const result = provider === "self"
+      ? await solveCaptchaSelf(page, solveOptions)
+      : await solveCaptcha(page, solveOptions);
 
     // For reCAPTCHA v2, try to submit the form after solving
     if (captcha.type === "recaptcha_v2" && result.solved) {
