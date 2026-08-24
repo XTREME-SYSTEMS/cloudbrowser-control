@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════
 
 import { hashKey, timingSafeEqual } from "./crypto.ts";
+import { withCaptchaCredentials, getCaptchaCredentials } from "./captchaSolver.ts";
 
 export { hashKey, timingSafeEqual };
 
@@ -161,6 +162,20 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       if (!await isEngineConfigured()) {
         return errResp(503, "Browser engine not configured");
       }
+
+      // Inject captcha solver credentials when caller requests captcha_solver: true
+      let captchaSolver = null;
+      if (data.captcha_solver === true) {
+        try {
+          captchaSolver = await getCaptchaCredentials(base44);
+          if (!captchaSolver) {
+            return errResp(400, "captcha_solver: true was requested but CAPTCHA_SOLVER_API_KEY secret is not configured");
+          }
+        } catch (e) {
+          return errResp(500, `Captcha solver config error: ${e.message}`);
+        }
+      }
+
       let engineRes;
       try {
         engineRes = await enginePost("/sessions", {
@@ -180,6 +195,7 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
           usePool: data.use_pool !== false,
           cookies: data.cookies,
           storageState: data.storage_state,
+          captchaSolver,
         }, requestId);
       } catch (err) {
         return errResp(502, `Engine session creation failed: ${err.message}`);
@@ -263,11 +279,20 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
 
       let engineRes;
       try {
+        // Inject captcha solver credentials for solve_captcha actions
+        let actionOptions = data.options || {};
+        if (data.action_type === "solve_captcha") {
+          try {
+            actionOptions = await withCaptchaCredentials(base44, actionOptions);
+          } catch (e) {
+            return errResp(400, e.message);
+          }
+        }
         engineRes = await enginePost(`/sessions/${session.session_id}/execute`, {
           action_type: data.action_type,
           selector: data.selector,
           value: data.value,
-          options: data.options || {},
+          options: actionOptions,
         }, requestId);
       } catch (err) {
         return errResp(502, `Engine action failed: ${err.message}`);

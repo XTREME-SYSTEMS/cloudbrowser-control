@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { stagingEnginePost, stagingEngineDelete, isStagingEngineConfigured, requireIsolatedFortressTestEnvironment, STAGING_ENGINE_CONFIGURATION_REQUIRED } from "../../shared/stagingEngineClient.ts";
 import { encrypt, decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+import { withCaptchaCredentials } from "../../shared/captchaSolver.ts";
 
 // ═══════════════════════════════════════════════
 // mcpToolsStaging — STAGING MCP tool surface (Fortress v1.1)
@@ -94,8 +95,12 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!session) throw new Error("Session not found");
       if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
+      let actionOptions = params.options || {};
+      if (params.action_type === "solve_captcha") {
+        actionOptions = await withCaptchaCredentials(base44, actionOptions);
+      }
       const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, {
-        action_type: params.action_type, selector: params.selector, value: params.value, options: params.options || {},
+        action_type: params.action_type, selector: params.selector, value: params.value, options: actionOptions,
       });
       return { result: res, environment: "staging" };
     }

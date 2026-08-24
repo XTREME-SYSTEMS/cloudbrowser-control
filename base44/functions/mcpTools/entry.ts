@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+import { withCaptchaCredentials } from "../../shared/captchaSolver.ts";
 
 // ═══════════════════════════════════════════════
 // MCP Tools — Governed MCP tool surface for browser automation
@@ -133,11 +134,16 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!session) throw new Error("Session not found");
       if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
+      // Inject captcha solver credentials for solve_captcha actions
+      let actionOptions = params.options || {};
+      if (params.action_type === "solve_captcha") {
+        actionOptions = await withCaptchaCredentials(base44, actionOptions);
+      }
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: params.action_type,
         selector: params.selector,
         value: params.value,
-        options: params.options || {},
+        options: actionOptions,
       });
       return { result: res };
     }

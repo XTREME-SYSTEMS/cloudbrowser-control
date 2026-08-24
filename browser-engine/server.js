@@ -402,6 +402,71 @@ async function solveCaptcha(page, options) {
   throw new Error("CAPTCHA solving timed out");
 }
 
+// Auto-detect and solve captchas on the current page.
+// Called after navigation when session.captchaSolver is configured.
+// Detects reCAPTCHA v2, hCaptcha, and Cloudflare Turnstile.
+async function autoSolveCaptcha(page, solverConfig) {
+  if (!solverConfig || !solverConfig.apiKey) return { detected: false, solved: false };
+
+  const detections = await page.evaluate(() => {
+    const found = [];
+
+    // reCAPTCHA v2 — look for the g-recaptcha div with sitekey, or the iframe
+    const recaptchaDiv = document.querySelector(".g-recaptcha[data-sitekey]");
+    if (recaptchaDiv) {
+      found.push({ type: "recaptcha_v2", siteKey: recaptchaDiv.getAttribute("data-sitekey") });
+    }
+    const recaptchaIframe = document.querySelector('iframe[src*="recaptcha/api2/anchor"]');
+    if (recaptchaIframe && found.length === 0) {
+      // Try to extract sitekey from the iframe src
+      const src = recaptchaIframe.getAttribute("src") || "";
+      const match = src.match(/[?&]k=([^&]+)/);
+      if (match) found.push({ type: "recaptcha_v2", siteKey: match[1] });
+    }
+
+    // hCaptcha
+    const hcaptchaDiv = document.querySelector(".h-captcha[data-sitekey]");
+    if (hcaptchaDiv) {
+      found.push({ type: "hcaptcha", siteKey: hcaptchaDiv.getAttribute("data-sitekey") });
+    }
+
+    // Cloudflare Turnstile
+    const turnstileDiv = document.querySelector(".cf-turnstile[data-sitekey]");
+    if (turnstileDiv) {
+      found.push({ type: "turnstile", siteKey: turnstileDiv.getAttribute("data-sitekey") });
+    }
+
+    return found;
+  }).catch(() => []);
+
+  if (detections.length === 0) return { detected: false, solved: false };
+
+  // Solve the first detected captcha
+  const captcha = detections[0];
+  try {
+    const solveOptions = {
+      ...solverConfig,
+      type: captcha.type,
+      siteKey: captcha.siteKey,
+    };
+    const result = await solveCaptcha(page, solveOptions);
+
+    // For reCAPTCHA v2, try to submit the form after solving
+    if (captcha.type === "recaptcha_v2" && result.solved) {
+      await page.evaluate(() => {
+        // Try clicking the submit button
+        const btn = document.querySelector('input[type="submit"]') || document.querySelector('button[type="submit"]');
+        if (btn) btn.click();
+      }).catch(() => {});
+      await page.waitForTimeout(2000);
+    }
+
+    return { detected: true, solved: result.solved, type: captcha.type, token: result.token };
+  } catch (e) {
+    return { detected: true, solved: false, type: captcha.type, error: e.message };
+  }
+}
+
 // Bounded crawler
 async function crawl(page, options) {
   const startUrl = page.url();
@@ -648,6 +713,8 @@ app.post("/sessions", async (req, res) => {
       id, browser, context, page, status: "idle", url: "", title: "",
       lastActivity: Date.now(), createdAt: Date.now(), consoleLogs: [], networkLogs: [],
       recordVideo: !!opts.recordVideo, cdpUrl, userDataDir: opts.userDataDir,
+      // Captcha auto-solver config (injected by gateway when captcha_solver: true)
+      captchaSolver: opts.captchaSolver || null,
     };
 
     page.on("console", (msg) => session.consoleLogs.push({ type: msg.type(), text: msg.text(), time: Date.now() }));
@@ -708,7 +775,21 @@ app.post("/sessions/:id/execute", async (req, res) => {
     }
 
     switch (action_type) {
-      case "goto": { await page.goto(value || selector, { waitUntil: options.waitUntil || "domcontentloaded", timeout: options.timeout || DEFAULT_TIMEOUT }); s.url = page.url(); s.title = await page.title(); result.url = s.url; result.title = s.title; break; }
+      case "goto": {
+        await page.goto(value || selector, { waitUntil: options.waitUntil || "domcontentloaded", timeout: options.timeout || DEFAULT_TIMEOUT });
+        s.url = page.url(); s.title = await page.title();
+        result.url = s.url; result.title = s.title;
+        // Auto-solve captcha if session has captcha solver configured
+        if (s.captchaSolver) {
+          const captchaResult = await autoSolveCaptcha(page, s.captchaSolver);
+          if (captchaResult.detected) {
+            result.captcha = captchaResult;
+            s.url = page.url(); s.title = await page.title().catch(() => s.title);
+            result.url = s.url; result.title = s.title;
+          }
+        }
+        break;
+      }
       case "back": { await page.goBack({ timeout: options.timeout || DEFAULT_TIMEOUT }); s.url = page.url(); result.url = s.url; break; }
       case "forward": { await page.goForward({ timeout: options.timeout || DEFAULT_TIMEOUT }); s.url = page.url(); result.url = s.url; break; }
       case "reload": { await page.reload({ timeout: options.timeout || DEFAULT_TIMEOUT }); s.url = page.url(); result.url = s.url; break; }
