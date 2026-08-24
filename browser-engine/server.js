@@ -532,7 +532,7 @@ async function autoSolveCaptcha(page, solverConfig) {
       await page.waitForTimeout(2000);
     }
 
-    return { detected: true, solved: result.solved, type: captcha.type, token: result.token, error: result.error, provider: result.provider };
+    return { detected: true, solved: result.solved, type: captcha.type, token: result.token, error: result.error, provider: result.provider, audioDebug: result.audioDebug };
   } catch (e) {
     return { detected: true, solved: false, type: captcha.type, error: e.message };
   }
