@@ -530,7 +530,7 @@ async function autoSolveCaptcha(page, solverConfig) {
       await page.waitForTimeout(2000);
     }
 
-    return { detected: true, solved: result.solved, type: captcha.type, token: result.token };
+    return { detected: true, solved: result.solved, type: captcha.type, token: result.token, error: result.error, provider: result.provider };
   } catch (e) {
     return { detected: true, solved: false, type: captcha.type, error: e.message };
   }
@@ -940,7 +940,13 @@ app.post("/sessions/:id/execute", async (req, res) => {
       case "set_headers": { await s.context.setExtraHTTPHeaders(options.headers || {}); break; }
       case "set_local_storage": { await page.evaluate(([k, v]) => localStorage.setItem(k, v), [options.key, options.value]); break; }
       case "capture_response": { result.data = await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.responseStatus || 200); break; }
-      case "solve_captcha": { result.data = await solveCaptcha(page, options); break; }
+      case "solve_captcha": {
+        const captchaProvider = options.provider || "2captcha";
+        result.data = captchaProvider === "self"
+          ? await solveCaptchaSelf(page, options)
+          : await solveCaptcha(page, options);
+        break;
+      }
       case "mock_response": { await page.route(options.url, (route) => route.fulfill({ status: options.status || 200, contentType: options.contentType || "application/json", body: options.body || "" })); result.data = { mocked: options.url }; break; }
       case "save_state": { const cookies = await s.context.cookies(); const storageState = await s.context.storageState(); const stateToken = "state_" + Math.random().toString(36).slice(2); savedStates.set(stateToken, { cookies, storageState, url: s.url, title: s.title }); result.data = { stateToken, url: s.url }; break; }
       case "restore_state": { const state = savedStates.get(options.stateToken); if (!state) throw new Error("State not found"); if (state.cookies) await s.context.addCookies(state.cookies); if (state.storageState?.origins) { for (const origin of state.storageState.origins) { for (const { key, value: val } of origin.localStorage || []) { await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: key, v: val }); } } } if (state.url) await page.goto(state.url); result.data = { restored: true, url: state.url }; break; }
