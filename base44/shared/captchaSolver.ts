@@ -12,7 +12,12 @@
  * - provider comes from SystemSettings.captcha_provider (default: "2captcha").
  */
 export async function getCaptchaCredentials(base44) {
-  const apiKey = process.env.CAPTCHA_SOLVER_API_KEY;
+  // Check multiple possible secret names — the platform may save the key
+  // under different names depending on how it was entered
+  const apiKey = process.env.CAPTCHA_SOLVER_API_KEY 
+    || process.env.CAPTCHA_API_KEY
+    || process.env.TWO_CAPTCHA_API_KEY
+    || process.env.TWOCAPTCHA_API_KEY;
   if (!apiKey || apiKey.length < 8) {
     return null;
   }
@@ -37,7 +42,7 @@ export async function getCaptchaCredentials(base44) {
 export async function withCaptchaCredentials(base44, options) {
   const creds = await getCaptchaCredentials(base44);
   if (!creds) {
-    throw new Error("Captcha solver not configured: CAPTCHA_SOLVER_API_KEY secret is missing or too short. Set it in the app secrets.");
+    throw new Error("Captcha solver not configured: CAPTCHA_SOLVER_API_KEY (or CAPTCHA_API_KEY) secret is missing or too short. Set it in the app secrets.");
   }
   return {
     ...options,

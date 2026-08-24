@@ -454,8 +454,10 @@ async function autoSolveCaptcha(page, solverConfig) {
   // captcha widget exists in the DOM and finds nothing.
   const captchaSelectors = [
     'iframe[src*="recaptcha/api2/anchor"]',
+    'iframe[src*="recaptcha/enterprise/anchor"]',
     'iframe[src*="recaptcha/"]',
     '.g-recaptcha[data-sitekey]',
+    '#recaptcha.g-recaptcha',
     'iframe[src*="hcaptcha.com"]',
     '.h-captcha[data-sitekey]',
     'iframe[src*="challenges.cloudflare.com"]',
@@ -854,11 +856,16 @@ app.post("/sessions/:id/execute", async (req, res) => {
         // Auto-solve captcha if session has captcha solver configured
         if (s.captchaSolver) {
           const captchaResult = await autoSolveCaptcha(page, s.captchaSolver);
+          // Always include captcha result in response — even when not detected,
+          // so the caller knows auto-solve was attempted
+          result.captcha = captchaResult;
           if (captchaResult.detected) {
-            result.captcha = captchaResult;
             s.url = page.url(); s.title = await page.title().catch(() => s.title);
             result.url = s.url; result.title = s.title;
           }
+        } else {
+          // No captcha solver configured — note it in the response
+          result.captcha = { detected: false, solved: false, reason: "no_captcha_solver_configured" };
         }
         break;
       }
