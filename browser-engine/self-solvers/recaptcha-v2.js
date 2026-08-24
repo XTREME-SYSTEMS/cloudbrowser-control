@@ -57,6 +57,8 @@ export async function solveReCaptchaV2(page, maxWait) {
   const deadline = Date.now() + maxWait;
   let challengeDetected = false;
 
+  let lastAudioDebug = null;
+  
   while (Date.now() < deadline) {
     await sleep(500);
 
@@ -88,6 +90,7 @@ export async function solveReCaptchaV2(page, maxWait) {
       }
       // audioResult is a failure object — save for error reporting
       if (audioResult && audioResult.failed) {
+        lastAudioDebug = audioResult;
         return { 
           solved: false, 
           error: `Audio challenge failed at: ${audioResult.reason} (steps: ${(audioResult.steps||[]).join(", ")})`,
@@ -97,6 +100,10 @@ export async function solveReCaptchaV2(page, maxWait) {
     }
   }
 
+  // If we have an audioDebug result, include it in the error
+  if (lastAudioDebug) {
+    return { solved: false, error: lastAudioDebug.reason || "audio_failed", audioDebug: lastAudioDebug };
+  }
   return { solved: false, error: challengeDetected 
     ? "Image challenge appeared and audio fallback failed (check engine logs for step details)" 
     : "reCAPTCHA solving timed out" };
@@ -236,8 +243,21 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
     }).catch(() => null);
 
     if (!audioUrl) {
+      // Dump the entire frame content for debugging
+      const frameDump = await challengeFrame.evaluate(() => {
+        return {
+          url: location.href,
+          title: document.title,
+          html: document.documentElement.outerHTML.slice(0, 3000),
+          bodyText: document.body?.innerText?.slice(0, 500) || '',
+          allLinks: [...document.querySelectorAll('a')].map(a => ({href: a.href, text: a.textContent?.slice(0,50)})),
+          allAudio: [...document.querySelectorAll('audio')].map(a => ({src: a.src, currentSrc: a.currentSrc, children: [...a.children].map(c => ({tag: c.tagName, src: c.src}))})),
+          allButtons: [...document.querySelectorAll('button, [role="button"]')].map(b => ({text: b.textContent?.slice(0,50), id: b.id, class: b.className?.slice(0,80)})),
+        };
+      }).catch(() => ({error: 'eval failed'}));
       console.log("[captcha] Audio: FAILED — no audio URL found");
-      return { failed: true, reason: "no_audio_url", steps };
+      console.log("[captcha] Frame dump:", JSON.stringify(frameDump, null, 2));
+      return { failed: true, reason: "no_audio_url", steps, frameDump };
     }
     console.log(`[captcha] Audio: Got URL: ${audioUrl.slice(0, 80)}...`);
     steps.push("got_audio_url");
