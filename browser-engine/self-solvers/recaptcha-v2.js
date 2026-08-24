@@ -83,7 +83,17 @@ export async function solveReCaptchaV2(page, maxWait) {
       challengeDetected = true;
       // ── Try audio challenge ──
       const audioResult = await tryAudioChallenge(page, challengeFrame, deadline - Date.now());
-      if (audioResult) return { solved: true, token: audioResult };
+      if (typeof audioResult === "string") {
+        return { solved: true, token: audioResult };
+      }
+      // audioResult is a failure object — save for error reporting
+      if (audioResult && audioResult.failed) {
+        return { 
+          solved: false, 
+          error: `Audio challenge failed at: ${audioResult.reason} (steps: ${(audioResult.steps||[]).join(", ")})`,
+          audioDebug: audioResult
+        };
+      }
     }
   }
 
@@ -117,8 +127,9 @@ async function pollForToken(page, timeout) {
 }
 
 // ── Try audio challenge ──
+// Returns: token string on success, or { failed: true, reason: string } on failure
 async function tryAudioChallenge(page, challengeFrame, remainingMs) {
-  if (remainingMs < 15000) return null;
+  if (remainingMs < 15000) return { failed: true, reason: "insufficient_time" };
   const steps = [];
 
   try {
@@ -185,7 +196,7 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
     
     if (!clickedAudio) {
       console.log("[captcha] Audio: FAILED — no audio button found");
-      return null;
+      return { failed: true, reason: "no_audio_button", steps };
     }
     steps.push("clicked_audio");
     
@@ -226,7 +237,7 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
 
     if (!audioUrl) {
       console.log("[captcha] Audio: FAILED — no audio URL found");
-      return null;
+      return { failed: true, reason: "no_audio_url", steps };
     }
     console.log(`[captcha] Audio: Got URL: ${audioUrl.slice(0, 80)}...`);
     steps.push("got_audio_url");
@@ -236,7 +247,7 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
     const audioResp = await fetch(audioUrl);
     if (!audioResp.ok) {
       console.log(`[captcha] Audio: FAILED — download returned ${audioResp.status}`);
-      return null;
+      return { failed: true, reason: `download_failed_${audioResp.status}`, steps };
     }
     const audioBuffer = await audioResp.arrayBuffer();
     console.log(`[captcha] Audio: Downloaded ${audioBuffer.byteLength} bytes`);
@@ -247,7 +258,7 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
     const transcription = await transcribeAudio(Buffer.from(audioBuffer));
     if (!transcription || transcription.trim().length < 2) {
       console.log("[captcha] Audio: FAILED — transcription empty");
-      return null;
+      return { failed: true, reason: "transcription_empty", steps };
     }
     console.log(`[captcha] Audio: Transcribed: "${transcription}"`);
     steps.push("transcribed");
@@ -269,7 +280,7 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
 
     if (!inputFilled) {
       console.log("[captcha] Audio: FAILED — no input field found");
-      return null;
+      return { failed: true, reason: "no_input_field", steps };
     }
     steps.push("entered_text");
 
@@ -296,10 +307,10 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
       return token;
     }
     console.log("[captcha] Audio: No token after submit. Steps: " + steps.join(", "));
-    return null;
+    return { failed: true, reason: "no_token_after_submit", steps };
   } catch (e) {
     console.log(`[captcha] Audio: EXCEPTION at steps [${steps.join(", ")}]: ${e.message}`);
-    return null;
+    return { failed: true, reason: `exception: ${e.message}`, steps };
   }
 }
 
