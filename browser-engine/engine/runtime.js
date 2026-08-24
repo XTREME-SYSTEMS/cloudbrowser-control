@@ -114,7 +114,7 @@ export async function createBrowserContext(opts = {}) {
 export async function createSession(opts = {}, status = "idle") {
   const { browser, context, page, cdpUrl, egressProxy } = await createBrowserContext(opts);
   const id = uid();
-  const session = { id, browser, context, page, status, url: "", title: "", lastActivity: Date.now(), createdAt: Date.now(), consoleLogs: [], networkLogs: [], recordVideo: Boolean(opts.recordVideo), cdpUrl, egressPolicy: sessionPolicy(opts), tabs: [page], isPooled: status === "pooled", egressProxy };
+  const session = { id, browser, context, page, status, url: "", title: "", lastActivity: Date.now(), createdAt: Date.now(), consoleLogs: [], networkLogs: [], recordVideo: Boolean(opts.recordVideo), cdpUrl, egressPolicy: sessionPolicy(opts), tabs: [page], isPooled: status === "pooled", egressProxy, captchaSolver: opts.captchaSolver || null };
   page.on("console", (msg) => session.consoleLogs.push({ type: msg.type(), text: msg.text(), time: Date.now() }));
   page.on("pageerror", (error) => session.consoleLogs.push({ type: "error", text: error.message, time: Date.now() }));
   page.on("request", (request) => session.networkLogs.push({ method: request.method(), url: request.url(), type: request.resourceType(), time: Date.now() }));
@@ -176,10 +176,12 @@ export function scheduleWarmPool(delayMs = 250) {
   warmPoolTimer = setTimeout(() => { warmPoolTimer = null; warmPool().catch(() => {}); }, Math.max(0, Number(delayMs) || 0));
   warmPoolTimer.unref?.();
 }
-export function checkoutPooledSession() {
+export function checkoutPooledSession(opts = {}) {
   while (pool.length) {
     const id = pool.shift(); const session = sessions.get(id); if (!session) continue;
-    session.status = "idle"; session.isPooled = false; session.lastActivity = Date.now(); return session;
+    session.status = "idle"; session.isPooled = false; session.lastActivity = Date.now();
+    session.captchaSolver = opts.captchaSolver || null;
+    return session;
   }
   return null;
 }

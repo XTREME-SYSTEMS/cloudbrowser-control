@@ -103,16 +103,16 @@ export function createApp() {
       if (opts.extensions?.some((id) => typeof id !== "string" || !/^[a-zA-Z0-9_-]+$/.test(id))) return res.status(400).json({ error: "Invalid extension identifier" });
 
       if (opts.usePool && !hasCallerOptions(opts)) {
-        const pooled = checkoutPooledSession();
+        const pooled = checkoutPooledSession(opts);
         if (pooled) {
           scheduleWarmPool();
-          return res.json({ sessionId: pooled.id, status: "idle", fromPool: true, workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, createdAt: new Date(pooled.createdAt).toISOString(), expiresAt: new Date(pooled.createdAt + SESSION_TTL_MS).toISOString() });
+          return res.json({ sessionId: pooled.id, status: "idle", fromPool: true, captcha_solver_enabled: Boolean(pooled.captchaSolver), workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, createdAt: new Date(pooled.createdAt).toISOString(), expiresAt: new Date(pooled.createdAt + SESSION_TTL_MS).toISOString() });
         }
       }
       if (sessions.size >= MAX_SESSIONS) return res.status(503).json({ error: "Max concurrent sessions reached" });
 
       const session = await createSession(opts, "idle");
-      return res.json({ sessionId: session.id, status: "idle", cdpUrl: null, workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, createdAt: new Date(session.createdAt).toISOString(), expiresAt: new Date(session.createdAt + SESSION_TTL_MS).toISOString() });
+      return res.json({ sessionId: session.id, status: "idle", cdpUrl: null, captcha_solver_enabled: Boolean(session.captchaSolver), workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, createdAt: new Date(session.createdAt).toISOString(), expiresAt: new Date(session.createdAt + SESSION_TTL_MS).toISOString() });
     } catch (error) { return res.status(400).json({ error: error.message }); }
   });
 
