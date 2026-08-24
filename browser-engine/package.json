@@ -1,7 +1,7 @@
 {
   "name": "browser-engine",
   "version": "1.0.0",
-  "description": "Self-hosted Browserbase replacement — Playwright + headless Chromium API server",
+  "description": "Self-hosted Browserbase replacement \u2014 Playwright + headless Chromium API server",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "playwright": "^1.48.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "@xenova/transformers": "^2.17.1"
   }
 }

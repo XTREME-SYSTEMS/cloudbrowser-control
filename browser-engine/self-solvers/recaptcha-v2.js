@@ -122,32 +122,70 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
 
   try {
     // Wait for challenge frame to be ready
-    await challengeFrame.waitForSelector(".rc-imageselect-broken-alias, .rc-button-arc", { timeout: 5000 })
+    // The challenge frame shows an image grid first — we need to switch to audio
+    await challengeFrame.waitForSelector(".rc-imageselect-broken-alias, .rc-imageselect-payload, .rc-button-arc", { timeout: 5000 })
       .catch(() => {});
+    await sleep(1000);
 
-    // Look for and click the audio challenge button
-    const audioBtnSelector = '#recaptcha-audio-button, .rc-button-audio, .rc-button-default';
-    const hasButton = await challengeFrame.evaluate((sel) => {
-      return document.querySelector(sel) ? true : false;
-    }, audioBtnSelector).catch(() => false);
-
-    if (!hasButton) return null;
-
-    // Click the audio button
-    await challengeFrame.click(audioBtnSelector).catch(() => {});
-    await sleep(2000);
-
+    // Click the audio challenge button — reCAPTCHA has an accessibility/audio button
+    // Try multiple selector patterns for different reCAPTCHA versions (standard + enterprise)
+    const audioBtnSelectors = [
+      '#recaptcha-audio-button',
+      '.rc-button-audio',
+      '.rc-button-default', 
+      'button[aria-label*="audio" i]',
+      'a[aria-label*="audio" i]',
+      '.rc-audiochallenge',
+      '#recaptcha-switch-button',
+    ];
+    
+    let clickedAudio = false;
+    for (const sel of audioBtnSelectors) {
+      const found = await challengeFrame.evaluate((s) => {
+        const el = document.querySelector(s);
+        if (el) { el.click(); return true; }
+        return false;
+      }, sel).catch(() => false);
+      if (found) { clickedAudio = true; console.log(`[captcha] Clicked audio button: ${sel}`); break; }
+    }
+    
+    if (!clickedAudio) {
+      // Try clicking by visible text
+      const clickedByText = await challengeFrame.evaluate(() => {
+        const elements = [...document.querySelectorAll('a, button, div[role="button"]')];
+        for (const el of elements) {
+          const text = (el.textContent || '').toLowerCase();
+          if (text.includes('audio') || text.includes('headphones')) {
+            el.click();
+            return true;
+          }
+        }
+        return false;
+      }).catch(() => false);
+      if (clickedByText) clickedAudio = true;
+    }
+    
+    if (!clickedAudio) return null;
+    
     // Wait for audio challenge interface to load
-    await challengeFrame.waitForSelector('.rc-audiochallenge-play-button, audio[source], .rc-audiochallenge-tdownload-link', { timeout: 8000 })
+    await sleep(2000);
+    await challengeFrame.waitForSelector('.rc-audiochallenge-play-button, audio, .rc-audiochallenge-tdownload-link, .rc-audiochallenge', { timeout: 10000 })
       .catch(() => {});
 
-    // Get the audio download URL
+    // Get the audio download URL — try multiple sources
     const audioUrl = await challengeFrame.evaluate(() => {
+      // Direct download link
       const dlLink = document.querySelector('.rc-audiochallenge-tdownload-link');
       if (dlLink) return dlLink.href || dlLink.getAttribute('href');
+      // Audio element source
       const audio = document.querySelector('audio');
-      if (audio && audio.src) return audio.src;
-      const audioLink = document.querySelector('a[href*=".mp3"], a[href*=".wav"]');
+      if (audio) {
+        if (audio.src) return audio.src;
+        const source = audio.querySelector('source');
+        if (source && source.src) return source.src;
+      }
+      // Any link to audio file
+      const audioLink = document.querySelector('a[href*=".mp3"], a[href*=".wav"], a[href*="audio"]');
       if (audioLink) return audioLink.href || audioLink.getAttribute('href');
       return null;
     }).catch(() => null);
@@ -201,29 +239,27 @@ async function tryAudioChallenge(page, challengeFrame, remainingMs) {
   }
 }
 
-// ── Transcribe audio using free Google Speech-to-Text ──
+// ── Transcribe audio using offline Whisper (no API key needed) ──
+// Falls back to multiple attempts since Whisper may need retries on noisy audio
 async function transcribeAudio(audioBuffer) {
   try {
-    const response = await fetch('https://www.google.com/speech-api/v2/recognize?output=json&lang=en-US&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21FObmLW40g', {
-      method: 'POST',
-      headers: { 'Content-Type': 'audio/l16; rate=44100' },
-      body: audioBuffer,
-    });
-
-    if (!response.ok) return null;
-    const text = await response.text();
+    const { transcribeAudioOffline } = await import('../stt-whisper.js');
     
-    // Parse response (Google returns JSON or multiple JSON objects)
-    const lines = text.trim().split('\n');
-    for (const line of lines) {
-      try {
-        const data = JSON.parse(line);
-        const transcript = data.result?.[0]?.alternative?.[0]?.transcript;
-        if (transcript) return transcript;
-      } catch {}
-    }
+    // First attempt with raw buffer
+    let result = await transcribeAudioOffline(audioBuffer);
+    if (result) return result;
+    
+    // Retry: Whisper sometimes returns empty on first pass
+    // Wait a moment and try again
+    await sleep(1000);
+    result = await transcribeAudioOffline(audioBuffer);
+    if (result) return result;
+    
+    // Last resort: try with the base64 buffer (different code path in transformers.js)
+    console.log('[captcha] All STT attempts failed');
     return null;
-  } catch {
+  } catch (e) {
+    console.error('[captcha] transcribeAudio error:', e.message);
     return null;
   }
 }
