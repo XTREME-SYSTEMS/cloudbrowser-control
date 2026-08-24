@@ -2,7 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
-import { withCaptchaCredentials } from "../../shared/captchaSolver.ts";
+import { withCaptchaCredentials, getCaptchaCredentials } from "../../shared/captchaSolver.ts";
 
 // ═══════════════════════════════════════════════
 // MCP Tools — Governed MCP tool surface for browser automation
@@ -22,6 +22,7 @@ const TOOL_SCOPES = {
   browser_screenshot: "sessions:read",
   browser_list_tabs: "sessions:read",
   browser_switch_tab: "sessions:write",
+  solve_captcha: "sessions:write",
   context_create: "sessions:write",
   context_use: "sessions:read",
   context_delete: "sessions:write",
@@ -87,19 +88,26 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     // ── Browser lifecycle ──
     case "browser_start": {
       if (!await isEngineConfigured()) throw new Error("Browser engine not configured");
+      // Inject captcha solver credentials when caller requests captcha_solver: true
+      let captchaSolver = null;
+      if (params.captcha_solver === true) {
+        captchaSolver = await getCaptchaCredentials(base44);
+        if (!captchaSolver) throw new Error("captcha_solver: true was requested but CAPTCHA_SOLVER_API_KEY secret is not configured");
+      }
       const engineRes = await enginePost("/sessions", {
         viewport: params.viewport,
         userAgent: params.user_agent,
         usePool: params.use_pool !== false,
+        captchaSolver,
       });
       const session = await base44.asServiceRole.entities.Session.create({
         session_id: engineRes.sessionId,
         status: "idle",
         project_id: keyRecord.project_id,
         started_at: new Date().toISOString(),
-        metadata: { worker_id: engineRes.workerId, region: engineRes.region },
+        metadata: { worker_id: engineRes.workerId, region: engineRes.region, captcha_solver_enabled: !!captchaSolver },
       });
-      return { session_id: session.id, runtime_session_id: engineRes.sessionId, status: "idle" };
+      return { session_id: session.id, runtime_session_id: engineRes.sessionId, status: "idle", captcha_solver_enabled: !!captchaSolver };
     }
 
     case "browser_end": {
@@ -122,11 +130,12 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "goto", value: params.url,
+        options: { waitUntil: params.wait_until || "domcontentloaded", timeout: params.timeout || 60000 },
       });
       await base44.asServiceRole.entities.Session.update(params.session_id, {
         current_url: res.url, current_title: res.title,
       });
-      return { url: res.url, title: res.title };
+      return { url: res.url, title: res.title, captcha: res.captcha || null };
     }
 
     case "browser_act": {
@@ -205,6 +214,25 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
         action_type: "switch_tab", value: String(params.tab_index),
       });
       return { url: res.url };
+    }
+
+    // ── Explicit captcha solving ──
+    case "solve_captcha": {
+      const session = await base44.asServiceRole.entities.Session.get(params.session_id);
+      if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (!await isEngineConfigured()) throw new Error("Engine not configured");
+      const solveOptions = await withCaptchaCredentials(base44, {
+        type: params.type,
+        siteKey: params.site_key,
+        provider: params.provider,
+        maxWait: params.max_wait,
+      });
+      const res = await enginePost(`/sessions/${session.session_id}/execute`, {
+        action_type: "solve_captcha",
+        options: solveOptions,
+      });
+      return { result: res.data, captcha: res.data };
     }
 
     // ── Context management ──

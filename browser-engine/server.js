@@ -381,7 +381,28 @@ async function solveCaptcha(page, options) {
       if (resData.status === 1) {
         const token = resData.request;
         if (type === "recaptcha_v2") {
-          await page.evaluate((t) => { const el = document.getElementById("g-recaptcha-response"); if (el) el.innerHTML = t; }, token);
+          await page.evaluate((t) => {
+            // Set the hidden textarea value (reCAPTCHA reads .value, not innerHTML)
+            const el = document.getElementById("g-recaptcha-response") || document.querySelector("textarea[name='g-recaptcha-response']");
+            if (el) { el.innerHTML = t; el.value = t; }
+            // Trigger the reCAPTCHA callback so the widget marks itself as solved
+            if (window.___grecaptcha_cfg && window.___grecaptcha_cfg.clients) {
+              for (const cid of Object.keys(window.___grecaptcha_cfg.clients)) {
+                const client = window.___grecaptcha_cfg.clients[cid];
+                // Walk the client object to find the callback function
+                for (const prop of Object.keys(client)) {
+                  const val = client[prop];
+                  if (val && typeof val === "object") {
+                    for (const p2 of Object.keys(val)) {
+                      if (typeof val[p2] === "function" && p2.startsWith("callback")) {
+                        try { val[p2](t); } catch (_) {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }, token);
         }
         return { solved: true, token, provider, type };
       }
@@ -408,6 +429,26 @@ async function solveCaptcha(page, options) {
 async function autoSolveCaptcha(page, solverConfig) {
   if (!solverConfig || !solverConfig.apiKey) return { detected: false, solved: false };
 
+  // Wait for reCAPTCHA/hCaptcha/Turnstile iframes to render.
+  // On Google's /sorry/ page and demo pages, the iframe loads asynchronously
+  // after domcontentloaded — without this wait, detection runs before the
+  // captcha widget exists in the DOM and finds nothing.
+  const captchaSelectors = [
+    'iframe[src*="recaptcha/api2/anchor"]',
+    'iframe[src*="recaptcha/"]',
+    '.g-recaptcha[data-sitekey]',
+    'iframe[src*="hcaptcha.com"]',
+    '.h-captcha[data-sitekey]',
+    'iframe[src*="challenges.cloudflare.com"]',
+    '.cf-turnstile[data-sitekey]',
+  ];
+  try {
+    await page.waitForSelector(captchaSelectors.join(", "), { timeout: 8000, state: "attached" });
+  } catch (_e) {
+    // No captcha iframe appeared within 8s — nothing to solve
+    return { detected: false, solved: false };
+  }
+
   const detections = await page.evaluate(() => {
     const found = [];
 
@@ -416,7 +457,7 @@ async function autoSolveCaptcha(page, solverConfig) {
     if (recaptchaDiv) {
       found.push({ type: "recaptcha_v2", siteKey: recaptchaDiv.getAttribute("data-sitekey") });
     }
-    const recaptchaIframe = document.querySelector('iframe[src*="recaptcha/api2/anchor"]');
+    const recaptchaIframe = document.querySelector('iframe[src*="recaptcha/api2/anchor"], iframe[src*="recaptcha/"]');
     if (recaptchaIframe && found.length === 0) {
       // Try to extract sitekey from the iframe src
       const src = recaptchaIframe.getAttribute("src") || "";
@@ -428,6 +469,12 @@ async function autoSolveCaptcha(page, solverConfig) {
     const hcaptchaDiv = document.querySelector(".h-captcha[data-sitekey]");
     if (hcaptchaDiv) {
       found.push({ type: "hcaptcha", siteKey: hcaptchaDiv.getAttribute("data-sitekey") });
+    }
+    const hcaptchaIframe = document.querySelector('iframe[src*="hcaptcha.com"]');
+    if (hcaptchaIframe && found.length === 0) {
+      const src = hcaptchaIframe.getAttribute("src") || "";
+      const match = src.match(/[?&]sitekey=([^&]+)/);
+      if (match) found.push({ type: "hcaptcha", siteKey: match[1] });
     }
 
     // Cloudflare Turnstile

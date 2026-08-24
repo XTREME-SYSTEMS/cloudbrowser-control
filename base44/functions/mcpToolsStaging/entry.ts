@@ -2,7 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { stagingEnginePost, stagingEngineDelete, isStagingEngineConfigured, requireIsolatedFortressTestEnvironment, STAGING_ENGINE_CONFIGURATION_REQUIRED } from "../../shared/stagingEngineClient.ts";
 import { encrypt, decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
-import { withCaptchaCredentials } from "../../shared/captchaSolver.ts";
+import { withCaptchaCredentials, getCaptchaCredentials } from "../../shared/captchaSolver.ts";
 
 // ═══════════════════════════════════════════════
 // mcpToolsStaging — STAGING MCP tool surface (Fortress v1.1)
@@ -62,14 +62,19 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
   switch (tool) {
     case "browser_start": {
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
+      let captchaSolver = null;
+      if (params.captcha_solver === true) {
+        captchaSolver = await getCaptchaCredentials(base44);
+        if (!captchaSolver) throw new Error("captcha_solver: true was requested but CAPTCHA_SOLVER_API_KEY secret is not configured");
+      }
       const engineRes = await stagingEnginePost("/sessions", {
-        viewport: params.viewport, userAgent: params.user_agent, usePool: params.use_pool !== false,
+        viewport: params.viewport, userAgent: params.user_agent, usePool: params.use_pool !== false, captchaSolver,
       });
       const session = await base44.asServiceRole.entities.Session.create({
         session_id: engineRes.sessionId, status: "idle", project_id: keyRecord.project_id,
-        started_at: new Date().toISOString(), metadata: { worker_id: engineRes.workerId, region: engineRes.region, environment: "staging" },
+        started_at: new Date().toISOString(), metadata: { worker_id: engineRes.workerId, region: engineRes.region, environment: "staging", captcha_solver_enabled: !!captchaSolver },
       });
-      return { session_id: session.id, runtime_session_id: engineRes.sessionId, status: "idle", environment: "staging" };
+      return { session_id: session.id, runtime_session_id: engineRes.sessionId, status: "idle", captcha_solver_enabled: !!captchaSolver, environment: "staging" };
     }
     case "browser_end": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
@@ -86,9 +91,25 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!session) throw new Error("Session not found");
       if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
-      const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, { action_type: "goto", value: params.url });
+      const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, {
+        action_type: "goto", value: params.url,
+        options: { waitUntil: params.wait_until || "domcontentloaded", timeout: params.timeout || 60000 },
+      });
       await base44.asServiceRole.entities.Session.update(params.session_id, { current_url: res.url, current_title: res.title });
-      return { url: res.url, title: res.title, environment: "staging" };
+      return { url: res.url, title: res.title, captcha: res.captcha || null, environment: "staging" };
+    }
+    case "solve_captcha": {
+      const session = await base44.asServiceRole.entities.Session.get(params.session_id);
+      if (!session) throw new Error("Session not found");
+      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
+      const solveOptions = await withCaptchaCredentials(base44, {
+        type: params.type, siteKey: params.site_key, provider: params.provider, maxWait: params.max_wait,
+      });
+      const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, {
+        action_type: "solve_captcha", options: solveOptions,
+      });
+      return { result: res.data, captcha: res.data, environment: "staging" };
     }
     case "browser_act": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
