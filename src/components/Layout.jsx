@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
+import StartHereHandoff from "@/components/StartHereHandoff";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -61,6 +62,9 @@ function SidebarContent({ onLogout }) {
           </div>
           <span className="font-heading font-semibold text-sidebar-foreground">Cloud Browser</span>
         </div>
+      </div>
+      <div className="px-4 pt-4">
+        <StartHereHandoff />
       </div>
       <NavLinks />
       <div className="p-4 border-t border-sidebar-border">
