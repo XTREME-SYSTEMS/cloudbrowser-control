@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Play, ArrowLeft, Calculator, DollarSign, Video, Bug, Layers } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, ArrowLeft, Calculator, DollarSign, Video, Bug, Layers, Ghost } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 const ACTION_TYPES = [
@@ -34,6 +34,7 @@ export default function JobBuilder() {
   const [recordVideo, setRecordVideo] = useState(false);
   const [enableCDP, setEnableCDP] = useState(false);
   const [usePool, setUsePool] = useState(false);
+  const [shadowMode, setShadowMode] = useState(false);
   const [profileId, setProfileId] = useState("");
   const [extensionIds, setExtensionIds] = useState([]);
   const [networkMocksJson, setNetworkMocksJson] = useState("[]");
@@ -84,8 +85,8 @@ export default function JobBuilder() {
     setSaving(true);
     try {
       const job = await base44.entities.Job.create({
-        name, status: "queued", start_url: startUrl,
-        session_config: { viewport, userAgent, blockedResources, recordVideo, enableCDP, usePool, profileId, extensionIds, networkMocks: (() => { try { return JSON.parse(networkMocksJson); } catch { return []; } })(), userDataDir: profiles.find((p) => p.id === profileId)?.user_data_dir, extensions: extensionIds.map((id) => extensions.find((e) => e.id === id)?.file_url).filter(Boolean) },
+        name, status: "queued", start_url: startUrl, shadow_mode: shadowMode,
+        session_config: { viewport, userAgent, blockedResources, recordVideo, enableCDP, usePool, shadowMode, profileId, extensionIds, networkMocks: (() => { try { return JSON.parse(networkMocksJson); } catch { return []; } })(), userDataDir: profiles.find((p) => p.id === profileId)?.user_data_dir, extensions: extensionIds.map((id) => extensions.find((e) => e.id === id)?.file_url).filter(Boolean) },
         steps_count: steps.length,
       });
 
@@ -227,6 +228,10 @@ export default function JobBuilder() {
               <div className="flex items-center gap-2"><Layers className="w-4 h-4" /><span className="text-sm">Session Pool</span></div>
               <Switch checked={usePool} onCheckedChange={setUsePool} />
             </div>
+          </div>
+          <div className="flex items-center justify-between p-3 border rounded-lg border-amber-400/40 bg-amber-50/30 dark:bg-amber-950/10">
+            <div className="flex items-center gap-2"><Ghost className="w-4 h-4 text-amber-500" /><div><span className="text-sm font-medium">Shadow Mode</span><p className="text-xs text-muted-foreground">Read-only safe run — maps site defenses before going live</p></div></div>
+            <Switch checked={shadowMode} onCheckedChange={setShadowMode} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

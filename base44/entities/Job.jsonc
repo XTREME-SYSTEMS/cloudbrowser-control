@@ -67,7 +67,16 @@
     },
     "session_config": {
       "type": "object",
-      "description": "Session options: viewport, user_agent, proxy_id, headers, blocked_resources, etc."
+      "description": "Session options: viewport, user_agent, proxy_id, headers, blocked_resources, shadow_mode, etc."
+    },
+    "shadow_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the job runs in shadow/safe mode \u2014 read-only, no mutations, captures site defenses for hardening before going live"
+    },
+    "shadow_report": {
+      "type": "object",
+      "description": "Defense analysis captured during a shadow run: detected captcha, bot-detection scripts, rate limits, honeypots, blocked resources, fingerprint checks"
     },
     "depends_on_job_id": {
       "type": "string",

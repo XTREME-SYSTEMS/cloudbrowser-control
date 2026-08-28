@@ -48,6 +48,101 @@ const QUESTIONS = [
       { value: "shadow_observe", label: "Shadow / observe (read-only)" },
     ],
   },
+  {
+    field: "proxy_strategy", label: "Proxy strategy", type: "select",
+    prompt: "Which proxy strategy should the agent use to avoid IP blocks?",
+    options: [
+      { value: "residential_rotating", label: "Residential rotating (max stealth, geo-coupled)" },
+      { value: "datacenter", label: "Datacenter (fast, lower stealth)" },
+      { value: "bring_own", label: "Bring my own proxy" },
+      { value: "none", label: "No proxy (direct)" },
+    ],
+  },
+  {
+    field: "target_geo", label: "Target geography", type: "text",
+    prompt: "Which countries/regions should sessions appear to originate from? (comma-separated, e.g. US, UK, DE)",
+  },
+  {
+    field: "concurrency", label: "Concurrency", type: "select",
+    prompt: "How many concurrent browser sessions should this project run?",
+    options: [
+      { value: "1", label: "1 (polite / single)" },
+      { value: "5", label: "5 (moderate)" },
+      { value: "10", label: "10 (high)" },
+      { value: "20", label: "20 (very high)" },
+      { value: "50", label: "50 (max throughput)" },
+    ],
+  },
+  {
+    field: "data_destination", label: "Data destination", type: "multiselect",
+    prompt: "Where should extracted data be sent? (select all that apply)",
+    options: [
+      { value: "googlesheets", label: "Google Sheets" },
+      { value: "supabase", label: "Supabase" },
+      { value: "webhook", label: "Webhook (HTTP POST)" },
+      { value: "email", label: "Email digest" },
+      { value: "download", label: "In-app download" },
+      { value: "hubspot", label: "HubSpot CRM" },
+    ],
+  },
+  {
+    field: "output_format", label: "Output format", type: "select",
+    prompt: "What format should extracted results be delivered in?",
+    options: [
+      { value: "json", label: "JSON (structured)" },
+      { value: "csv", label: "CSV (tabular)" },
+      { value: "html", label: "HTML (rendered)" },
+      { value: "pdf", label: "PDF (document)" },
+      { value: "screenshots", label: "Screenshots (visual)" },
+    ],
+  },
+  {
+    field: "schedule", label: "Run schedule", type: "select",
+    prompt: "How often should this job run?",
+    options: [
+      { value: "on_demand", label: "On demand (manual trigger)" },
+      { value: "hourly", label: "Hourly" },
+      { value: "daily", label: "Daily" },
+      { value: "weekly", label: "Weekly" },
+      { value: "realtime_monitor", label: "Real-time monitor (continuous change detection)" },
+    ],
+  },
+  {
+    field: "anti_detect_level", label: "Anti-detection level", type: "select",
+    prompt: "How aggressive should anti-detection / stealth be?",
+    options: [
+      { value: "maximum_stealth", label: "Maximum stealth (fingerprint spoofing, human-like input)" },
+      { value: "standard", label: "Standard (basic stealth)" },
+      { value: "basic", label: "Basic (minimal)" },
+    ],
+  },
+  {
+    field: "compliance_mode", label: "Compliance mode", type: "select",
+    prompt: "How should the agent respect site rules?",
+    options: [
+      { value: "respect_robots", label: "Respect robots.txt & ToS (safe)" },
+      { value: "aggressive", label: "Aggressive (ignore robots.txt)" },
+      { value: "legal_only", label: "Legal-only (public data, no auth bypass)" },
+    ],
+  },
+  {
+    field: "retry_policy", label: "Retry policy", type: "select",
+    prompt: "How should the agent handle transient failures?",
+    options: [
+      { value: "conservative", label: "Conservative (1 retry, long backoff)" },
+      { value: "standard", label: "Standard (3 retries, exponential backoff)" },
+      { value: "aggressive", label: "Aggressive (5 retries, short backoff + selector re-discovery)" },
+    ],
+  },
+  {
+    field: "shadow_first", label: "Shadow-first hardening", type: "select",
+    prompt: "Should the first run be a shadow/safe run to map site defenses before going live?",
+    options: [
+      { value: "shadow_first", label: "Yes — shadow run first, then go live (recommended)" },
+      { value: "live", label: "No — go live immediately" },
+      { value: "a_b_test", label: "A/B test shadow vs live" },
+    ],
+  },
 ];
 
 function isUnanswered(answers, field, type) {
@@ -84,6 +179,16 @@ export default async function (req) {
                 operating_mode: { type: "string" },
                 max_concurrent_sessions: { type: "number" },
                 enforce_https: { type: "boolean" },
+                proxy_strategy: { type: "string" },
+                target_geo: { type: "string" },
+                concurrency: { type: "number" },
+                data_destination: { type: "array", items: { type: "string" } },
+                output_format: { type: "string" },
+                schedule: { type: "string" },
+                anti_detect_level: { type: "string" },
+                compliance_mode: { type: "string" },
+                retry_policy: { type: "string" },
+                shadow_first: { type: "string" },
               },
             },
             risk_notes: { type: "string", description: "Any non-destructive hardening notes" },
