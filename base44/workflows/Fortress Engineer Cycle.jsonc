@@ -1,0 +1,47 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fortress_engineer_cycle",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_cycle": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runEnhancementCycle",
+            "args": {
+              "action": "cycle"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run enhancement cycle",
+            "description": "Implement, audit, fix, optimize"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Autonomously runs the implement\u2192audit\u2192fix\u2192optimize loop over the SystemEnhancement ledger every hour",
+  "name": "Fortress Engineer Cycle"
+}

@@ -1,0 +1,120 @@
+{
+  "name": "SystemEnhancement",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short name of the enhancement"
+    },
+    "description": {
+      "type": "string",
+      "description": "What the enhancement does and why it matters"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "competitive",
+        "hardening",
+        "reliability",
+        "dx",
+        "observability",
+        "proxy_captcha"
+      ],
+      "default": "competitive"
+    },
+    "priority": {
+      "type": "number",
+      "default": 2,
+      "description": "1 = highest, 3 = lowest"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "implemented",
+        "auditing",
+        "audited",
+        "failed",
+        "optimized",
+        "blocked"
+      ],
+      "default": "pending"
+    },
+    "target_layer": {
+      "type": "string",
+      "enum": [
+        "control_plane",
+        "engine",
+        "both"
+      ],
+      "default": "both"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Verifiable checks that prove the enhancement is done"
+    },
+    "implementation_plan": {
+      "type": "string",
+      "description": "LLM-generated plan of attack"
+    },
+    "implementation_notes": {
+      "type": "string",
+      "description": "What was actually done, file refs, evidence"
+    },
+    "audit_result": {
+      "type": "object",
+      "description": "{ passed: bool, score: number, failures: [string], evidence: [string] }"
+    },
+    "fix_attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "max_fix_attempts": {
+      "type": "number",
+      "default": 3
+    },
+    "blocked_reason": {
+      "type": "string",
+      "description": "Why progress stopped (e.g. requires external engine deploy)"
+    },
+    "last_action_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "auto_managed": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the Fortress Engineer agent owns this record"
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

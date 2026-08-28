@@ -36,6 +36,7 @@ import ErrorsPage from '@/pages/ErrorsPage';
 import ShareView from '@/pages/ShareView';
 import ConnectionWizard from '@/pages/ConnectionWizard';
 import OnboardingWizard from '@/pages/OnboardingWizard';
+import Enhancements from '@/pages/Enhancements';
 import AiChat from '@/pages/AiChat';
 
 const AuthenticatedApp = () => {
@@ -80,6 +81,7 @@ const AuthenticatedApp = () => {
           <Route path="/projects" element={<Projects />} />
           <Route path="/connection-wizard" element={<ConnectionWizard />} />
           <Route path="/onboarding" element={<OnboardingWizard />} />
+          <Route path="/enhancements" element={<Enhancements />} />
           <Route path="/ai-chat" element={<AiChat />} />
           <Route path="/connection-info" element={<ConnectionInfo />} />
           <Route path="/sessions" element={<Sessions />} />
