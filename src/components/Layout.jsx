@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 
@@ -27,7 +27,7 @@ const navItems = [
   { to: "/connection-info", label: "Connection Info", icon: Plug },
   { to: "/api-docs", label: "API Docs", icon: Code2 },
   { to: "/test-results", label: "Test Results", icon: Trophy },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 function NavLinks({ onNavigate }) {
@@ -117,6 +117,9 @@ export default function Layout() {
             </div>
             <span className="font-heading font-semibold">Cloud Browser</span>
           </div>
+          <Link to="/settings" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
+            <SettingsIcon className="w-5 h-5" />
+          </Link>
           <NotificationBell />
         </header>
 
