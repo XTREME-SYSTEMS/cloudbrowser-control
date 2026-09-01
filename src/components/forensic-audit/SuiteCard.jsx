@@ -29,7 +29,7 @@ export default function SuiteCard({ suiteName, state }) {
     );
   }
 
-  const data = state.data;
+  const data = state.data || {};
   const score = data.score ?? 0;
   const passed = data.testsPassed ?? 0;
   const total = data.testsTotal ?? 0;
