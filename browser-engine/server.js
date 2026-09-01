@@ -4,6 +4,9 @@ import fs from "fs";
 import { chromium } from "playwright";
 // Self-hosted CAPTCHA solver — zero external API dependency.
 import { solveCaptchaSelf } from './captcha-self-solver.js';
+// TASK 8: Fingerprint + human behavior modules
+import { generateFingerprint, getFingerprintInitScript } from './fingerprint-randomizer.js';
+import { humanClick, humanType, generateMousePath, humanDelay } from './human-behavior.js';
 
 
 const app = express();
@@ -750,10 +753,20 @@ app.post("/sessions", async (req, res) => {
       context = await chromium.launchPersistentContext(opts.userDataDir, { headless: true, args: launchArgs, ...contextOptions });
       page = context.pages()[0] || await context.newPage();
       await context.addInitScript(buildStealthScript(opts.userDataDir));
+      // TASK 8: Full fingerprint randomization
+      if (opts.fingerprintLevel === 'full') {
+        const fp = generateFingerprint();
+        await context.addInitScript(getFingerprintInitScript(fp));
+      }
     } else {
       browser = await chromium.launch({ headless: true, args: launchArgs });
       context = await browser.newContext(contextOptions);
       await context.addInitScript(buildStealthScript(Math.random().toString(36).slice(2)));
+      // TASK 8: Full fingerprint randomization
+      if (opts.fingerprintLevel === 'full') {
+        const fp = generateFingerprint();
+        await context.addInitScript(getFingerprintInitScript(fp));
+      }
       page = await context.newPage();
     }
 
@@ -789,6 +802,10 @@ app.post("/sessions", async (req, res) => {
       recordVideo: !!opts.recordVideo, cdpUrl, userDataDir: opts.userDataDir,
       // Captcha auto-solver config (injected by gateway when captcha_solver: true)
       captchaSolver: opts.captchaSolver || null,
+      // TASK 8: Human behavior level for clicks/typing
+      behaviorLevel: opts.behaviorLevel || 'low',
+      antiBotSystem: opts.antiBotSystem || null,
+      fingerprintLevel: opts.fingerprintLevel || 'none',
     };
 
     page.on("console", (msg) => session.consoleLogs.push({ type: msg.type(), text: msg.text(), time: Date.now() }));
