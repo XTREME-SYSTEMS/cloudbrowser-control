@@ -1,0 +1,9 @@
+[deploy]
+region = "ams"
+numReplicas = 3
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
