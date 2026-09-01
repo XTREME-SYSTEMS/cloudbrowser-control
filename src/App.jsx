@@ -40,6 +40,8 @@ import Enhancements from '@/pages/Enhancements';
 import AiChat from '@/pages/AiChat';
 import Proxies from '@/pages/Proxies';
 import Captcha from '@/pages/Captcha';
+import JobKanban from '@/pages/JobKanban';
+import ThemeProvider from '@/components/ThemeProvider';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -89,6 +91,7 @@ const AuthenticatedApp = () => {
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/sessions/:id" element={<SessionDetail />} />
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs/kanban" element={<JobKanban />} />
           <Route path="/jobs/new" element={<JobBuilder />} />
           <Route path="/jobs/ai-builder" element={<AiJobBuilder />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
@@ -117,6 +120,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <ThemeProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
@@ -124,6 +128,7 @@ function App() {
         </Router>
         <Toaster />
       </QueryClientProvider>
+      </ThemeProvider>
     </AuthProvider>
   )
 }

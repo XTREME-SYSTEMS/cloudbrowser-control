@@ -1,10 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun, Command } from "lucide-react";
+import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
+import CommandPalette from "@/components/CommandPalette";
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="w-8 h-8" />;
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent w-full"
+    >
+      {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {theme === "dark" ? "Light Mode" : "Dark Mode"}
+    </button>
+  );
+}
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -71,7 +89,8 @@ function SidebarContent({ onLogout }) {
         <StartHereHandoff />
       </div>
       <NavLinks />
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-1">
+        <ThemeToggle />
         <button
           onClick={onLogout}
           className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent w-full"
@@ -131,6 +150,8 @@ export default function Layout() {
           </div>
         </main>
       </div>
+
+      <CommandPalette />
     </div>
   );
 }
