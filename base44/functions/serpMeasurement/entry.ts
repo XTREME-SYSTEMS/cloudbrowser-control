@@ -46,7 +46,7 @@ export default async function (req) {
     const navResult = await enginePost(`/sessions/${session.sessionId}/execute`, {
       action_type: "goto",
       value: searchUrl,
-      options: { timeout: 60000, waitUntil: "domcontentloaded" },
+      options: { timeout: 180000, waitUntil: "domcontentloaded" },
     }, requestId);
 
     // Check if captcha was encountered and solved
@@ -68,7 +68,29 @@ export default async function (req) {
       }
     }
 
-    // 3. Extract SERP results from the page
+    // 3. If captcha was solved, re-navigate to the search URL
+    // The captcha solve redirects to google.com/index, but the session cookie is now set.
+    // Re-navigating to the search URL should serve actual search results.
+    if (captchaSolved) {
+      const reNavResult = await enginePost(`/sessions/${session.sessionId}/execute`, {
+        action_type: "goto",
+        value: searchUrl,
+        options: { timeout: 60000, waitUntil: "domcontentloaded" },
+      }, requestId);
+      // Check if we got a second captcha (unlikely but possible)
+      if (reNavResult.captcha?.detected && !reNavResult.captcha?.solved) {
+        return Response.json({
+          ok: false,
+          error: "reCAPTCHA on re-navigation but not solved",
+          captcha: reNavResult.captcha,
+          keyword,
+          target_url,
+          engine_session_id: session.sessionId,
+        }, { status: 200 });
+      }
+    }
+
+    // 4. Extract SERP results from the page
     const extractResult = await enginePost(`/sessions/${session.sessionId}/execute`, {
       action_type: "evaluate",
       value: `(() => {
@@ -100,7 +122,7 @@ export default async function (req) {
       serpResults = [];
     }
 
-    // 4. Find the target URL's position
+    // 5. Find the target URL's position
     const target = target_url.toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
     let foundPosition = -1;
     let foundResult = null;
@@ -114,7 +136,7 @@ export default async function (req) {
       }
     }
 
-    // 5. Clean up session
+    // 6. Clean up session
     try {
       await engineGet(`/sessions/${session.sessionId}`, requestId);
     } catch (_e) { /* session cleanup is best-effort */ }
