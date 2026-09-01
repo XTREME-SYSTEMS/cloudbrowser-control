@@ -1087,19 +1087,26 @@ app.post("/sessions/:id/execute", async (req, res) => {
             if (route.request().resourceType() === "document") {
               try {
                 const response = await route.fetch();
-                let body = await response.text();
-                // Remove reCAPTCHA script tags from the HTML
+                const body = await response.text();
+                // Only modify if the page contains reCAPTCHA
                 if (body.includes("recaptcha")) {
-                  body = body.replace(/<script[^>]*recaptcha[^>]*><\/script>/gi, "");
-                  body = body.replace(/<script[^>]*src=["'][^"']*gstatic\.com\/recaptcha[^"']*["'][^>]*><\/script>/gi, "");
+                  const stripped = body
+                    .replace(/<script[^>]*recaptcha[^>]*><\/script>/gi, "")
+                    .replace(/<script[^>]*src=["'][^"']*gstatic\.com\/recaptcha[^"']*["'][^>]*><\/script>/gi, "");
                   return route.fulfill({
                     status: response.status(),
-                    headers: response.headers(),
-                    body: body,
+                    headers: { ...response.headers(), "content-length": String(stripped.length) },
+                    body: stripped,
                   });
                 }
+                // Page doesn't have reCAPTCHA — fulfill with original response
+                return route.fulfill({
+                  status: response.status(),
+                  headers: response.headers(),
+                  body: body,
+                });
               } catch (_e) {
-                // If fetch fails, continue normally
+                return route.continue();
               }
             }
             return route.continue();
