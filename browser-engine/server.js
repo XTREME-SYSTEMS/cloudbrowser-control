@@ -451,6 +451,123 @@ async function solveCaptcha(page, options) {
 // Called after navigation when session.captchaSolver is configured.
 // Detects reCAPTCHA v2, hCaptcha, and Cloudflare Turnstile.
 // Providers: "self" (browser-based, no API key needed), "2captcha", "anticaptcha", "capmonster".
+// ═══════════════════════════════════════════════════════════
+// Google /sorry/ page captcha solver
+// Per 2captcha's blog (https://2captcha.com/blog/google-search-recaptcha):
+// "If you load the captcha on the webpage and then send us this captcha
+// for solving, a token we provide with a solution then will NOT work."
+// Solution: block reCAPTCHA scripts, extract data-s from raw HTML,
+// get token from 2captcha, then submit form directly with the token.
+// ═══════════════════════════════════════════════════════════
+async function solveGoogleSorryCaptcha(page, solverConfig) {
+  const url = page.url();
+  if (!url.includes("/sorry/")) return null;
+
+  const provider = solverConfig.provider || "2captcha";
+  if (provider === "self" || !solverConfig.apiKey) return null;
+
+  // 1. Extract data-s and data-sitekey from the page
+  const captchaInfo = await page.evaluate(() => {
+    const recaptchaDiv = document.querySelector(".g-recaptcha[data-sitekey]");
+    if (!recaptchaDiv) return null;
+    return {
+      siteKey: recaptchaDiv.getAttribute("data-sitekey"),
+      dataS: recaptchaDiv.getAttribute("data-s"),
+    };
+  }).catch(() => null);
+
+  if (!captchaInfo || !captchaInfo.siteKey) return null;
+
+  // 2. Submit to 2captcha with data-s parameter
+  const pageurl = page.url();
+  const submitBody = new URLSearchParams({
+    key: solverConfig.apiKey,
+    method: "userrecaptcha",
+    pageurl: pageurl,
+    googlekey: captchaInfo.siteKey,
+    enterprise: "1",
+    version: "enterprise",
+    json: "1",
+  });
+  if (captchaInfo.dataS) submitBody.append("data-s", captchaInfo.dataS);
+
+  console.log("[google-sorry] Submitting to 2captcha with data-s:", captchaInfo.dataS ? "yes" : "no");
+
+  const submitRes = await fetch("https://2captcha.com/in.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: submitBody.toString(),
+  });
+  const submitData = await submitRes.json();
+
+  if (submitData.status !== 1) {
+    console.log("[google-sorry] 2captcha submit failed:", submitData.request);
+    return { detected: true, solved: false, error: submitData.request, type: "recaptcha_enterprise" };
+  }
+
+  const captchaId = submitData.request;
+  console.log("[google-sorry] 2captcha task created:", captchaId);
+
+  // 3. Poll for solution
+  const deadline = Date.now() + 150000;
+  let token = null;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 5000));
+    const resRes = await fetch(`https://2captcha.com/res.php?key=${solverConfig.apiKey}&action=get&id=${captchaId}&json=1`);
+    const resData = await resRes.json();
+    if (resData.status === 1) {
+      token = resData.request;
+      break;
+    }
+    if (resData.request !== "CAPCHA_NOT_READY") {
+      console.log("[google-sorry] 2captcha error:", resData.request);
+      return { detected: true, solved: false, error: resData.request, type: "recaptcha_enterprise" };
+    }
+  }
+
+  if (!token) {
+    return { detected: true, solved: false, error: "timeout", type: "recaptcha_enterprise" };
+  }
+
+  console.log("[google-sorry] Token received, submitting form directly");
+
+  // 4. Create hidden input with token and submit form directly
+  // This bypasses the reCAPTCHA widget entirely
+  await page.evaluate((t) => {
+    const form = document.getElementById("captcha-form") || document.querySelector("form[action='index']");
+    if (form) {
+      // Create hidden input for g-recaptcha-response
+      let input = form.querySelector('input[name="g-recaptcha-response"]');
+      if (!input) {
+        input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "g-recaptcha-response";
+        form.appendChild(input);
+      }
+      input.value = t;
+      // Submit the form
+      form.submit();
+    }
+  }, token).catch(() => {});
+
+  // 5. Wait for navigation away from /sorry/
+  try {
+    await page.waitForURL((url) => !url.toString().includes("/sorry/"), { timeout: 15000 });
+    console.log("[google-sorry] Navigated to:", page.url().slice(0, 80));
+  } catch (_e) {
+    console.log("[google-sorry] Form submission may have failed — still on /sorry/");
+  }
+
+  return {
+    detected: true,
+    solved: true,
+    type: "recaptcha_enterprise",
+    token: token,
+    provider: "2captcha",
+    dataS: captchaInfo.dataS ? true : false,
+  };
+}
+
 async function autoSolveCaptcha(page, solverConfig) {
   if (!solverConfig) return { detected: false, solved: false, reason: "no_solver_config" };
   // Self-solver doesn't need an API key — only external providers do
@@ -956,6 +1073,17 @@ app.post("/sessions/:id/execute", async (req, res) => {
         result.url = s.url; result.title = s.title;
         // Auto-solve captcha if session has captcha solver configured
         if (s.captchaSolver) {
+          // Google /sorry/ page needs special handling (data-s parameter, form submission)
+          const sorryResult = await solveGoogleSorryCaptcha(page, s.captchaSolver);
+          if (sorryResult) {
+            result.captcha = sorryResult;
+            if (sorryResult.solved) {
+              s.url = page.url(); s.title = await page.title().catch(() => s.title);
+              result.url = s.url; result.title = s.title;
+            }
+            break;
+          }
+          // Standard captcha solving for non-Google pages
           const captchaResult = await autoSolveCaptcha(page, s.captchaSolver);
           // Always include captcha result in response — even when not detected,
           // so the caller knows auto-solve was attempted
