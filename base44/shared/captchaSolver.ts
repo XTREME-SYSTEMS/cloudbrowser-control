@@ -14,7 +14,8 @@
 export async function getCaptchaCredentials(base44) {
   // Check multiple possible secret names — the platform may save the key
   // under different names depending on how it was entered
-  const apiKey = process.env.CAPTCHA_SOLVER_API_KEY 
+  const apiKey = process.env.CAPTCHA_SERVICE_TOKEN
+    || process.env.CAPTCHA_SOLVER_API_KEY 
     || process.env.CAPTCHA_API_KEY
     || process.env.TWO_CAPTCHA_API_KEY
     || process.env.TWOCAPTCHA_API_KEY;
