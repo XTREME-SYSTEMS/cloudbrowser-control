@@ -42,6 +42,7 @@ import Proxies from '@/pages/Proxies';
 import Captcha from '@/pages/Captcha';
 import JobKanban from '@/pages/JobKanban';
 import Capabilities from '@/pages/Capabilities';
+import ForensicAudit from '@/pages/ForensicAudit';
 import ThemeProvider from '@/components/ThemeProvider';
 
 const AuthenticatedApp = () => {
@@ -108,6 +109,7 @@ const AuthenticatedApp = () => {
           <Route path="/proxies" element={<Proxies />} />
           <Route path="/captcha" element={<Captcha />} />
           <Route path="/capabilities" element={<Capabilities />} />
+          <Route path="/forensic-audit" element={<ForensicAudit />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/test-results" element={<TestResults />} />
         </Route>
