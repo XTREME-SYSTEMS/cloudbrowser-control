@@ -308,7 +308,7 @@ async function solveCaptcha(page, options) {
   const apiKey = options.apiKey;
   if (!apiKey) throw new Error("CAPTCHA API key required");
   const provider = options.provider || "2captcha";
-  const pageurl = options.originalUrl || page.url();
+  const pageurl = page.url();
   const maxWait = options.maxWait || 150000;
   const pollInterval = 5000;
 
