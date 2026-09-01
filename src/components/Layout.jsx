@@ -45,6 +45,7 @@ const navItems = [
   { to: "/connection-info", label: "Connection Info", icon: Plug },
   { to: "/api-docs", label: "API Docs", icon: Code2 },
   { to: "/test-results", label: "Test Results", icon: Trophy },
+  { to: "/capabilities", label: "Capabilities", icon: ShieldCheck },
   { to: "/proxies", label: "Proxies", icon: Globe },
   { to: "/captcha", label: "Captcha", icon: Shield },
   { to: "/settings", label: "Settings", icon: SettingsIcon },

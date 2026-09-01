@@ -40,7 +40,7 @@ export function redactValue(value: any): any {
     for (const [k, v] of Object.entries(value)) {
       // Redact keys that look like sensitive field names
       const keyLower = k.toLowerCase();
-      if (['password', 'passwd', 'secret', 'token', 'apikey', 'api_key', 'ssn', 'creditcard'].some(s => keyLower.includes(s))) {
+      if (['password', 'passwd', 'secret', 'token', 'apikey', 'api_key'].some(s => keyLower.includes(s))) {
         result[k] = '[REDACTED_FIELD]';
       } else {
         result[k] = redactValue(v);

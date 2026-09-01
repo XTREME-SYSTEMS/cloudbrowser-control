@@ -11,8 +11,8 @@ export default async function(req: Request): Promise<Response> {
     if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const suites: any[] = [];
-    const suiteNames = ['validateEnhancements', 'validateSecurity', 'validateReliability'];
-    const suiteLabels = ['AI Core + PII + Anomaly', 'Security (SSRF + Rate Limit + API Keys)', 'Reliability (Webhooks + Cost + Integration)'];
+    const suiteNames = ['validateEnhancements', 'validateSecurity', 'validateReliability', 'validateCapabilities'];
+    const suiteLabels = ['AI Core + PII + Anomaly', 'Security (SSRF + Rate Limit + API Keys)', 'Reliability (Webhooks + Cost + Integration)', 'Capabilities (Human Behavior + HAR + Anti-Bot + Fingerprint)'];
 
     for (let i = 0; i < suiteNames.length; i++) {
       try {
