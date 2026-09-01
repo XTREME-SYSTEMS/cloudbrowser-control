@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 
@@ -27,6 +27,8 @@ const navItems = [
   { to: "/connection-info", label: "Connection Info", icon: Plug },
   { to: "/api-docs", label: "API Docs", icon: Code2 },
   { to: "/test-results", label: "Test Results", icon: Trophy },
+  { to: "/proxies", label: "Proxies", icon: Globe },
+  { to: "/captcha", label: "Captcha", icon: Shield },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

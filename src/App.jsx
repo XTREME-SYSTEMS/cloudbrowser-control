@@ -38,6 +38,8 @@ import ConnectionWizard from '@/pages/ConnectionWizard';
 import OnboardingWizard from '@/pages/OnboardingWizard';
 import Enhancements from '@/pages/Enhancements';
 import AiChat from '@/pages/AiChat';
+import Proxies from '@/pages/Proxies';
+import Captcha from '@/pages/Captcha';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -99,6 +101,8 @@ const AuthenticatedApp = () => {
           <Route path="/team" element={<TeamPage />} />
           <Route path="/audit-logs" element={<AuditLogs />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/proxies" element={<Proxies />} />
+          <Route path="/captcha" element={<Captcha />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/test-results" element={<TestResults />} />
         </Route>
