@@ -339,6 +339,8 @@ async function solveCaptcha(page, options) {
     if (options.siteKey) body.googlekey = options.siteKey;
     if (type === "recaptcha_v3") { body.version = "v3"; body.action = options.action || "verify"; body.min_score = options.minScore || 0.3; }
     if (type === "recaptcha_enterprise") { body.enterprise = 1; body.version = "enterprise"; }
+    // Google search reCAPTCHA requires data-s parameter (see 2captcha.com/blog/google-search-recaptcha)
+    if (options.dataS) body["data-s"] = options.dataS;
     if (type === "hcaptcha" && options.siteKey) body.sitekey = options.siteKey;
     if (type === "turnstile" && options.siteKey) body.sitekey = options.siteKey;
     if (type === "funcaptcha" && options.siteKey) body.publickey = options.siteKey;
@@ -361,6 +363,7 @@ async function solveCaptcha(page, options) {
       else task.websiteKey = options.siteKey;
     }
     if (type === "recaptcha_v3") { task.pageAction = options.action || "verify"; task.minScore = options.minScore || 0.3; }
+    if (type === "recaptcha_enterprise") { task.isEnterprise = true; if (options.dataS) task.dataS = options.dataS; }
     submitBody = { clientKey: apiKey, task };
   }
 
@@ -484,10 +487,16 @@ async function autoSolveCaptcha(page, solverConfig) {
   const detections = await page.evaluate(() => {
     const found = [];
 
-    // reCAPTCHA v2 — look for the g-recaptcha div with sitekey
+    // reCAPTCHA — look for the g-recaptcha div with sitekey
     const recaptchaDiv = document.querySelector(".g-recaptcha[data-sitekey]");
     if (recaptchaDiv) {
-      found.push({ type: "recaptcha_v2", siteKey: recaptchaDiv.getAttribute("data-sitekey") });
+      const isEnterprise = !!document.querySelector('script[src*="recaptcha/enterprise.js"]') || 
+        !!document.querySelector('iframe[src*="recaptcha/enterprise"]');
+      found.push({
+        type: isEnterprise ? "recaptcha_enterprise" : "recaptcha_v2",
+        siteKey: recaptchaDiv.getAttribute("data-sitekey"),
+        dataS: recaptchaDiv.getAttribute("data-s") || null,
+      });
     }
 
     // reCAPTCHA — look for iframes (both standard api2 and enterprise)
@@ -496,7 +505,6 @@ async function autoSolveCaptcha(page, solverConfig) {
       const src = recaptchaIframe.getAttribute("src") || "";
       const match = src.match(/[?&]k=([^&]+)/);
       if (match) {
-        // Detect enterprise reCAPTCHA from the iframe src
         const isEnterprise = src.includes("recaptcha/enterprise");
         found.push({ type: isEnterprise ? "recaptcha_enterprise" : "recaptcha_v2", siteKey: match[1] });
       }
@@ -525,6 +533,7 @@ async function autoSolveCaptcha(page, solverConfig) {
 
   // Google /sorry/ page: extract the original search URL from the continue parameter
   // 2captcha needs the original page URL, not the /sorry/ redirect URL
+  // Also: 2captcha requires the data-s parameter for Google search reCAPTCHA
   if (detections.length > 0 && page.url().includes("/sorry/")) {
     const currentUrl = page.url();
     try {
@@ -534,6 +543,16 @@ async function autoSolveCaptcha(page, solverConfig) {
         detections[0].originalUrl = decodeURIComponent(continueUrl);
       }
     } catch (_e) {}
+    // If data-s wasn't found on the div, try extracting it from the full page HTML
+    if (!detections[0].dataS) {
+      try {
+        const dataS = await page.evaluate(() => {
+          const el = document.querySelector("[data-s]");
+          return el ? el.getAttribute("data-s") : null;
+        });
+        if (dataS) detections[0].dataS = dataS;
+      } catch (_e) {}
+    }
   }
 
   if (detections.length === 0) return { detected: false, solved: false };
@@ -546,6 +565,7 @@ async function autoSolveCaptcha(page, solverConfig) {
       type: captcha.type,
       siteKey: captcha.siteKey,
       originalUrl: captcha.originalUrl,
+      dataS: captcha.dataS,
     };
     // Route to self-solver or external API based on provider
     const result = provider === "self"
