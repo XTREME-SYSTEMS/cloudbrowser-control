@@ -996,24 +996,6 @@ app.post("/sessions", async (req, res) => {
       });
     }
 
-    // Block reCAPTCHA scripts when captcha solver is configured
-    // This prevents the reCAPTCHA JS from consuming the data-s variable
-    // on Google's /sorry/ page, keeping it fresh for 2captcha.
-    if (opts.captchaSolver) {
-      context.route("**/*", (route) => {
-        const url = route.request().url();
-        // Block reCAPTCHA script loading — both enterprise and standard
-        if (url.includes("recaptcha/enterprise.js") ||
-            url.includes("gstatic.com/recaptcha/") ||
-            url.includes("recaptcha/api.js") ||
-            url.includes("recaptcha/api2/") ||
-            url.includes("recaptcha/enterprise/anchor")) {
-          return route.abort();
-        }
-        return route.continue();
-      });
-    }
-
     const id = uid();
     const session = {
       id, browser, context, page, status: "idle", url: "", title: "",
@@ -1086,6 +1068,22 @@ app.post("/sessions/:id/execute", async (req, res) => {
 
     switch (action_type) {
       case "goto": {
+        // Block reCAPTCHA scripts at the page level when captcha solver is configured
+        // This prevents the reCAPTCHA JS from consuming the data-s variable on Google's
+        // /sorry/ page, keeping it fresh for 2captcha to solve.
+        if (s.captchaSolver) {
+          await page.route("**/*", (route) => {
+            const reqUrl = route.request().url();
+            if (reqUrl.includes("recaptcha/enterprise.js") ||
+                reqUrl.includes("gstatic.com/recaptcha/") ||
+                reqUrl.includes("recaptcha/api.js") ||
+                reqUrl.includes("recaptcha/api2/") ||
+                reqUrl.includes("recaptcha/enterprise/")) {
+              return route.abort();
+            }
+            return route.continue();
+          });
+        }
         await page.goto(value || selector, { waitUntil: options.waitUntil || "domcontentloaded", timeout: options.timeout || DEFAULT_TIMEOUT });
         s.url = page.url(); s.title = await page.title();
         result.url = s.url; result.title = s.title;
