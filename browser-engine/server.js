@@ -308,7 +308,7 @@ async function solveCaptcha(page, options) {
   const apiKey = options.apiKey;
   if (!apiKey) throw new Error("CAPTCHA API key required");
   const provider = options.provider || "2captcha";
-  const pageurl = page.url();
+  const pageurl = options.originalUrl || page.url();
   const maxWait = options.maxWait || 150000;
   const pollInterval = 5000;
 
@@ -328,6 +328,7 @@ async function solveCaptcha(page, options) {
     const methodMap = {
       recaptcha_v2: "userrecaptcha",
       recaptcha_v3: "userrecaptcha",
+      recaptcha_enterprise: "userrecaptcha",
       hcaptcha: "hcaptcha",
       turnstile: "turnstile",
       funcaptcha: "funcaptcha",
@@ -337,6 +338,7 @@ async function solveCaptcha(page, options) {
     const body = { key: apiKey, method, pageurl, json: 1 };
     if (options.siteKey) body.googlekey = options.siteKey;
     if (type === "recaptcha_v3") { body.version = "v3"; body.action = options.action || "verify"; body.min_score = options.minScore || 0.3; }
+    if (type === "recaptcha_enterprise") { body.enterprise = 1; body.version = "enterprise"; }
     if (type === "hcaptcha" && options.siteKey) body.sitekey = options.siteKey;
     if (type === "turnstile" && options.siteKey) body.sitekey = options.siteKey;
     if (type === "funcaptcha" && options.siteKey) body.publickey = options.siteKey;
@@ -346,6 +348,7 @@ async function solveCaptcha(page, options) {
     const taskTypeMap = {
       recaptcha_v2: "NoCaptchaTaskProxyless",
       recaptcha_v3: "RecaptchaV3TaskProxyless",
+      recaptcha_enterprise: "RecaptchaV3TaskProxyless",
       hcaptcha: "HCaptchaTaskProxyless",
       turnstile: "TurnstileTaskProxyless",
       funcaptcha: "FunCaptchaTaskProxyless",
@@ -481,17 +484,22 @@ async function autoSolveCaptcha(page, solverConfig) {
   const detections = await page.evaluate(() => {
     const found = [];
 
-    // reCAPTCHA v2 — look for the g-recaptcha div with sitekey, or the iframe
+    // reCAPTCHA v2 — look for the g-recaptcha div with sitekey
     const recaptchaDiv = document.querySelector(".g-recaptcha[data-sitekey]");
     if (recaptchaDiv) {
       found.push({ type: "recaptcha_v2", siteKey: recaptchaDiv.getAttribute("data-sitekey") });
     }
-    const recaptchaIframe = document.querySelector('iframe[src*="recaptcha/api2/anchor"], iframe[src*="recaptcha/"]');
+
+    // reCAPTCHA — look for iframes (both standard api2 and enterprise)
+    const recaptchaIframe = document.querySelector('iframe[src*="recaptcha/api2/anchor"], iframe[src*="recaptcha/enterprise/anchor"], iframe[src*="recaptcha/"]');
     if (recaptchaIframe && found.length === 0) {
-      // Try to extract sitekey from the iframe src
       const src = recaptchaIframe.getAttribute("src") || "";
       const match = src.match(/[?&]k=([^&]+)/);
-      if (match) found.push({ type: "recaptcha_v2", siteKey: match[1] });
+      if (match) {
+        // Detect enterprise reCAPTCHA from the iframe src
+        const isEnterprise = src.includes("recaptcha/enterprise");
+        found.push({ type: isEnterprise ? "recaptcha_enterprise" : "recaptcha_v2", siteKey: match[1] });
+      }
     }
 
     // hCaptcha
@@ -515,6 +523,19 @@ async function autoSolveCaptcha(page, solverConfig) {
     return found;
   }).catch(() => []);
 
+  // Google /sorry/ page: extract the original search URL from the continue parameter
+  // 2captcha needs the original page URL, not the /sorry/ redirect URL
+  if (detections.length > 0 && page.url().includes("/sorry/")) {
+    const currentUrl = page.url();
+    try {
+      const urlObj = new URL(currentUrl);
+      const continueUrl = urlObj.searchParams.get("continue");
+      if (continueUrl) {
+        detections[0].originalUrl = decodeURIComponent(continueUrl);
+      }
+    } catch (_e) {}
+  }
+
   if (detections.length === 0) return { detected: false, solved: false };
 
   // Solve the first detected captcha
@@ -524,6 +545,7 @@ async function autoSolveCaptcha(page, solverConfig) {
       ...solverConfig,
       type: captcha.type,
       siteKey: captcha.siteKey,
+      originalUrl: captcha.originalUrl,
     };
     // Route to self-solver or external API based on provider
     const result = provider === "self"
