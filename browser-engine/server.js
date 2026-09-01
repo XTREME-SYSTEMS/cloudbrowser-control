@@ -449,6 +449,11 @@ async function autoSolveCaptcha(page, solverConfig) {
   if (!solverConfig) return { detected: false, solved: false, reason: "no_solver_config" };
   // Self-solver doesn't need an API key — only external providers do
   const provider = solverConfig.provider || "2captcha";
+  // Auto-fill API key from environment if not provided in config
+  if (provider !== "self" && !solverConfig.apiKey) {
+    const envKey = process.env.CAPTCHA_SERVICE_TOKEN || process.env.CAPTCHA_API_KEY;
+    if (envKey && envKey.length > 20) solverConfig.apiKey = envKey;
+  }
   if (provider !== "self" && !solverConfig.apiKey) return { detected: false, solved: false, reason: "no_api_key" };
 
   // Wait for reCAPTCHA/hCaptcha/Turnstile iframes to render.
