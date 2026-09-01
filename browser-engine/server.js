@@ -971,9 +971,16 @@ app.post("/sessions/:id/execute", async (req, res) => {
       case "capture_response": { result.data = await page.evaluate(() => performance.getEntriesByType("navigation")[0]?.responseStatus || 200); break; }
       case "solve_captcha": {
         const captchaProvider = options.provider || "2captcha";
+        // Auto-fill API key from environment if not provided
+        if (captchaProvider !== "self" && !options.apiKey) {
+          const envKey = process.env.CAPTCHA_SERVICE_TOKEN || process.env.CAPTCHA_API_KEY;
+          if (envKey && envKey.length > 20) options.apiKey = envKey;
+        }
         result.data = captchaProvider === "self"
           ? await solveCaptchaSelf(page, options)
           : await solveCaptcha(page, options);
+        // Also expose in captcha field for consistency with auto-solve
+        result.captcha = result.data;
         break;
       }
       case "mock_response": { await page.route(options.url, (route) => route.fulfill({ status: options.status || 200, contentType: options.contentType || "application/json", body: options.body || "" })); result.data = { mocked: options.url }; break; }
