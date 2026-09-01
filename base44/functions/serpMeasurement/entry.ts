@@ -8,27 +8,24 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { enginePost, engineGet, setEngineClient } from "../../shared/engineClient.ts";
 import { getCaptchaCredentials } from "../../shared/captchaSolver.ts";
-import { secrets } from "base44:runtime";
 
-export async function main(req) {
+export default async function (req) {
   const base44 = createClientFromRequest(req);
   setEngineClient(base44);
-
-  const { keyword, target_url, max_results } = req.body || {};
-
-  if (!keyword) {
-    return { ok: false, error: "keyword is required" };
-  }
-  if (!target_url) {
-    return { ok: false, error: "target_url is required" };
-  }
-
-  const maxRows = Math.min(max_results || 100, 100);
-
-  // Get captcha credentials for auto-solve
-  const captchaCreds = await getCaptchaCredentials(base44);
+  const requestId = req.headers?.["x-request-id"];
 
   try {
+    const body = await req.json();
+    const { keyword, target_url, max_results } = body;
+
+    if (!keyword) return Response.json({ ok: false, error: "keyword is required" }, { status: 400 });
+    if (!target_url) return Response.json({ ok: false, error: "target_url is required" }, { status: 400 });
+
+    const maxRows = Math.min(max_results || 100, 100);
+
+    // Get captcha credentials for auto-solve
+    const captchaCreds = await getCaptchaCredentials(base44);
+
     // 1. Create a browser session with captcha solver enabled
     const sessionPayload = {
       usePool: false,
@@ -42,7 +39,7 @@ export async function main(req) {
       };
     }
 
-    const session = await enginePost("/sessions", sessionPayload, req.headers?.["x-request-id"]);
+    const session = await enginePost("/sessions", sessionPayload, requestId);
 
     // 2. Navigate to Google search
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(keyword)}&num=${maxRows}`;
@@ -50,7 +47,7 @@ export async function main(req) {
       action_type: "goto",
       value: searchUrl,
       options: { timeout: 60000, waitUntil: "domcontentloaded" },
-    }, req.headers?.["x-request-id"]);
+    }, requestId);
 
     // Check if captcha was encountered and solved
     const captchaInfo = navResult.captcha || {};
@@ -60,14 +57,14 @@ export async function main(req) {
         captchaSolved = true;
       } else {
         // Captcha detected but not solved — return partial result
-        return {
+        return Response.json({
           ok: false,
           error: "reCAPTCHA detected but not solved",
           captcha: captchaInfo,
           keyword,
           target_url,
           engine_session_id: session.sessionId,
-        };
+        }, { status: 200 });
       }
     }
 
@@ -76,7 +73,7 @@ export async function main(req) {
       action_type: "evaluate",
       value: `(() => {
         const results = [];
-        const links = document.querySelectorAll('#search a[href]');
+        const links = document.querySelectorAll('#search a[href], #rso a[href]');
         let position = 0;
         const seen = new Set();
         for (const link of links) {
@@ -94,7 +91,7 @@ export async function main(req) {
         }
         return JSON.stringify(results);
       })()`,
-    }, req.headers?.["x-request-id"]);
+    }, requestId);
 
     let serpResults = [];
     try {
@@ -119,11 +116,10 @@ export async function main(req) {
 
     // 5. Clean up session
     try {
-      await engineGet(`/sessions/${session.sessionId}`, req.headers?.["x-request-id"]);
-      // Session auto-expires, but we could explicitly delete it
+      await engineGet(`/sessions/${session.sessionId}`, requestId);
     } catch (_e) { /* session cleanup is best-effort */ }
 
-    return {
+    return Response.json({
       ok: true,
       keyword,
       target_url,
@@ -133,16 +129,14 @@ export async function main(req) {
       total_results: serpResults.length,
       captcha_detected: captchaInfo.detected || false,
       captcha_solved: captchaSolved,
-      serp_results: serpResults.slice(0, 10), // Return top 10 for reference
+      serp_results: serpResults.slice(0, 10),
       engine_session_id: session.sessionId,
       timestamp: new Date().toISOString(),
-    };
+    }, { status: 200 });
   } catch (err) {
-    return {
+    return Response.json({
       ok: false,
       error: err.message,
-      keyword,
-      target_url,
-    };
+    }, { status: 500 });
   }
 }
