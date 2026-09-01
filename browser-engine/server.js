@@ -1068,18 +1068,39 @@ app.post("/sessions/:id/execute", async (req, res) => {
 
     switch (action_type) {
       case "goto": {
-        // Block reCAPTCHA scripts at the page level when captcha solver is configured
-        // This prevents the reCAPTCHA JS from consuming the data-s variable on Google's
-        // /sorry/ page, keeping it fresh for 2captcha to solve.
+        // Block reCAPTCHA scripts when captcha solver is configured.
+        // We intercept the HTML response and strip reCAPTCHA script tags from it,
+        // preventing the reCAPTCHA JS from consuming the data-s variable on Google's
+        // /sorry/ page. This keeps data-s fresh for 2captcha to solve.
         if (s.captchaSolver) {
-          await page.route("**/*", (route) => {
+          await page.route("**/*", async (route) => {
             const reqUrl = route.request().url();
+            // Abort reCAPTCHA script/iframe requests directly
             if (reqUrl.includes("recaptcha/enterprise.js") ||
                 reqUrl.includes("gstatic.com/recaptcha/") ||
                 reqUrl.includes("recaptcha/api.js") ||
                 reqUrl.includes("recaptcha/api2/") ||
                 reqUrl.includes("recaptcha/enterprise/")) {
               return route.abort();
+            }
+            // For HTML document responses, strip reCAPTCHA script tags
+            if (route.request().resourceType() === "document") {
+              try {
+                const response = await route.fetch();
+                let body = await response.text();
+                // Remove reCAPTCHA script tags from the HTML
+                if (body.includes("recaptcha")) {
+                  body = body.replace(/<script[^>]*recaptcha[^>]*><\/script>/gi, "");
+                  body = body.replace(/<script[^>]*src=["'][^"']*gstatic\.com\/recaptcha[^"']*["'][^>]*><\/script>/gi, "");
+                  return route.fulfill({
+                    status: response.status(),
+                    headers: response.headers(),
+                    body: body,
+                  });
+                }
+              } catch (_e) {
+                // If fetch fails, continue normally
+              }
             }
             return route.continue();
           });
