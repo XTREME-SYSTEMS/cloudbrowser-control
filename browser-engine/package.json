@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "playwright": "^1.48.0",
+    "playwright": "npm:rebrowser-playwright@^1.48.0",
     "cors": "^2.8.5"
   }
 }
