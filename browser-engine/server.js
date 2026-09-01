@@ -572,14 +572,51 @@ async function autoSolveCaptcha(page, solverConfig) {
       ? await solveCaptchaSelf(page, solveOptions)
       : await solveCaptcha(page, solveOptions);
 
-    // For reCAPTCHA v2, try to submit the form after solving
-    if (captcha.type === "recaptcha_v2" && result.solved) {
+    // For reCAPTCHA v2 and Enterprise, try to submit the form after solving
+    if ((captcha.type === "recaptcha_v2" || captcha.type === "recaptcha_enterprise") && result.solved) {
+      // First, inject the token into the reCAPTCHA response field
+      if (result.token) {
+        await page.evaluate((token) => {
+          const el = document.getElementById("g-recaptcha-response") || document.querySelector("textarea[name='g-recaptcha-response']");
+          if (el) { el.innerHTML = token; el.value = token; }
+          if (window.___grecaptcha_cfg && window.___grecaptcha_cfg.clients) {
+            for (const cid of Object.keys(window.___grecaptcha_cfg.clients)) {
+              const client = window.___grecaptcha_cfg.clients[cid];
+              for (const prop of Object.keys(client)) {
+                const val = client[prop];
+                if (val && typeof val === "object") {
+                  for (const p2 of Object.keys(val)) {
+                    if (typeof val[p2] === "function" && (p2.startsWith("callback") || p2 === "resolve")) {
+                      try { val[p2](token); } catch (_) {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }, result.token).catch(() => {});
+      }
+
+      // Then submit the form
       await page.evaluate(() => {
-        // Try clicking the submit button
+        // Try Google's submitCallback (used on /sorry/ page)
+        if (typeof submitCallback === "function") {
+          try { submitCallback(); } catch (_) {}
+        }
+        // Try submitting the captcha form directly
+        const form = document.getElementById("captcha-form") || document.querySelector("form[action='index']");
+        if (form) { form.submit(); return; }
+        // Fallback: click submit button
         const btn = document.querySelector('input[type="submit"]') || document.querySelector('button[type="submit"]');
         if (btn) btn.click();
       }).catch(() => {});
-      await page.waitForTimeout(2000);
+
+      // Wait for navigation away from /sorry/ to actual search results
+      try {
+        await page.waitForURL((url) => !url.toString().includes("/sorry/"), { timeout: 15000 });
+      } catch (_e) {
+        await page.waitForTimeout(3000);
+      }
     }
 
     return { detected: true, solved: result.solved, type: captcha.type, token: result.token, error: result.error, provider: result.provider, audioDebug: result.audioDebug };
