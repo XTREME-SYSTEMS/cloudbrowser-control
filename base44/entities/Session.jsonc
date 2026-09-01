@@ -126,6 +126,10 @@
       "type": "object",
       "description": "Browser fingerprint config: platform, plugins, fonts, canvas_noise, webdriver"
     },
+    "tls_fingerprint": {
+      "type": "object",
+      "description": "TLS/JA3 fingerprint config: { ja3_hash, ja4, tls_version, cipher_suites, extensions, alpn }"
+    },
     "project_id": {
       "type": "string"
     },

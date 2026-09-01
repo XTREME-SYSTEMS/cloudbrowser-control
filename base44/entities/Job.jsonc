@@ -17,6 +17,11 @@
       ],
       "default": "queued"
     },
+    "priority": {
+      "type": "number",
+      "default": 5,
+      "description": "Queue priority 1 (highest) to 10 (lowest). Higher-priority jobs are dequeued first."
+    },
     "start_url": {
       "type": "string"
     },
@@ -67,7 +72,7 @@
     },
     "session_config": {
       "type": "object",
-      "description": "Session options: viewport, user_agent, proxy_id, headers, blocked_resources, shadow_mode, etc."
+      "description": "Session options: viewport, user_agent, proxy_id, headers, blocked_resources, shadow_mode, tls_fingerprint, etc."
     },
     "shadow_mode": {
       "type": "boolean",

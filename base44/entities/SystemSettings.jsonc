@@ -61,6 +61,26 @@
       "default": 2,
       "description": "Number of pre-warmed sessions to maintain"
     },
+    "autoscaling_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable auto-scaling based on queue depth and CPU"
+    },
+    "autoscale_min_pool": {
+      "type": "number",
+      "default": 2,
+      "description": "Minimum pool size when autoscaling"
+    },
+    "autoscale_max_pool": {
+      "type": "number",
+      "default": 50,
+      "description": "Maximum pool size when autoscaling"
+    },
+    "autoscale_target_queue_depth": {
+      "type": "number",
+      "default": 5,
+      "description": "Target queue depth \u2014 scale up when exceeded, down when below"
+    },
     "screenshot_retention_days": {
       "type": "number",
       "default": 30
@@ -119,6 +139,29 @@
     "default_proxy_id": {
       "type": "string",
       "description": "Default proxy to use for all sessions"
+    },
+    "saml_config": {
+      "type": "object",
+      "description": "SAML 2.0 SSO config: { entry_point, issuer, cert, audience, want_assertions_signed }"
+    },
+    "oidc_config": {
+      "type": "object",
+      "description": "OIDC SSO config: { issuer, client_id, client_secret_encrypted, scopes, redirect_uri }"
+    },
+    "compliance_frameworks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "soc2_type1",
+          "soc2_type2",
+          "hipaa",
+          "gdpr",
+          "pci_dss",
+          "iso_27001"
+        ]
+      },
+      "description": "Active compliance frameworks \u2014 controls enforced per framework"
     }
   },
   "required": [],

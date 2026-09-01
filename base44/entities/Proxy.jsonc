@@ -24,6 +24,22 @@
     "country": {
       "type": "string"
     },
+    "city": {
+      "type": "string",
+      "description": "City-level geo-targeting (e.g. 'new york', 'los angeles')"
+    },
+    "state": {
+      "type": "string",
+      "description": "State/region-level geo-targeting (e.g. 'ny', 'ca')"
+    },
+    "asn": {
+      "type": "string",
+      "description": "ASN-level targeting (e.g. 'AS12345' for specific ISP)"
+    },
+    "zip_code": {
+      "type": "string",
+      "description": "ZIP/postal code-level geo-targeting"
+    },
     "protocol": {
       "type": "string",
       "enum": [
@@ -33,13 +49,37 @@
       ],
       "default": "http"
     },
-    "active": {
-      "type": "boolean",
-      "default": true
+    "ip_type": {
+      "type": "string",
+      "enum": [
+        "residential",
+        "datacenter",
+        "mobile",
+        "isp"
+      ],
+      "default": "datacenter",
+      "description": "IP type \u2014 residential/mobile for anti-bot bypass, datacenter for speed"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "custom",
+        "bright_data",
+        "smartproxy",
+        "oxylabs",
+        "iproyal",
+        "soax"
+      ],
+      "default": "custom",
+      "description": "Proxy provider \u2014 enables API-based rotation for commercial networks"
     },
     "rotation_group": {
       "type": "string",
       "description": "Group name for round-robin rotation"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
     }
   },
   "required": [
