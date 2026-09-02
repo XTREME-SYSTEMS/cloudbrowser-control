@@ -1,0 +1,83 @@
+{
+  "name": "Capability Test Automation",
+  "description": "Autonomously runs all 95 capability tests every day at 9am ET, stores results, and alerts if score drops below 90",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "capability_test_automation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_all_tests": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runAllCapabilityTests",
+            "args": {}
+          },
+          "then": "check_score",
+          "x-base44": {
+            "title": "Run all capability tests",
+            "description": "Execute all 95 capability suites autonomously"
+          }
+        }
+      },
+      {
+        "check_score": {
+          "switch": [
+            {
+              "when": "${ .run_all_tests.average_score < 90 }",
+              "then": "send_alert"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Check score",
+            "description": "Alert if average score below 90"
+          }
+        }
+      },
+      {
+        "send_alert": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendNotification",
+            "args": {
+              "type": "capability_score_alert",
+              "title": "Capability score below threshold",
+              "body": "Autonomous test run scored ${ .run_all_tests.average_score }/100 (${ .run_all_tests.total_passed }/${ .run_all_tests.total_tests } tests passed). Engine: ${ .run_all_tests.engine_status }.",
+              "link": "/capability-test-lab",
+              "send_email": true
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send alert",
+            "description": "Notify about low capability score"
+          }
+        }
+      }
+    ]
+  }
+}

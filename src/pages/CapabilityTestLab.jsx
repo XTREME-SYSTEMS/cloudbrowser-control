@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, FlaskConical, CheckCircle2, XCircle, AlertCircle, Eye, ListChecks } from "lucide-react";
+import { Loader2, Play, FlaskConical, CheckCircle2, XCircle, AlertCircle, Eye, ListChecks, Zap, Clock, History } from "lucide-react";
 import { CAPABILITIES, CATEGORIES } from "@/components/capability-test/capabilitiesData";
 import ResultBox from "@/components/capability-test/ResultBox";
 
@@ -13,8 +13,53 @@ export default function CapabilityTestLab() {
   const [runningAll, setRunningAll] = useState(false);
   const [runProgress, setRunProgress] = useState(0);
   const stopRef = useRef(false);
+  const [autoRunning, setAutoRunning] = useState(false);
+  const [autoResult, setAutoResult] = useState(null);
+  const [lastAutoRun, setLastAutoRun] = useState(null);
 
   const selected = CAPABILITIES.find((c) => c.id === selectedId);
+
+  // Load latest autonomous run from TestResult records
+  useEffect(() => {
+    loadLatestAutoRun();
+  }, []);
+
+  const loadLatestAutoRun = async () => {
+    try {
+      const records = await base44.entities.TestResult.list("-created_date", 200);
+      if (records.length === 0) return;
+      const latestRunId = records[0].run_id;
+      const runRecords = records.filter((r) => r.run_id === latestRunId);
+      if (runRecords.length === 0) return;
+      const passed = runRecords.filter((r) => r.status === "pass").length;
+      const total = runRecords.length;
+      const points = runRecords.reduce((s, r) => s + (r.score_points || 0), 0);
+      const maxPoints = runRecords.reduce((s, r) => s + (r.max_points || 0), 0);
+      setLastAutoRun({
+        run_id: latestRunId,
+        passed,
+        total,
+        score: maxPoints > 0 ? Math.round((points / maxPoints) * 100) : 0,
+        date: records[0].created_date,
+        records: runRecords,
+      });
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const triggerAutoRun = async () => {
+    setAutoRunning(true);
+    try {
+      const res = await base44.functions.invoke("runAllCapabilityTests", {});
+      const data = res.data || res;
+      setAutoResult(data);
+      await loadLatestAutoRun();
+    } catch (e) {
+      setAutoResult({ error: e.message });
+    }
+    setAutoRunning(false);
+  };
 
   const runSingle = useCallback(async (cap) => {
     if (!cap.testFn) {
@@ -90,8 +135,67 @@ export default function CapabilityTestLab() {
               <ListChecks className="w-4 h-4 mr-2" /> Run All Tests
             </Button>
           )}
+          <Button variant="outline" onClick={triggerAutoRun} disabled={autoRunning}>
+            {autoRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+            {autoRunning ? "Running Autonomous…" : "Trigger Autonomous Run"}
+          </Button>
         </div>
       </div>
+
+      {/* Autonomous Run Status */}
+      {(autoRunning || autoResult || lastAutoRun) && (
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-5 h-5 text-blue-500" />
+              <h3 className="text-sm font-semibold">Autonomous Test Runner</h3>
+              <Badge variant="outline" className="ml-auto">Daily 9am ET · Workflow</Badge>
+            </div>
+            {autoRunning && (
+              <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Running all capability suites sequentially…
+              </p>
+            )}
+            {autoResult && !autoRunning && (
+              <div className="space-y-2">
+                {autoResult.error ? (
+                  <p className="text-sm text-destructive">Error: {autoResult.error}</p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <span className="flex items-center gap-1"><Clock className="w-4 h-4 text-muted-foreground" /> {autoResult.duration_ms ? `${(autoResult.duration_ms / 1000).toFixed(1)}s` : "—"}</span>
+                      <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-green-500" /> {autoResult.total_passed}/{autoResult.total_tests} passed</span>
+                      <span className="flex items-center gap-1"><FlaskConical className="w-4 h-4 text-blue-500" /> Avg: {autoResult.average_score}/100</span>
+                      <span className="flex items-center gap-1"><Zap className="w-4 h-4 text-orange-500" /> Engine: {autoResult.engine_status}</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                      {autoResult.suites?.map((s) => (
+                        <div key={s.suite} className="rounded border p-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{s.suite}</span>
+                            <Badge variant={s.score >= 90 ? "default" : "destructive"} className="text-[10px]">{s.score}</Badge>
+                          </div>
+                          <span className="text-muted-foreground">{s.testsPassed}/{s.testsTotal} tests</span>
+                          {s.error && <p className="text-destructive text-[10px] mt-1 truncate">{s.error}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {!autoResult && !autoRunning && lastAutoRun && (
+              <div className="flex items-center gap-3 text-sm">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Last autonomous run:</span>
+                <Badge variant={lastAutoRun.score >= 90 ? "default" : "destructive"}>{lastAutoRun.score}/100</Badge>
+                <span className="text-muted-foreground">{lastAutoRun.passed}/{lastAutoRun.total} tests passed</span>
+                <span className="text-xs text-muted-foreground">{new Date(lastAutoRun.date).toLocaleString()}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
