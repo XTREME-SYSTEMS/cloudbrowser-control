@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, FlaskConical, CheckCircle2, XCircle, Eye, ChevronRight, ListChecks } from "lucide-react";
+import { Loader2, Play, FlaskConical, CheckCircle2, XCircle, AlertCircle, Eye, ListChecks } from "lucide-react";
 import { CAPABILITIES, CATEGORIES } from "@/components/capability-test/capabilitiesData";
 import ResultBox from "@/components/capability-test/ResultBox";
 
@@ -228,8 +228,4 @@ export default function CapabilityTestLab() {
       </div>
     </div>
   );
-}
-
-function AlertCircle({ className }) {
-  return <XCircle className={className} />;
 }
