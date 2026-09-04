@@ -7,6 +7,7 @@ import { solveCaptchaSelf } from './captcha-self-solver.js';
 // TASK 8: Fingerprint + human behavior modules
 import { generateFingerprint, getFingerprintInitScript } from './fingerprint-randomizer.js';
 import { humanClick, humanType, generateMousePath, humanDelay } from './human-behavior.js';
+import SessionManager from './session-manager.js';
 
 
 const app = express();
@@ -33,7 +34,7 @@ const BROWSER_CPU_LIMIT = process.env.BROWSER_CPU_LIMIT || undefined;
 const BROWSER_MEMORY_LIMIT = process.env.BROWSER_MEMORY_LIMIT || undefined;
 const WORKER_ID = process.env.RAILWAY_REPLICA_ID || process.env.HOSTNAME || "worker-local";
 const REGION = process.env.RAILWAY_REGION || process.env.REGION || "unknown";
-const ENGINE_VERSION = "3.0.0";
+const ENGINE_VERSION = "3.1.0";
 const SCHEMA_VERSION = "3.0";
 const CONFIG_VERSION = process.env.CONFIG_VERSION || "unknown";
 
@@ -146,6 +147,9 @@ function validateTargetUrl(urlStr) {
 
 const sessions = new Map();
 const pool = [];
+// Initialize Supabase-backed session manager
+const sessionManager = new SessionManager();
+
 const savedStates = new Map();
 let cdpPortCounter = 9222;
 const workerStartedAt = Date.now();
@@ -257,6 +261,7 @@ async function closeSession(id, reason = "ended") {
   try { s.status = reason; await s.context.close(); } catch (e) {}
   try { await s.browser?.close(); } catch (e) {}
   sessions.delete(id);
+  await sessionManager.closeSession(id, reason);
   const idx = pool.indexOf(id);
   if (idx >= 0) pool.splice(idx, 1);
   return true;
@@ -292,11 +297,15 @@ async function warmPool() {
       await context.addInitScript(buildStealthScript("pool_" + Math.random().toString(36).slice(2)));
       const page = await context.newPage();
       const id = uid();
-      sessions.set(id, {
+      const session = {
         id, browser, context, page, status: "pooled", url: "", title: "",
         lastActivity: Date.now(), createdAt: Date.now(), consoleLogs: [], networkLogs: [], isPooled: true,
-      });
+      };
+      sessions.set(id, session);
+      await sessionManager.trackSession(id, session);
       pool.push(id);
+    } catch (e) { break; }
+  }
     } catch (e) { break; }
   }
 }
@@ -898,7 +907,7 @@ app.post("/sessions", async (req, res) => {
       const pooledId = pool.shift();
       const s = sessions.get(pooledId);
       if (s) {
-        s.status = "idle"; s.isPooled = false; s.lastActivity = Date.now();
+        await sessionManager.setStatus(pooledId, "active");
         // Merge per-session opts that pooled sessions don't have yet
         // (captcha solver config, proxy, headers, etc.)
         s.captchaSolver = opts.captchaSolver || null;
@@ -1367,7 +1376,14 @@ async function gracefulShutdown(signal) {
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
+// Initialize session manager
+(async () => {
+  await sessionManager.initSchema();
+  sessionManager.startCleanupLoop();
+})();
+
 app.listen(PORT, () => {
   console.log(`Browser engine v${ENGINE_VERSION} running on port ${PORT} (worker: ${WORKER_ID}, region: ${REGION})`);
   console.log(`Max sessions: ${MAX_SESSIONS}, Pool size: ${POOL_SIZE}, Enforce HTTPS: ${ENFORCE_HTTPS}`);
+  console.log(`Session manager: ${sessionManager.isEnabled ? 'ENABLED (Supabase-backed)' : 'DISABLED (in-process only)'}`);
 });
