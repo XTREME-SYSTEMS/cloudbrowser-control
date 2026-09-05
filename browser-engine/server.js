@@ -8,6 +8,8 @@ import { solveCaptchaSelf } from './captcha-self-solver.js';
 import { generateFingerprint, getFingerprintInitScript } from './fingerprint-randomizer.js';
 import { humanClick, humanType, generateMousePath, humanDelay } from './human-behavior.js';
 import SessionManager from './session-manager.js';
+import SupabaseAdmin from './supabase-admin.js';
+import { setupAdminRoutes } from './admin-routes.js';
 
 
 const app = express();
@@ -149,6 +151,7 @@ const sessions = new Map();
 const pool = [];
 // Initialize Supabase-backed session manager
 const sessionManager = new SessionManager();
+const supabaseAdmin = new SupabaseAdmin();
 
 const savedStates = new Map();
 let cdpPortCounter = 9222;
@@ -1376,11 +1379,20 @@ async function gracefulShutdown(signal) {
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-// Initialize session manager
+// Initialize session manager and Supabase admin
 (async () => {
   await sessionManager.initSchema();
   sessionManager.startCleanupLoop();
+  
+  // Initialize Supabase admin with auto-migration
+  const adminReady = await supabaseAdmin.init();
+  if (adminReady) {
+    console.log('🔗 Supabase admin client ready — full bidirectional sync enabled');
+  }
 })();
+
+// Setup admin control panel
+setupAdminRoutes(app, supabaseAdmin, sessionManager, sessions, pool);
 
 app.listen(PORT, () => {
   console.log(`Browser engine v${ENGINE_VERSION} running on port ${PORT} (worker: ${WORKER_ID}, region: ${REGION})`);
