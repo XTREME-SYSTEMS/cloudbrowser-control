@@ -20,6 +20,9 @@ RUN npm install @xenova/transformers@^2.17.1 --no-save || echo "WARN: @xenova/tr
 
 # Copy all engine source files
 COPY server.js ./
+COPY session-manager.js ./
+COPY supabase-admin.js ./
+COPY admin-routes.js ./
 COPY captcha-self-solver.js ./
 COPY fingerprint-randomizer.js ./
 COPY human-behavior.js ./
@@ -33,3 +36,4 @@ ENV SESSION_TTL_MS=300000
 
 EXPOSE 8080
 CMD ["node", "server.js"]
+
