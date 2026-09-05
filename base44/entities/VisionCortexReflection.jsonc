@@ -1,0 +1,102 @@
+{
+  "name": "VisionCortexReflection",
+  "type": "object",
+  "properties": {
+    "reflection_type": {
+      "type": "string",
+      "enum": [
+        "system_operation",
+        "playbook_learning",
+        "elite_investigation",
+        "money_tracking",
+        "strategy_refinement",
+        "capability_assessment",
+        "self_improvement",
+        "predictive_analysis"
+      ],
+      "description": "What type of self-reflection this is"
+    },
+    "title": {
+      "type": "string"
+    },
+    "observation": {
+      "type": "string",
+      "description": "What Vision Cortex observed during system operation"
+    },
+    "insight": {
+      "type": "string",
+      "description": "The deeper insight derived from the observation"
+    },
+    "learning": {
+      "type": "string",
+      "description": "What Vision Cortex learned that it didn't know before"
+    },
+    "action_taken": {
+      "type": "string",
+      "description": "What action was taken (or should be taken) based on this reflection"
+    },
+    "playbook_reference": {
+      "type": "string",
+      "description": "Which playbook this reflection relates to or generated"
+    },
+    "elite_motive_analysis": {
+      "type": "string",
+      "description": "Analysis of why elites/corporations are driving for data (for elite_investigation type)"
+    },
+    "money_trail_insight": {
+      "type": "string",
+      "description": "Insight about money flows (for money_tracking type)"
+    },
+    "confidence": {
+      "type": "number",
+      "default": 50,
+      "description": "Confidence in this reflection (0-100)"
+    },
+    "system_score_before": {
+      "type": "number",
+      "description": "System capability score before this reflection was applied"
+    },
+    "system_score_after": {
+      "type": "number",
+      "description": "System capability score after applying this reflection"
+    },
+    "reflection_cycle": {
+      "type": "number",
+      "description": "Which reflection cycle this belongs to (increments each autonomous run)"
+    }
+  },
+  "required": [
+    "reflection_type",
+    "title",
+    "observation"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

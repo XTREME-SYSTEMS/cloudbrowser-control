@@ -44,6 +44,7 @@ import JobKanban from '@/pages/JobKanban';
 import Capabilities from '@/pages/Capabilities';
 import ForensicAudit from '@/pages/ForensicAudit';
 import CapabilityTestLab from '@/pages/CapabilityTestLab';
+import VisionCortexIntelligence from '@/pages/VisionCortexIntelligence';
 import ThemeProvider from '@/components/ThemeProvider';
 
 const AuthenticatedApp = () => {
@@ -112,6 +113,7 @@ const AuthenticatedApp = () => {
           <Route path="/capabilities" element={<Capabilities />} />
           <Route path="/forensic-audit" element={<ForensicAudit />} />
           <Route path="/capability-test-lab" element={<CapabilityTestLab />} />
+          <Route path="/vision-cortex" element={<VisionCortexIntelligence />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/test-results" element={<TestResults />} />
         </Route>

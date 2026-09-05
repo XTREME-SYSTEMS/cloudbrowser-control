@@ -1,0 +1,141 @@
+{
+  "name": "IntelligenceSeed",
+  "type": "object",
+  "properties": {
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "ai_tool",
+        "data_acquisition_tool",
+        "data_ingestion_platform",
+        "keyword",
+        "trending_phrase",
+        "trending_topic",
+        "researched_topic",
+        "top_website",
+        "scraping_strategy",
+        "playbook",
+        "elite_research",
+        "data_center_intel",
+        "money_trail_source"
+      ],
+      "description": "What type of intelligence source this is"
+    },
+    "title": {
+      "type": "string",
+      "description": "Name or title of the source"
+    },
+    "url": {
+      "type": "string",
+      "description": "Source URL to scrape or reference"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this source covers and why it matters"
+    },
+    "intelligence_category": {
+      "type": "string",
+      "enum": [
+        "ai_tools",
+        "data_acquisition",
+        "data_ingestion",
+        "scraping_strategies",
+        "playbooks",
+        "trending_topics",
+        "keywords",
+        "top_websites",
+        "elite_motives",
+        "data_centers",
+        "money_flows",
+        "competitive_intel"
+      ]
+    },
+    "priority": {
+      "type": "number",
+      "default": 5,
+      "description": "1 = highest priority, 10 = lowest"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "scraping",
+        "scraped",
+        "ingested",
+        "failed",
+        "stale"
+      ],
+      "default": "pending"
+    },
+    "scraped_content": {
+      "type": "string",
+      "description": "Raw scraped content from the source"
+    },
+    "vision_cortex_analysis": {
+      "type": "string",
+      "description": "Vision Cortex's analysis of this source"
+    },
+    "relevance_score": {
+      "type": "number",
+      "default": 0,
+      "description": "How relevant this source is to the system (0-100)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scraped_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rank": {
+      "type": "number",
+      "description": "Ranking position (e.g. #1 top AI tool, #42 top keyword)"
+    },
+    "seed_batch": {
+      "type": "string",
+      "description": "Batch ID grouping seeds from the same discovery run"
+    }
+  },
+  "required": [
+    "source_type",
+    "title",
+    "intelligence_category",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

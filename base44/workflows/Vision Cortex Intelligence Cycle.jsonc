@@ -1,0 +1,89 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "vision_cortex_intelligence_cycle",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "seed_sources": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "seedIntelligenceSources",
+            "args": {}
+          },
+          "then": "ingest_intelligence",
+          "x-base44": {
+            "title": "Seed intelligence sources",
+            "description": "Discover top AI tools, keywords, strategies, websites, elite research"
+          }
+        }
+      },
+      {
+        "ingest_intelligence": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "ingestIntelligence",
+            "args": {
+              "limit": 50
+            }
+          },
+          "then": "follow_money",
+          "x-base44": {
+            "title": "Ingest intelligence",
+            "description": "Vision Cortex analyzes and extracts actionable artifacts"
+          }
+        }
+      },
+      {
+        "follow_money": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "followTheMoney",
+            "args": {}
+          },
+          "then": "self_reflect",
+          "x-base44": {
+            "title": "Follow the money",
+            "description": "Track money flows in AI/data/data center space"
+          }
+        }
+      },
+      {
+        "self_reflect": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "visionCortexSelfReflect",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Self-reflect",
+            "description": "Vision Cortex reflects on system operation, playbooks, elite motives, money"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Vision Cortex Intelligence Cycle",
+  "description": "Autonomous daily intelligence cycle: seeds sources, ingests intelligence, follows the money, and self-reflects \u2014 compounding Vision Cortex's understanding of browser automation, data acquisition, elite motives, and money flows."
+}

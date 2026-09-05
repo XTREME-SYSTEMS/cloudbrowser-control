@@ -1,0 +1,137 @@
+{
+  "name": "MoneyTrail",
+  "type": "object",
+  "properties": {
+    "entity_name": {
+      "type": "string",
+      "description": "Company, fund, or person involved in the money flow"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "tech_giant",
+        "ai_lab",
+        "hedge_fund",
+        "private_equity",
+        "vc_firm",
+        "data_broker",
+        "cloud_provider",
+        "chip_maker",
+        "government",
+        "startup",
+        "individual"
+      ],
+      "description": "What type of entity this is"
+    },
+    "flow_type": {
+      "type": "string",
+      "enum": [
+        "investment",
+        "acquisition",
+        "spending",
+        "revenue",
+        "grant",
+        "ipo",
+        "buyback",
+        "infrastructure_spend"
+      ],
+      "description": "Type of money flow"
+    },
+    "amount_usd": {
+      "type": "number",
+      "description": "Amount in USD (in millions if large)"
+    },
+    "amount_display": {
+      "type": "string",
+      "description": "Human-readable amount (e.g. '$10B', '$500M')"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "inflow",
+        "outflow",
+        "circular"
+      ],
+      "description": "Direction of money flow relative to the entity"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "data_center",
+        "ai_infrastructure",
+        "data_acquisition",
+        "gpu_compute",
+        "cloud_expansion",
+        "ai_research",
+        "talent_acquisition",
+        "data_brokerage",
+        "scraping_infrastructure",
+        "energy"
+      ],
+      "description": "What the money is being spent on or invested in"
+    },
+    "description": {
+      "type": "string",
+      "description": "What the money flow is for"
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "significance": {
+      "type": "number",
+      "default": 50,
+      "description": "How significant this flow is to the data/AI landscape (0-100)"
+    },
+    "vision_cortex_interpretation": {
+      "type": "string",
+      "description": "Vision Cortex's interpretation of what this money flow means strategically"
+    },
+    "elite_motive": {
+      "type": "string",
+      "description": "What elite motive this money flow reveals (control, monopoly, surveillance, competitive moat, etc.)"
+    },
+    "follows_from_id": {
+      "type": "string",
+      "description": "ID of a prior MoneyTrail this flow follows from (for chaining)"
+    }
+  },
+  "required": [
+    "entity_name",
+    "flow_type",
+    "category",
+    "direction"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
