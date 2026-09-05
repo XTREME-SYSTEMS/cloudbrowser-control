@@ -18,6 +18,14 @@
       "type": "string",
       "description": "Railway worker that was probed"
     },
+    "engine_url": {
+      "type": "string",
+      "description": "Full base URL of the engine instance probed"
+    },
+    "engine_label": {
+      "type": "string",
+      "description": "Human label e.g. engine-1, engine-2, engine-3"
+    },
     "region": {
       "type": "string"
     },
