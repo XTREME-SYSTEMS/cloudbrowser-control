@@ -119,7 +119,7 @@ export default async function (req) {
     // Region drift detection (against expected, if set)
     let regionDrift = null;
     if (expectedRegion !== "unknown") {
-      const drifted = engines.filter((e) => e.ok && e.region && e.region !== expectedRegion);
+      const drifted = engines.filter((e) => e.ok && e.region && e.region !== "unknown" && e.region !== expectedRegion);
       if (drifted.length > 0) {
         regionDrift = {
           expected: expectedRegion,
