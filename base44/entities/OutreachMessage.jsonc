@@ -1,0 +1,111 @@
+{
+  "name": "OutreachMessage",
+  "type": "object",
+  "properties": {
+    "campaign_id": {
+      "type": "string"
+    },
+    "prospect_id": {
+      "type": "string"
+    },
+    "prospect_email": {
+      "type": "string"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "initial",
+        "followup_1",
+        "followup_2",
+        "followup_3",
+        "final"
+      ],
+      "default": "initial"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string",
+      "description": "Final rendered email body with placeholders filled"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this message should be sent"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "sending",
+        "sent",
+        "failed",
+        "responded",
+        "bounced",
+        "skipped"
+      ],
+      "default": "scheduled"
+    },
+    "send_method": {
+      "type": "string",
+      "enum": [
+        "platform",
+        "export",
+        "manual"
+      ],
+      "default": "export",
+      "description": "How the message will be/was sent"
+    },
+    "response_received": {
+      "type": "string",
+      "description": "Reply content if prospect responded"
+    },
+    "response_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error_message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "campaign_id",
+    "prospect_id",
+    "message_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

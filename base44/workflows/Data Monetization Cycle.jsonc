@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "data_monetization_cycle",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_monetization": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runDataMonetizationCycle",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run Data Monetization Cycle",
+            "description": "Score assets, find buyers, generate campaigns"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Data Monetization Cycle",
+  "description": "Autonomous daily cycle: turns scored intelligence into monetizable data assets, discovers prospect buyers, enriches them, and generates branded outreach campaigns with 3-day follow-up schedules."
+}

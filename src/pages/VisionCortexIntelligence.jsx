@@ -10,6 +10,7 @@ import {
   Target, Lightbulb, Crown, AlertTriangle, CheckCircle2, ArrowRight,
   Search, Database, Zap, Activity, BookOpen,
 } from 'lucide-react';
+import MonetizationTab from '@/components/vision-cortex/MonetizationTab';
 
 const ARTIFACT_TYPE_ICONS = {
   insight: Lightbulb,
@@ -92,7 +93,11 @@ export default function VisionCortexIntelligence() {
 
       // 4. Self-reflect
       await base44.functions.invoke('visionCortexSelfReflect', { cycle: Date.now() });
-      setLastResult({ action: 'reflect', message: 'Full intelligence cycle complete.' });
+      setLastResult({ action: 'reflect', message: 'Intelligence cycle complete. Running monetization...' });
+
+      // 5. Monetize — turn intelligence into data assets, prospects & campaigns
+      await base44.functions.invoke('runDataMonetizationCycle', {});
+      setLastResult({ action: 'monetize', message: 'Full intelligence + monetization cycle complete.' });
 
       await loadData();
     } catch (e) {
@@ -251,12 +256,13 @@ export default function VisionCortexIntelligence() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
           <TabsTrigger value="overview" className="text-xs md:text-sm"><Activity className="w-4 h-4 mr-1 md:mr-2" />Overview</TabsTrigger>
           <TabsTrigger value="seeds" className="text-xs md:text-sm"><Search className="w-4 h-4 mr-1 md:mr-2" />Seeds</TabsTrigger>
           <TabsTrigger value="artifacts" className="text-xs md:text-sm"><Brain className="w-4 h-4 mr-1 md:mr-2" />Artifacts</TabsTrigger>
           <TabsTrigger value="reflections" className="text-xs md:text-sm"><Eye className="w-4 h-4 mr-1 md:mr-2" />Reflections</TabsTrigger>
           <TabsTrigger value="money" className="text-xs md:text-sm"><DollarSign className="w-4 h-4 mr-1 md:mr-2" />Money</TabsTrigger>
+          <TabsTrigger value="monetization" className="text-xs md:text-sm"><DollarSign className="w-4 h-4 mr-1 md:mr-2" />Monetize</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -484,6 +490,11 @@ export default function VisionCortexIntelligence() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Monetization */}
+        <TabsContent value="monetization" className="space-y-4">
+          <MonetizationTab onRunAction={runAction} actionLoading={actionLoading} />
         </TabsContent>
       </Tabs>
     </div>

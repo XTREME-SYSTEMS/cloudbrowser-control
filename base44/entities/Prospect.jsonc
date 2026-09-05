@@ -1,0 +1,129 @@
+{
+  "name": "Prospect",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string"
+    },
+    "industry": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_title": {
+      "type": "string"
+    },
+    "linkedin_url": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "estimated_data_budget_usd": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated annual data acquisition budget"
+    },
+    "current_data_providers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Data vendors they likely already use"
+    },
+    "data_needs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "What data they likely need to acquire"
+    },
+    "buying_signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Signals indicating they're in market for data"
+    },
+    "match_score": {
+      "type": "number",
+      "default": 0,
+      "description": "How well they match the ideal buyer profile (0-100)"
+    },
+    "data_asset_id": {
+      "type": "string",
+      "description": "The DataAsset they're a prospect for"
+    },
+    "buyer_profile_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "qualified",
+        "contacted",
+        "responded",
+        "not_interested",
+        "converted",
+        "bounced"
+      ],
+      "default": "new"
+    },
+    "source": {
+      "type": "string",
+      "description": "How this prospect was discovered"
+    },
+    "enrichment_data": {
+      "type": "object",
+      "description": "Raw enrichment payload from research"
+    },
+    "vision_cortex_analysis": {
+      "type": "string"
+    },
+    "last_researched_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "company_name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

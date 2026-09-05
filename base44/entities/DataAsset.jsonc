@@ -1,0 +1,156 @@
+{
+  "name": "DataAsset",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Name of the monetizable data asset"
+    },
+    "description": {
+      "type": "string",
+      "description": "What the data contains and why it's valuable"
+    },
+    "source_artifact_id": {
+      "type": "string",
+      "description": "Reference to the IntelligenceArtifact this was derived from"
+    },
+    "data_category": {
+      "type": "string",
+      "enum": [
+        "real_estate",
+        "b2b_leads",
+        "consumer_data",
+        "market_intel",
+        "ai_training",
+        "scraped_records",
+        "api_access",
+        "enriched_datasets",
+        "niche_intel",
+        "competitive_intel"
+      ]
+    },
+    "data_type": {
+      "type": "string",
+      "enum": [
+        "dataset",
+        "api",
+        "lead_list",
+        "scraped_records",
+        "market_report",
+        "enriched_records",
+        "niche_intel"
+      ]
+    },
+    "record_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of records in this asset"
+    },
+    "sample_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Field names / schema of the data"
+    },
+    "monetization_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Overall monetization potential (0-100)"
+    },
+    "freshness_score": {
+      "type": "number",
+      "default": 0,
+      "description": "How current/fresh the data is (0-100)"
+    },
+    "uniqueness_score": {
+      "type": "number",
+      "default": 0,
+      "description": "How rare/exclusive vs. competitors (0-100)"
+    },
+    "demand_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Market demand for this data type (0-100)"
+    },
+    "estimated_value_usd": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated market value per record or per dataset"
+    },
+    "pricing_model": {
+      "type": "string",
+      "enum": [
+        "per_record",
+        "per_dataset",
+        "subscription",
+        "api_access",
+        "tiered"
+      ],
+      "default": "per_record"
+    },
+    "ideal_buyer_description": {
+      "type": "string",
+      "description": "Vision Cortex's description of the ideal buyer for this data"
+    },
+    "competitive_advantage": {
+      "type": "string",
+      "description": "Why this data beats what competitors offer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "scored",
+        "listed",
+        "in_outreach",
+        "sold",
+        "archived"
+      ],
+      "default": "pending"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "vision_cortex_analysis": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "data_category",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "name": "OutreachCampaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "data_asset_id": {
+      "type": "string",
+      "description": "The DataAsset being sold"
+    },
+    "prospect_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email address to send from (informational \u2014 platform sends from app email)"
+    },
+    "sender_name": {
+      "type": "string",
+      "default": "Lead Generation Near You"
+    },
+    "brand_entity": {
+      "type": "string",
+      "enum": [
+        "leadgenerationnearyou",
+        "hiddenpropertyintel"
+      ],
+      "default": "leadgenerationnearyou"
+    },
+    "email_subject": {
+      "type": "string"
+    },
+    "email_body_template": {
+      "type": "string",
+      "description": "Personalized email template with {{prospect_name}}, {{company}}, {{data_description}} placeholders"
+    },
+    "proposal_template": {
+      "type": "string",
+      "description": "Branded proposal body (markdown)"
+    },
+    "offer_price_usd": {
+      "type": "number",
+      "description": "Price offered to prospect (below their estimated budget)"
+    },
+    "competitor_price_estimate_usd": {
+      "type": "number",
+      "description": "What they likely pay competitors"
+    },
+    "follow_up_interval_days": {
+      "type": "number",
+      "default": 3
+    },
+    "max_followups": {
+      "type": "number",
+      "default": 3
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "paused",
+        "completed",
+        "failed"
+      ],
+      "default": "draft"
+    },
+    "messages_sent": {
+      "type": "number",
+      "default": 0
+    },
+    "responses_received": {
+      "type": "number",
+      "default": 0
+    },
+    "conversions": {
+      "type": "number",
+      "default": 0
+    },
+    "vision_cortex_strategy": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "activated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "name",
+    "data_asset_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
