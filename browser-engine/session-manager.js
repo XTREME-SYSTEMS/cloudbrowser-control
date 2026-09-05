@@ -9,15 +9,21 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const WORKER_ID = process.env.RAILWAY_REPLICA_ID || process.env.HOSTNAME || "worker-local";
 
+let supabase = null;
+
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.warn(
     "Session manager disabled: SUPABASE_URL or SUPABASE_SERVICE_KEY not set. Using in-process sessions only."
   );
+} else {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    console.log("✓ Supabase session manager initialized");
+  } catch (e) {
+    console.warn(`Failed to initialize Supabase client: ${e.message}. Falling back to in-process sessions.`);
+    supabase = null;
+  }
 }
-
-const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY 
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-  : null;
 
 const SESSION_TABLE = "browser_sessions";
 const HEARTBEAT_INTERVAL_MS = 15000; // Ping DB every 15s
@@ -60,18 +66,7 @@ class SessionManager {
             `Failed to auto-create session schema (OK if using manual SQL): ${createError.message}`
           );
           console.log(
-            `Initialize schema manually with:
-CREATE TABLE ${SESSION_TABLE} (
-  id TEXT PRIMARY KEY,
-  worker_id TEXT,
-  status TEXT,
-  url TEXT,
-  pool_id TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  last_heartbeat TIMESTAMP DEFAULT NOW(),
-  ttl_ms INT
-);
-CREATE INDEX idx_worker_status ON ${SESSION_TABLE}(worker_id, status);`
+            `Initialize schema manually with:\nCREATE TABLE ${SESSION_TABLE} (\n  id TEXT PRIMARY KEY,\n  worker_id TEXT,\n  status TEXT,\n  url TEXT,\n  pool_id TEXT,\n  created_at TIMESTAMP DEFAULT NOW(),\n  last_heartbeat TIMESTAMP DEFAULT NOW(),\n  ttl_ms INT\n);\nCREATE INDEX idx_worker_status ON ${SESSION_TABLE}(worker_id, status);`
           );
           return;
         }
