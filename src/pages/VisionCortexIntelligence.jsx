@@ -11,6 +11,7 @@ import {
   Search, Database, Zap, Activity, BookOpen,
 } from 'lucide-react';
 import MonetizationTab from '@/components/vision-cortex/MonetizationTab';
+import BrainLinkTab from '@/components/vision-cortex/BrainLinkTab';
 
 const ARTIFACT_TYPE_ICONS = {
   insight: Lightbulb,
@@ -263,6 +264,7 @@ export default function VisionCortexIntelligence() {
           <TabsTrigger value="reflections" className="text-xs md:text-sm"><Eye className="w-4 h-4 mr-1 md:mr-2" />Reflections</TabsTrigger>
           <TabsTrigger value="money" className="text-xs md:text-sm"><DollarSign className="w-4 h-4 mr-1 md:mr-2" />Money</TabsTrigger>
           <TabsTrigger value="monetization" className="text-xs md:text-sm"><DollarSign className="w-4 h-4 mr-1 md:mr-2" />Monetize</TabsTrigger>
+          <TabsTrigger value="brainlink" className="text-xs md:text-sm"><Brain className="w-4 h-4 mr-1 md:mr-2" />Brain Link</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -495,6 +497,11 @@ export default function VisionCortexIntelligence() {
         {/* Monetization */}
         <TabsContent value="monetization" className="space-y-4">
           <MonetizationTab onRunAction={runAction} actionLoading={actionLoading} />
+        </TabsContent>
+
+        {/* Brain Link — bi-directional V-1 <-> V-2 */}
+        <TabsContent value="brainlink" className="space-y-4">
+          <BrainLinkTab onRunAction={runAction} actionLoading={actionLoading} />
         </TabsContent>
       </Tabs>
     </div>

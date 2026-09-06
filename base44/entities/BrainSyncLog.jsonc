@@ -1,0 +1,83 @@
+{
+  "name": "BrainSyncLog",
+  "type": "object",
+  "properties": {
+    "direction": {
+      "type": "string",
+      "enum": [
+        "eyes_to_brain",
+        "brain_to_eyes"
+      ],
+      "description": "Which way the data flowed"
+    },
+    "source_type": {
+      "type": "string",
+      "description": "Entity type pushed (IntelligenceArtifact, IntelligenceSeed, MoneyTrail, etc.) or 'command' for inbound"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "ID of the record that was synced"
+    },
+    "payload_summary": {
+      "type": "string",
+      "description": "Short summary of what was sent/received"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "http_status": {
+      "type": "number",
+      "description": "HTTP status code from the Brain's response (for outbound)"
+    },
+    "brain_response": {
+      "type": "string",
+      "description": "Raw response from the Brain (truncated)"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "synced_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "direction",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0,5,10,15,20,25,30,35,40,45,50,55 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "brain_eyes_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "push_to_brain": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncToBrain",
+            "args": {}
+          },
+          "then": "process_brain_commands",
+          "x-base44": {
+            "title": "Push Intelligence to Brain",
+            "description": "Eyes to Brain: send new artifacts, seeds, money trails"
+          }
+        }
+      },
+      {
+        "process_brain_commands": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "processBrainCommands",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Process Brain Commands",
+            "description": "Brain to Eyes: execute commands the Brain pushed to the Eyes webhook"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Brain Eyes Sync",
+  "description": "Bi-directional sync between Eyes (V-2/Cloud Browser) and Brain (V-1/Vision Cortex). Every 5 minutes: pushes new intelligence to the Brain, then processes any commands the Brain sent back."
+}

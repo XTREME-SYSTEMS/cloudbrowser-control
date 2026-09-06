@@ -1,0 +1,95 @@
+{
+  "name": "BrainCommand",
+  "type": "object",
+  "properties": {
+    "command_type": {
+      "type": "string",
+      "enum": [
+        "create_job",
+        "add_seed",
+        "scrape_url",
+        "run_cycle",
+        "update_strategy",
+        "run_monetization",
+        "follow_money",
+        "custom"
+      ],
+      "description": "What the Brain wants the Eyes to do"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Command-specific data: { url, name, steps, seed_type, category, strategy_text, ... }"
+    },
+    "brain_command_id": {
+      "type": "string",
+      "description": "ID assigned by the Brain for correlation"
+    },
+    "priority": {
+      "type": "number",
+      "default": 5,
+      "description": "1 = highest, 10 = lowest"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "executed",
+        "failed",
+        "skipped"
+      ],
+      "default": "pending"
+    },
+    "result": {
+      "type": "object",
+      "description": "Execution result \u2014 created entity IDs, output, errors"
+    },
+    "result_summary": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "brain_agent": {
+      "type": "string",
+      "description": "Which Brain agent issued this command (e.g. Primus, Validator)"
+    }
+  },
+  "required": [
+    "command_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
