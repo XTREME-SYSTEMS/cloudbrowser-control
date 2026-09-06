@@ -111,6 +111,13 @@ export async function engineFetch(path, options = {}, requestId) {
         const errMsg = typeof body === "object" && body?.error ? body.error : `Engine error ${res.status}`;
         throw new Error(errMsg);
       }
+
+      // Detect HTML responses (misconfigured engine serving Vite app shell instead of engine API)
+      if (typeof body === "string" && (body.trim().startsWith("<!doctype") || body.trim().startsWith("<html"))) {
+        errors.push(`${baseUrl}: returned HTML, not engine API (misconfigured deployment)`);
+        continue;
+      }
+
       return body;
     } catch (err) {
       // Network error / fetch rejection — record and try next engine

@@ -31,6 +31,20 @@ async function probeEngine(baseUrl, key) {
         raw: body,
       };
     }
+
+    // Detect HTML responses (misconfigured engine serving Vite app shell)
+    const bodyStr = typeof body === "string" ? body : (body?.raw && typeof body.raw === "string" ? body.raw : "");
+    if (bodyStr && (bodyStr.trim().startsWith("<!doctype") || bodyStr.trim().startsWith("<html") || bodyStr.includes("<!doctype html"))) {
+      return {
+        ok: false,
+        status: "unhealthy",
+        engine_url: baseUrl,
+        response_time_ms: responseTime,
+        error_message: "Engine returned HTML instead of JSON — deployment is misconfigured (serving Vite app, not browser engine)",
+        raw: { html_detected: true, snippet: bodyStr.slice(0, 200) },
+      };
+    }
+
     return {
       ok: true,
       status: body.ok ? "healthy" : "degraded",
