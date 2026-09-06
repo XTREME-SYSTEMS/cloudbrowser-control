@@ -153,19 +153,8 @@ export default async function (req) {
       }
     }
 
-    // Alert on any newly-unreachable engine
-    if (unhealthy.length > 0) {
-      try {
-        await base44.asServiceRole.entities.Notification.create({
-          type: "error",
-          category: "engine_health",
-          title: `${unhealthy.length}/${engines.length} Engine(s) Unhealthy`,
-          message: unhealthy.map((e) => `${e.engine_label}: ${e.error_message || e.status}`).join(" | "),
-          read: false,
-          created_at: new Date().toISOString(),
-        });
-      } catch (e) { console.error("Health notification failed:", e.message); }
-    }
+    // EngineHealthLog already persists per-engine status — no per-user Notification needed
+    // (Notification entity requires user_id; system alerts are tracked via EngineHealthLog)
 
     const swarmOk = unhealthy.length === 0;
     const swarmStatus = unhealthy.length === engines.length ? "down"
