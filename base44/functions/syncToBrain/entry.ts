@@ -15,12 +15,12 @@ export default async function (req) {
   const stats = { artifacts_pushed: 0, seeds_pushed: 0, money_trails_pushed: 0, failed: 0, skipped: 0 };
 
   const brainUrl = secrets.get("VISION_CORTEX_BRAIN_URL");
-  const brainKey = secrets.get("VISION_CORTEX_BRAIN_API_KEY");
+  const eyesApiKey = secrets.get("VISION_CORTEX_EYES_API_KEY");
 
-  if (!brainUrl || !brainKey) {
+  if (!brainUrl || !eyesApiKey) {
     return Response.json({
       ok: false,
-      error: "Brain connection not configured — set VISION_CORTEX_BRAIN_URL and VISION_CORTEX_BRAIN_API_KEY secrets",
+      error: "Brain connection not configured — set VISION_CORTEX_BRAIN_URL and VISION_CORTEX_EYES_API_KEY secrets",
       __v: DEPLOYMENT_VERSION,
     }, { status: 200 });
   }
@@ -70,7 +70,7 @@ export default async function (req) {
   try {
     const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-eyes-api-key": brainKey },
+      headers: { "Content-Type": "application/json", "x-eyes-api-key": eyesApiKey },
       body: JSON.stringify({ source: "cloud-browser-v2-eyes", batch: items }),
       signal: controller.signal,
     });

@@ -22,10 +22,7 @@ export default async function (req) {
         if (!serviceId) throw new Error("serviceId is required for redeploy");
         result = await railwayGraphQL(
           `mutation($environmentId: String!, $serviceId: String!) {
-            serviceInstanceRedeploy(environmentId: $environmentId, serviceId: $serviceId) {
-              id
-              status
-            }
+            serviceInstanceRedeploy(environmentId: $environmentId, serviceId: $serviceId)
           }`,
           { environmentId, serviceId }
         );
@@ -36,10 +33,7 @@ export default async function (req) {
         if (!serviceId) throw new Error("serviceId is required for deploy_latest");
         result = await railwayGraphQL(
           `mutation($environmentId: String!, $serviceId: String!) {
-            serviceInstanceDeploy(latestCommit: true, environmentId: $environmentId, serviceId: $serviceId) {
-              id
-              status
-            }
+            serviceInstanceDeploy(latestCommit: true, environmentId: $environmentId, serviceId: $serviceId)
           }`,
           { environmentId, serviceId }
         );
@@ -50,10 +44,7 @@ export default async function (req) {
         if (!deploymentId) throw new Error("deploymentId is required for restart");
         result = await railwayGraphQL(
           `mutation($deploymentId: String!) {
-            deploymentRestart(id: $deploymentId) {
-              id
-              status
-            }
+            deploymentRestart(id: $deploymentId)
           }`,
           { deploymentId }
         );
@@ -64,10 +55,7 @@ export default async function (req) {
         if (!deploymentId) throw new Error("deploymentId is required for stop");
         result = await railwayGraphQL(
           `mutation($deploymentId: String!) {
-            deploymentStop(id: $deploymentId) {
-              id
-              status
-            }
+            deploymentStop(id: $deploymentId)
           }`,
           { deploymentId }
         );
@@ -78,10 +66,7 @@ export default async function (req) {
         if (!deploymentId) throw new Error("deploymentId is required for rollback");
         result = await railwayGraphQL(
           `mutation($deploymentId: String!) {
-            deploymentRollback(id: $deploymentId) {
-              id
-              status
-            }
+            deploymentRollback(id: $deploymentId)
           }`,
           { deploymentId }
         );
@@ -92,10 +77,7 @@ export default async function (req) {
         if (!deploymentId) throw new Error("deploymentId is required for cancel");
         result = await railwayGraphQL(
           `mutation($deploymentId: String!) {
-            deploymentCancel(id: $deploymentId) {
-              id
-              status
-            }
+            deploymentCancel(id: $deploymentId)
           }`,
           { deploymentId }
         );
@@ -111,12 +93,7 @@ export default async function (req) {
               serviceId: $serviceId
               memoryGB: $memoryGB
               vCPUs: $vCPUs
-            }) {
-              serviceInstanceLimitOverride {
-                memoryGB
-                vCPUs
-              }
-            }
+            })
           }`,
           { environmentId, serviceId, memoryGB: memoryGB || null, vCPUs: vCPUs || null }
         );
