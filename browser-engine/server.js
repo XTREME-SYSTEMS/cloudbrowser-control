@@ -306,8 +306,6 @@ async function warmPool() {
       pool.push(id);
     } catch (e) { break; }
   }
-    } catch (e) { break; }
-  }
 }
 
 // Multi-provider CAPTCHA — Browserbase parity.
