@@ -12,7 +12,7 @@ export default async function(req) {
 
     // ── Google Drive sync ──
     if (serviceType === 'googledrive') {
-      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db1e5e75a5f8c15c80cf34');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
       const res = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=50&fields=files(id,name,mimeType,modifiedTime)', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -23,7 +23,7 @@ export default async function(req) {
 
     // ── Google Calendar sync ──
     if (serviceType === 'googlecalendar') {
-      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69ddcb305a599e0b4a1b3cff');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
       const timeMin = new Date().toISOString();
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=50&timeMin=${timeMin}&orderBy=startTime&singleEvents=true`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -35,7 +35,7 @@ export default async function(req) {
 
     // ── Gmail sync ──
     if (serviceType === 'gmail') {
-      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db200274332486fd28dd7e');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('gmail');
       const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -46,7 +46,7 @@ export default async function(req) {
 
     // ── Google Sheets sync ──
     if (serviceType === 'googlesheets') {
-      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db1fad3c50db37ad0ce8dd');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlesheets');
       const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -57,7 +57,7 @@ export default async function(req) {
 
     // ── Google Docs sync ──
     if (serviceType === 'googledocs') {
-      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69ddcb7e5d965b5605cd24b4');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledocs');
       const res = await fetch('https://docs.googleapis.com/v1/documents', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -68,7 +68,7 @@ export default async function(req) {
 
     // ── Google Tasks sync ──
     if (serviceType === 'googletasks') {
-      const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection('69db201897e4e8f9ae073be7');
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googletasks');
       const res = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
