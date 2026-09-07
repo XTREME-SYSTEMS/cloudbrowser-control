@@ -40,24 +40,43 @@
     },
     {
       "function_name": "runDeepClonePipeline",
-      "description": "Execute the full 4-phase DEEP clone pipeline for a target URL"
+      "description": "Execute the full 4-phase DEEP clone pipeline"
     },
     {
       "function_name": "cloneFullSite",
-      "description": "Capture the full frontend of a target URL (DOM, HAR, screenshots)"
+      "description": "Capture frontend via browser engine"
     },
     {
       "function_name": "siteAudit",
-      "description": "Analyze captured network traces to map API endpoints and identify gaps"
+      "description": "Analyze network traces for endpoints"
     },
     {
       "function_name": "reconstructBackend",
-      "description": "Infer backend architecture and generate mock backend code from network traces"
+      "description": "Infer backend architecture from traces"
     },
     {
       "function_name": "provisionCloneDeployment",
-      "description": "Deploy the verified clone to GitHub and Vercel"
+      "description": "Deploy clone to GitHub and Vercel"
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "clone_parity_engineer"
 }
