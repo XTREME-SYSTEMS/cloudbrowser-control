@@ -116,7 +116,7 @@ export default function Landing() {
               </Button>
             </Link>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">No credit card required · 1 browser hour free · Cancel anytime</p>
+          <p className="mt-4 text-sm text-muted-foreground">No credit card required · 15 minutes free · Cancel anytime</p>
         </div>
       </section>
 

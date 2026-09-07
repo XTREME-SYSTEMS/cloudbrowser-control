@@ -57,6 +57,7 @@ import McpCreator from '@/pages/McpCreator';
 import SandboxManager from '@/pages/SandboxManager';
 import AgentBuilder from '@/pages/AgentBuilder';
 import ThankYou from '@/pages/ThankYou';
+import AdminPortal from '@/pages/AdminPortal';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -107,6 +108,7 @@ const AuthenticatedApp = () => {
           <Route path="/mcp-creator" element={<McpCreator />} />
           <Route path="/sandboxes" element={<SandboxManager />} />
           <Route path="/agent-builder" element={<AgentBuilder />} />
+          <Route path="/admin" element={<AdminPortal />} />
           <Route path="/enhancements" element={<Enhancements />} />
           <Route path="/ai-chat" element={<AiChat />} />
           <Route path="/connection-info" element={<ConnectionInfo />} />

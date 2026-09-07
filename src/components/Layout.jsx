@@ -61,6 +61,7 @@ const navItems = [
   { to: "/proxies", label: "Proxies", icon: Globe },
   { to: "/captcha", label: "Captcha", icon: Shield },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/admin", label: "Admin Portal", icon: ShieldCheck },
 ];
 
 function NavLinks({ onNavigate }) {
