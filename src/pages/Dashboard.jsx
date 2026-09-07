@@ -1,256 +1,291 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import CopyBlock from "@/components/CopyBlock";
-import CaptchaSolverCard from "@/components/CaptchaSolverCard";
+import { Image } from "@/components/ui/image";
 import {
-  Key, Plus, RefreshCw, Eye, EyeOff, Plug, Package, Copy,
-  ArrowRight, Sparkles, Monitor, Briefcase, Bot,
+  Server, Bot, Monitor, Clock, Copy, Plug,
+  CheckCircle2, Circle, ArrowRight, Sparkles, Activity, Zap,
 } from "lucide-react";
 
-const GATEWAY_PATH = "/api/functions/cloudBrowserGatewayV6";
-const MCP_PATH = "/api/functions/mcpTools";
-const DEFAULT_SCOPES = ["sessions:read", "sessions:write", "jobs:read", "jobs:write"];
+const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png";
 
 export default function Dashboard() {
-  const [apiKeys, setApiKeys] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [createdKey, setCreatedKey] = useState(null);
-  const [showKey, setShowKey] = useState(true);
-  const [newKeyName, setNewKeyName] = useState("");
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [stats, setStats] = useState({ sandboxes: 0, agents: 0, sessions: 0, jobs: 0, browserHours: 0 });
   const [subscription, setSubscription] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [onboarded, setOnboarded] = useState(true);
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://app.base44.app";
-  const gatewayUrl = origin + GATEWAY_PATH;
-  const mcpUrl = origin + MCP_PATH;
+  useEffect(() => {
+    (async () => {
+      try {
+        const [sandboxes, agents, sessions, jobs, subs, onboarding] = await Promise.all([
+          base44.entities.Sandbox.list("-created_date", 50).catch(() => []),
+          base44.entities.UserAgent.list("-created_date", 50).catch(() => []),
+          base44.entities.Session.list("-created_date", 10).catch(() => []),
+          base44.entities.Job.list("-created_date", 10).catch(() => []),
+          base44.entities.Subscription.list("-created_date", 1).catch(() => []),
+          base44.entities.OnboardingProfile.filter({ completed: true }).catch(() => []),
+        ]);
 
-  const load = useCallback(async () => {
-    try {
-      const [keys, projs, onboarding, subs] = await Promise.all([
-        base44.entities.ApiKey.list("-created_date", 50).catch(() => []),
-        base44.entities.Project.list("-created_date", 50).catch(() => []),
-        base44.entities.OnboardingProfile.filter({ completed: true }).catch(() => []),
-        base44.entities.Subscription.list("-created_date", 5).catch(() => []),
-      ]);
-      setApiKeys(keys);
-      setProjects(projs);
-      setNeedsOnboarding(onboarding.length === 0);
-      setSubscription(subs[0] || null);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+        setStats({
+          sandboxes: sandboxes.length,
+          agents: agents.length,
+          sessions: sessions.filter(s => s.status === "active").length,
+          jobs: jobs.length,
+          browserHours: subs[0]?.usage_browser_hours || 0,
+        });
+        setSubscription(subs[0] || null);
+        setOnboarded(onboarding.length > 0);
+
+        const activity = [
+          ...sessions.slice(0, 5).map(s => ({
+            type: "session",
+            title: "Session " + (s.status || "created"),
+            subtitle: s.start_url || s.target_url || "—",
+            time: s.created_date,
+            icon: Monitor,
+          })),
+          ...jobs.slice(0, 5).map(j => ({
+            type: "job",
+            title: "Job: " + (j.name || "Untitled"),
+            subtitle: j.status || "pending",
+            time: j.created_date,
+            icon: Activity,
+          })),
+        ].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0)).slice(0, 8);
+        setRecentActivity(activity);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const planName = subscription?.plan_tier || "free";
+  const maxHours = subscription?.max_browser_hours || 0.25;
+  const usagePct = maxHours > 0 ? Math.min(100, (stats.browserHours / maxHours) * 100) : 0;
 
-  const generateKey = async () => {
-    setGenerating(true);
-    try {
-      const res = await base44.functions.invoke("createApiKey", {
-        name: newKeyName || `Key ${new Date().toLocaleDateString()}`,
-        scopes: DEFAULT_SCOPES,
-      });
-      const data = res.data || res;
-      if (data.api_key) {
-        setCreatedKey(data.api_key);
-        setShowKey(true);
-        setNewKeyName("");
-        load();
-      }
-    } catch (e) { alert(e.response?.data?.error || e.message); }
-    finally { setGenerating(false); }
-  };
+  const checklist = [
+    { label: "Complete onboarding", done: onboarded, link: "/welcome" },
+    { label: "Create your first sandbox", done: stats.sandboxes > 0, link: "/sandboxes" },
+    { label: "Build an AI agent", done: stats.agents > 0, link: "/agent-builder" },
+    { label: "Run a job", done: stats.jobs > 0, link: "/jobs" },
+    { label: "Set up MCP connection", done: false, link: "/mcp-creator" },
+  ];
+  const checklistDone = checklist.filter(c => c.done).length;
 
-  const regenerate = async (key) => {
-    if (!confirm("Regenerate this key? The old key stops working immediately.")) return;
-    try {
-      await base44.entities.ApiKey.update(key.id, { active: false }).catch(() => {});
-      const res = await base44.functions.invoke("createApiKey", {
-        name: `${key.name} (regenerated)`,
-        scopes: key.scopes || DEFAULT_SCOPES,
-        project_id: key.project_id,
-      });
-      const data = res.data || res;
-      if (data.api_key) {
-        setCreatedKey(data.api_key);
-        setShowKey(true);
-        load();
-      }
-    } catch (e) { alert(e.response?.data?.error || e.message); }
-  };
+  const quickActions = [
+    { label: "New Sandbox", desc: "Provision an isolated environment", icon: Server, link: "/sandboxes", color: "text-blue-500 bg-blue-50" },
+    { label: "Build Agent", desc: "Create an AI automation agent", icon: Bot, link: "/agent-builder", color: "text-purple-500 bg-purple-50" },
+    { label: "Clone Site", desc: "Clone any website", icon: Copy, link: "/clone-studio", color: "text-amber-500 bg-amber-50" },
+    { label: "MCP Config", desc: "Connect your AI tools", icon: Plug, link: "/mcp-creator", color: "text-emerald-500 bg-emerald-50" },
+  ];
 
-  // The full connection package — everything another project needs in one block
-  const activeKey = createdKey || "<generate a key below>";
-  const connectionPackage = [
-    `# CloudBrowser Control — Connection Package`,
-    `# Paste these into the other project's environment / secrets`,
-    ``,
-    `CLOUDBROWSER_GATEWAY_URL=${gatewayUrl}`,
-    `CLOUDBROWSER_MCP_URL=${mcpUrl}`,
-    `CLOUDBROWSER_API_KEY=${activeKey}`,
-  ].join("\n");
+  const statCards = [
+    { label: "Sandboxes", value: stats.sandboxes, icon: Server, color: "text-blue-500" },
+    { label: "AI Agents", value: stats.agents, icon: Bot, color: "text-purple-500" },
+    { label: "Active Sessions", value: stats.sessions, icon: Monitor, color: "text-emerald-500" },
+    { label: "Jobs Run", value: stats.jobs, icon: Activity, color: "text-amber-500" },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><Plug className="w-6 h-6" />Connection Hub</h1>
-          <p className="text-muted-foreground mt-1">Everything another project needs to connect to CloudBrowser — all in one place.</p>
-        </div>
-        {subscription && (
-          <div className="hidden md:flex items-center gap-2">
-            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">{subscription.plan_tier} plan</span>
-            <Link to="/pricing"><Button variant="outline" size="sm">Upgrade</Button></Link>
+      {/* Branded Header */}
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gold-gradient" />
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <Image src={LOGO_URL} alt="XTREME SCRAPER" className="w-12 h-12 shrink-0" fittingType="fit" />
+            <div>
+              <h1 className="text-2xl font-heading font-bold">Command Center</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Welcome back{user?.full_name ? ", " + user.full_name : ""} — your automation workspace.
+              </p>
+            </div>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 font-medium capitalize">
+              {planName} plan
+            </span>
+            <Link to="/billing"><Button variant="outline" size="sm">Upgrade</Button></Link>
+          </div>
+        </div>
       </div>
 
-      {/* Onboarding banner */}
-      {needsOnboarding && (
-        <Card className="border-violet-300 bg-violet-50/50">
-          <CardContent className="pt-4 flex items-center justify-between gap-4">
+      {/* Onboarding Banner */}
+      {!onboarded && (
+        <Card className="border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50/50">
+          <CardContent className="pt-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
-                <Sparkles className="w-5 h-5 text-violet-600" />
+              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Welcome to CloudBrowser! Let's set up your account.</h3>
+                <h3 className="font-semibold text-sm">Welcome to XTREME SCRAPER! Let's set up your account.</h3>
                 <p className="text-xs text-muted-foreground">Answer a few questions and our AI will configure everything for you.</p>
               </div>
             </div>
             <Link to="/welcome">
-              <Button size="sm">Get Started <ArrowRight className="w-3 h-3 ml-1" /></Button>
+              <Button size="sm" className="bg-gold-gradient text-black font-medium">
+                Get Started <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
             </Link>
           </CardContent>
         </Card>
       )}
 
-      {/* NEW KEY BANNER */}
-      {createdKey && (
-        <Card className="border-amber-300">
-          <CardContent className="pt-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-amber-800">New API key — copy it now, it won't be shown again!</span>
-              <Button size="sm" variant="ghost" onClick={() => setShowKey(!showKey)}>{showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</Button>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {statCards.map(s => {
+          const Icon = s.icon;
+          return (
+            <Card key={s.label} className="border-border/50">
+              <CardContent className="pt-5">
+                <div className="flex items-center justify-between mb-2">
+                  <Icon className={cn("w-5 h-5", s.color)} />
+                </div>
+                <div className="text-2xl font-heading font-bold">{loading ? "—" : s.value}</div>
+                <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Usage Card */}
+      {subscription && (
+        <Card className="border-border/50">
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" />
+                <h3 className="font-semibold text-sm">Browser Hours Usage</h3>
+              </div>
+              <span className="text-sm font-medium">
+                {stats.browserHours.toFixed(2)} / {maxHours} hrs
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 p-2 rounded bg-amber-50 border font-mono text-xs sm:text-sm break-all">
-                {showKey ? createdKey : "cb_live_••••••••••••••••••••••••••••••••••••••••"}
-              </code>
-              <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(createdKey); }}>
-                <Copy className="w-4 h-4" />
-              </Button>
+            <div className="w-full h-3 rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-gold-gradient transition-all" style={{ width: usagePct + "%" }} />
             </div>
-            <Button size="sm" variant="outline" onClick={() => setCreatedKey(null)}>Done</Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              {usagePct >= 100
+                ? "You've reached your monthly limit. Upgrade to continue."
+                : (100 - usagePct).toFixed(0) + "% remaining this billing period."}
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* CAPTCHA SOLVER */}
-      <CaptchaSolverCard />
+      {/* Quick Actions + Recent Activity */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Zap className="w-5 h-5 text-amber-600" /> Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {quickActions.map(a => {
+              const Icon = a.icon;
+              return (
+                <Link key={a.label} to={a.link}>
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-amber-300 hover:bg-amber-50/30 transition-colors cursor-pointer">
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", a.color)}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{a.label}</div>
+                      <div className="text-xs text-muted-foreground">{a.desc}</div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
 
-      {/* FULL CONNECTION PACKAGE — the main thing */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Package className="w-5 h-5" />Full Connection Package</CardTitle>
-          <CardDescription>Copy this entire block and hand it to the other project. That's all they need.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CopyBlock text={connectionPackage} label="Environment variables / secrets" />
-          <div className="mt-3 p-3 rounded-md bg-blue-50 border border-blue-200 text-xs text-blue-800">
-            <strong>Auth:</strong> Every request needs <code>Authorization: Bearer &lt;CLOUDBROWSER_API_KEY&gt;</code>.
-            Create sessions via the Gateway URL (geo/proxy), then drive them via the MCP URL (navigate/extract/screenshot).
-            Full integration guide: <Link to="/api-docs" className="underline">API Docs</Link>.
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ENDPOINTS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Endpoints</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <CopyBlock label="Gateway URL — create geo-targeted sessions" text={gatewayUrl} />
-          <CopyBlock label="MCP Tools URL — navigate, extract, screenshot, close" text={mcpUrl} />
-          <CopyBlock label="Authorization header (on every request)" text="Authorization: Bearer <CLOUDBROWSER_API_KEY>" />
-        </CardContent>
-      </Card>
-
-      {/* API KEYS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Key className="w-5 h-5" />API Keys</CardTitle>
-          <CardDescription>Keys are shown in plaintext only once — at creation or regeneration. Copy immediately.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Create new */}
-          <div className="flex gap-2 items-end">
-            <div className="flex-1">
-              <Label>Key name (optional)</Label>
-              <Input value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g. SEO Generator" />
-            </div>
-            <Button onClick={generateKey} disabled={generating}>
-              {generating ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
-              Generate Key
-            </Button>
-          </div>
-
-          {/* Existing keys */}
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : apiKeys.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No keys yet — generate one above.</p>
-          ) : (
-            <div className="space-y-2">
-              {apiKeys.map((k) => (
-                <div key={k.id} className="flex items-center justify-between p-3 rounded-md border">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{k.name}</span>
-                      {k.active ? (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">active</span>
-                      ) : (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">inactive</span>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="w-5 h-5 text-amber-600" /> Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : recentActivity.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No activity yet. Start by creating a sandbox or agent.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentActivity.map((a, i) => {
+                  const Icon = a.icon;
+                  return (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{a.title}</div>
+                        <div className="text-xs text-muted-foreground truncate">{a.subtitle}</div>
+                      </div>
+                      {a.time && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(a.time).toLocaleDateString()}
+                        </span>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                      {k.key_prefix}… · scopes: {(k.scopes || []).join(", ")}
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => regenerate(k)}>
-                    <RefreshCw className="w-3 h-3 mr-1" /> Regenerate
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* QUICK ACTIONS */}
+      {/* Getting Started Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="w-5 h-5" />Quick Actions</CardTitle>
-          <CardDescription>Jump to the tools you need.</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="w-5 h-5 text-amber-600" /> Getting Started
+            <span className="text-xs text-muted-foreground ml-2">({checklistDone}/{checklist.length} complete)</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link to="/sessions"><Button variant="outline" className="w-full justify-start"><Monitor className="w-4 h-4 mr-2" />Sessions</Button></Link>
-            <Link to="/jobs"><Button variant="outline" className="w-full justify-start"><Briefcase className="w-4 h-4 mr-2" />Jobs</Button></Link>
-            <Link to="/agent-builder"><Button variant="outline" className="w-full justify-start"><Bot className="w-4 h-4 mr-2" />Agents</Button></Link>
-            <Link to="/clone-studio"><Button variant="outline" className="w-full justify-start"><Copy className="w-4 h-4 mr-2" />Clone</Button></Link>
+          <div className="space-y-2">
+            {checklist.map((item, i) => (
+              <Link key={i} to={item.link}>
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                  {item.done ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-muted-foreground shrink-0" />
+                  )}
+                  <span className={cn("text-sm flex-1", item.done && "text-muted-foreground line-through")}>
+                    {item.label}
+                  </span>
+                  {!item.done && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
+                </div>
+              </Link>
+            ))}
           </div>
+          {checklistDone === checklist.length && (
+            <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              <span className="text-sm text-emerald-700">All set! Your workspace is fully configured.</span>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

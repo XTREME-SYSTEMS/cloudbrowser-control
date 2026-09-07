@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,21 +25,17 @@ const tabs = [
 
 export default function AdminPortal() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  const [isAdmin, setIsAdmin] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
-      if (!u || u.role !== "admin") {
-        navigate("/dashboard", { replace: true });
-      } else {
-        setIsAdmin(true);
-      }
-    }).catch(() => navigate("/dashboard"));
-  }, [navigate]);
+    if (user && user.role !== "admin") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
 
-  if (!isAdmin) {
+  if (!user || user.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin" />
