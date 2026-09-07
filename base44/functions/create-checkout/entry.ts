@@ -69,33 +69,39 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
 
     // ===== APP-SPECIFIC =====
-    // Resolve what is being bought AND its price SERVER-SIDE. NEVER trust a price sent by the
-    // client — a buyer can tamper the request body and pay any amount. The client sends only a
-    // product identifier; look up the authoritative price here (a Product entity, a config map,
-    // etc.). For a subscription, set `subscriptionInfo` (frequency/interval/billingCycles).
+    // CloudBrowser subscription plans — prices resolved SERVER-SIDE, never from the client.
+    const PLANS = {
+      developer: {
+        name: "CloudBrowser Developer Plan",
+        price: "29.00",
+        subscriptionInfo: {
+          subscriptionSettings: { frequency: "MONTH" },
+          title: "Developer Plan — 25 concurrent, 100 browser hrs",
+          description: "Build and test real workflows. Prepare for production.",
+        },
+      },
+      startup: {
+        name: "CloudBrowser Startup Plan",
+        price: "99.00",
+        subscriptionInfo: {
+          subscriptionSettings: { frequency: "MONTH" },
+          title: "Startup Plan — 100 concurrent, 500 browser hrs",
+          description: "Run in production with room to grow and scale usage.",
+        },
+      },
+    };
     const productId = String(body.productId ?? "");
-    // Quantity is buyer-controlled, so VALIDATE it server-side. Check the RAW value is a positive
-    // integer BEFORE using it — do NOT Math.trunc first, or a fractional POST (e.g. 1.9) silently
-    // passes as 1 and charges a quantity the UI never allowed. For a plan / fixed-entitlement product,
-    // hard-code `1` and ignore the body; for a genuine multi-unit product, also enforce YOUR own max.
-    const quantity = Number(body.quantity ?? 1);
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      return new Response(JSON.stringify({ error: "Invalid quantity" }), { status: 400 });
+    const plan = PLANS[productId];
+    if (!plan) {
+      return new Response(JSON.stringify({ error: "Unknown plan. Available: developer, startup" }), { status: 400 });
     }
-    // Example — replace with your real trusted product source:
-    //   const product = (await base44.asServiceRole.entities.Product.filter({ id: productId }))[0];
-    //   if (!product) return new Response(JSON.stringify({ error: "Unknown product" }), { status: 400 });
-    //   const productName = product.name; const price = String(product.price); const currency = product.currency ?? "USD";
-    const productName = "Purchase"; // TODO: from your trusted product source
-    const price = "0.00";           // TODO: authoritative per-unit price (major units), resolved server-side
+    const productName = plan.name;
+    const price = plan.price;
     const currency = "USD";
-    // For a SUBSCRIPTION set this to Wix's subscriptionInfo; leave null for a one-time payment.
-    const subscriptionInfo = null;
-    // Where Wix returns the buyer. Both MUST be real, PUBLICLY reachable routes in this app: the
-    // returning buyer is often anonymous, so a missing or login-gated route strands a paid customer.
-    // Match your router exactly — `/ThankYou`, not `/thank-you`.
+    const subscriptionInfo = plan.subscriptionInfo;
+    const quantity = 1; // Fixed-entitlement plan — always 1
     const thankYouPath = "/ThankYou";
-    const postFlowPath = "/";
+    const postFlowPath = "/pricing";
     // ===== END APP-SPECIFIC =====
 
     const total = parseFloat(price) * quantity;

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Check, Zap, Crown, Building2, Rocket, ArrowRight, Cloud, Sparkles } from "lucide-react";
+import { Check, Zap, Crown, Building2, Rocket, ArrowRight, Cloud, Sparkles, Loader2 } from "lucide-react";
 
 const plans = [
   {
@@ -154,7 +155,26 @@ function FeatureValue({ value }) {
 }
 
 export default function Pricing() {
+  const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
+  const [checkoutPlan, setCheckoutPlan] = useState(null);
+
+  const handleCheckout = async (planId) => {
+    setCheckoutPlan(planId);
+    try {
+      const res = await base44.functions.invoke("create-checkout", { productId: planId });
+      const redirectUrl = res.data?.redirectUrl;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        alert("Could not start checkout. Please try again.");
+      }
+    } catch (e) {
+      alert(e.response?.data?.error || e.message || "Checkout failed");
+    } finally {
+      setCheckoutPlan(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,11 +268,28 @@ export default function Pricing() {
                     </div>
                   </div>
                 </div>
-                <Link to={plan.ctaLink} className="mt-6">
-                  <Button className="w-full" variant={plan.highlight ? "default" : "outline"}>
-                    {plan.cta} <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
+                <div className="mt-6">
+                  {plan.name === "Developer" || plan.name === "Startup" ? (
+                    <Button
+                      className="w-full"
+                      variant={plan.highlight ? "default" : "outline"}
+                      onClick={() => handleCheckout(plan.name.toLowerCase())}
+                      disabled={checkoutPlan === plan.name.toLowerCase()}
+                    >
+                      {checkoutPlan === plan.name.toLowerCase() ? (
+                        <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Redirecting…</>
+                      ) : (
+                        <>{plan.cta} <ArrowRight className="w-4 h-4 ml-1" /></>
+                      )}
+                    </Button>
+                  ) : (
+                    <Link to={plan.ctaLink}>
+                      <Button className="w-full" variant={plan.highlight ? "default" : "outline"}>
+                        {plan.cta} <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}

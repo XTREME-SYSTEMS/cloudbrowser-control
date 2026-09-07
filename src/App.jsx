@@ -56,6 +56,7 @@ import SaaSOnboarding from '@/pages/SaaSOnboarding';
 import McpCreator from '@/pages/McpCreator';
 import SandboxManager from '@/pages/SandboxManager';
 import AgentBuilder from '@/pages/AgentBuilder';
+import ThankYou from '@/pages/ThankYou';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -95,6 +96,7 @@ const AuthenticatedApp = () => {
       <Route path="/share/:token" element={<ShareView />} />
       <Route path="/landing" element={<Landing />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/ThankYou" element={<ThankYou />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />

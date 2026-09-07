@@ -9,6 +9,7 @@ import CopyBlock from "@/components/CopyBlock";
 import CaptchaSolverCard from "@/components/CaptchaSolverCard";
 import {
   Key, Plus, RefreshCw, Eye, EyeOff, Plug, Folder, ExternalLink, Package, Copy,
+  ArrowRight, Sparkles,
 } from "lucide-react";
 
 const GATEWAY_PATH = "/api/functions/cloudBrowserGatewayV6";
@@ -23,6 +24,8 @@ export default function Dashboard() {
   const [newKeyName, setNewKeyName] = useState("");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [subscription, setSubscription] = useState(null);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://app.base44.app";
   const gatewayUrl = origin + GATEWAY_PATH;
@@ -30,12 +33,16 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [keys, projs] = await Promise.all([
+      const [keys, projs, onboarding, subs] = await Promise.all([
         base44.entities.ApiKey.list("-created_date", 50).catch(() => []),
         base44.entities.Project.list("-created_date", 50).catch(() => []),
+        base44.entities.OnboardingProfile.filter({ completed: true }).catch(() => []),
+        base44.entities.Subscription.list("-created_date", 5).catch(() => []),
       ]);
       setApiKeys(keys);
       setProjects(projs);
+      setNeedsOnboarding(onboarding.length === 0);
+      setSubscription(subs[0] || null);
     } catch (e) {
       console.error(e);
     } finally {
@@ -95,10 +102,38 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><Plug className="w-6 h-6" />Connection Hub</h1>
-        <p className="text-muted-foreground mt-1">Everything another project needs to connect to CloudBrowser — all in one place.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><Plug className="w-6 h-6" />Connection Hub</h1>
+          <p className="text-muted-foreground mt-1">Everything another project needs to connect to CloudBrowser — all in one place.</p>
+        </div>
+        {subscription && (
+          <div className="hidden md:flex items-center gap-2">
+            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">{subscription.plan_tier} plan</span>
+            <Link to="/pricing"><Button variant="outline" size="sm">Upgrade</Button></Link>
+          </div>
+        )}
       </div>
+
+      {/* Onboarding banner */}
+      {needsOnboarding && (
+        <Card className="border-violet-300 bg-violet-50/50">
+          <CardContent className="pt-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-violet-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Welcome to CloudBrowser! Let's set up your account.</h3>
+                <p className="text-xs text-muted-foreground">Answer a few questions and our AI will configure everything for you.</p>
+              </div>
+            </div>
+            <Link to="/welcome">
+              <Button size="sm">Get Started <ArrowRight className="w-3 h-3 ml-1" /></Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* NEW KEY BANNER */}
       {createdKey && (

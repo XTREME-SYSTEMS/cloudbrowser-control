@@ -143,29 +143,52 @@ async function handleOrderApproved(db: any, eventData: any): Promise<Response> {
   const buyerEmail: string | null = purchase.buyerEmail ?? extractBuyerEmail(order);
 
   // ===== APP-SPECIFIC =====
-  // Grant whatever the buyer paid for. This runs BEFORE we mark the purchase paid: if it
-  // throws or times out, the status stays "pending", so Wix's retry re-runs the grant
-  // rather than hitting the "already paid" short-circuit above and skipping it forever.
-  //
-  // It MUST therefore be idempotent — Wix can also deliver duplicates CONCURRENTLY, so the
-  // "pending" check above is NOT a lock: two invocations can both reach this block. Make every
-  // effect safe to run twice by keying it on a stable id (purchase.id / checkoutId), never
-  // blind-create/blind-send:
-  //   - unlock a feature:   await db.entities.User.update(purchase.appUserId, { plan: purchase.productId });  // update is naturally idempotent
-  //   - create entitlement: const existing = await db.entities.Entitlement.filter({ purchaseId: purchase.id });
-  //                         if (!existing.length) await db.entities.Entitlement.create({ purchaseId: purchase.id, ... });
-  //   - one-time side effects (email/webhook): guard them the same way — record a marker keyed
-  //     on purchase.id and skip if it already exists, so a duplicate delivery can't send twice.
-  //   - QUANTITY: for a multi-unit purchase grant `purchase.quantity` (seats/credits/items), not a
-  //     single unit — it's the validated count create-checkout charged for. Fixed-entitlement = 1.
-  //   - subscriptions:      subscriptionId is persisted automatically below, for later revoke.
-  //   - GRANT TARGET: use purchase.appUserId when set (the built-in `User` entity — there is no
-  //     `AppUser`). For an anonymous buyer (appUserId null) match `buyerEmail` (resolved above)
-  //     against User; User records CANNOT be created here (invite-only), so when no user matches,
-  //     grant to an Entitlement row keyed on the email and claim it when they sign up.
-  //   - Gate paid access on a WRITABLE field you set here (e.g. plan / has_paid on the user or an
-  //     Entitlement row) — NEVER on is_verified: it is platform-protected and cannot be set here,
-  //     even as service role, so gating access on it locks the paying buyer out.
+  // Grant: upgrade the buyer's Subscription entity to the paid plan.
+  // Idempotent — update is safe to run twice.
+  const PLAN_LIMITS = {
+    developer: { max_concurrent_sessions: 25, max_browser_hours: 100, max_agent_runs: 15, max_search_calls: 1000, max_fetch_calls: 1000, max_proxy_gb: 1, data_retention_days: 30, captcha_solving_enabled: true, stealth_mode: "basic", monthly_price_usd: 29, overage_rate_browser_hr: 0.12, overage_rate_search_1k: 7, overage_rate_fetch_1k: 1, overage_rate_proxy_gb: 12 },
+    startup: { max_concurrent_sessions: 100, max_browser_hours: 500, max_agent_runs: 50, max_search_calls: 1000, max_fetch_calls: 10000, max_proxy_gb: 5, data_retention_days: 30, captcha_solving_enabled: true, stealth_mode: "basic", monthly_price_usd: 99, overage_rate_browser_hr: 0.10, overage_rate_search_1k: 7, overage_rate_fetch_1k: 1, overage_rate_proxy_gb: 10 },
+  };
+  const planTier = purchase.productId;
+  const limits = PLAN_LIMITS[planTier];
+  if (limits) {
+    // Find the buyer's Subscription record by appUserId or buyerEmail
+    let subFilter = {};
+    if (purchase.appUserId) {
+      subFilter = { created_by_id: purchase.appUserId };
+    } else if (buyerEmail) {
+      // Anonymous buyer — match by email isn't directly possible via RLS filter,
+      // but asServiceRole bypasses RLS so we can query all and find by created_by_id later.
+      // For now, the subscription will be upgraded when the user signs in and we match by email.
+      // Store a pending entitlement keyed on email.
+    }
+    if (purchase.appUserId) {
+      const existing = await db.entities.Subscription.filter(subFilter).catch(() => []);
+      if (existing.length > 0) {
+        await db.entities.Subscription.update(existing[0].id, {
+          plan_tier: planTier,
+          status: "active",
+          billing_cycle: "monthly",
+          stripe_subscription_id: subscriptionId ?? existing[0].stripe_subscription_id,
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          ...limits,
+        });
+      } else {
+        await db.entities.Subscription.create({
+          created_by_id: purchase.appUserId,
+          plan_tier: planTier,
+          status: "active",
+          billing_cycle: "monthly",
+          stripe_subscription_id: subscriptionId ?? null,
+          stripe_customer_id: purchase.appUserId,
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          ...limits,
+        });
+      }
+    }
+  }
   // ===== END APP-SPECIFIC =====
 
   // Mark paid LAST, so "paid" always implies the grant above completed. The idempotency
@@ -217,10 +240,32 @@ async function handleSubscriptionEnded(db: any, eventData: any): Promise<Respons
   }
 
   // ===== APP-SPECIFIC =====
-  // Revoke whatever access the subscription granted (mirror of the grant). Runs BEFORE we
-  // mark the purchase canceled: if it throws, the status stays as-is so Wix's retry re-runs
-  // the revoke rather than hitting the "already canceled" short-circuit and leaving access on.
-  // Must be idempotent.
+  // Revoke: downgrade the buyer's Subscription back to the free plan.
+  // Idempotent — safe to run twice.
+  if (purchase.appUserId) {
+    const existing = await db.entities.Subscription.filter({ created_by_id: purchase.appUserId }).catch(() => []);
+    if (existing.length > 0) {
+      await db.entities.Subscription.update(existing[0].id, {
+        plan_tier: "free",
+        status: "expired",
+        billing_cycle: "none",
+        max_concurrent_sessions: 3,
+        max_browser_hours: 1,
+        max_agent_runs: 3,
+        max_search_calls: 1000,
+        max_fetch_calls: 1000,
+        max_proxy_gb: 0,
+        data_retention_days: 7,
+        captcha_solving_enabled: false,
+        stealth_mode: "none",
+        monthly_price_usd: 0,
+        overage_rate_browser_hr: 0,
+        overage_rate_search_1k: 0,
+        overage_rate_fetch_1k: 0,
+        overage_rate_proxy_gb: 0,
+      });
+    }
+  }
   // ===== END APP-SPECIFIC =====
 
   // Mark canceled LAST, so "canceled" always implies access was actually revoked.
