@@ -2,21 +2,36 @@
   "name": "Subscription",
   "type": "object",
   "properties": {
-    "user_id": {
-      "type": "string"
-    },
-    "plan_name": {
-      "type": "string"
+    "plan_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "developer",
+        "startup",
+        "enterprise"
+      ],
+      "default": "free",
+      "description": "Current subscription plan"
     },
     "status": {
       "type": "string",
       "enum": [
         "active",
-        "canceled",
+        "trialing",
         "past_due",
-        "trialing"
+        "canceled",
+        "expired"
       ],
       "default": "active"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "annual",
+        "none"
+      ],
+      "default": "none"
     },
     "current_period_start": {
       "type": "string",
@@ -26,54 +41,124 @@
       "type": "string",
       "format": "date-time"
     },
-    "credits_used": {
+    "trial_ends_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "canceled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "max_concurrent_sessions": {
+      "type": "number",
+      "default": 3,
+      "description": "Concurrent browser session limit"
+    },
+    "max_browser_hours": {
+      "type": "number",
+      "default": 1,
+      "description": "Browser hours included per month"
+    },
+    "max_agent_runs": {
+      "type": "number",
+      "default": 3,
+      "description": "Agent runs included per month"
+    },
+    "max_search_calls": {
+      "type": "number",
+      "default": 1000
+    },
+    "max_fetch_calls": {
+      "type": "number",
+      "default": 1000
+    },
+    "max_proxy_gb": {
+      "type": "number",
+      "default": 0,
+      "description": "Proxy bandwidth in GB"
+    },
+    "data_retention_days": {
+      "type": "number",
+      "default": 7
+    },
+    "captcha_solving_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "stealth_mode": {
+      "type": "string",
+      "enum": [
+        "none",
+        "basic",
+        "advanced"
+      ],
+      "default": "none"
+    },
+    "overage_rate_browser_hr": {
+      "type": "number",
+      "default": 0,
+      "description": "USD per browser hour over limit"
+    },
+    "overage_rate_search_1k": {
       "type": "number",
       "default": 0
     },
-    "credits_remaining": {
+    "overage_rate_fetch_1k": {
       "type": "number",
       "default": 0
+    },
+    "overage_rate_proxy_gb": {
+      "type": "number",
+      "default": 0
+    },
+    "usage_browser_hours": {
+      "type": "number",
+      "default": 0,
+      "description": "Current period browser hours used"
+    },
+    "usage_agent_runs": {
+      "type": "number",
+      "default": 0
+    },
+    "usage_search_calls": {
+      "type": "number",
+      "default": 0
+    },
+    "usage_fetch_calls": {
+      "type": "number",
+      "default": 0
+    },
+    "usage_proxy_gb": {
+      "type": "number",
+      "default": 0
+    },
+    "stripe_customer_id": {
+      "type": "string"
     },
     "stripe_subscription_id": {
       "type": "string"
+    },
+    "monthly_price_usd": {
+      "type": "number",
+      "default": 0
     }
   },
   "required": [
-    "user_id",
-    "plan_name"
+    "plan_tier",
+    "status"
   ],
   "rls": {
     "read": {
-      "$or": [
-        {
-          "data.user_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "created_by_id": "{{user.id}}"
     },
     "create": {
-      "data.user_id": "{{user.id}}"
+      "created_by_id": "{{user.id}}"
     },
     "update": {
-      "$or": [
-        {
-          "data.user_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "created_by_id": "{{user.id}}"
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "created_by_id": "{{user.id}}"
     }
   }
 }
