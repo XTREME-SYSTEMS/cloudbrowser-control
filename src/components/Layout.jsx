@@ -149,20 +149,6 @@ export default function Layout() {
         </SheetContent>
       </Sheet>
 
-      {/* Copilot panel - desktop inline */}
-      {copilotOpen && !isMobile && (
-        <aside className="hidden md:flex w-[340px] border-r border-sidebar-border shrink-0">
-          <CopilotPanel onClose={() => setCopilotOpen(false)} />
-        </aside>
-      )}
-
-      {/* Copilot panel - mobile drawer */}
-      <Sheet open={copilotOpen && isMobile} onOpenChange={setCopilotOpen}>
-        <SheetContent side="left" className="w-[340px] p-0">
-          <CopilotPanel onClose={() => setCopilotOpen(false)} />
-        </SheetContent>
-      </Sheet>
-
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
@@ -191,6 +177,20 @@ export default function Layout() {
           </div>
         </main>
       </div>
+
+      {/* Copilot panel - desktop inline (right side) */}
+      {copilotOpen && !isMobile && (
+        <aside className="hidden md:flex w-[340px] border-l border-sidebar-border shrink-0">
+          <CopilotPanel onClose={() => setCopilotOpen(false)} />
+        </aside>
+      )}
+
+      {/* Copilot panel - mobile drawer (right side) */}
+      <Sheet open={copilotOpen && isMobile} onOpenChange={setCopilotOpen}>
+        <SheetContent side="right" className="w-[340px] p-0">
+          <CopilotPanel onClose={() => setCopilotOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
       <CommandPalette />
     </div>
