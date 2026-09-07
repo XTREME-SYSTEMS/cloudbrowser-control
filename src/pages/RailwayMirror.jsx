@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, AlertCircle, CheckCircle2, XCircle, Clock,
   Server, Activity, Zap, RotateCcw, Square, Undo2, Ban,
-  Rocket, Settings2, ExternalLink, Cpu, MemoryStick, Loader2
+  Rocket, Settings2, ExternalLink, Cpu, MemoryStick, Loader2, FolderTree
 } from "lucide-react";
 
 const STATUS_STYLES = {
@@ -26,8 +26,10 @@ function getStatusStyle(status, deployed) {
 
 function ServiceCard({ service, onAction, acting }) {
   const [showLimits, setShowLimits] = useState(false);
+  const [showRoot, setShowRoot] = useState(false);
   const [memGB, setMemGB] = useState(null);
   const [vcpus, setVcpus] = useState(null);
+  const [rootDir, setRootDir] = useState("");
   const instance = service.instances[0];
 
   // Initialize limit values from instance data
@@ -36,7 +38,8 @@ function ServiceCard({ service, onAction, acting }) {
       setMemGB(instance.limits.memoryGB);
       setVcpus(instance.limits.vCPUs);
     }
-  }, [instance?.limits]);
+    setRootDir(instance?.rootDirectory || "");
+  }, [instance?.limits, instance?.rootDirectory]);
 
   if (!instance) return null;
 
@@ -49,6 +52,11 @@ function ServiceCard({ service, onAction, acting }) {
   const handleLimitSave = () => {
     onAction("update_limits", service.id, null, { memoryGB: parseFloat(memGB), vCPUs: parseFloat(vcpus) });
     setShowLimits(false);
+  };
+
+  const handleRootSave = () => {
+    onAction("update_root_directory", service.id, null, { rootDirectory: rootDir });
+    setShowRoot(false);
   };
 
   return (
@@ -99,20 +107,26 @@ function ServiceCard({ service, onAction, acting }) {
           </div>
         )}
 
-        {/* Resource limits */}
-        {instance.limits && (
-          <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <MemoryStick className="w-3 h-3" />
-              {instance.limits.memoryGB ? `${instance.limits.memoryGB}GB` : "unlimited"}
-            </span>
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Cpu className="w-3 h-3" />
-              {instance.limits.vCPUs ? `${instance.limits.vCPUs} vCPU` : "unlimited"}
-            </span>
-            {instance.sleeping && <Badge variant="outline" className="text-xs">Sleeping</Badge>}
-          </div>
-        )}
+        {/* Resource limits + root directory */}
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          {instance.limits && (
+            <>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <MemoryStick className="w-3 h-3" />
+                {instance.limits.memoryGB ? `${instance.limits.memoryGB}GB` : "unlimited"}
+              </span>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Cpu className="w-3 h-3" />
+                {instance.limits.vCPUs ? `${instance.limits.vCPUs} vCPU` : "unlimited"}
+              </span>
+            </>
+          )}
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <FolderTree className="w-3 h-3" />
+            {instance.rootDirectory || "/"}
+          </span>
+          {instance.sleeping && <Badge variant="outline" className="text-xs">Sleeping</Badge>}
+        </div>
 
         {/* Limit editor */}
         {showLimits && (
@@ -133,6 +147,25 @@ function ServiceCard({ service, onAction, acting }) {
               Save
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setShowLimits(false)} className="mt-4 h-7">
+              Cancel
+            </Button>
+          </div>
+        )}
+
+        {/* Root directory editor */}
+        {showRoot && (
+          <div className="flex items-center gap-2 p-2 rounded-md bg-background/50 border">
+            <div className="flex flex-col gap-0.5 flex-1">
+              <label className="text-xs text-muted-foreground">Root Directory</label>
+              <input type="text" value={rootDir}
+                onChange={(e) => setRootDir(e.target.value)}
+                className="w-full px-1.5 py-1 text-xs rounded border bg-background"
+                placeholder="e.g. browser-engine" />
+            </div>
+            <Button size="sm" onClick={handleRootSave} disabled={isActing} className="mt-4 h-7">
+              Save
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowRoot(false)} className="mt-4 h-7">
               Cancel
             </Button>
           </div>
@@ -188,6 +221,13 @@ function ServiceCard({ service, onAction, acting }) {
               onClick={() => setShowLimits(!showLimits)}
               className="h-7 text-xs">
               <Settings2 className="w-3 h-3" /> Limits
+            </Button>
+          )}
+          {instance.deployed && (
+            <Button size="sm" variant="ghost" disabled={isActing}
+              onClick={() => setShowRoot(!showRoot)}
+              className="h-7 text-xs">
+              <FolderTree className="w-3 h-3" /> Root
             </Button>
           )}
         </div>

@@ -1,13 +1,13 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
-import { railwayGraphQL, getProjectMeta } from "../../shared/railwayClient.ts";
+import { railwayGraphQL, getProjectMeta, getDeploymentLogs } from "../../shared/railwayClient.ts";
 
 // Performs Railway infrastructure actions: redeploy, restart, stop, rollback, cancel, updateLimits.
 export default async function (req) {
   const base44 = createClientFromRequest(req);
   try {
     const body = await req.json();
-    const { action, serviceId, deploymentId, memoryGB, vCPUs } = body;
+    const { action, serviceId, deploymentId, memoryGB, vCPUs, rootDirectory } = body;
 
     if (!action) {
       return Response.json({ ok: false, error: "action is required" }, { status: 400 });
@@ -100,10 +100,85 @@ export default async function (req) {
         break;
       }
 
+      case "update_root_directory": {
+        if (!serviceId) throw new Error("serviceId is required for update_root_directory");
+        result = await railwayGraphQL(
+          `mutation($environmentId: String!, $serviceId: String!, $rootDirectory: String) {
+            serviceInstanceUpdate(input: {
+              environmentId: $environmentId
+              serviceId: $serviceId
+              rootDirectory: $rootDirectory
+            }) {
+              id
+              serviceName
+              rootDirectory
+            }
+          }`,
+          { environmentId, serviceId, rootDirectory: rootDirectory || "" }
+        );
+        break;
+      }
+
+      case "get_root_directories": {
+        const { projectId } = await getProjectMeta();
+        const statusData = await railwayGraphQL(
+          `query($projectId: String!) {
+            project(id: $projectId) {
+              services {
+                edges {
+                  node {
+                    id
+                    name
+                    serviceInstances {
+                      edges {
+                        node {
+                          id
+                          serviceName
+                          rootDirectory
+                          source { repo }
+                          latestDeployment {
+                            id
+                            status
+                            createdAt
+                            statusUpdatedAt
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }`,
+          { projectId }
+        );
+        const svcList = statusData.project.services.edges.map((e: any) => {
+          const s = e.node;
+          const inst = s.serviceInstances.edges[0]?.node;
+          return {
+            serviceId: s.id,
+            name: s.name,
+            instanceId: inst?.id,
+            rootDirectory: inst?.rootDirectory || "",
+            repo: inst?.source?.repo || null,
+            deploymentStatus: inst?.latestDeployment?.status || "NONE",
+            deploymentId: inst?.latestDeployment?.id || null,
+            deploymentCreatedAt: inst?.latestDeployment?.createdAt || null,
+          };
+        });
+        return Response.json({ ok: true, action, services: svcList, __v: DEPLOYMENT_VERSION });
+      }
+
+      case "get_logs": {
+        if (!deploymentId) throw new Error("deploymentId is required for get_logs");
+        const logs = await getDeploymentLogs(deploymentId, 100);
+        return Response.json({ ok: true, action, logs, __v: DEPLOYMENT_VERSION });
+      }
+
       default:
         return Response.json({
           ok: false,
-          error: `Unknown action: ${action}. Valid: redeploy, deploy_latest, restart, stop, rollback, cancel, update_limits`,
+          error: `Unknown action: ${action}. Valid: redeploy, deploy_latest, restart, stop, rollback, cancel, update_limits, update_root_directory, get_root_directories, get_logs`,
         }, { status: 400 });
     }
 

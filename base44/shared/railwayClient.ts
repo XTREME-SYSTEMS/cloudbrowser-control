@@ -244,22 +244,17 @@ export async function getDeploymentLogs(deploymentId: string, limit = 50) {
   const query = `
     query($deploymentId: String!, $limit: Int!) {
       deploymentLogs(deploymentId: $deploymentId, limit: $limit) {
-        edges {
-          node {
-            timestamp
-            message
-            stream
-          }
-        }
+        timestamp
+        message
       }
     }
   `;
 
   const data = await railwayGraphQL<{
-    deploymentLogs: { edges: { node: { timestamp: string; message: string; stream: string } }[] };
+    deploymentLogs: { timestamp: string; message: string }[];
   }>(query, { deploymentId, limit });
 
-  return data.deploymentLogs.edges.map((e) => e.node);
+  return data.deploymentLogs;
 }
 
 /**
