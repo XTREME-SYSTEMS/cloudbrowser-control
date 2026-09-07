@@ -50,6 +50,12 @@ import AutoHeal from '@/pages/AutoHeal';
 import CloneStudio from '@/pages/CloneStudio';
 import EngineMonitor from '@/pages/EngineMonitor';
 import ThemeProvider from '@/components/ThemeProvider';
+import Landing from '@/pages/Landing';
+import Pricing from '@/pages/Pricing';
+import SaaSOnboarding from '@/pages/SaaSOnboarding';
+import McpCreator from '@/pages/McpCreator';
+import SandboxManager from '@/pages/SandboxManager';
+import AgentBuilder from '@/pages/AgentBuilder';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -87,12 +93,18 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/share/:token" element={<ShareView />} />
+      <Route path="/landing" element={<Landing />} />
+      <Route path="/pricing" element={<Pricing />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/connection-wizard" element={<ConnectionWizard />} />
           <Route path="/onboarding" element={<OnboardingWizard />} />
+          <Route path="/welcome" element={<SaaSOnboarding />} />
+          <Route path="/mcp-creator" element={<McpCreator />} />
+          <Route path="/sandboxes" element={<SandboxManager />} />
+          <Route path="/agent-builder" element={<AgentBuilder />} />
           <Route path="/enhancements" element={<Enhancements />} />
           <Route path="/ai-chat" element={<AiChat />} />
           <Route path="/connection-info" element={<ConnectionInfo />} />

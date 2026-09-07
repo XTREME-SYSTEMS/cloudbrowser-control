@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun, Command, FileSearch, FlaskConical, Eye, Train, HeartPulse, Copy } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun, Command, FileSearch, FlaskConical, Eye, Train, HeartPulse, Copy, Server } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -30,7 +30,10 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/sessions", label: "Sessions", icon: Monitor },
   { to: "/projects", label: "Projects", icon: Folder },
-  { to: "/onboarding", label: "Onboarding", icon: Rocket },
+  { to: "/welcome", label: "Get Started", icon: Rocket },
+  { to: "/agent-builder", label: "Agent Builder", icon: Bot },
+  { to: "/sandboxes", label: "Sandboxes", icon: Server },
+  { to: "/mcp-creator", label: "MCP Creator", icon: Plug },
   { to: "/enhancements", label: "Fortress", icon: ShieldCheck },
   { to: "/connection-wizard", label: "Connect", icon: Wand2 },
   { to: "/ai-chat", label: "AI Agent", icon: Bot },
