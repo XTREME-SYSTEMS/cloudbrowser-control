@@ -51,26 +51,26 @@
     },
     "max_concurrent_sessions": {
       "type": "number",
-      "default": 3,
+      "default": 1,
       "description": "Concurrent browser session limit"
     },
     "max_browser_hours": {
       "type": "number",
-      "default": 1,
-      "description": "Browser hours included per month"
+      "default": 0.25,
+      "description": "Browser hours included per month (15 minutes on free)"
     },
     "max_agent_runs": {
       "type": "number",
-      "default": 3,
+      "default": 1,
       "description": "Agent runs included per month"
     },
     "max_search_calls": {
       "type": "number",
-      "default": 1000
+      "default": 50
     },
     "max_fetch_calls": {
       "type": "number",
-      "default": 1000
+      "default": 50
     },
     "max_proxy_gb": {
       "type": "number",
@@ -79,7 +79,7 @@
     },
     "data_retention_days": {
       "type": "number",
-      "default": 7
+      "default": 1
     },
     "captcha_solving_enabled": {
       "type": "boolean",
@@ -149,16 +149,43 @@
   ],
   "rls": {
     "read": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "create": {
       "created_by_id": "{{user.id}}"
     },
     "update": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "delete": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     }
   }
 }
