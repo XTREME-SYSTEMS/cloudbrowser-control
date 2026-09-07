@@ -18,14 +18,30 @@ export async function railwayGraphQL<T = any>(
   const token = secrets.get("RAILWAY_TOKEN");
   if (!token) throw new Error("RAILWAY_TOKEN secret not set");
 
-  const res = await fetch(RAILWAY_GRAPHQL_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Project-Access-Token": token.trim(),
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  // Hard 10s timeout — prevents the browser fetch from aborting with "Failed to fetch"
+  // when Railway API is slow (e.g., during active deployments)
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+
+  let res: Response;
+  try {
+    res = await fetch(RAILWAY_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Project-Access-Token": token.trim(),
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      throw new Error("Railway API timeout (10s) — API may be slow during deployments");
+    }
+    throw new Error(`Railway API unreachable: ${err.message}`);
+  } finally {
+    clearTimeout(timer);
+  }
 
   const data = await res.json();
 

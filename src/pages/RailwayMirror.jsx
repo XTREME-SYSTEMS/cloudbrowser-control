@@ -203,20 +203,25 @@ export default function RailwayMirror() {
   const [acting, setActing] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchStatus = useCallback(async () => {
+  const fetchStatus = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
     try {
       const result = await base44.functions.invoke("railwayMirror", {});
       if (result.ok) {
         setData(result);
         setError(null);
       } else {
+        // Don't overwrite existing data on refresh errors — just show a banner
         setError(result.error || "Failed to fetch Railway status");
       }
     } catch (e) {
-      setError(e.message);
+      // Don't overwrite existing data on refresh errors — just show a banner
+      setError(e.message || "Failed to fetch");
     } finally {
       setLoading(false);
+      setRefreshing(false);
       setLastRefresh(new Date());
     }
   }, []);
@@ -224,7 +229,7 @@ export default function RailwayMirror() {
   useEffect(() => {
     fetchStatus();
     if (!autoRefresh) return;
-    const interval = setInterval(fetchStatus, 30000);
+    const interval = setInterval(() => fetchStatus(true), 60000);
     return () => clearInterval(interval);
   }, [fetchStatus, autoRefresh]);
 
@@ -267,7 +272,7 @@ export default function RailwayMirror() {
             <div className="flex flex-col items-center gap-3 text-center">
               <AlertCircle className="w-10 h-10 text-red-500" />
               <p className="text-sm text-muted-foreground">{error}</p>
-              <Button onClick={fetchStatus} variant="outline" size="sm">
+              <Button onClick={() => { setLoading(true); setError(null); fetchStatus(); }} variant="outline" size="sm">
                 <RefreshCw className="w-3 h-3" /> Retry
               </Button>
             </div>
@@ -309,8 +314,8 @@ export default function RailwayMirror() {
             <Activity className="w-3 h-3" />
             {autoRefresh ? "Auto 30s" : "Paused"}
           </Button>
-          <Button size="sm" variant="outline" onClick={fetchStatus}>
-            <RefreshCw className="w-3 h-3" /> Refresh
+          <Button size="sm" variant="outline" onClick={() => fetchStatus(true)} disabled={refreshing}>
+            <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} /> Refresh
           </Button>
         </div>
       </div>
