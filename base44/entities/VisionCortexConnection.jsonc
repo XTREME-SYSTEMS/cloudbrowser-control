@@ -1,0 +1,92 @@
+{
+  "name": "VisionCortexConnection",
+  "type": "object",
+  "properties": {
+    "api_endpoint": {
+      "type": "string",
+      "description": "Base API endpoint URL for Vision Cortex"
+    },
+    "admin_api_key": {
+      "type": "string",
+      "description": "Admin API key for VC authentication"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "connected",
+        "disconnected",
+        "error"
+      ],
+      "default": "pending"
+    },
+    "autonomous_mode": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether VC can operate autonomously"
+    },
+    "connected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_audit_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_heal_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_audit_result": {
+      "type": "string"
+    },
+    "last_heal_result": {
+      "type": "string"
+    },
+    "audit_count": {
+      "type": "number",
+      "default": 0
+    },
+    "heal_count": {
+      "type": "number",
+      "default": 0
+    },
+    "issues_detected": {
+      "type": "number",
+      "default": 0
+    },
+    "issues_healed": {
+      "type": "number",
+      "default": 0
+    },
+    "config": {
+      "type": "object",
+      "description": "Additional VC configuration (audit interval, heal thresholds, etc.)"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

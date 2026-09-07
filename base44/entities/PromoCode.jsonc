@@ -1,0 +1,120 @@
+{
+  "name": "PromoCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "The promo code string (uppercase)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Internal note about this promo"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "percentage",
+        "fixed_amount",
+        "free_trial_days",
+        "plan_upgrade"
+      ],
+      "default": "plan_upgrade"
+    },
+    "discount_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentage (0-100), fixed amount in USD, or trial days"
+    },
+    "granted_plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "developer",
+        "startup",
+        "enterprise"
+      ],
+      "description": "Plan to grant when promo is redeemed"
+    },
+    "granted_months": {
+      "type": "number",
+      "default": 1,
+      "description": "How many months the granted plan lasts"
+    },
+    "max_uses": {
+      "type": "number",
+      "default": 100
+    },
+    "used_count": {
+      "type": "number",
+      "default": 0
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "disabled",
+        "exhausted"
+      ],
+      "default": "active"
+    },
+    "applicable_plans": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "free",
+          "developer",
+          "startup",
+          "enterprise"
+        ]
+      }
+    },
+    "target_user_email": {
+      "type": "string",
+      "description": "Specific user this promo is for (empty = anyone)"
+    },
+    "redeemed_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs who redeemed this promo"
+    }
+  },
+  "required": [
+    "code",
+    "discount_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
