@@ -8,6 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
 import CopilotPanel from "@/components/copilot/CopilotPanel";
+import { Image } from "@/components/ui/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 function ThemeToggle() {
@@ -91,10 +92,8 @@ function SidebarContent({ onLogout, onToggleCopilot, copilotOpen }) {
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <Cloud className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-heading font-semibold text-sidebar-foreground">Cloud Browser</span>
+          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-8 h-8 shrink-0" fittingType="fit" />
+          <span className="font-heading font-semibold text-sidebar-foreground">XTREME SCRAPER</span>
         </div>
       </div>
       <div className="px-4 pt-4">
@@ -160,10 +159,8 @@ export default function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Cloud className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-semibold">Cloud Browser</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <span className="font-heading font-semibold">XTREME SCRAPER</span>
           </div>
           <button onClick={() => setCopilotOpen(!copilotOpen)} className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <Bot className="w-5 h-5" />

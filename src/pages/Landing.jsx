@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import {
-  Cloud, Zap, Globe, Search, Code2, Shield, Bot, Copy, Monitor,
+  Zap, Globe, Search, Code2, Shield, Bot, Copy, Monitor,
   ArrowRight, Check, Sparkles, Lock, Database, Eye, Clock, TrendingUp,
   MousePointerClick, FileSearch, Download, RefreshCw, ChevronRight
 } from "lucide-react";
@@ -71,10 +72,8 @@ export default function Landing() {
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Cloud className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-bold text-lg">CloudBrowser</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-9 h-9 shrink-0" fittingType="fit" />
+            <span className="font-heading font-bold text-lg">XTREME SCRAPER</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#products" className="hover:text-foreground transition-colors">Products</a>
@@ -91,18 +90,18 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 px-4 md:px-8 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-50/50 via-transparent to-transparent" />
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-violet-500/10 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-50/50 via-transparent to-transparent" />
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[120px]" />
         <div className="relative max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
             Production-grade browser infrastructure for AI agents
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold tracking-tight leading-[1.05]">
-            Give your agents access<br />to the <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">entire web</span>
+            Give your agents access<br />to the <span className="text-gold-gradient">entire web</span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            CloudBrowser makes the web as reliable and programmable as APIs. Spin up browsers,
+            XTREME SCRAPER makes the web as reliable and programmable as APIs. Spin up browsers,
             build AI agents, clone websites, and scrape at scale — all from one platform.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -227,7 +226,7 @@ export default function Landing() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {stats.map((s) => (
               <div key={s.label}>
-                <div className="text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
+                <div className="text-3xl md:text-4xl font-heading font-bold text-gold-gradient">
                   {s.value}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">{s.label}</div>
@@ -240,12 +239,12 @@ export default function Landing() {
       {/* CTA */}
       <section className="py-20 px-4 md:px-8">
         <div className="max-w-4xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-blue-600 p-12 md:p-16 text-center">
-            <div className="absolute inset-0 bg-grid-white/10 opacity-20" />
-            <h2 className="relative text-3xl md:text-5xl font-heading font-bold text-white">
+          <div className="relative overflow-hidden rounded-3xl bg-gold-gradient p-12 md:p-16 text-center">
+            <div className="absolute inset-0 bg-grid-white/10 opacity-10" />
+            <h2 className="relative text-3xl md:text-5xl font-heading font-bold text-black">
               100% of the web at production scale
             </h2>
-            <p className="relative mt-4 text-lg text-white/80 max-w-xl mx-auto">
+            <p className="relative mt-4 text-lg text-black/70 max-w-xl mx-auto">
               No obstacles for your agents. No limits on what they can accomplish.
             </p>
             <div className="relative mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -253,7 +252,7 @@ export default function Landing() {
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto">Try for free</Button>
               </Link>
               <Link to="/pricing">
-                <Button size="lg" variant="ghost" className="w-full sm:w-auto text-white hover:text-white hover:bg-white/10">View pricing</Button>
+                <Button size="lg" variant="ghost" className="w-full sm:w-auto text-black hover:text-black hover:bg-black/10">View pricing</Button>
               </Link>
             </div>
           </div>
@@ -264,10 +263,8 @@ export default function Landing() {
       <footer className="border-t border-border py-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Cloud className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-semibold">CloudBrowser</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <span className="font-heading font-semibold">XTREME SCRAPER</span>
             <span className="text-sm text-muted-foreground ml-2">© 2026</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">

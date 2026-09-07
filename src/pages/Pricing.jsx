@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import { Check, Zap, Crown, Building2, Rocket, ArrowRight, Cloud, Sparkles, Loader2 } from "lucide-react";
 
 const plans = [
@@ -11,7 +12,7 @@ const plans = [
     icon: Cloud,
     price: "$0",
     period: "forever",
-    description: "Get started with CloudBrowser. Explore and prototype ideas.",
+    description: "Get started with XTREME SCRAPER. Explore and prototype ideas.",
     cta: "Start for free",
     ctaLink: "/register",
     highlight: false,
@@ -123,16 +124,16 @@ const plans = [
 
 const faqs = [
   {
-    q: "What does CloudBrowser do?",
-    a: "CloudBrowser is the complete platform to build and deploy agents that browse and interact with the web like humans. We provide browser infrastructure, fetch/search APIs, AI agent building, website cloning, and MCP integration — all from one platform.",
+    q: "What does XTREME SCRAPER do?",
+    a: "XTREME SCRAPER is the complete platform to build and deploy agents that browse and interact with the web like humans. We provide browser infrastructure, fetch/search APIs, AI agent building, website cloning, and MCP integration — all from one platform.",
   },
   {
-    q: "What kinds of use cases do companies use CloudBrowser for?",
+    q: "What kinds of use cases do companies use XTREME SCRAPER for?",
     a: "Healthcare (insurance verification, claims processing), Financial Services (loan workflows, compliance), Real Estate (MLS sync, transaction automation), HR & Payroll (benefits, onboarding), and general business operations like data entry, migrations, and web scraping.",
   },
   {
     q: "Can I bring my own proxies?",
-    a: "Yes. CloudBrowser supports custom proxy configurations including residential proxies for geo-specific automation, rotating proxy pools for large-scale operations, and custom proxy authentication.",
+    a: "Yes. XTREME SCRAPER supports custom proxy configurations including residential proxies for geo-specific automation, rotating proxy pools for large-scale operations, and custom proxy authentication.",
   },
   {
     q: "What automation frameworks are supported?",
@@ -182,10 +183,8 @@ export default function Pricing() {
       <nav className="border-b border-border/40 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Cloud className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-bold text-lg">CloudBrowser</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-9 h-9 shrink-0" fittingType="fit" />
+            <span className="font-heading font-bold text-lg">XTREME SCRAPER</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Sign in</Button></Link>
@@ -197,7 +196,7 @@ export default function Pricing() {
       {/* Header */}
       <section className="pt-16 pb-12 px-4 md:px-8 text-center">
         <div className="max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
             Four plans. One platform.
           </div>
@@ -335,9 +334,9 @@ export default function Pricing() {
       {/* CTA */}
       <section className="px-4 md:px-8 pb-20">
         <div className="max-w-4xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-blue-600 p-12 text-center">
-            <h2 className="text-3xl font-heading font-bold text-white">Ready to start building?</h2>
-            <p className="mt-3 text-white/80">Get your API key in minutes. No credit card required.</p>
+          <div className="relative overflow-hidden rounded-3xl bg-gold-gradient p-12 text-center">
+            <h2 className="text-3xl font-heading font-bold text-black">Ready to start building?</h2>
+            <p className="mt-3 text-black/70">Get your API key in minutes. No credit card required.</p>
             <Link to="/register" className="mt-6 inline-block">
               <Button size="lg" variant="secondary">Get started free <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </Link>
