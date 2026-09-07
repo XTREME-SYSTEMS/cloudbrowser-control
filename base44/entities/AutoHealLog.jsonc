@@ -1,0 +1,104 @@
+{
+  "name": "AutoHealLog",
+  "type": "object",
+  "properties": {
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "railway_service",
+        "engine"
+      ],
+      "description": "What kind of infrastructure was healed"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "Railway service ID or engine URL"
+    },
+    "target_name": {
+      "type": "string",
+      "description": "Human-readable name (service name or engine label)"
+    },
+    "issue_detected": {
+      "type": "string",
+      "enum": [
+        "failed_deployment",
+        "stuck_deployment",
+        "not_deployed",
+        "engine_down",
+        "engine_degraded",
+        "engine_html_response",
+        "primary_recovered",
+        "cooldown"
+      ],
+      "description": "What the auto-heal system detected"
+    },
+    "action_taken": {
+      "type": "string",
+      "enum": [
+        "redeploy",
+        "cancel_and_redeploy",
+        "deploy_latest",
+        "promote_backup_engine",
+        "revert_to_primary",
+        "restart",
+        "none"
+      ],
+      "description": "What remediation action was taken"
+    },
+    "action_result": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "skipped"
+      ],
+      "default": "skipped"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object",
+      "description": "Additional context: promoted_url, stuck_duration_ms, etc."
+    },
+    "healed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cycle_id": {
+      "type": "string",
+      "description": "Groups actions from a single heal cycle"
+    }
+  },
+  "required": [
+    "target_type",
+    "issue_detected",
+    "action_taken",
+    "action_result"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

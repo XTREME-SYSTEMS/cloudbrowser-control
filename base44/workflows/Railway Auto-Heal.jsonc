@@ -1,0 +1,59 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0,5,10,15,20,25,30,35,40,45,50,55 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "railway_auto_heal",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_auto_heal": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "railwayAutoHeal",
+            "args": {}
+          },
+          "then": "probe_engine_health",
+          "x-base44": {
+            "title": "Run Auto-Heal Cycle",
+            "description": "Detects failed Railway deployments, stuck builds, and engine outages; auto-remediates and promotes backup engines"
+          }
+        }
+      },
+      {
+        "probe_engine_health": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "engineHealth",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Probe Engine Health",
+            "description": "Records fresh engine health metrics to EngineHealthLog after heal cycle"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Railway Auto-Heal",
+  "description": "Every 5 minutes: detects and auto-remediates Railway service failures (failed deployments, stuck builds, not-deployed services) and engine outages (promotes backup engines when primary is down, reverts when primary recovers). Logs all actions to AutoHealLog."
+}

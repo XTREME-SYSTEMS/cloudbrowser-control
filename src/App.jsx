@@ -46,6 +46,7 @@ import ForensicAudit from '@/pages/ForensicAudit';
 import CapabilityTestLab from '@/pages/CapabilityTestLab';
 import VisionCortexIntelligence from '@/pages/VisionCortexIntelligence';
 import RailwayMirror from '@/pages/RailwayMirror';
+import AutoHeal from '@/pages/AutoHeal';
 import ThemeProvider from '@/components/ThemeProvider';
 
 const AuthenticatedApp = () => {
@@ -116,6 +117,7 @@ const AuthenticatedApp = () => {
           <Route path="/capability-test-lab" element={<CapabilityTestLab />} />
           <Route path="/vision-cortex" element={<VisionCortexIntelligence />} />
           <Route path="/railway-mirror" element={<RailwayMirror />} />
+          <Route path="/auto-heal" element={<AutoHeal />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/test-results" element={<TestResults />} />
         </Route>
