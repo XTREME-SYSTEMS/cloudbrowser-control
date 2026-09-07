@@ -16,6 +16,7 @@ export default function AiChat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -45,7 +46,11 @@ export default function AiChat() {
     return () => unsub();
   }, [activeId]);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleCreate = async () => {
     try {
@@ -123,7 +128,7 @@ export default function AiChat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-auto p-4 space-y-4">
+        <div ref={scrollContainerRef} className="flex-1 overflow-auto p-4 space-y-4">
           {loading ? (
             <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>
           ) : !activeId ? (
