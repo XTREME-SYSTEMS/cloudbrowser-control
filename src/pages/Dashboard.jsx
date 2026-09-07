@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import CopyBlock from "@/components/CopyBlock";
 import CaptchaSolverCard from "@/components/CaptchaSolverCard";
 import {
-  Key, Plus, RefreshCw, Eye, EyeOff, Plug, Folder, ExternalLink, Package, Copy,
-  ArrowRight, Sparkles,
+  Key, Plus, RefreshCw, Eye, EyeOff, Plug, Package, Copy,
+  ArrowRight, Sparkles, Monitor, Briefcase, Bot,
 } from "lucide-react";
 
 const GATEWAY_PATH = "/api/functions/cloudBrowserGatewayV6";
@@ -170,7 +170,7 @@ export default function Dashboard() {
           <div className="mt-3 p-3 rounded-md bg-blue-50 border border-blue-200 text-xs text-blue-800">
             <strong>Auth:</strong> Every request needs <code>Authorization: Bearer &lt;CLOUDBROWSER_API_KEY&gt;</code>.
             Create sessions via the Gateway URL (geo/proxy), then drive them via the MCP URL (navigate/extract/screenshot).
-            Full integration guide: <Link to="/connection-info" className="underline">Connection Info</Link>.
+            Full integration guide: <Link to="/api-docs" className="underline">API Docs</Link>.
           </div>
         </CardContent>
       </Card>
@@ -238,41 +238,19 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* PROJECTS */}
+      {/* QUICK ACTIONS */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base"><Folder className="w-5 h-5" />Projects</CardTitle>
-              <CardDescription>Each project groups sessions, jobs, and costs. Manage full details on the Projects page.</CardDescription>
-            </div>
-            <Link to="/projects"><Button variant="outline" size="sm">Manage <ExternalLink className="w-3 h-3 ml-1" /></Button></Link>
-          </div>
+          <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="w-5 h-5" />Quick Actions</CardTitle>
+          <CardDescription>Jump to the tools you need.</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No projects yet. <Link to="/projects" className="underline">Create one</Link>.</p>
-          ) : (
-            <div className="space-y-2">
-              {projects.map((p) => (
-                <div key={p.id} className="flex items-center justify-between p-3 rounded-md border">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-2.5 h-2.5 rounded-full bg-${p.color || "blue"}-500 shrink-0`} />
-                    <div className="min-w-0">
-                      <div className="font-medium text-sm truncate">{p.name}</div>
-                      {p.description && <div className="text-xs text-muted-foreground truncate">{p.description}</div>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {p.status === "archived" && <span className="text-xs text-muted-foreground">archived</span>}
-                    <Link to="/projects"><Button variant="ghost" size="sm">Details</Button></Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Link to="/sessions"><Button variant="outline" className="w-full justify-start"><Monitor className="w-4 h-4 mr-2" />Sessions</Button></Link>
+            <Link to="/jobs"><Button variant="outline" className="w-full justify-start"><Briefcase className="w-4 h-4 mr-2" />Jobs</Button></Link>
+            <Link to="/agent-builder"><Button variant="outline" className="w-full justify-start"><Bot className="w-4 h-4 mr-2" />Agents</Button></Link>
+            <Link to="/clone-studio"><Button variant="outline" className="w-full justify-start"><Copy className="w-4 h-4 mr-2" />Clone</Button></Link>
+          </div>
         </CardContent>
       </Card>
     </div>

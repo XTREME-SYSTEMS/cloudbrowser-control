@@ -44,7 +44,7 @@ export default function Jobs() {
           <h1 className="text-2xl md:text-3xl font-heading font-bold">Jobs</h1>
           <p className="text-muted-foreground mt-1">Automation jobs — define steps and run them</p>
         </div>
-        <Link to="/jobs/new"><Button><Plus className="w-4 h-4 mr-2" />New Job</Button></Link>
+        <Link to="/agent-builder"><Button><Plus className="w-4 h-4 mr-2" />New Job</Button></Link>
       </div>
 
       <Card>
@@ -54,7 +54,7 @@ export default function Jobs() {
             <div className="text-center py-12 text-muted-foreground">
               <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>No jobs yet.</p>
-              <Link to="/jobs/new" className="inline-block mt-3"><Button><Plus className="w-4 h-4 mr-2" />Create a Job</Button></Link>
+              <Link to="/agent-builder" className="inline-block mt-3"><Button><Plus className="w-4 h-4 mr-2" />Create a Job</Button></Link>
             </div>
           ) : (
             <div className="overflow-x-auto">

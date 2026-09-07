@@ -17,38 +17,13 @@ import Dashboard from '@/pages/Dashboard';
 import Sessions from '@/pages/Sessions';
 import SessionDetail from '@/pages/SessionDetail';
 import Jobs from '@/pages/Jobs';
-import JobBuilder from '@/pages/JobBuilder';
 import JobDetail from '@/pages/JobDetail';
-import Schedules from '@/pages/Schedules';
-import Costs from '@/pages/Costs';
-import AuditLogs from '@/pages/AuditLogs';
 import Settings from '@/pages/Settings';
 import ApiDocs from '@/pages/ApiDocs';
-import ConnectionInfo from '@/pages/ConnectionInfo';
-import Projects from '@/pages/Projects';
-import TestResults from '@/pages/TestResults';
-import AiJobBuilder from '@/pages/AiJobBuilder';
-import Templates from '@/pages/Templates';
-import Analytics from '@/pages/Analytics';
 import Billing from '@/pages/Billing';
-import TeamPage from '@/pages/TeamPage';
-import ErrorsPage from '@/pages/ErrorsPage';
 import ShareView from '@/pages/ShareView';
-import ConnectionWizard from '@/pages/ConnectionWizard';
-import OnboardingWizard from '@/pages/OnboardingWizard';
-import Enhancements from '@/pages/Enhancements';
 import AiChat from '@/pages/AiChat';
-import Proxies from '@/pages/Proxies';
-import Captcha from '@/pages/Captcha';
-import JobKanban from '@/pages/JobKanban';
-import Capabilities from '@/pages/Capabilities';
-import ForensicAudit from '@/pages/ForensicAudit';
-import CapabilityTestLab from '@/pages/CapabilityTestLab';
-import VisionCortexIntelligence from '@/pages/VisionCortexIntelligence';
-import RailwayMirror from '@/pages/RailwayMirror';
-import AutoHeal from '@/pages/AutoHeal';
 import CloneStudio from '@/pages/CloneStudio';
-import EngineMonitor from '@/pages/EngineMonitor';
 import ThemeProvider from '@/components/ThemeProvider';
 import Landing from '@/pages/Landing';
 import Pricing from '@/pages/Pricing';
@@ -100,46 +75,21 @@ const AuthenticatedApp = () => {
       <Route path="/ThankYou" element={<ThankYou />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/connection-wizard" element={<ConnectionWizard />} />
-          <Route path="/onboarding" element={<OnboardingWizard />} />
+          <Route path="/" element={<AdminPortal />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/welcome" element={<SaaSOnboarding />} />
-          <Route path="/mcp-creator" element={<McpCreator />} />
-          <Route path="/sandboxes" element={<SandboxManager />} />
-          <Route path="/agent-builder" element={<AgentBuilder />} />
-          <Route path="/admin" element={<AdminPortal />} />
-          <Route path="/enhancements" element={<Enhancements />} />
-          <Route path="/ai-chat" element={<AiChat />} />
-          <Route path="/connection-info" element={<ConnectionInfo />} />
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/sessions/:id" element={<SessionDetail />} />
           <Route path="/jobs" element={<Jobs />} />
-          <Route path="/jobs/kanban" element={<JobKanban />} />
-          <Route path="/jobs/new" element={<JobBuilder />} />
-          <Route path="/jobs/ai-builder" element={<AiJobBuilder />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
-          <Route path="/templates" element={<Templates />} />
-          <Route path="/schedules" element={<Schedules />} />
-          <Route path="/costs" element={<Costs />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/errors" element={<ErrorsPage />} />
-          <Route path="/billing" element={<Billing />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/proxies" element={<Proxies />} />
-          <Route path="/captcha" element={<Captcha />} />
-          <Route path="/capabilities" element={<Capabilities />} />
-          <Route path="/forensic-audit" element={<ForensicAudit />} />
-          <Route path="/capability-test-lab" element={<CapabilityTestLab />} />
-          <Route path="/vision-cortex" element={<VisionCortexIntelligence />} />
-          <Route path="/railway-mirror" element={<RailwayMirror />} />
-          <Route path="/auto-heal" element={<AutoHeal />} />
+          <Route path="/agent-builder" element={<AgentBuilder />} />
+          <Route path="/sandboxes" element={<SandboxManager />} />
           <Route path="/clone-studio" element={<CloneStudio />} />
-          <Route path="/engine-monitor" element={<EngineMonitor />} />
+          <Route path="/mcp-creator" element={<McpCreator />} />
+          <Route path="/billing" element={<Billing />} />
           <Route path="/api-docs" element={<ApiDocs />} />
-          <Route path="/test-results" element={<TestResults />} />
+          <Route path="/ai-chat" element={<AiChat />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

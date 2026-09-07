@@ -32,11 +32,11 @@ export default function AdminPortal() {
   useEffect(() => {
     base44.auth.me().then(u => {
       if (!u || u.role !== "admin") {
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       } else {
         setIsAdmin(true);
       }
-    }).catch(() => navigate("/"));
+    }).catch(() => navigate("/dashboard"));
   }, [navigate]);
 
   if (!isAdmin) {
@@ -63,7 +63,7 @@ export default function AdminPortal() {
             <Button variant="ghost" size="sm" onClick={() => setRefreshKey(k => k + 1)}>
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to App
             </Button>
           </div>
