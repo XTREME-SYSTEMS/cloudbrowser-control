@@ -3,7 +3,8 @@
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "User-friendly sandbox name"
     },
     "description": {
       "type": "string"
@@ -11,111 +12,100 @@
     "status": {
       "type": "string",
       "enum": [
+        "creating",
         "active",
-        "archived",
-        "provisioning",
-        "error"
+        "paused",
+        "terminated",
+        "failed"
       ],
-      "default": "active"
+      "default": "creating"
     },
-    "scope": {
+    "project_id": {
       "type": "string",
-      "enum": [
-        "isolated",
-        "production",
-        "staging"
-      ],
-      "default": "isolated"
+      "description": "Associated project"
     },
-    "config": {
-      "type": "object",
-      "description": "Sandbox configuration (resources, limits, isolation settings)"
-    },
-    "created_by_agent": {
-      "type": "boolean",
-      "default": false,
-      "description": "Whether this sandbox was created by the autonomous agent"
-    },
-    "parent_sandbox_id": {
+    "railway_service_id": {
       "type": "string",
-      "description": "Parent sandbox if this is a nested sandbox"
+      "description": "Railway service ID for this sandbox's backend"
     },
-    "resources": {
+    "railway_domain": {
+      "type": "string",
+      "description": "Auto-provisioned Railway domain"
+    },
+    "engine_url": {
+      "type": "string",
+      "description": "Provisioned engine endpoint URL"
+    },
+    "api_key": {
+      "type": "string",
+      "description": "API key for this sandbox (hashed)"
+    },
+    "capabilities": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "string",
+        "enum": [
+          "scraper",
+          "headless_browser",
+          "form_filler",
+          "captcha_solver",
+          "clone_engine",
+          "ai_agent",
+          "proxy_rotation",
+          "stealth_mode"
+        ]
       },
-      "description": "Resources created within this sandbox (entities, sessions, jobs, etc.)"
+      "default": [
+        "scraper",
+        "headless_browser"
+      ],
+      "description": "Enabled capabilities for this sandbox"
     },
-    "integration_id": {
+    "max_sessions": {
+      "type": "number",
+      "default": 3
+    },
+    "max_browser_hours": {
+      "type": "number",
+      "default": 5
+    },
+    "region": {
       "type": "string",
-      "description": "Associated integration for external provisioning"
+      "default": "us-west"
     },
     "expires_at": {
       "type": "string",
+      "format": "date-time",
+      "description": "When the sandbox auto-terminates"
+    },
+    "last_activity_at": {
+      "type": "string",
       "format": "date-time"
     },
-    "provisioned_externally": {
-      "type": "boolean",
-      "default": false,
-      "description": "Whether this sandbox has been provisioned on external systems"
-    },
-    "provisioning_status": {
+    "provisioning_logs": {
       "type": "string",
-      "enum": [
-        "pending",
-        "in_progress",
-        "completed",
-        "failed",
-        "not_required"
-      ],
-      "default": "not_required"
+      "description": "Logs from Railway provisioning"
+    },
+    "error_message": {
+      "type": "string"
     }
   },
   "required": [
     "name",
-    "status",
-    "scope"
+    "status"
   ],
   "rls": {
     "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "created_by_id": "{{user.id}}"
     },
     "create": {
       "created_by_id": "{{user.id}}"
     },
     "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "created_by_id": "{{user.id}}"
     },
     "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "created_by_id": "{{user.id}}"
     }
   }
 }
