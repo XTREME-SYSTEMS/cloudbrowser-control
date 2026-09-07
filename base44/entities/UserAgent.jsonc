@@ -1,0 +1,148 @@
+{
+  "name": "UserAgent",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Agent name"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "running",
+        "paused",
+        "error",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "agent_type": {
+      "type": "string",
+      "enum": [
+        "scraper",
+        "form_filler",
+        "cloner",
+        "researcher",
+        "monitor",
+        "custom"
+      ],
+      "default": "scraper"
+    },
+    "target_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs the agent operates on"
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Natural language instructions for the agent"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "navigate",
+          "extract",
+          "screenshot",
+          "click",
+          "type",
+          "scroll",
+          "wait",
+          "solve_captcha",
+          "clone",
+          "fill_form",
+          "download",
+          "upload",
+          "monitor_changes"
+        ]
+      },
+      "default": [
+        "navigate",
+        "extract",
+        "screenshot"
+      ]
+    },
+    "schedule_cron": {
+      "type": "string",
+      "description": "Cron schedule for recurring runs (empty = manual only)"
+    },
+    "model_preference": {
+      "type": "string",
+      "enum": [
+        "automatic",
+        "gpt_5_mini",
+        "gemini_3_flash",
+        "claude_sonnet_4_6",
+        "claude_opus_5"
+      ],
+      "default": "automatic"
+    },
+    "proxy_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "stealth_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "output_schema": {
+      "type": "object",
+      "description": "JSON schema for structured extraction output"
+    },
+    "webhook_url": {
+      "type": "string",
+      "description": "Webhook to call when agent completes"
+    },
+    "sandbox_id": {
+      "type": "string",
+      "description": "Sandbox this agent runs in"
+    },
+    "last_run_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "run_count": {
+      "type": "number",
+      "default": 0
+    },
+    "success_count": {
+      "type": "number",
+      "default": 0
+    },
+    "error_count": {
+      "type": "number",
+      "default": 0
+    },
+    "config": {
+      "type": "object",
+      "description": "Full agent configuration (steps, settings, etc.)"
+    }
+  },
+  "required": [
+    "name",
+    "status",
+    "agent_type"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

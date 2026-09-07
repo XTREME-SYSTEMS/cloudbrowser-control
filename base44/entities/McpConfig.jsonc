@@ -1,0 +1,93 @@
+{
+  "name": "McpConfig",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Configuration name"
+    },
+    "target_client": {
+      "type": "string",
+      "enum": [
+        "chatgpt",
+        "claude",
+        "gemini",
+        "cursor",
+        "windsurf",
+        "custom",
+        "generic"
+      ],
+      "default": "generic",
+      "description": "Which AI client this config is for"
+    },
+    "config_json": {
+      "type": "string",
+      "description": "Full MCP server config JSON for the client"
+    },
+    "mcp_url": {
+      "type": "string",
+      "description": "The MCP server endpoint URL"
+    },
+    "api_key_id": {
+      "type": "string",
+      "description": "API key associated with this MCP config"
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "sessions:read",
+          "sessions:write",
+          "jobs:read",
+          "jobs:write",
+          "scrape:run",
+          "clone:run",
+          "agent:run",
+          "sandbox:manage"
+        ]
+      },
+      "default": [
+        "sessions:read",
+        "sessions:write",
+        "scrape:run"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked",
+        "expired"
+      ],
+      "default": "active"
+    },
+    "last_used_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "target_client",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

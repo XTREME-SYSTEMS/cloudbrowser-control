@@ -1,0 +1,176 @@
+{
+  "name": "OnboardingProfile",
+  "type": "object",
+  "properties": {
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "primary_goal": {
+      "type": "string",
+      "enum": [
+        "web_scraping",
+        "data_extraction",
+        "form_automation",
+        "website_cloning",
+        "ai_agent_building",
+        "monitoring",
+        "research",
+        "other"
+      ],
+      "description": "Main reason the user signed up"
+    },
+    "target_websites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs the user wants to scrape/automate"
+    },
+    "data_to_extract": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "product_info",
+          "pricing",
+          "reviews",
+          "contact_info",
+          "company_data",
+          "real_estate",
+          "job_listings",
+          "social_media",
+          "news_articles",
+          "financial_data",
+          "custom"
+        ]
+      },
+      "description": "What kind of data the user needs"
+    },
+    "automation_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "login_and_navigate",
+          "fill_forms",
+          "submit_applications",
+          "download_files",
+          "monitor_changes",
+          "scrape_at_scale",
+          "bypass_captcha",
+          "use_proxies",
+          "clone_websites",
+          "build_ai_agents"
+        ]
+      },
+      "description": "What the user wants to automate"
+    },
+    "ai_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "navigate_pages",
+          "extract_data",
+          "fill_forms",
+          "solve_captcha",
+          "make_decisions",
+          "answer_questions",
+          "summarize_content",
+          "monitor_sites",
+          "clone_sites",
+          "build_workflows"
+        ]
+      },
+      "description": "What the user wants their AI to do"
+    },
+    "scale_level": {
+      "type": "string",
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        "enterprise"
+      ],
+      "default": "small",
+      "description": "Expected scale of operations"
+    },
+    "preferred_ai_tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "chatgpt",
+          "claude",
+          "gemini",
+          "cursor",
+          "custom",
+          "none"
+        ]
+      },
+      "description": "AI tools the user wants to connect"
+    },
+    "experience_level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "developer"
+      ],
+      "default": "beginner"
+    },
+    "custom_description": {
+      "type": "string",
+      "description": "Free-text description of what the user wants"
+    },
+    "ai_generated_config": {
+      "type": "object",
+      "description": "LLM-generated configuration based on answers"
+    },
+    "recommended_plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "developer",
+        "startup",
+        "enterprise"
+      ],
+      "description": "AI-recommended plan tier"
+    },
+    "recommended_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AI-recommended capabilities to enable"
+    },
+    "starter_agents_generated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether starter agents were auto-created from onboarding"
+    }
+  },
+  "required": [
+    "completed"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
