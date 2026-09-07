@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun, Command, FileSearch, FlaskConical, Eye, Train, HeartPulse } from "lucide-react";
+import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun, Command, FileSearch, FlaskConical, Eye, Train, HeartPulse, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -50,6 +50,7 @@ const navItems = [
   { to: "/vision-cortex", label: "Vision Cortex", icon: Eye },
   { to: "/railway-mirror", label: "Railway Mirror", icon: Train },
   { to: "/auto-heal", label: "Auto-Heal", icon: HeartPulse },
+  { to: "/clone-studio", label: "Clone Studio", icon: Copy },
   { to: "/capabilities", label: "Capabilities", icon: ShieldCheck },
   { to: "/proxies", label: "Proxies", icon: Globe },
   { to: "/captcha", label: "Captcha", icon: Shield },

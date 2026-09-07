@@ -1,0 +1,123 @@
+{
+  "name": "CloneGap",
+  "type": "object",
+  "properties": {
+    "clone_project_id": {
+      "type": "string",
+      "description": "Reference to the CloneProject this gap belongs to"
+    },
+    "gap_type": {
+      "type": "string",
+      "enum": [
+        "database",
+        "oauth",
+        "server_logic",
+        "websocket",
+        "firewall",
+        "unknown"
+      ],
+      "description": "Category of unclonable element"
+    },
+    "description": {
+      "type": "string",
+      "description": "What the gap is and why it can't be directly cloned"
+    },
+    "interaction_pattern": {
+      "type": "string",
+      "description": "DOM interaction pattern that triggered this gap identification"
+    },
+    "inferred_endpoint": {
+      "type": "string",
+      "description": "Inferred API endpoint path for this gap"
+    },
+    "inferred_method": {
+      "type": "string",
+      "enum": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+        "WS"
+      ],
+      "default": "POST"
+    },
+    "template_matched": {
+      "type": "string",
+      "description": "Which template from the catalog was matched"
+    },
+    "mock_logic": {
+      "type": "string",
+      "description": "Generated mock backend code for this gap"
+    },
+    "request_schema": {
+      "type": "object",
+      "description": "Inferred request JSON schema"
+    },
+    "response_schema": {
+      "type": "object",
+      "description": "Inferred response JSON schema"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "identified",
+        "inferred",
+        "resolved",
+        "unresolved"
+      ],
+      "default": "identified"
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 50,
+      "description": "Confidence in the inference (0-100)"
+    }
+  },
+  "required": [
+    "clone_project_id",
+    "gap_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

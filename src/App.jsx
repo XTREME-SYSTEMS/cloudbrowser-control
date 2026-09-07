@@ -47,6 +47,7 @@ import CapabilityTestLab from '@/pages/CapabilityTestLab';
 import VisionCortexIntelligence from '@/pages/VisionCortexIntelligence';
 import RailwayMirror from '@/pages/RailwayMirror';
 import AutoHeal from '@/pages/AutoHeal';
+import CloneStudio from '@/pages/CloneStudio';
 import ThemeProvider from '@/components/ThemeProvider';
 
 const AuthenticatedApp = () => {
@@ -118,6 +119,7 @@ const AuthenticatedApp = () => {
           <Route path="/vision-cortex" element={<VisionCortexIntelligence />} />
           <Route path="/railway-mirror" element={<RailwayMirror />} />
           <Route path="/auto-heal" element={<AutoHeal />} />
+          <Route path="/clone-studio" element={<CloneStudio />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/test-results" element={<TestResults />} />
         </Route>

@@ -1,0 +1,99 @@
+{
+  "name": "CloneValidationResult",
+  "type": "object",
+  "properties": {
+    "clone_project_id": {
+      "type": "string",
+      "description": "Reference to the CloneProject being validated"
+    },
+    "validation_category": {
+      "type": "string",
+      "enum": [
+        "visual_dom",
+        "endpoint_interactive",
+        "viewport_compliance",
+        "egress_deployment"
+      ],
+      "description": "Which parity validation category"
+    },
+    "score": {
+      "type": "number",
+      "default": 0,
+      "description": "Score achieved (0-100)"
+    },
+    "max_score": {
+      "type": "number",
+      "default": 100
+    },
+    "details": {
+      "type": "string",
+      "description": "Human-readable validation details"
+    },
+    "failed_nodes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific elements that failed validation"
+    },
+    "iteration": {
+      "type": "number",
+      "default": 1,
+      "description": "Which inference iteration produced this result"
+    },
+    "validated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "screenshot_diff_url": {
+      "type": "string",
+      "description": "Visual diff screenshot URL if applicable"
+    }
+  },
+  "required": [
+    "clone_project_id",
+    "validation_category",
+    "score"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

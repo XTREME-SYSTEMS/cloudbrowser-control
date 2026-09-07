@@ -1,0 +1,114 @@
+{
+  "name": "CloneAsset",
+  "type": "object",
+  "properties": {
+    "clone_project_id": {
+      "type": "string",
+      "description": "Reference to the CloneProject this asset belongs to"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "dom",
+        "har",
+        "screenshot",
+        "stylesheet",
+        "script",
+        "image",
+        "font",
+        "svg",
+        "form_schema",
+        "route_map",
+        "mock_backend",
+        "inferred_architecture"
+      ],
+      "description": "What type of captured asset this is"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Original URL the asset was captured from"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Stored file URL in Base44 storage"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the asset content for dedup verification"
+    },
+    "size_bytes": {
+      "type": "number",
+      "default": 0
+    },
+    "viewport": {
+      "type": "string",
+      "enum": [
+        "desktop",
+        "mobile",
+        "tablet",
+        "none"
+      ],
+      "default": "none"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "captured",
+        "failed",
+        "inferred",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional asset-specific data (HTTP headers, MIME type, etc.)"
+    }
+  },
+  "required": [
+    "clone_project_id",
+    "asset_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

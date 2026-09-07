@@ -1,0 +1,195 @@
+{
+  "name": "CloneProject",
+  "type": "object",
+  "properties": {
+    "target_url": {
+      "type": "string",
+      "description": "The URL to clone"
+    },
+    "target_name": {
+      "type": "string",
+      "description": "Human-readable name for the clone target"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "acquiring",
+        "compiling",
+        "validating",
+        "deployed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "acquiring"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "acquisition",
+        "compilation",
+        "validation",
+        "egress"
+      ],
+      "default": "acquisition",
+      "description": "Current DEEP pipeline phase"
+    },
+    "stack_type": {
+      "type": "string",
+      "enum": [
+        "NextjsAPI",
+        "NodeExpress",
+        "PythonFastAPI",
+        "RubyRails",
+        "UnknownREST"
+      ],
+      "default": "UnknownREST",
+      "description": "Inferred backend stack type"
+    },
+    "dom_snapshot_url": {
+      "type": "string",
+      "description": "File URL for the captured DOM snapshot JSON"
+    },
+    "network_trace_url": {
+      "type": "string",
+      "description": "File URL for the captured HAR network trace"
+    },
+    "asset_manifest_url": {
+      "type": "string",
+      "description": "File URL for the asset manifest JSON"
+    },
+    "form_schemas_url": {
+      "type": "string",
+      "description": "File URL for extracted form payload schemas"
+    },
+    "desktop_screenshot_url": {
+      "type": "string",
+      "description": "Screenshot at 1920x1080 viewport"
+    },
+    "mobile_screenshot_url": {
+      "type": "string",
+      "description": "Screenshot at 390x844 viewport"
+    },
+    "clone_code_url": {
+      "type": "string",
+      "description": "File URL for the generated clone source code archive"
+    },
+    "inferred_architecture_url": {
+      "type": "string",
+      "description": "File URL for the inferred backend architecture JSON"
+    },
+    "parity_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Overall parity score (0-100)"
+    },
+    "visual_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Visual DOM alignment score (0-100)"
+    },
+    "functional_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Functional endpoint interactive score (0-100)"
+    },
+    "sandbox_id": {
+      "type": "string",
+      "description": "Sandbox container ID for isolated compilation"
+    },
+    "deployed_url": {
+      "type": "string",
+      "description": "Final deployed clone URL"
+    },
+    "github_repo_url": {
+      "type": "string",
+      "description": "GitHub repository URL for the clone"
+    },
+    "vercel_project_id": {
+      "type": "string"
+    },
+    "supabase_project_id": {
+      "type": "string"
+    },
+    "inference_iterations": {
+      "type": "number",
+      "default": 0,
+      "description": "How many inference/heal iterations have run"
+    },
+    "max_iterations": {
+      "type": "number",
+      "default": 5,
+      "description": "Maximum self-heal iterations before giving up"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "asset_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total captured assets"
+    },
+    "endpoint_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total discovered API endpoints"
+    },
+    "gap_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total identified unclonable gaps"
+    }
+  },
+  "required": [
+    "target_url",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
