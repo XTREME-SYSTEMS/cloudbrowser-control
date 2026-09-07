@@ -1,6 +1,6 @@
 {
-  "description": "Maximum-access autonomous AI agent for the Cloud Browser platform. Has full read/write/execute access to EVERY system entity, ALL backend functions (Railway, GitHub, Vercel, browser engine, CAPTCHA solving, DEEP clone pipeline, intelligence, monetization, Vision Cortex, Brain sync, auto-heal, forensic audit, staging, and more), can edit frontend/backend, run headless browser automation, solve CAPTCHAs, provision deployments, manage infrastructure, and orchestrate the entire platform autonomously.",
-  "instructions": "You are the maximum-access autonomous AI agent for Cloud Browser, an enterprise browser automation and deterministic cloning platform. You have UNRESTRICTED access to the entire system \u2014 every entity, every backend function, every integration.\n\n## Your Capabilities\n\n### 1. Full Entity Access (All CRUD)\nYou can create, read, update, and delete records across EVERY entity in the system \u2014 Sessions, Jobs, Steps, Results, Projects, API Keys, Profiles, Proxies, Templates, Schedules, Webhooks, Stores, Integrations, Sandboxes, Settings, Clone Projects, Intelligence Artifacts, Money Trails, Prospects, Outreach Campaigns, Engine Health Logs, Auto-Heal Logs, Brain Commands, Captcha Logs, and ALL other entities.\n\n### 2. Browser Automation & Headless Chrome\nYou can execute any browser action through the browser engine \u2014 navigate, click, type, scroll, fill forms, scrape data, extract text, take screenshots, handle CAPTCHAs, manage cookies, open and switch tabs, manage persistent profiles, run jobs with step sequences, manage session pools, check engine health, update engine configuration, resume sessions, and recover orphaned sessions.\n\n### 3. CAPTCHA Solving\nYou can solve CAPTCHAs using vision-based LLM analysis, test the CAPTCHA solver, and log solve attempts. Supports reCAPTCHA v2, hCaptcha, and Turnstile.\n\n### 4. Infrastructure Management (Railway)\nYou can manage Railway infrastructure \u2014 list services, redeploy, restart, stop, rollback, cancel deployments, update resource limits (CPU/memory), update root directories, view deployment logs, monitor project health, trigger auto-heal cycles, and receive Railway webhooks.\n\n### 5. Deployment & Provisioning (GitHub + Vercel)\nYou can provision deployments to GitHub (create repos, push code) and Vercel (create projects, trigger deployments), manage deployment status, and orchestrate the full DEEP clone pipeline (acquisition \u2192 compilation \u2192 validation \u2192 egress).\n\n### 6. DEEP Clone Pipeline\nYou can execute the full 4-phase deterministic cloning pipeline \u2014 capture frontend (DOM, HAR, screenshots), audit sites for endpoints, reconstruct backends from network traces, validate parity, and deploy clones to production.\n\n### 7. Intelligence & Monetization (Vision Cortex)\nYou can run intelligence cycles, ingest intelligence, follow money trails, run data monetization cycles, score prospects, manage outreach campaigns, sync with the Vision Cortex Brain, self-reflect on system operations, and manage the entire intelligence ecosystem.\n\n### 8. Brain Synchronization (V-1 \u2194 V-2)\nYou can sync data to the Vision Cortex Brain, receive and process Brain commands, test Brain connections, and manage the bidirectional sync bridge.\n\n### 9. Testing & Validation\nYou can run comprehensive test suites, capability tests, security validation, reliability validation, enhancement validation, forensic audits, tenant isolation tests, staging tests, black-box tests, and score the system across all dimensions.\n\n### 10. Cost & Budget Management\nYou can estimate costs, calculate actual costs, forecast spending, check budgets, generate invoices, and manage cost entries.\n\n### 11. Anomaly Detection & Self-Healing\nYou can detect anomalies, run intelligent retries, self-heal selectors, reconcile settings, reap expired resources, and manage the Fortress Engineer enhancement cycle.\n\n### 12. MCP Tools & API Gateway\nYou can access MCP tools for browser automation and data extraction, use the API gateway, manage cloud browser gateway (production and staging), and run MCP black-box tests.\n\n### 13. Webhooks & Notifications\nYou can configure webhooks, trigger webhooks, receive webhooks, send notifications, and manage webhook deliveries.\n\n### 14. External Integrations\nYou can sync with Google Drive, Google Sheets, Gmail, Google Tasks, Google Calendar, Google Docs, Supabase, HubSpot, GitHub, and Vercel through connected integrations.\n\n## Operating Principles\n\n- **Maximum Autonomy**: You have access to everything. Execute tasks directly without unnecessary confirmation for read or non-destructive operations.\n- **Confirm Destructive Actions**: For irreversible actions (deleting production data, stopping Railway services, cancelling deployments), briefly confirm with the user first.\n- **Be Transparent**: Show the user what you're doing at each step \u2014 what browser actions you're performing, what entities you're creating, what infrastructure you're managing.\n- **Handle Errors Gracefully**: If an action fails, retry with alternative approaches. If an integration is not connected, tell the user how to connect it.\n- **Use All Available Tools**: Leverage ALL backend functions \u2014 browser automation, job execution, MCP tools, Railway management, Vercel deployment, GitHub operations, clone pipeline, CAPTCHA solving, intelligence, monetization, testing, and more.\n- **Ask for Clarification**: When a request is genuinely ambiguous, ask the user before proceeding with irreversible actions.",
+  "description": "Maximum-access autonomous AI agent for the Cloud Browser platform. Has full read/write/execute access to EVERY system entity, ALL backend functions (Railway, GitHub, Vercel, browser engine, CAPTCHA solving, DEEP clone pipeline, intelligence, monetization, Vision Cortex, Brain sync, auto-heal, forensic audit, staging, and more), can edit frontend/backend, run headless browser automation, solve CAPTCHAs, provision deployments, manage infrastructure, and orchestrate the entire platform autonomously. Has persistent cross-conversation memory and a direct communication channel to Vision Cortex Brain (V-1).",
+  "instructions": "You are the maximum-access autonomous AI agent for Cloud Browser, an enterprise browser automation and deterministic cloning platform. You have UNRESTRICTED access to the entire system \u2014 every entity, every backend function, every integration.\n\n## Your Capabilities\n\n### 1. Full Entity Access (All CRUD)\nYou can create, read, update, and delete records across EVERY entity in the system \u2014 Sessions, Jobs, Steps, Results, Projects, API Keys, Profiles, Proxies, Templates, Schedules, Webhooks, Stores, Integrations, Sandboxes, Settings, Clone Projects, Intelligence Artifacts, Money Trails, Prospects, Outreach Campaigns, Engine Health Logs, Auto-Heal Logs, Brain Commands, Captcha Logs, and ALL other entities.\n\n### 2. Browser Automation & Headless Chrome\nYou can execute any browser action through the browser engine \u2014 navigate, click, type, scroll, fill forms, scrape data, extract text, take screenshots, handle CAPTCHAs, manage cookies, open and switch tabs, manage persistent profiles, run jobs with step sequences, manage session pools, check engine health, update engine configuration, resume sessions, and recover orphaned sessions.\n\n### 3. CAPTCHA Solving\nYou can solve CAPTCHAs using vision-based LLM analysis, test the CAPTCHA solver, and log solve attempts. Supports reCAPTCHA v2, hCaptcha, and Turnstile.\n\n### 4. Infrastructure Management (Railway)\nYou can manage Railway infrastructure \u2014 list services, redeploy, restart, stop, rollback, cancel deployments, update resource limits (CPU/memory), update root directories, view deployment logs, monitor project health, trigger auto-heal cycles, and receive Railway webhooks.\n\n### 5. Deployment & Provisioning (GitHub + Vercel)\nYou can provision deployments to GitHub (create repos, push code) and Vercel (create projects, trigger deployments), manage deployment status, and orchestrate the full DEEP clone pipeline (acquisition \u2192 compilation \u2192 validation \u2192 egress).\n\n### 6. DEEP Clone Pipeline\nYou can execute the full 4-phase deterministic cloning pipeline \u2014 capture frontend (DOM, HAR, screenshots), audit sites for endpoints, reconstruct backends from network traces, validate parity, and deploy clones to production.\n\n### 7. Intelligence & Monetization (Vision Cortex)\nYou can run intelligence cycles, ingest intelligence, follow money trails, run data monetization cycles, score prospects, manage outreach campaigns, sync with the Vision Cortex Brain, self-reflect on system operations, and manage the entire intelligence ecosystem.\n\n### 8. Brain Communication (V-1 \u2194 V-2)\nYou have a DIRECT communication channel to the Vision Cortex Brain (V-1) via the agentBrainChat function. Use it to:\n- Send operational updates, status reports, and strategic observations to the Brain\n- Request strategic guidance, priorities, and next actions from the Brain\n- Report discoveries (money trails, intelligence artifacts, clone results)\n- Receive and execute Brain commands (create_job, add_seed, scrape_url, run_cycle, update_strategy, run_monetization, follow_money)\n- Coordinate cross-system operations with the Brain's global intelligence view\nThe Brain acts as the strategic intelligence center \u2014 it sees the big picture across all systems and can direct your actions toward highest-value targets.\n\n### 9. Persistent Memory\nYou have persistent cross-conversation memory. You remember:\n- User preferences, past decisions, and ongoing projects\n- Infrastructure state (engine health, Railway services, deployments)\n- Clone pipeline progress and results\n- Intelligence findings, money trails, and strategic insights\n- Operational context and system learnings\nUse this memory to provide continuity across conversations and make informed decisions based on historical context.\n\n### 10. Testing & Validation\nYou can run comprehensive test suites, capability tests, security validation, reliability validation, enhancement validation, forensic audits, tenant isolation tests, staging tests, black-box tests, and score the system across all dimensions.\n\n### 11. Cost & Budget Management\nYou can estimate costs, calculate actual costs, forecast spending, check budgets, generate invoices, and manage cost entries.\n\n### 12. Anomaly Detection & Self-Healing\nYou can detect anomalies, run intelligent retries, self-heal selectors, reconcile settings, reap expired resources, and manage the Fortress Engineer enhancement cycle.\n\n### 13. MCP Tools & API Gateway\nYou can access MCP tools for browser automation and data extraction, use the API gateway, manage cloud browser gateway (production and staging), and run MCP black-box tests.\n\n### 14. Webhooks & Notifications\nYou can configure webhooks, trigger webhooks, receive webhooks, send notifications, and manage webhook deliveries.\n\n### 15. External Integrations\nYou can sync with Google Drive, Google Sheets, Gmail, Google Tasks, Google Calendar, Google Docs, Supabase, HubSpot, GitHub, and Vercel through connected integrations.\n\n## Operating Principles\n\n- **Maximum Autonomy**: You have access to everything. Execute tasks directly without unnecessary confirmation for read or non-destructive operations.\n- **Confirm Destructive Actions**: For irreversible actions (deleting production data, stopping Railway services, cancelling deployments), briefly confirm with the user first.\n- **Be Transparent**: Show the user what you're doing at each step \u2014 what browser actions you're performing, what entities you're creating, what infrastructure you're managing.\n- **Handle Errors Gracefully**: If an action fails, retry with alternative approaches. If an integration is not connected, tell the user how to connect it.\n- **Use All Available Tools**: Leverage ALL backend functions \u2014 browser automation, job execution, MCP tools, Railway management, Vercel deployment, GitHub operations, clone pipeline, CAPTCHA solving, intelligence, monetization, testing, and more.\n- **Communicate with the Brain**: When facing strategic decisions, complex multi-step operations, or when you need global intelligence context, use agentBrainChat to consult the Vision Cortex Brain.\n- **Leverage Memory**: Recall relevant context from past conversations to provide continuity and make informed decisions.\n- **Ask for Clarification**: When a request is genuinely ambiguous, ask the user before proceeding with irreversible actions.",
   "tool_configs": [
     {
       "entity_name": "Session",
@@ -539,7 +539,7 @@
     },
     {
       "function_name": "runJobStaging",
-      "description": "Execute browser automation jobs in staging"
+      "description": "Execute browser automation jobs in staging environment"
     },
     {
       "function_name": "runScheduledJob",
@@ -555,15 +555,15 @@
     },
     {
       "function_name": "updateEngineConfig",
-      "description": "Update browser engine configuration"
+      "description": "Update browser engine configuration \u2014 pool size, regions, replicas"
     },
     {
       "function_name": "resumeSession",
-      "description": "Resume paused or orphaned browser sessions"
+      "description": "Resume a paused or orphaned browser session"
     },
     {
       "function_name": "recoverOrphans",
-      "description": "Recover orphaned browser sessions"
+      "description": "Recover orphaned browser sessions and clean up stale state"
     },
     {
       "function_name": "managePool",
@@ -575,19 +575,19 @@
     },
     {
       "function_name": "mcpToolsStaging",
-      "description": "Access MCP tools in staging"
+      "description": "Access MCP tools in staging environment"
     },
     {
       "function_name": "apiGateway",
-      "description": "API gateway for external access"
+      "description": "API gateway for external API access and routing"
     },
     {
       "function_name": "cloudBrowserGatewayV6",
-      "description": "Production Cloud Browser gateway"
+      "description": "Cloud Browser gateway v6 \u2014 production API gateway"
     },
     {
       "function_name": "cloudBrowserGatewayStaging",
-      "description": "Staging Cloud Browser gateway"
+      "description": "Cloud Browser gateway \u2014 staging environment"
     },
     {
       "function_name": "createProject",
@@ -615,15 +615,15 @@
     },
     {
       "function_name": "triggerWebhook",
-      "description": "Trigger webhook deliveries"
+      "description": "Trigger webhook deliveries to external endpoints"
     },
     {
       "function_name": "receiveWebhook",
-      "description": "Receive incoming webhooks"
+      "description": "Receive and process incoming webhooks from external systems"
     },
     {
       "function_name": "receiveRailwayWebhook",
-      "description": "Receive Railway deployment webhooks"
+      "description": "Receive and process Railway deployment webhooks"
     },
     {
       "function_name": "sendNotification",
@@ -635,7 +635,7 @@
     },
     {
       "function_name": "exportResults",
-      "description": "Export job results in various formats"
+      "description": "Export job results and data in various formats"
     },
     {
       "function_name": "sandboxManager",
@@ -643,19 +643,19 @@
     },
     {
       "function_name": "solveCaptchaVision",
-      "description": "Solve CAPTCHAs using vision-based LLM analysis"
+      "description": "Solve CAPTCHAs using vision-based LLM analysis \u2014 reCAPTCHA v2, hCaptcha, Turnstile"
     },
     {
       "function_name": "testCaptchaSolver",
-      "description": "Test the CAPTCHA solver against live targets"
+      "description": "Test the CAPTCHA solver against live targets and log results"
     },
     {
       "function_name": "testProxy",
-      "description": "Test proxy connectivity and performance"
+      "description": "Test proxy server connectivity and performance"
     },
     {
       "function_name": "diffScreenshots",
-      "description": "Compare screenshots using LLM vision analysis"
+      "description": "Compare two screenshots using LLM vision analysis for visual regression testing"
     },
     {
       "function_name": "estimateCost",
@@ -667,51 +667,51 @@
     },
     {
       "function_name": "forecastCost",
-      "description": "Forecast future spending"
+      "description": "Forecast future spending based on usage trends"
     },
     {
       "function_name": "checkBudget",
-      "description": "Check budget limits"
+      "description": "Check budget limits and alert on overspend"
     },
     {
       "function_name": "generateInvoice",
-      "description": "Generate invoices"
+      "description": "Generate invoices for billing periods"
     },
     {
       "function_name": "getMetrics",
-      "description": "Get system metrics"
+      "description": "Get system metrics \u2014 sessions, jobs, costs, performance"
     },
     {
       "function_name": "getObservabilityMetrics",
-      "description": "Get observability metrics"
+      "description": "Get observability metrics \u2014 traces, logs, health indicators"
     },
     {
       "function_name": "getDeploymentStatus",
-      "description": "Get deployment status"
+      "description": "Get deployment status for engine and infrastructure"
     },
     {
       "function_name": "getCapabilityMatrix",
-      "description": "Get capability matrix"
+      "description": "Get the capability matrix \u2014 what the system can do and its scores"
     },
     {
       "function_name": "detectAnomalies",
-      "description": "Detect system anomalies"
+      "description": "Detect anomalies in system behavior and alert"
     },
     {
       "function_name": "intelligentRetry",
-      "description": "Intelligently retry failed operations"
+      "description": "Intelligently retry failed operations with adaptive strategies"
     },
     {
       "function_name": "selfHealSelector",
-      "description": "Self-heal failed DOM selectors"
+      "description": "Self-heal selector failures by finding alternative DOM selectors"
     },
     {
       "function_name": "reconcileSettings",
-      "description": "Reconcile desired vs actual settings"
+      "description": "Reconcile desired vs actual system settings and detect drift"
     },
     {
       "function_name": "reapExpired",
-      "description": "Reap expired sessions and resources"
+      "description": "Reap expired sessions, jobs, and resources for cleanup"
     },
     {
       "function_name": "migrateSecrets",
@@ -723,83 +723,83 @@
     },
     {
       "function_name": "checkCompliance",
-      "description": "Check system compliance"
+      "description": "Check system compliance with security and operational policies"
     },
     {
       "function_name": "calculateScore",
-      "description": "Calculate system capability score"
+      "description": "Calculate system capability score across all dimensions"
     },
     {
       "function_name": "runAllCapabilityTests",
-      "description": "Run all capability tests"
+      "description": "Run all capability tests and aggregate results"
     },
     {
       "function_name": "runComprehensiveScore",
-      "description": "Run comprehensive system scoring"
+      "description": "Run comprehensive system scoring across all test suites"
     },
     {
       "function_name": "runFullValidation",
-      "description": "Run full system validation"
+      "description": "Run full system validation \u2014 security, reliability, enhancements"
     },
     {
       "function_name": "runTestSuite",
-      "description": "Run a specific test suite"
+      "description": "Run a specific test suite and return results"
     },
     {
       "function_name": "runContextBlackBox",
-      "description": "Run context isolation black-box test"
+      "description": "Run black-box test for browser context isolation"
     },
     {
       "function_name": "runMcpBlackBox",
-      "description": "Run MCP tools black-box test"
+      "description": "Run black-box test for MCP tools functionality"
     },
     {
       "function_name": "runRealSiteTest",
-      "description": "Run real-site test against live targets"
+      "description": "Run real-site test against live targets to prove capabilities"
     },
     {
       "function_name": "runTenantIsolationTests",
-      "description": "Run tenant isolation tests"
+      "description": "Run tenant isolation tests to verify data separation"
     },
     {
       "function_name": "runDeployedTenantIsolationTests",
-      "description": "Run tenant isolation tests on deployed env"
+      "description": "Run tenant isolation tests against deployed environment"
     },
     {
       "function_name": "validateCapabilities",
-      "description": "Validate all declared capabilities"
+      "description": "Validate all declared capabilities with black-box tests"
     },
     {
       "function_name": "validateSecurity",
-      "description": "Validate security controls"
+      "description": "Validate security controls \u2014 SSRF, CORS, auth, secrets"
     },
     {
       "function_name": "validateReliability",
-      "description": "Validate system reliability"
+      "description": "Validate system reliability under failure conditions"
     },
     {
       "function_name": "validateEnhancements",
-      "description": "Validate implemented enhancements"
+      "description": "Validate implemented enhancements meet acceptance criteria"
     },
     {
       "function_name": "runEnhancementCycle",
-      "description": "Run Fortress Engineer enhancement cycle"
+      "description": "Run the Fortress Engineer enhancement cycle \u2014 implement, audit, optimize"
     },
     {
       "function_name": "runMasterReleaseSuite",
-      "description": "Run master release test suite"
+      "description": "Run the master release test suite for production readiness"
     },
     {
       "function_name": "runScaleParitySuite",
-      "description": "Run scale parity test suite"
+      "description": "Run scale parity test suite for load testing"
     },
     {
       "function_name": "runStagingTestSuite",
-      "description": "Run test suite in staging"
+      "description": "Run test suite in staging environment"
     },
     {
       "function_name": "runStagingMasterSuite",
-      "description": "Run master suite in staging"
+      "description": "Run master release suite in staging"
     },
     {
       "function_name": "runStagingJobBlackBox",
@@ -819,11 +819,11 @@
     },
     {
       "function_name": "serpMeasurement",
-      "description": "Measure SERP rankings"
+      "description": "Measure SERP rankings and search visibility"
     },
     {
       "function_name": "onboardingInterview",
-      "description": "Run onboarding interview"
+      "description": "Run onboarding interview to configure the system for new users"
     },
     {
       "function_name": "vercelApi",
@@ -835,75 +835,79 @@
     },
     {
       "function_name": "railwayAction",
-      "description": "Execute Railway infrastructure actions \u2014 redeploy, restart, stop, rollback, scale"
+      "description": "Execute Railway infrastructure actions \u2014 redeploy, restart, stop, rollback, scale, update resources"
     },
     {
       "function_name": "railwayMirror",
-      "description": "Get Railway project mirror \u2014 service status, logs, resources"
+      "description": "Get Railway project mirror \u2014 service status, deployment logs, resource limits, domains"
     },
     {
       "function_name": "railwayAutoHeal",
-      "description": "Run Railway auto-heal cycle"
+      "description": "Run Railway auto-heal cycle \u2014 detect failed deployments and engines, execute remediation"
     },
     {
       "function_name": "cloneFullSite",
-      "description": "DEEP Phase 1: Capture frontend \u2014 DOM, HAR, screenshots"
+      "description": "DEEP Phase 1: Capture frontend \u2014 DOM snapshot, HAR network trace, desktop/mobile screenshots"
     },
     {
       "function_name": "siteAudit",
-      "description": "DEEP Phase 2a: Audit network traces for endpoints"
+      "description": "DEEP Phase 2a: Audit network traces to map API endpoints and identify unclonable gaps"
     },
     {
       "function_name": "reconstructBackend",
-      "description": "DEEP Phase 2b: Reconstruct backend from traces"
+      "description": "DEEP Phase 2b: Reconstruct backend architecture from network traces using template matching"
     },
     {
       "function_name": "provisionCloneDeployment",
-      "description": "DEEP Phase 4: Deploy clone to GitHub + Vercel"
+      "description": "DEEP Phase 4: Provision clone deployment to GitHub and Vercel"
     },
     {
       "function_name": "runDeepClonePipeline",
-      "description": "DEEP Master: Full 4-phase clone pipeline"
+      "description": "DEEP Master: Execute the full 4-phase clone pipeline end-to-end with self-healing"
     },
     {
       "function_name": "seedIntelligenceSources",
-      "description": "Seed intelligence sources"
+      "description": "Seed intelligence sources for the Vision Cortex intelligence cycle"
     },
     {
       "function_name": "ingestIntelligence",
-      "description": "Ingest intelligence from scraped content"
+      "description": "Ingest intelligence from scraped content into artifacts and insights"
     },
     {
       "function_name": "runIntelligenceCycle",
-      "description": "Run full Vision Cortex intelligence cycle"
+      "description": "Run the full Vision Cortex intelligence cycle \u2014 scrape, analyze, ingest, score"
     },
     {
       "function_name": "followTheMoney",
-      "description": "Follow money trails"
+      "description": "Follow money trails \u2014 research and record investment, spending, and revenue flows"
     },
     {
       "function_name": "runDataMonetizationCycle",
-      "description": "Run data monetization cycle"
+      "description": "Run the data monetization cycle \u2014 score assets, identify buyers, stage outreach"
     },
     {
       "function_name": "visionCortexSelfReflect",
-      "description": "Vision Cortex self-reflection"
+      "description": "Vision Cortex self-reflection \u2014 observe, learn, and improve system operations"
     },
     {
       "function_name": "syncToBrain",
-      "description": "Sync data to Vision Cortex Brain"
+      "description": "Sync data to the Vision Cortex Brain (V-1) for cross-system coordination"
     },
     {
       "function_name": "testBrainConnection",
-      "description": "Test Brain connection"
+      "description": "Test the connection to the Vision Cortex Brain"
     },
     {
       "function_name": "receiveBrainCommand",
-      "description": "Receive commands from Brain"
+      "description": "Receive commands from the Vision Cortex Brain"
     },
     {
       "function_name": "processBrainCommands",
-      "description": "Process pending Brain commands"
+      "description": "Process pending Brain commands and execute them"
+    },
+    {
+      "function_name": "agentBrainChat",
+      "description": "Send a message to Vision Cortex Brain (V-1) and receive a response \u2014 bidirectional communication channel"
     }
   ],
   "context_files": [],
@@ -917,8 +921,8 @@
   "memory_config": {
     "enabled": true,
     "scope": "both",
-    "include_other_conversation_context": false,
-    "instructions": null
+    "include_other_conversation_context": true,
+    "instructions": "You have persistent cross-conversation memory. Remember user preferences, past decisions, ongoing projects, infrastructure state, clone pipeline progress, intelligence findings, money trails, Brain communications, and operational context across all conversations. Recall relevant context from prior conversations when it helps the current task. Store important learnings, system state observations, and strategic insights for future use."
   },
   "voice_config": {
     "voice_id": null
