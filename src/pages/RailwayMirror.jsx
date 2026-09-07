@@ -248,7 +248,8 @@ export default function RailwayMirror() {
   const fetchStatus = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const result = await base44.functions.invoke("railwayMirror", {});
+      const response = await base44.functions.invoke("railwayMirror", {});
+      const result = response.data ?? response;
       if (result.ok) {
         setData(result);
         setError(null);
@@ -277,9 +278,10 @@ export default function RailwayMirror() {
     const key = serviceId || deploymentId;
     setActing(key);
     try {
-      const result = await base44.functions.invoke("railwayAction", {
+      const response = await base44.functions.invoke("railwayAction", {
         action, serviceId, deploymentId, ...extra
       });
+      const result = response.data ?? response;
       if (!result.ok) {
         setError(result.error);
       } else {
