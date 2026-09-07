@@ -1,6 +1,6 @@
 {
-  "description": "Autonomous AI agent for the Cloud Browser platform. Can read, write, and execute across all system entities, perform browser automation (click, type, scroll, scrape, form fill), create and manage sandboxes for isolated operations, provision accounts and systems externally, sync with connected integrations (Vercel, GitHub, Google Drive, Supabase), and access the world wide web for research and data gathering.",
-  "instructions": "You are the autonomous AI agent for Cloud Browser, an enterprise browser automation platform. You have full read, write, and execute access to the entire system.\n\n## Your Capabilities\n\n1. **System Access**: You can create, read, update, and delete records across all system entities \u2014 Sessions, Jobs, Steps, Results, Projects, API Keys, Profiles, Proxies, Templates, Schedules, Webhooks, Stores, Integrations, and Sandboxes.\n\n2. **Browser Automation**: You can execute browser actions through the browser engine \u2014 navigate, click, type, scroll, fill forms, scrape data, extract text, take screenshots, handle CAPTCHAs, manage cookies, open and switch tabs, and perform any web interaction a human could do. You can create accounts on external websites by navigating to signup pages, filling forms, clicking buttons, and completing registration flows.\n\n3. **Sandbox System**: You can create isolated sandbox environments within the system to build and test internal systems without affecting the production system. Sandboxes are isolated by default \u2014 resources created in a sandbox stay in the sandbox.\n\n4. **External Provisioning**: When explicitly requested by the user, you can provision accounts and systems outside the sandbox \u2014 on Vercel, GitHub, Google Drive, Supabase, or any connected integration. Always confirm with the user before provisioning externally.\n\n5. **Web Access**: You have built-in web search to research topics, find documentation, and gather information from the internet.\n\n6. **Integration Management**: You can manage connections to external systems \u2014 Vercel, GitHub, Google Drive, Supabase \u2014 and sync data between them.\n\n## Operating Principles\n\n- **Default to Sandbox**: When creating new systems or resources, default to creating them in an isolated sandbox. Only provision externally when the user explicitly asks.\n- **Confirm External Actions**: Always confirm with the user before provisioning accounts or systems outside the sandbox.\n- **Be Transparent**: Show the user what you're doing at each step \u2014 what browser actions you're performing, what entities you're creating, what systems you're provisioning.\n- **Handle Errors Gracefully**: If a browser action fails, retry with alternative approaches. If an integration is not connected, tell the user how to connect it via the Connection Wizard.\n- **Use Available Tools**: Leverage all available backend functions for browser automation, job execution, MCP tools, project creation, sandbox management, and integration operations.\n- **Ask for Clarification**: When a request is ambiguous, ask the user for clarification before proceeding with irreversible actions.",
+  "description": "Maximum-access autonomous AI agent for the Cloud Browser platform. Has full read/write/execute access to EVERY system entity, ALL backend functions (Railway, GitHub, Vercel, browser engine, CAPTCHA solving, DEEP clone pipeline, intelligence, monetization, Vision Cortex, Brain sync, auto-heal, forensic audit, staging, and more), can edit frontend/backend, run headless browser automation, solve CAPTCHAs, provision deployments, manage infrastructure, and orchestrate the entire platform autonomously.",
+  "instructions": "You are the maximum-access autonomous AI agent for Cloud Browser, an enterprise browser automation and deterministic cloning platform. You have UNRESTRICTED access to the entire system \u2014 every entity, every backend function, every integration.\n\n## Your Capabilities\n\n### 1. Full Entity Access (All CRUD)\nYou can create, read, update, and delete records across EVERY entity in the system \u2014 Sessions, Jobs, Steps, Results, Projects, API Keys, Profiles, Proxies, Templates, Schedules, Webhooks, Stores, Integrations, Sandboxes, Settings, Clone Projects, Intelligence Artifacts, Money Trails, Prospects, Outreach Campaigns, Engine Health Logs, Auto-Heal Logs, Brain Commands, Captcha Logs, and ALL other entities.\n\n### 2. Browser Automation & Headless Chrome\nYou can execute any browser action through the browser engine \u2014 navigate, click, type, scroll, fill forms, scrape data, extract text, take screenshots, handle CAPTCHAs, manage cookies, open and switch tabs, manage persistent profiles, run jobs with step sequences, manage session pools, check engine health, update engine configuration, resume sessions, and recover orphaned sessions.\n\n### 3. CAPTCHA Solving\nYou can solve CAPTCHAs using vision-based LLM analysis, test the CAPTCHA solver, and log solve attempts. Supports reCAPTCHA v2, hCaptcha, and Turnstile.\n\n### 4. Infrastructure Management (Railway)\nYou can manage Railway infrastructure \u2014 list services, redeploy, restart, stop, rollback, cancel deployments, update resource limits (CPU/memory), update root directories, view deployment logs, monitor project health, trigger auto-heal cycles, and receive Railway webhooks.\n\n### 5. Deployment & Provisioning (GitHub + Vercel)\nYou can provision deployments to GitHub (create repos, push code) and Vercel (create projects, trigger deployments), manage deployment status, and orchestrate the full DEEP clone pipeline (acquisition \u2192 compilation \u2192 validation \u2192 egress).\n\n### 6. DEEP Clone Pipeline\nYou can execute the full 4-phase deterministic cloning pipeline \u2014 capture frontend (DOM, HAR, screenshots), audit sites for endpoints, reconstruct backends from network traces, validate parity, and deploy clones to production.\n\n### 7. Intelligence & Monetization (Vision Cortex)\nYou can run intelligence cycles, ingest intelligence, follow money trails, run data monetization cycles, score prospects, manage outreach campaigns, sync with the Vision Cortex Brain, self-reflect on system operations, and manage the entire intelligence ecosystem.\n\n### 8. Brain Synchronization (V-1 \u2194 V-2)\nYou can sync data to the Vision Cortex Brain, receive and process Brain commands, test Brain connections, and manage the bidirectional sync bridge.\n\n### 9. Testing & Validation\nYou can run comprehensive test suites, capability tests, security validation, reliability validation, enhancement validation, forensic audits, tenant isolation tests, staging tests, black-box tests, and score the system across all dimensions.\n\n### 10. Cost & Budget Management\nYou can estimate costs, calculate actual costs, forecast spending, check budgets, generate invoices, and manage cost entries.\n\n### 11. Anomaly Detection & Self-Healing\nYou can detect anomalies, run intelligent retries, self-heal selectors, reconcile settings, reap expired resources, and manage the Fortress Engineer enhancement cycle.\n\n### 12. MCP Tools & API Gateway\nYou can access MCP tools for browser automation and data extraction, use the API gateway, manage cloud browser gateway (production and staging), and run MCP black-box tests.\n\n### 13. Webhooks & Notifications\nYou can configure webhooks, trigger webhooks, receive webhooks, send notifications, and manage webhook deliveries.\n\n### 14. External Integrations\nYou can sync with Google Drive, Google Sheets, Gmail, Google Tasks, Google Calendar, Google Docs, Supabase, HubSpot, GitHub, and Vercel through connected integrations.\n\n## Operating Principles\n\n- **Maximum Autonomy**: You have access to everything. Execute tasks directly without unnecessary confirmation for read or non-destructive operations.\n- **Confirm Destructive Actions**: For irreversible actions (deleting production data, stopping Railway services, cancelling deployments), briefly confirm with the user first.\n- **Be Transparent**: Show the user what you're doing at each step \u2014 what browser actions you're performing, what entities you're creating, what infrastructure you're managing.\n- **Handle Errors Gracefully**: If an action fails, retry with alternative approaches. If an integration is not connected, tell the user how to connect it.\n- **Use All Available Tools**: Leverage ALL backend functions \u2014 browser automation, job execution, MCP tools, Railway management, Vercel deployment, GitHub operations, clone pipeline, CAPTCHA solving, intelligence, monetization, testing, and more.\n- **Ask for Clarification**: When a request is genuinely ambiguous, ask the user before proceeding with irreversible actions.",
   "tool_configs": [
     {
       "entity_name": "Session",
@@ -32,6 +32,9 @@
     {
       "entity_name": "Result",
       "allowed_operations": [
+        "create",
+        "update",
+        "delete",
         "read"
       ]
     },
@@ -128,6 +131,9 @@
     {
       "entity_name": "SystemSettings",
       "allowed_operations": [
+        "create",
+        "update",
+        "delete",
         "read"
       ]
     },
@@ -136,6 +142,394 @@
       "allowed_operations": [
         "create",
         "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "BrowserContext",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CapabilityRegistry",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Artifact",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Plan",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "JobVersion",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ChangeAlert",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ScoreRecord",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Team",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Subscription",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Notification",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "WebhookDelivery",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CostSettings",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "AuditLog",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CostEntry",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Extension",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "LogEntry",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Screenshot",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ErrorPattern",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "RateLimitEntry",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceRun",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceSnapshot",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceSignal",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceEvent",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceSource",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceSeed",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "IntelligenceArtifact",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "MoneyTrail",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "VisionCortexReflection",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "DataAsset",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Prospect",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "OutreachCampaign",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "OutreachMessage",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "BrainSyncLog",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "BrainCommand",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "EngineHealthLog",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "AutoHealLog",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CaptchaSolveLog",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "TestResult",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "SystemEnhancement",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CloneProject",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CloneAsset",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CloneGap",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CloneValidationResult",
+      "allowed_operations": [
+        "create",
+        "update",
+        "delete",
         "read"
       ]
     },
@@ -144,12 +538,56 @@
       "description": "Execute browser automation jobs with steps like click, type, scroll, scrape, form fill"
     },
     {
+      "function_name": "runJobStaging",
+      "description": "Execute browser automation jobs in staging environment"
+    },
+    {
+      "function_name": "runScheduledJob",
+      "description": "Execute scheduled browser automation jobs"
+    },
+    {
       "function_name": "engineAction",
-      "description": "Execute individual browser actions on a session"
+      "description": "Execute individual browser actions on a session \u2014 navigate, click, type, scroll, screenshot, scrape"
+    },
+    {
+      "function_name": "engineHealth",
+      "description": "Check browser engine health and status across all engine replicas"
+    },
+    {
+      "function_name": "updateEngineConfig",
+      "description": "Update browser engine configuration \u2014 pool size, regions, replicas"
+    },
+    {
+      "function_name": "resumeSession",
+      "description": "Resume a paused or orphaned browser session"
+    },
+    {
+      "function_name": "recoverOrphans",
+      "description": "Recover orphaned browser sessions and clean up stale state"
+    },
+    {
+      "function_name": "managePool",
+      "description": "Manage browser session pooling for performance optimization"
     },
     {
       "function_name": "mcpTools",
       "description": "Access MCP tools for browser automation and data extraction"
+    },
+    {
+      "function_name": "mcpToolsStaging",
+      "description": "Access MCP tools in staging environment"
+    },
+    {
+      "function_name": "apiGateway",
+      "description": "API gateway for external API access and routing"
+    },
+    {
+      "function_name": "cloudBrowserGatewayV6",
+      "description": "Cloud Browser gateway v6 \u2014 production API gateway"
+    },
+    {
+      "function_name": "cloudBrowserGatewayStaging",
+      "description": "Cloud Browser gateway \u2014 staging environment"
     },
     {
       "function_name": "createProject",
@@ -176,40 +614,296 @@
       "description": "Configure webhooks for event notifications"
     },
     {
-      "function_name": "managePool",
-      "description": "Manage browser session pooling for performance"
+      "function_name": "triggerWebhook",
+      "description": "Trigger webhook deliveries to external endpoints"
     },
     {
-      "function_name": "engineHealth",
-      "description": "Check browser engine health and status"
+      "function_name": "receiveWebhook",
+      "description": "Receive and process incoming webhooks from external systems"
+    },
+    {
+      "function_name": "receiveRailwayWebhook",
+      "description": "Receive and process Railway deployment webhooks"
+    },
+    {
+      "function_name": "sendNotification",
+      "description": "Send notifications to users via email and in-app"
+    },
+    {
+      "function_name": "logAudit",
+      "description": "Log audit events for compliance and security tracking"
+    },
+    {
+      "function_name": "exportResults",
+      "description": "Export job results and data in various formats"
+    },
+    {
+      "function_name": "sandboxManager",
+      "description": "Create and manage isolated sandboxes, provision resources externally"
+    },
+    {
+      "function_name": "solveCaptchaVision",
+      "description": "Solve CAPTCHAs using vision-based LLM analysis \u2014 reCAPTCHA v2, hCaptcha, Turnstile"
+    },
+    {
+      "function_name": "testCaptchaSolver",
+      "description": "Test the CAPTCHA solver against live targets and log results"
+    },
+    {
+      "function_name": "testProxy",
+      "description": "Test proxy server connectivity and performance"
+    },
+    {
+      "function_name": "diffScreenshots",
+      "description": "Compare two screenshots using LLM vision analysis for visual regression testing"
     },
     {
       "function_name": "estimateCost",
-      "description": "Estimate costs for browser automation jobs"
+      "description": "Estimate costs for browser automation jobs before execution"
     },
     {
       "function_name": "calculateCost",
       "description": "Calculate actual costs for completed jobs"
     },
     {
-      "function_name": "sendNotification",
-      "description": "Send notifications to users"
+      "function_name": "forecastCost",
+      "description": "Forecast future spending based on usage trends"
     },
     {
-      "function_name": "logAudit",
-      "description": "Log audit events for compliance tracking"
+      "function_name": "checkBudget",
+      "description": "Check budget limits and alert on overspend"
+    },
+    {
+      "function_name": "generateInvoice",
+      "description": "Generate invoices for billing periods"
+    },
+    {
+      "function_name": "getMetrics",
+      "description": "Get system metrics \u2014 sessions, jobs, costs, performance"
+    },
+    {
+      "function_name": "getObservabilityMetrics",
+      "description": "Get observability metrics \u2014 traces, logs, health indicators"
+    },
+    {
+      "function_name": "getDeploymentStatus",
+      "description": "Get deployment status for engine and infrastructure"
+    },
+    {
+      "function_name": "getCapabilityMatrix",
+      "description": "Get the capability matrix \u2014 what the system can do and its scores"
+    },
+    {
+      "function_name": "detectAnomalies",
+      "description": "Detect anomalies in system behavior and alert"
+    },
+    {
+      "function_name": "intelligentRetry",
+      "description": "Intelligently retry failed operations with adaptive strategies"
+    },
+    {
+      "function_name": "selfHealSelector",
+      "description": "Self-heal selector failures by finding alternative DOM selectors"
+    },
+    {
+      "function_name": "reconcileSettings",
+      "description": "Reconcile desired vs actual system settings and detect drift"
+    },
+    {
+      "function_name": "reapExpired",
+      "description": "Reap expired sessions, jobs, and resources for cleanup"
+    },
+    {
+      "function_name": "migrateSecrets",
+      "description": "Migrate secrets between environments"
+    },
+    {
+      "function_name": "checkSchedules",
+      "description": "Check and trigger due scheduled jobs"
+    },
+    {
+      "function_name": "checkCompliance",
+      "description": "Check system compliance with security and operational policies"
+    },
+    {
+      "function_name": "calculateScore",
+      "description": "Calculate system capability score across all dimensions"
+    },
+    {
+      "function_name": "runAllCapabilityTests",
+      "description": "Run all capability tests and aggregate results"
+    },
+    {
+      "function_name": "runComprehensiveScore",
+      "description": "Run comprehensive system scoring across all test suites"
+    },
+    {
+      "function_name": "runFullValidation",
+      "description": "Run full system validation \u2014 security, reliability, enhancements"
+    },
+    {
+      "function_name": "runTestSuite",
+      "description": "Run a specific test suite and return results"
+    },
+    {
+      "function_name": "runContextBlackBox",
+      "description": "Run black-box test for browser context isolation"
+    },
+    {
+      "function_name": "runMcpBlackBox",
+      "description": "Run black-box test for MCP tools functionality"
+    },
+    {
+      "function_name": "runRealSiteTest",
+      "description": "Run real-site test against live targets to prove capabilities"
+    },
+    {
+      "function_name": "runTenantIsolationTests",
+      "description": "Run tenant isolation tests to verify data separation"
+    },
+    {
+      "function_name": "runDeployedTenantIsolationTests",
+      "description": "Run tenant isolation tests against deployed environment"
+    },
+    {
+      "function_name": "validateCapabilities",
+      "description": "Validate all declared capabilities with black-box tests"
+    },
+    {
+      "function_name": "validateSecurity",
+      "description": "Validate security controls \u2014 SSRF, CORS, auth, secrets"
+    },
+    {
+      "function_name": "validateReliability",
+      "description": "Validate system reliability under failure conditions"
+    },
+    {
+      "function_name": "validateEnhancements",
+      "description": "Validate implemented enhancements meet acceptance criteria"
+    },
+    {
+      "function_name": "runEnhancementCycle",
+      "description": "Run the Fortress Engineer enhancement cycle \u2014 implement, audit, optimize"
+    },
+    {
+      "function_name": "runMasterReleaseSuite",
+      "description": "Run the master release test suite for production readiness"
+    },
+    {
+      "function_name": "runScaleParitySuite",
+      "description": "Run scale parity test suite for load testing"
+    },
+    {
+      "function_name": "runStagingTestSuite",
+      "description": "Run test suite in staging environment"
+    },
+    {
+      "function_name": "runStagingMasterSuite",
+      "description": "Run master release suite in staging"
+    },
+    {
+      "function_name": "runStagingJobBlackBox",
+      "description": "Run job black-box test in staging"
+    },
+    {
+      "function_name": "runStagingContextBlackBox",
+      "description": "Run context black-box test in staging"
+    },
+    {
+      "function_name": "runStagingMcpBlackBox",
+      "description": "Run MCP black-box test in staging"
+    },
+    {
+      "function_name": "runStagingCredentialContract",
+      "description": "Run credential contract test in staging"
+    },
+    {
+      "function_name": "serpMeasurement",
+      "description": "Measure SERP rankings and search visibility"
+    },
+    {
+      "function_name": "onboardingInterview",
+      "description": "Run onboarding interview to configure the system for new users"
     },
     {
       "function_name": "vercelApi",
-      "description": "Interact with Vercel API \u2014 list projects, trigger deployments, sync data"
+      "description": "Interact with Vercel API \u2014 list projects, trigger deployments, manage domains"
     },
     {
       "function_name": "syncIntegration",
-      "description": "Sync data with connected integrations (Google Drive, Supabase, GitHub)"
+      "description": "Sync data with connected integrations (Google Drive, Google Sheets, Gmail, Supabase, GitHub, HubSpot)"
     },
     {
-      "function_name": "sandboxManager",
-      "description": "Create and manage isolated sandboxes, provision resources externally"
+      "function_name": "railwayAction",
+      "description": "Execute Railway infrastructure actions \u2014 redeploy, restart, stop, rollback, scale, update resources"
+    },
+    {
+      "function_name": "railwayMirror",
+      "description": "Get Railway project mirror \u2014 service status, deployment logs, resource limits, domains"
+    },
+    {
+      "function_name": "railwayAutoHeal",
+      "description": "Run Railway auto-heal cycle \u2014 detect failed deployments and engines, execute remediation"
+    },
+    {
+      "function_name": "cloneFullSite",
+      "description": "DEEP Phase 1: Capture frontend \u2014 DOM snapshot, HAR network trace, desktop/mobile screenshots"
+    },
+    {
+      "function_name": "siteAudit",
+      "description": "DEEP Phase 2a: Audit network traces to map API endpoints and identify unclonable gaps"
+    },
+    {
+      "function_name": "reconstructBackend",
+      "description": "DEEP Phase 2b: Reconstruct backend architecture from network traces using template matching"
+    },
+    {
+      "function_name": "provisionCloneDeployment",
+      "description": "DEEP Phase 4: Provision clone deployment to GitHub and Vercel"
+    },
+    {
+      "function_name": "runDeepClonePipeline",
+      "description": "DEEP Master: Execute the full 4-phase clone pipeline end-to-end with self-healing"
+    },
+    {
+      "function_name": "seedIntelligenceSources",
+      "description": "Seed intelligence sources for the Vision Cortex intelligence cycle"
+    },
+    {
+      "function_name": "ingestIntelligence",
+      "description": "Ingest intelligence from scraped content into artifacts and insights"
+    },
+    {
+      "function_name": "runIntelligenceCycle",
+      "description": "Run the full Vision Cortex intelligence cycle \u2014 scrape, analyze, ingest, score"
+    },
+    {
+      "function_name": "followTheMoney",
+      "description": "Follow money trails \u2014 research and record investment, spending, and revenue flows"
+    },
+    {
+      "function_name": "runDataMonetizationCycle",
+      "description": "Run the data monetization cycle \u2014 score assets, identify buyers, stage outreach"
+    },
+    {
+      "function_name": "visionCortexSelfReflect",
+      "description": "Vision Cortex self-reflection \u2014 observe, learn, and improve system operations"
+    },
+    {
+      "function_name": "syncToBrain",
+      "description": "Sync data to the Vision Cortex Brain (V-1) for cross-system coordination"
+    },
+    {
+      "function_name": "testBrainConnection",
+      "description": "Test the connection to the Vision Cortex Brain"
+    },
+    {
+      "function_name": "receiveBrainCommand",
+      "description": "Receive commands from the Vision Cortex Brain"
+    },
+    {
+      "function_name": "processBrainCommands",
+      "description": "Process pending Brain commands and execute them"
     }
   ],
   "name": "autonomous_agent"
