@@ -7,6 +7,8 @@ import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
+import CopilotPanel from "@/components/copilot/CopilotPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -81,7 +83,7 @@ function NavLinks({ onNavigate }) {
   );
 }
 
-function SidebarContent({ onLogout }) {
+function SidebarContent({ onLogout, onToggleCopilot, copilotOpen }) {
   return (
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-6 border-b border-sidebar-border">
@@ -95,6 +97,19 @@ function SidebarContent({ onLogout }) {
       <div className="px-4 pt-4">
         <StartHereHandoff />
       </div>
+      {onToggleCopilot && (
+        <div className="px-4 pt-2">
+          <button
+            onClick={onToggleCopilot}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors ${
+              copilotOpen ? "bg-primary text-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
+            }`}
+          >
+            <Bot className="w-4 h-4" />
+            {copilotOpen ? "Hide Copilot" : "Copilot"}
+          </button>
+        </div>
+      )}
       <NavLinks />
       <div className="p-4 border-t border-sidebar-border space-y-1">
         <ThemeToggle />
@@ -112,6 +127,8 @@ function SidebarContent({ onLogout }) {
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     await base44.auth.logout();
@@ -122,13 +139,27 @@ export default function Layout() {
     <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 border-r border-sidebar-border flex-col">
-        <SidebarContent onLogout={handleLogout} />
+        <SidebarContent onLogout={handleLogout} onToggleCopilot={() => setCopilotOpen(!copilotOpen)} copilotOpen={copilotOpen} />
       </aside>
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
           <SidebarContent onLogout={handleLogout} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Copilot panel - desktop inline */}
+      {copilotOpen && !isMobile && (
+        <aside className="hidden md:flex w-[340px] border-r border-sidebar-border shrink-0">
+          <CopilotPanel onClose={() => setCopilotOpen(false)} />
+        </aside>
+      )}
+
+      {/* Copilot panel - mobile drawer */}
+      <Sheet open={copilotOpen && isMobile} onOpenChange={setCopilotOpen}>
+        <SheetContent side="left" className="w-[340px] p-0">
+          <CopilotPanel onClose={() => setCopilotOpen(false)} />
         </SheetContent>
       </Sheet>
 
@@ -145,6 +176,9 @@ export default function Layout() {
             </div>
             <span className="font-heading font-semibold">Cloud Browser</span>
           </div>
+          <button onClick={() => setCopilotOpen(!copilotOpen)} className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
+            <Bot className="w-5 h-5" />
+          </button>
           <Link to="/settings" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <SettingsIcon className="w-5 h-5" />
           </Link>
