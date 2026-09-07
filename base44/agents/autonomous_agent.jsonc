@@ -539,7 +539,7 @@
     },
     {
       "function_name": "runJobStaging",
-      "description": "Execute browser automation jobs in staging environment"
+      "description": "Execute browser automation jobs in staging"
     },
     {
       "function_name": "runScheduledJob",
@@ -555,15 +555,15 @@
     },
     {
       "function_name": "updateEngineConfig",
-      "description": "Update browser engine configuration \u2014 pool size, regions, replicas"
+      "description": "Update browser engine configuration"
     },
     {
       "function_name": "resumeSession",
-      "description": "Resume a paused or orphaned browser session"
+      "description": "Resume paused or orphaned browser sessions"
     },
     {
       "function_name": "recoverOrphans",
-      "description": "Recover orphaned browser sessions and clean up stale state"
+      "description": "Recover orphaned browser sessions"
     },
     {
       "function_name": "managePool",
@@ -575,19 +575,19 @@
     },
     {
       "function_name": "mcpToolsStaging",
-      "description": "Access MCP tools in staging environment"
+      "description": "Access MCP tools in staging"
     },
     {
       "function_name": "apiGateway",
-      "description": "API gateway for external API access and routing"
+      "description": "API gateway for external access"
     },
     {
       "function_name": "cloudBrowserGatewayV6",
-      "description": "Cloud Browser gateway v6 \u2014 production API gateway"
+      "description": "Production Cloud Browser gateway"
     },
     {
       "function_name": "cloudBrowserGatewayStaging",
-      "description": "Cloud Browser gateway \u2014 staging environment"
+      "description": "Staging Cloud Browser gateway"
     },
     {
       "function_name": "createProject",
@@ -615,15 +615,15 @@
     },
     {
       "function_name": "triggerWebhook",
-      "description": "Trigger webhook deliveries to external endpoints"
+      "description": "Trigger webhook deliveries"
     },
     {
       "function_name": "receiveWebhook",
-      "description": "Receive and process incoming webhooks from external systems"
+      "description": "Receive incoming webhooks"
     },
     {
       "function_name": "receiveRailwayWebhook",
-      "description": "Receive and process Railway deployment webhooks"
+      "description": "Receive Railway deployment webhooks"
     },
     {
       "function_name": "sendNotification",
@@ -635,7 +635,7 @@
     },
     {
       "function_name": "exportResults",
-      "description": "Export job results and data in various formats"
+      "description": "Export job results in various formats"
     },
     {
       "function_name": "sandboxManager",
@@ -643,19 +643,19 @@
     },
     {
       "function_name": "solveCaptchaVision",
-      "description": "Solve CAPTCHAs using vision-based LLM analysis \u2014 reCAPTCHA v2, hCaptcha, Turnstile"
+      "description": "Solve CAPTCHAs using vision-based LLM analysis"
     },
     {
       "function_name": "testCaptchaSolver",
-      "description": "Test the CAPTCHA solver against live targets and log results"
+      "description": "Test the CAPTCHA solver against live targets"
     },
     {
       "function_name": "testProxy",
-      "description": "Test proxy server connectivity and performance"
+      "description": "Test proxy connectivity and performance"
     },
     {
       "function_name": "diffScreenshots",
-      "description": "Compare two screenshots using LLM vision analysis for visual regression testing"
+      "description": "Compare screenshots using LLM vision analysis"
     },
     {
       "function_name": "estimateCost",
@@ -667,51 +667,51 @@
     },
     {
       "function_name": "forecastCost",
-      "description": "Forecast future spending based on usage trends"
+      "description": "Forecast future spending"
     },
     {
       "function_name": "checkBudget",
-      "description": "Check budget limits and alert on overspend"
+      "description": "Check budget limits"
     },
     {
       "function_name": "generateInvoice",
-      "description": "Generate invoices for billing periods"
+      "description": "Generate invoices"
     },
     {
       "function_name": "getMetrics",
-      "description": "Get system metrics \u2014 sessions, jobs, costs, performance"
+      "description": "Get system metrics"
     },
     {
       "function_name": "getObservabilityMetrics",
-      "description": "Get observability metrics \u2014 traces, logs, health indicators"
+      "description": "Get observability metrics"
     },
     {
       "function_name": "getDeploymentStatus",
-      "description": "Get deployment status for engine and infrastructure"
+      "description": "Get deployment status"
     },
     {
       "function_name": "getCapabilityMatrix",
-      "description": "Get the capability matrix \u2014 what the system can do and its scores"
+      "description": "Get capability matrix"
     },
     {
       "function_name": "detectAnomalies",
-      "description": "Detect anomalies in system behavior and alert"
+      "description": "Detect system anomalies"
     },
     {
       "function_name": "intelligentRetry",
-      "description": "Intelligently retry failed operations with adaptive strategies"
+      "description": "Intelligently retry failed operations"
     },
     {
       "function_name": "selfHealSelector",
-      "description": "Self-heal selector failures by finding alternative DOM selectors"
+      "description": "Self-heal failed DOM selectors"
     },
     {
       "function_name": "reconcileSettings",
-      "description": "Reconcile desired vs actual system settings and detect drift"
+      "description": "Reconcile desired vs actual settings"
     },
     {
       "function_name": "reapExpired",
-      "description": "Reap expired sessions, jobs, and resources for cleanup"
+      "description": "Reap expired sessions and resources"
     },
     {
       "function_name": "migrateSecrets",
@@ -723,83 +723,83 @@
     },
     {
       "function_name": "checkCompliance",
-      "description": "Check system compliance with security and operational policies"
+      "description": "Check system compliance"
     },
     {
       "function_name": "calculateScore",
-      "description": "Calculate system capability score across all dimensions"
+      "description": "Calculate system capability score"
     },
     {
       "function_name": "runAllCapabilityTests",
-      "description": "Run all capability tests and aggregate results"
+      "description": "Run all capability tests"
     },
     {
       "function_name": "runComprehensiveScore",
-      "description": "Run comprehensive system scoring across all test suites"
+      "description": "Run comprehensive system scoring"
     },
     {
       "function_name": "runFullValidation",
-      "description": "Run full system validation \u2014 security, reliability, enhancements"
+      "description": "Run full system validation"
     },
     {
       "function_name": "runTestSuite",
-      "description": "Run a specific test suite and return results"
+      "description": "Run a specific test suite"
     },
     {
       "function_name": "runContextBlackBox",
-      "description": "Run black-box test for browser context isolation"
+      "description": "Run context isolation black-box test"
     },
     {
       "function_name": "runMcpBlackBox",
-      "description": "Run black-box test for MCP tools functionality"
+      "description": "Run MCP tools black-box test"
     },
     {
       "function_name": "runRealSiteTest",
-      "description": "Run real-site test against live targets to prove capabilities"
+      "description": "Run real-site test against live targets"
     },
     {
       "function_name": "runTenantIsolationTests",
-      "description": "Run tenant isolation tests to verify data separation"
+      "description": "Run tenant isolation tests"
     },
     {
       "function_name": "runDeployedTenantIsolationTests",
-      "description": "Run tenant isolation tests against deployed environment"
+      "description": "Run tenant isolation tests on deployed env"
     },
     {
       "function_name": "validateCapabilities",
-      "description": "Validate all declared capabilities with black-box tests"
+      "description": "Validate all declared capabilities"
     },
     {
       "function_name": "validateSecurity",
-      "description": "Validate security controls \u2014 SSRF, CORS, auth, secrets"
+      "description": "Validate security controls"
     },
     {
       "function_name": "validateReliability",
-      "description": "Validate system reliability under failure conditions"
+      "description": "Validate system reliability"
     },
     {
       "function_name": "validateEnhancements",
-      "description": "Validate implemented enhancements meet acceptance criteria"
+      "description": "Validate implemented enhancements"
     },
     {
       "function_name": "runEnhancementCycle",
-      "description": "Run the Fortress Engineer enhancement cycle \u2014 implement, audit, optimize"
+      "description": "Run Fortress Engineer enhancement cycle"
     },
     {
       "function_name": "runMasterReleaseSuite",
-      "description": "Run the master release test suite for production readiness"
+      "description": "Run master release test suite"
     },
     {
       "function_name": "runScaleParitySuite",
-      "description": "Run scale parity test suite for load testing"
+      "description": "Run scale parity test suite"
     },
     {
       "function_name": "runStagingTestSuite",
-      "description": "Run test suite in staging environment"
+      "description": "Run test suite in staging"
     },
     {
       "function_name": "runStagingMasterSuite",
-      "description": "Run master release suite in staging"
+      "description": "Run master suite in staging"
     },
     {
       "function_name": "runStagingJobBlackBox",
@@ -819,11 +819,11 @@
     },
     {
       "function_name": "serpMeasurement",
-      "description": "Measure SERP rankings and search visibility"
+      "description": "Measure SERP rankings"
     },
     {
       "function_name": "onboardingInterview",
-      "description": "Run onboarding interview to configure the system for new users"
+      "description": "Run onboarding interview"
     },
     {
       "function_name": "vercelApi",
@@ -835,76 +835,95 @@
     },
     {
       "function_name": "railwayAction",
-      "description": "Execute Railway infrastructure actions \u2014 redeploy, restart, stop, rollback, scale, update resources"
+      "description": "Execute Railway infrastructure actions \u2014 redeploy, restart, stop, rollback, scale"
     },
     {
       "function_name": "railwayMirror",
-      "description": "Get Railway project mirror \u2014 service status, deployment logs, resource limits, domains"
+      "description": "Get Railway project mirror \u2014 service status, logs, resources"
     },
     {
       "function_name": "railwayAutoHeal",
-      "description": "Run Railway auto-heal cycle \u2014 detect failed deployments and engines, execute remediation"
+      "description": "Run Railway auto-heal cycle"
     },
     {
       "function_name": "cloneFullSite",
-      "description": "DEEP Phase 1: Capture frontend \u2014 DOM snapshot, HAR network trace, desktop/mobile screenshots"
+      "description": "DEEP Phase 1: Capture frontend \u2014 DOM, HAR, screenshots"
     },
     {
       "function_name": "siteAudit",
-      "description": "DEEP Phase 2a: Audit network traces to map API endpoints and identify unclonable gaps"
+      "description": "DEEP Phase 2a: Audit network traces for endpoints"
     },
     {
       "function_name": "reconstructBackend",
-      "description": "DEEP Phase 2b: Reconstruct backend architecture from network traces using template matching"
+      "description": "DEEP Phase 2b: Reconstruct backend from traces"
     },
     {
       "function_name": "provisionCloneDeployment",
-      "description": "DEEP Phase 4: Provision clone deployment to GitHub and Vercel"
+      "description": "DEEP Phase 4: Deploy clone to GitHub + Vercel"
     },
     {
       "function_name": "runDeepClonePipeline",
-      "description": "DEEP Master: Execute the full 4-phase clone pipeline end-to-end with self-healing"
+      "description": "DEEP Master: Full 4-phase clone pipeline"
     },
     {
       "function_name": "seedIntelligenceSources",
-      "description": "Seed intelligence sources for the Vision Cortex intelligence cycle"
+      "description": "Seed intelligence sources"
     },
     {
       "function_name": "ingestIntelligence",
-      "description": "Ingest intelligence from scraped content into artifacts and insights"
+      "description": "Ingest intelligence from scraped content"
     },
     {
       "function_name": "runIntelligenceCycle",
-      "description": "Run the full Vision Cortex intelligence cycle \u2014 scrape, analyze, ingest, score"
+      "description": "Run full Vision Cortex intelligence cycle"
     },
     {
       "function_name": "followTheMoney",
-      "description": "Follow money trails \u2014 research and record investment, spending, and revenue flows"
+      "description": "Follow money trails"
     },
     {
       "function_name": "runDataMonetizationCycle",
-      "description": "Run the data monetization cycle \u2014 score assets, identify buyers, stage outreach"
+      "description": "Run data monetization cycle"
     },
     {
       "function_name": "visionCortexSelfReflect",
-      "description": "Vision Cortex self-reflection \u2014 observe, learn, and improve system operations"
+      "description": "Vision Cortex self-reflection"
     },
     {
       "function_name": "syncToBrain",
-      "description": "Sync data to the Vision Cortex Brain (V-1) for cross-system coordination"
+      "description": "Sync data to Vision Cortex Brain"
     },
     {
       "function_name": "testBrainConnection",
-      "description": "Test the connection to the Vision Cortex Brain"
+      "description": "Test Brain connection"
     },
     {
       "function_name": "receiveBrainCommand",
-      "description": "Receive commands from the Vision Cortex Brain"
+      "description": "Receive commands from Brain"
     },
     {
       "function_name": "processBrainCommands",
-      "description": "Process pending Brain commands and execute them"
+      "description": "Process pending Brain commands"
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "autonomous_agent"
 }
