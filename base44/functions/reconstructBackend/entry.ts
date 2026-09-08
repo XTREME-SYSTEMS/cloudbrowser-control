@@ -82,43 +82,63 @@ export default async function (req) {
     }
 
     // ═══════════════════════════════════════════
-    // 3. RESOLVE: Gaps via Template Matching
+    // 3. RESOLVE: Gaps via Gap Intelligence Engine
     // ═══════════════════════════════════════════
-    const gaps = await base44.entities.CloneGap.filter({
-      clone_project_id,
-      status: "identified",
-    });
+    // First: definitively classify all gaps using deterministic HTTP evidence
+    try {
+      await base44.functions.invoke("classifyGapsDefinitively", { clone_project_id });
+    } catch (classifyErr) {
+      // Classification needs HAR data — if it fails, fall back to template matching below
+      console.error("classifyGapsDefinitively failed, falling back to template matching:", classifyErr.message);
+    }
 
+    // Then: resolve all gaps using the multi-strategy engine (template + scrape + seed + LLM)
+    let gapResolutionResult = null;
+    try {
+      gapResolutionResult = await base44.functions.invoke("resolveAllGaps", { clone_project_id });
+      gapResolutionResult = gapResolutionResult.data || gapResolutionResult;
+    } catch (resolveErr) {
+      console.error("resolveAllGaps failed, falling back to template matching:", resolveErr.message);
+    }
+
+    // Load all gaps (now classified + resolved by the Gap Intelligence Engine)
+    const gaps = await base44.entities.CloneGap.filter({ clone_project_id });
     let resolvedCount = 0;
+
     for (const gap of gaps) {
-      // Match the gap's interaction pattern against the template catalog
+      // Use the generated_code from the Gap Intelligence Engine if available
+      const mockLogic = gap.generated_code || gap.mock_logic || "";
       const template = findClosestFunctionalMatch(gap.interaction_pattern || gap.inferred_endpoint || "");
+      const finalMockLogic = mockLogic || template.executableCodeSnippet;
 
-      // Generate mock logic for this gap
-      const mockLogic = template.executableCodeSnippet;
-
-      // Update the gap with the inferred solution
-      await base44.entities.CloneGap.update(gap.id, {
-        status: "inferred",
-        template_matched: template.id,
-        mock_logic: mockLogic,
-        inferred_endpoint: gap.inferred_endpoint || template.inferredEndpoint,
-        inferred_method: gap.inferred_method || template.method,
-        request_schema: gap.request_schema || template.defaultRequest,
-        response_schema: template.defaultResponse,
-        confidence_score: 75,
-      });
+      // If the gap intelligence engine already resolved it, keep its status; otherwise mark inferred
+      if (gap.status !== "resolved") {
+        await base44.entities.CloneGap.update(gap.id, {
+          status: "inferred",
+          template_matched: gap.template_matched || template.id,
+          mock_logic: finalMockLogic,
+          generated_code: finalMockLogic,
+          inferred_endpoint: gap.inferred_endpoint || template.inferredEndpoint,
+          inferred_method: gap.inferred_method || template.method,
+          request_schema: gap.request_schema || template.defaultRequest,
+          response_schema: gap.response_schema || template.defaultResponse,
+          confidence_score: gap.confidence_score || 75,
+        });
+      }
 
       // Add to routes
       routes.push({
         endpoint: gap.inferred_endpoint || template.inferredEndpoint,
         method: gap.inferred_method || template.method,
         requestSchema: gap.request_schema || template.defaultRequest,
-        responseSchema: template.defaultResponse,
-        mockLogic,
+        responseSchema: gap.response_schema || template.defaultResponse,
+        mockLogic: finalMockLogic,
+        seedData: gap.seed_data || null,
         source: "inferred",
-        template: template.id,
+        template: gap.template_matched || template.id,
         gap_id: gap.id,
+        resolution_strategy: gap.resolution_strategy || "template",
+        confidence: gap.confidence_score || 75,
       });
 
       resolvedCount++;
@@ -141,8 +161,8 @@ export default async function (req) {
       generated_at: new Date().toISOString(),
     };
 
-    const archBlob = new Blob([JSON.stringify(architecture, null, 2)], { type: "application/json" });
-    const archUpload = await base44.integrations.Core.UploadFile({ file: archBlob });
+    const archFile = new File([JSON.stringify(architecture, null, 2)], `architecture-${clone_project_id}.json`, { type: "application/json" });
+    const archUpload = await base44.integrations.Core.UploadFile({ file: archFile });
     await base44.entities.CloneAsset.create({
       clone_project_id,
       asset_type: "inferred_architecture",
@@ -152,8 +172,8 @@ export default async function (req) {
     });
 
     // Store the mock backend code as a separate asset
-    const codeBlob = new Blob([mockBackendCode], { type: "text/javascript" });
-    const codeUpload = await base44.integrations.Core.UploadFile({ file: codeBlob });
+    const codeFile = new File([mockBackendCode], `mock-backend-${clone_project_id}.js`, { type: "text/javascript" });
+    const codeUpload = await base44.integrations.Core.UploadFile({ file: codeFile });
     await base44.entities.CloneAsset.create({
       clone_project_id,
       asset_type: "mock_backend",
@@ -177,6 +197,15 @@ export default async function (req) {
       captured_routes: routes.filter((r) => r.source === "captured").length,
       inferred_routes: routes.filter((r) => r.source === "inferred").length,
       gaps_resolved: resolvedCount,
+      gap_intelligence: gapResolutionResult ? {
+        resolved: gapResolutionResult.resolved || 0,
+        failed: gapResolutionResult.failed || 0,
+        strategies: gapResolutionResult.results?.map((r: any) => ({
+          gap_type: r.gap_type,
+          strategy: r.strategy_used,
+          confidence: r.confidence,
+        })) || [],
+      } : null,
       mock_backend_url: codeUpload.file_url,
       architecture_url: archUpload.file_url,
       __v: DEPLOYMENT_VERSION,
@@ -190,17 +219,43 @@ export default async function (req) {
  * Generate a complete mock backend file from the inferred routes.
  */
 function generateMockBackendFile(stackType, routes, targetUrl) {
+  // Collect all seed data from resolved gaps
+  const seedDataBlocks = routes
+    .filter((r) => r.seedData && Object.keys(r.seedData).length > 0)
+    .map((r) => {
+      const collectionName = (r.endpoint || "").replace(/[^a-zA-Z0-9]/g, "_").replace(/^_+|_+$/g, "") || "collection";
+      return `MOCK_DB["${collectionName}"] = ${JSON.stringify(r.seedData, null, 2)};`;
+    })
+    .join("\n");
+
   const imports = `/**
  * Auto-generated mock backend for ${targetUrl}
  * Stack: ${stackType}
- * Generated by DEEP reconstructBackend
+ * Generated by DEEP reconstructBackend with Gap Intelligence Engine
+ * 
+ * Routes: ${routes.length} (${routes.filter((r) => r.source === "captured").length} captured, ${routes.filter((r) => r.source === "inferred").length} inferred)
+ * Seed data: ${seedDataBlocks ? "yes" : "none"}
  */
 
-import express from 'express';
+const express = require('express');
+const path = require('path');
+const fetch = require('node-fetch');
+
 const app = express();
 app.use(express.json());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+// Serve the cloned frontend from public/
+app.use(express.static(path.join(__dirname, 'public')));
 
 const MOCK_DB = {};
+${seedDataBlocks ? "// Seeded from Gap Intelligence Engine\n" + seedDataBlocks : ""}
 
 `;
 
@@ -209,18 +264,56 @@ const MOCK_DB = {};
     const method = (r.method || "GET").toLowerCase();
 
     if (method === "ws") {
-      return `// WebSocket endpoint: ${path}
-// app.ws('${path}', (ws, req) => { ... });
-`;
+      return `// WebSocket endpoint: ${path} — source: ${r.source}
+// WebSocket endpoints require a ws server adapter — stubbed for parity
+app.get('${path}', (req, res) => {
+  res.status(200).json({ _ws: true, endpoint: '${path}', message: 'WebSocket stub — connect via ws:// protocol' });
+});`;
     }
 
-    return `// ${method.toUpperCase()} ${path} — source: ${r.source}
+    const logic = r.mockLogic || `res.status(200).json({ ok: true, endpoint: '${path}' });`;
+    const sourceComment = `// ${method.toUpperCase()} ${path} — source: ${r.source}${r.resolution_strategy ? `, strategy: ${r.resolution_strategy}` : ""}${r.confidence ? `, confidence: ${r.confidence}%` : ""}`;
+
+    return `${sourceComment}
 app.${method}('${path}', (req, res) => {
-  ${r.mockLogic || `res.status(200).json({ ok: true, endpoint: '${path}' });`}
+  ${logic}
 });`;
   }).join("\n\n");
 
   const footer = `
+
+// ── PROXY: serve assets from original site (makes clone self-contained) ──
+const TARGET_URL = "${targetUrl}";
+const TARGET_ORIGIN = new URL(TARGET_URL).origin;
+
+app.get('/proxy', async (req, res) => {
+  try {
+    const targetUrl = req.query.url;
+    if (!targetUrl) return res.status(400).json({ error: 'url param required' });
+    // Only allow proxying to the original site's origin or known CDN hosts
+    const parsed = new URL(targetUrl);
+    const response = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DEEP-Clone/1.0)' },
+    });
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(buffer);
+  } catch (err) {
+    res.status(502).json({ error: 'Proxy fetch failed: ' + err.message });
+  }
+});
+
+// ── CATCH-ALL: serve index.html for any unmatched route (SPA support) ──
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
+    if (err) res.status(200).json({ ok: true, message: 'DEEP Clone mock backend', routes: ${routes.length} });
+  });
+});
+
+// Health check
+app.get('/__health', (req, res) => res.json({ ok: true, stack: '${stackType}', routes: ${routes.length} }));
 
 app.listen(3000, () => console.log('Mock backend running on port 3000'));
 `;

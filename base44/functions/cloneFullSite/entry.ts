@@ -15,19 +15,19 @@ import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
  */
 
 async function uploadJsonFile(base44, data, filename) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const result = await base44.integrations.Core.UploadFile({ file: blob });
+  const file = new File([JSON.stringify(data, null, 2)], filename, { type: "application/json" });
+  const result = await base44.integrations.Core.UploadFile({ file });
   return result.file_url;
 }
 
-async function uploadBase64Image(base44, base64Data, mimeType = "image/png") {
+async function uploadBase64Image(base44, base64Data, filename, mimeType = "image/png") {
   const byteCharacters = atob(base64Data);
   const byteArray = new Uint8Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
     byteArray[i] = byteCharacters.charCodeAt(i);
   }
-  const blob = new Blob([byteArray], { type: mimeType });
-  const result = await base44.integrations.Core.UploadFile({ file: blob });
+  const file = new File([byteArray], filename, { type: mimeType });
+  const result = await base44.integrations.Core.UploadFile({ file });
   return result.file_url;
 }
 
@@ -258,7 +258,7 @@ export default async function (req) {
       // ═══════════════════════════════════════════
       let desktopScreenshotUrl = null;
       if (desktopCapture?.screenshotBase64) {
-        desktopScreenshotUrl = await uploadBase64Image(base44, desktopCapture.screenshotBase64, "image/png");
+        desktopScreenshotUrl = await uploadBase64Image(base44, desktopCapture.screenshotBase64, `screenshot-desktop-${project.id}.png`, "image/png");
         await base44.entities.CloneAsset.create({
           clone_project_id: project.id,
           asset_type: "screenshot",
@@ -275,7 +275,7 @@ export default async function (req) {
       // ═══════════════════════════════════════════
       let mobileScreenshotUrl = null;
       if (mobileCapture?.screenshotBase64) {
-        mobileScreenshotUrl = await uploadBase64Image(base44, mobileCapture.screenshotBase64, "image/png");
+        mobileScreenshotUrl = await uploadBase64Image(base44, mobileCapture.screenshotBase64, `screenshot-mobile-${project.id}.png`, "image/png");
         await base44.entities.CloneAsset.create({
           clone_project_id: project.id,
           asset_type: "screenshot",

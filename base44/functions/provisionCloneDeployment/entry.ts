@@ -119,9 +119,9 @@ export default async function (req) {
         auto_init: true,
       });
 
-      // Push index.html (the cloned frontend)
+      // Push index.html (the cloned frontend) into public/ for Express static serving
       const indexHtml = generateIndexHtml(domHtml, project);
-      await githubApi(`/repos/${owner}/${repoName}/contents/index.html`, "PUT", {
+      await githubApi(`/repos/${owner}/${repoName}/contents/public/index.html`, "PUT", {
         message: "DEEP Clone: Add cloned frontend",
         content: btoa(unescape(encodeURIComponent(indexHtml))),
       });
@@ -134,16 +134,34 @@ export default async function (req) {
         });
       }
 
-      // Push package.json
+      // Push package.json with express + static file serving
       const pkgJson = JSON.stringify({
         name: repoName,
         version: "1.0.0",
         scripts: { start: "node server.js" },
-        dependencies: { express: "^4.18.0" },
+        dependencies: { express: "^4.18.0", "node-fetch": "^2.7.0" },
       }, null, 2);
       await githubApi(`/repos/${owner}/${repoName}/contents/package.json`, "PUT", {
         message: "DEEP Clone: Add package.json",
         content: btoa(unescape(encodeURIComponent(pkgJson))),
+      });
+
+      // Push vercel.json — configures static frontend + Express API on Vercel
+      const vercelJson = JSON.stringify({
+        version: 2,
+        builds: [
+          { src: "server.js", use: "@vercel/node" },
+        ],
+        routes: [
+          { src: "/proxy", dest: "/server.js" },
+          { src: "/api/(.*)", dest: "/server.js" },
+          { src: "/__health", dest: "/server.js" },
+          { src: "/(.*)", dest: "/public/$1" },
+        ],
+      }, null, 2);
+      await githubApi(`/repos/${owner}/${repoName}/contents/vercel.json`, "PUT", {
+        message: "DEEP Clone: Add Vercel deployment config",
+        content: btoa(unescape(encodeURIComponent(vercelJson))),
       });
 
       // Push README
@@ -224,12 +242,15 @@ export default async function (req) {
 }
 
 /**
- * Generate a clean index.html from the captured DOM.
+ * Generate a clean, self-contained index.html from the captured DOM.
+ * Rewrites absolute asset URLs to proxy through the mock backend so the clone
+ * doesn't depend on the original site's servers.
  */
 function generateIndexHtml(domHtml, project) {
-  // Wrap the captured DOM in a clean HTML document
-  // Strip out external tracker scripts and analytics
   let cleanHtml = domHtml || "";
+  const targetOrigin = (() => {
+    try { return new URL(project.target_url).origin; } catch { return ""; }
+  })();
 
   // Remove script tags that load external trackers
   cleanHtml = cleanHtml.replace(
@@ -237,8 +258,64 @@ function generateIndexHtml(domHtml, project) {
     ""
   );
 
-  // If the DOM already has <html> tags, use it as-is
+  // Rewrite absolute URLs to the target origin → relative proxy paths
+  if (targetOrigin) {
+    // CSS, JS, images, fonts, links, etc. with absolute URLs to the target
+    cleanHtml = cleanHtml.replace(
+      new RegExp(targetOrigin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
+      ""
+    );
+  }
+
+  // Rewrite cross-origin asset URLs to proxy through /proxy?url=<encoded>
+  // This handles CDN URLs, third-party asset hosts, etc.
+  cleanHtml = cleanHtml.replace(
+    /((?:src|href|action|data-src|poster)\s*=\s*["'])(https?:\/\/[^"']+)(["'])/gi,
+    (match, prefix, url, suffix) => {
+      // Don't proxy data: URIs or already-relative paths
+      if (url.startsWith("data:") || url.startsWith("/proxy?")) return match;
+      return `${prefix}/proxy?url=${encodeURIComponent(url)}${suffix}`;
+    }
+  );
+
+  // Inject a fetch/XHR interceptor that routes API calls to the mock backend
+  const interceptorScript = `
+<script>
+// DEEP Clone API interceptor — routes all fetch/XHR to the mock backend
+(function() {
+  var MOCK_API_PREFIX = '';
+  var origFetch = window.fetch;
+  var origXhrOpen = XMLHttpRequest.prototype.open;
+
+  // Intercept fetch
+  window.fetch = function(input, init) {
+    var url = typeof input === 'string' ? input : input.url;
+    // If the URL points to the original site's API, route to mock backend
+    if (url && (url.indexOf('/api/') !== -1 || url.indexOf('/graphql') !== -1)) {
+      // Already relative — let it hit the mock backend
+    }
+    return origFetch.apply(this, arguments);
+  };
+
+  // Intercept XHR
+  XMLHttpRequest.prototype.open = function(method, url) {
+    // If absolute URL to original site, rewrite to relative
+    if (url && url.indexOf("${targetOrigin}") === 0) {
+      url = url.substring("${targetOrigin}".length);
+    }
+    return origXhrOpen.apply(this, [method, url]);
+  };
+})();
+</script>`;
+
+  // If the DOM already has <html> tags, inject interceptor into <head>
   if (cleanHtml.trim().toLowerCase().startsWith("<!doctype") || cleanHtml.trim().toLowerCase().startsWith("<html")) {
+    // Inject interceptor right after <head> or at the beginning
+    if (cleanHtml.toLowerCase().includes("<head>")) {
+      cleanHtml = cleanHtml.replace(/<head>/i, "<head>" + interceptorScript);
+    } else {
+      cleanHtml = cleanHtml.replace(/<html/i, "<html" + interceptorScript);
+    }
     return cleanHtml;
   }
 
@@ -250,6 +327,7 @@ function generateIndexHtml(domHtml, project) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${project.target_name || "Clone"} — DEEP Clone</title>
   <meta name="generator" content="CloudBrowser DEEP Pipeline">
+  ${interceptorScript}
 </head>
 <body>
 ${cleanHtml}
