@@ -10,6 +10,30 @@
       "type": "string",
       "format": "date-time"
     },
+    "current_step": {
+      "type": "number",
+      "default": 0,
+      "description": "Current step index for resumable onboarding"
+    },
+    "onboarding_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Progress tracking for each onboarding step"
+    },
     "primary_goal": {
       "type": "string",
       "enum": [
@@ -128,6 +152,22 @@
     "custom_description": {
       "type": "string",
       "description": "Free-text description of what the user wants"
+    },
+    "intelligence_data": {
+      "type": "object",
+      "description": "Scanned intelligence about target websites/industry"
+    },
+    "generated_agent_prompt": {
+      "type": "string",
+      "description": "AI-generated system prompt for the starter agent"
+    },
+    "generated_job_template": {
+      "type": "object",
+      "description": "AI-generated job template with extraction schema and steps"
+    },
+    "test_result": {
+      "type": "object",
+      "description": "Result of the test run during onboarding"
     },
     "ai_generated_config": {
       "type": "object",

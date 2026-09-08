@@ -110,9 +110,30 @@ Be practical and specific. If they want to scrape e-commerce, suggest a product 
       });
     }
 
-    // Auto-create starter agents based on LLM recommendations
+    // Auto-create starter agents — prefer pre-generated config from onboarding step 3
     const createdAgents = [];
-    if (aiConfig.starter_agents && Array.isArray(aiConfig.starter_agents)) {
+    const preGeneratedPrompt = existing[0]?.generated_agent_prompt;
+    const preGeneratedTemplate = existing[0]?.generated_job_template;
+
+    if (preGeneratedTemplate) {
+      // Use the agent config the user reviewed during onboarding
+      try {
+        const created = await base44.entities.UserAgent.create({
+          name: preGeneratedTemplate.name || 'Starter Agent',
+          description: `Auto-created from onboarding: ${(preGeneratedTemplate.steps || []).slice(0, 2).join('. ')}`,
+          status: 'draft',
+          agent_type: preGeneratedTemplate.agent_type || 'scraper',
+          target_urls: target_websites,
+          instructions: preGeneratedPrompt || '',
+          capabilities: preGeneratedTemplate.capabilities || ['navigate', 'extract', 'screenshot'],
+          config: { auto_generated: true, source: 'onboarding', extraction_schema: preGeneratedTemplate.extraction_schema },
+        });
+        createdAgents.push({ id: created.id, name: created.name });
+      } catch (e) {
+        // Continue if agent creation fails
+      }
+    } else if (aiConfig.starter_agents && Array.isArray(aiConfig.starter_agents)) {
+      // Fallback: create agents from LLM recommendations
       for (const agent of aiConfig.starter_agents.slice(0, 3)) {
         try {
           const created = await base44.entities.UserAgent.create({
@@ -140,10 +161,11 @@ Be practical and specific. If they want to scrape e-commerce, suggest a product 
       startup: { max_concurrent_sessions: 100, max_browser_hours: 500, max_agent_runs: 50, max_search_calls: 1000, max_fetch_calls: 10000, max_proxy_gb: 5, data_retention_days: 30, captcha_solving_enabled: true, stealth_mode: 'basic', monthly_price_usd: 99, overage_rate_browser_hr: 0.10, overage_rate_search_1k: 7, overage_rate_fetch_1k: 1, overage_rate_proxy_gb: 10 },
       enterprise: { max_concurrent_sessions: 250, max_browser_hours: 500, max_agent_runs: 100, max_search_calls: 10000, max_fetch_calls: 10000, max_proxy_gb: 5, data_retention_days: 30, captcha_solving_enabled: true, stealth_mode: 'advanced', monthly_price_usd: 0 },
     };
-    const limits = planLimits[aiConfig.recommended_plan] || planLimits.free;
+    const planTier = existing[0]?.recommended_plan || aiConfig.recommended_plan;
+    const limits = planLimits[planTier] || planLimits.free;
     if (existingSub.length === 0) {
       await base44.entities.Subscription.create({
-        plan_tier: aiConfig.recommended_plan,
+        plan_tier: planTier,
         status: 'active',
         billing_cycle: aiConfig.recommended_plan === 'free' ? 'none' : 'monthly',
         current_period_start: new Date().toISOString(),
