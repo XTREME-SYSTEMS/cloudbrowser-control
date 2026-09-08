@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Calendar, Settings as SettingsIcon, LayoutDashboard, LogOut, Cloud, Menu, DollarSign, ScrollText, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun, Command, FileSearch, FlaskConical, Eye, Train, HeartPulse, Copy, Server } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -10,6 +10,7 @@ import CommandPalette from "@/components/CommandPalette";
 import CopilotPanel from "@/components/copilot/CopilotPanel";
 import { Image } from "@/components/ui/image";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/lib/AuthContext";
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -27,42 +28,81 @@ function ThemeToggle() {
   );
 }
 
-const navItems = [
-  { to: "/", label: "Admin Portal", icon: ShieldCheck },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/sessions", label: "Sessions", icon: Monitor },
-  { to: "/jobs", label: "Jobs", icon: Briefcase },
-  { to: "/agent-builder", label: "Agents", icon: Bot },
-  { to: "/sandboxes", label: "Sandboxes", icon: Server },
-  { to: "/clone-studio", label: "Clone Studio", icon: Copy },
-  { to: "/mcp-creator", label: "MCP Creator", icon: Plug },
-  { to: "/welcome", label: "Get Started", icon: Rocket },
-  { to: "/billing", label: "Billing", icon: CreditCard },
-  { to: "/api-docs", label: "API Docs", icon: Code2 },
-  { to: "/ai-chat", label: "AI Chat", icon: Sparkles },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+const navGroups = [
+  {
+    label: "Getting Started",
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/welcome", label: "Onboarding", icon: Rocket },
+    ],
+  },
+  {
+    label: "Build",
+    items: [
+      { to: "/sandboxes", label: "Sandboxes", icon: Server },
+      { to: "/agent-builder", label: "Build Agent", icon: Bot },
+      { to: "/clone-studio", label: "Clone Site", icon: Copy },
+      { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
+    ],
+  },
+  {
+    label: "Workspace",
+    items: [
+      { to: "/sessions", label: "Sessions", icon: Monitor },
+      { to: "/jobs", label: "Jobs", icon: Briefcase },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { to: "/billing", label: "Billing", icon: CreditCard },
+      { to: "/settings", label: "Settings", icon: SettingsIcon },
+    ],
+  },
 ];
 
 function NavLinks({ onNavigate }) {
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   return (
-    <nav className="flex-1 p-4 space-y-1">
-      {navItems.map(({ to, label, icon: Icon }) => {
-        const active = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
-        return (
+    <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+      {isAdmin && (
+        <div className="space-y-1 pb-2 border-b border-sidebar-border">
           <Link
-            key={to}
-            to={to}
+            to="/"
             onClick={onNavigate}
             className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
+              location.pathname === "/" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
             }`}
           >
-            <Icon className="w-4 h-4" />
-            {label}
+            <ShieldCheck className="w-4 h-4" />
+            Admin Portal
           </Link>
-        );
-      })}
+        </div>
+      )}
+      {navGroups.map((group) => (
+        <div key={group.label} className="space-y-1">
+          <div className="px-3 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">{group.label}</div>
+          {group.items.map(({ to, label, icon: Icon }) => {
+            const active = location.pathname.startsWith(to);
+            return (
+              <Link
+                key={to}
+                to={to}
+                onClick={onNavigate}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                  active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }

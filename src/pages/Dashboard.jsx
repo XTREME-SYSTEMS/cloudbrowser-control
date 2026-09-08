@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
@@ -15,11 +15,18 @@ const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf59
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ sandboxes: 0, agents: 0, sessions: 0, jobs: 0, browserHours: 0 });
   const [subscription, setSubscription] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
   const [onboarded, setOnboarded] = useState(true);
+
+  useEffect(() => {
+    if (!loading && !onboarded) {
+      navigate("/welcome");
+    }
+  }, [loading, onboarded, navigate]);
 
   useEffect(() => {
     (async () => {
