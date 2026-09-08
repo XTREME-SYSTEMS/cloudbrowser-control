@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import {
-  Server, Bot, Monitor, Clock, Copy, Plug,
+  Server, Bot, Monitor, Clock, Copy, Plug, Box,
   CheckCircle2, Circle, ArrowRight, Sparkles, Activity, Zap,
 } from "lucide-react";
 
@@ -91,6 +91,7 @@ export default function Dashboard() {
   const quickActions = [
     { label: "New Sandbox", desc: "Provision an isolated environment", icon: Server, link: "/sandboxes", color: "text-blue-500 bg-blue-50" },
     { label: "Build Agent", desc: "Create an AI automation agent", icon: Bot, link: "/agent-builder", color: "text-purple-500 bg-purple-50" },
+    { label: "Sandbox Clone", desc: "Recursive clone to 100% parity", icon: Box, link: "/sandboxed-clone", color: "text-violet-500 bg-violet-50" },
     { label: "Clone Site", desc: "Clone any website", icon: Copy, link: "/clone-studio", color: "text-amber-500 bg-amber-50" },
     { label: "MCP Config", desc: "Connect your AI tools", icon: Plug, link: "/mcp-creator", color: "text-emerald-500 bg-emerald-50" },
   ];

@@ -6,7 +6,7 @@ import { Image } from "@/components/ui/image";
 import {
   Zap, Globe, Search, Code2, Shield, Bot, Copy, Monitor,
   ArrowRight, Check, Sparkles, Lock, Database, Eye, Clock, TrendingUp,
-  MousePointerClick, FileSearch, Download, RefreshCw, ChevronRight
+  MousePointerClick, FileSearch, Download, RefreshCw, ChevronRight, Box, Ghost, Repeat
 } from "lucide-react";
 
 const useCases = [
@@ -39,6 +39,24 @@ const products = [
     desc: "Build, deploy, and run AI agents that browse and interact with the web. Natural language instructions, visual workflows.",
     gradient: "from-emerald-500 to-teal-600",
   },
+  {
+    icon: Box,
+    name: "Sandboxed Clone Engine",
+    desc: "Clone any website into an isolated sandbox and recursively iterate until 100% parity. The DEEP pipeline captures, synthesizes, deploys, and self-heals — automatically.",
+    gradient: "from-amber-500 to-yellow-600",
+  },
+  {
+    icon: Ghost,
+    name: "Shadow Mode",
+    desc: "Keep your clone in sync forever. Shadow mode continuously monitors the original site and auto-re-syncs your sandboxed clone the moment anything changes.",
+    gradient: "from-violet-500 to-fuchsia-600",
+  },
+  {
+    icon: Repeat,
+    name: "Recursive Parity Loop",
+    desc: "Our engine doesn't just clone once — it validates, finds gaps, heals them, redeploys, and re-validates in a loop until your clone is pixel-perfect.",
+    gradient: "from-rose-500 to-orange-600",
+  },
 ];
 
 const steps = [
@@ -57,10 +75,12 @@ const stats = [
 const features = [
   { icon: Shield, title: "Auto Captcha Solving", desc: "reCAPTCHA, hCaptcha, Turnstile — solved automatically with self-hosted + fallback solvers" },
   { icon: Globe, title: "Global Proxy Network", desc: "Residential proxies with geo-targeting across 50+ countries" },
-  { icon: Copy, title: "Website Cloning", desc: "Clone any URL into a deployable frontend + backend with our DEEP pipeline" },
+  { icon: Box, title: "Sandboxed Recursive Cloning", desc: "Deploy clones into isolated sandboxes and iterate to 100% parity automatically" },
+  { icon: Ghost, title: "Shadow Mode", desc: "Continuously monitor the original site and auto-re-sync your clone when anything changes" },
   { icon: Code2, title: "MCP Integration", desc: "Connect ChatGPT, Claude, Gemini, or any AI agent via MCP protocol" },
   { icon: Database, title: "Sandbox Environments", desc: "Isolated Railway-provisioned backends for every user — zero DevOps" },
   { icon: Eye, title: "Live View & Recording", desc: "Watch your agents work in real-time with full session recording" },
+  { icon: Repeat, title: "Self-Healing Parity Loop", desc: "Validate, detect gaps, heal, redeploy, and re-validate until pixel-perfect" },
 ];
 
 export default function Landing() {
@@ -127,7 +147,7 @@ export default function Landing() {
             <h2 className="text-3xl md:text-4xl font-heading font-bold">See what agents can do on the web</h2>
             <p className="mt-3 text-muted-foreground text-lg">From login to task completion, CloudBrowser powers agents that reliably operate on the web.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((p) => (
               <Card key={p.name} className="group relative overflow-hidden border-border/50 hover:border-primary/30 transition-all hover:shadow-lg">
                 <div className={`absolute inset-0 bg-gradient-to-br ${p.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />

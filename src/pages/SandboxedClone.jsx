@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import {
   Loader2, Globe, Rocket, CheckCircle2, XCircle, AlertCircle,
-  RefreshCw, Target, Zap, Eye, Server, Repeat, Box,
+  RefreshCw, Target, Zap, Eye, Server, Repeat, Box, Ghost, Radio,
 } from "lucide-react";
 
 export default function SandboxedClone() {
   const [url, setUrl] = useState("");
   const [maxIterations, setMaxIterations] = useState(10);
+  const [shadowMode, setShadowMode] = useState(false);
+  const [shadowInterval, setShadowInterval] = useState(60);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState(null);
   const [sandbox, setSandbox] = useState(null);
@@ -30,6 +33,8 @@ export default function SandboxedClone() {
       const response = await base44.functions.invoke("runSandboxedRecursiveClone", {
         target_url: url.trim(),
         max_iterations: maxIterations,
+        shadow_mode: shadowMode,
+        shadow_interval: shadowInterval,
       });
       const data = response.data || response;
       if (!data.ok) {
@@ -67,11 +72,14 @@ export default function SandboxedClone() {
   }, [sandbox?.sandbox_id, sandbox?.project_id]);
 
   const isRunning = sandbox && project && (project.status === "validating" || project.status === "compiling" || project.status === "acquiring");
-  const isDone = sandbox && project && (project.status === "deployed" || project.status === "failed");
+  const isShadowing = sandbox?.status === "shadowing";
+  const isDone = sandbox && project && (project.status === "deployed" || project.status === "failed") && !isShadowing;
   const parityScore = project?.parity_score || 0;
   const visualScore = project?.visual_score || 0;
   const functionalScore = project?.functional_score || 0;
   const currentIteration = project?.inference_iterations || 0;
+  const shadowSyncCount = sandbox?.shadow_sync_count || 0;
+  const shadowLastSync = sandbox?.shadow_last_sync_at;
   const logs = sandbox?.provisioning_logs || "";
 
   // Group validations by iteration
@@ -125,9 +133,38 @@ export default function SandboxedClone() {
               />
             </div>
             <Button onClick={handleStart} disabled={starting || !url.trim()}>
-              {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
-              {starting ? "Starting..." : "Launch Sandbox Clone"}
+              {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : shadowMode ? <Ghost className="w-4 h-4" /> : <Rocket className="w-4 h-4" />}
+              {starting ? "Starting..." : shadowMode ? "Launch Shadow Clone" : "Launch Sandbox Clone"}
             </Button>
+          </div>
+          {/* Shadow Mode Toggle */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+            <div className="flex items-center gap-2">
+              <Ghost className={`w-4 h-4 ${shadowMode ? "text-violet-500" : "text-muted-foreground"}`} />
+              <div>
+                <span className="text-sm font-medium">Shadow Mode</span>
+                <p className="text-xs text-muted-foreground">Continuously monitor the original site and auto-re-sync the clone when changes are detected.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 sm:ml-auto">
+              {shadowMode && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap">Check every:</label>
+                  <select
+                    value={shadowInterval}
+                    onChange={(e) => setShadowInterval(Number(e.target.value))}
+                    disabled={starting}
+                    className="text-xs rounded-md border border-input bg-transparent px-2 py-1"
+                  >
+                    <option value={30}>30s</option>
+                    <option value={60}>1 min</option>
+                    <option value={300}>5 min</option>
+                    <option value={600}>10 min</option>
+                  </select>
+                </div>
+              )}
+              <Switch checked={shadowMode} onCheckedChange={setShadowMode} disabled={starting} />
+            </div>
           </div>
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-500">
@@ -142,19 +179,26 @@ export default function SandboxedClone() {
       {sandbox && project && (
         <>
           {/* Status Bar */}
-          <Card className={isDone && parityScore >= 100 ? "border-emerald-500/30 bg-emerald-500/5" : ""}>
+          <Card className={isShadowing ? "border-violet-500/30 bg-violet-500/5" : isDone && parityScore >= 100 ? "border-emerald-500/30 bg-emerald-500/5" : ""}>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-3 mb-3">
                 {isRunning && <Loader2 className="w-5 h-5 animate-spin text-blue-500" />}
+                {isShadowing && <Radio className="w-5 h-5 text-violet-500 animate-pulse" />}
                 {isDone && parityScore >= 100 && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
                 {isDone && parityScore < 100 && <AlertCircle className="w-5 h-5 text-amber-500" />}
                 <div className="flex-1">
                   <p className="text-sm font-medium">
-                    {isRunning ? `Iterating — iteration ${currentIteration} of ${maxIterations}` : isDone && parityScore >= 100 ? "100% parity achieved!" : `Complete — ${parityScore}% parity`}
+                    {isShadowing
+                      ? `Shadow mode active — monitoring for changes (${shadowSyncCount} syncs)`
+                      : isRunning
+                        ? `Iterating — iteration ${currentIteration} of ${maxIterations}`
+                        : isDone && parityScore >= 100
+                          ? "100% parity achieved!"
+                          : `Complete — ${parityScore}% parity`}
                   </p>
                   <p className="text-xs text-muted-foreground">{sandbox.name}</p>
                 </div>
-                {isRunning && (
+                {(isRunning || isShadowing) && (
                   <Button size="sm" variant="ghost" onClick={pollProgress}>
                     <RefreshCw className="w-3 h-3" /> Refresh
                   </Button>
@@ -226,6 +270,38 @@ export default function SandboxedClone() {
                 <Badge variant="outline" className={isRunning ? "text-blue-500" : "text-emerald-500"}>
                   {isRunning ? "Iterating" : "Live"}
                 </Badge>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Shadow Mode Status */}
+          {isShadowing && (
+            <Card className="border-violet-500/20 bg-violet-500/5">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Ghost className="w-5 h-5 text-violet-500 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Shadow Mode Active</p>
+                    <p className="text-xs text-muted-foreground">
+                      Monitoring <span className="font-mono">{sandbox.shadow_target_url}</span> every {sandbox.shadow_monitoring_interval || 60}s
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-violet-500">
+                    <Radio className="w-3 h-3 mr-1" /> Live
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-background/50 p-2">
+                    <p className="text-xs text-muted-foreground">Syncs performed</p>
+                    <p className="text-lg font-bold text-violet-500">{shadowSyncCount}</p>
+                  </div>
+                  <div className="rounded-lg bg-background/50 p-2">
+                    <p className="text-xs text-muted-foreground">Last sync</p>
+                    <p className="text-sm font-medium">
+                      {shadowLastSync ? new Date(shadowLastSync).toLocaleTimeString() : "Awaiting first change"}
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}

@@ -20,8 +20,14 @@ import { waitUntil } from "base44:runtime";
  * The recursive loop runs via waitUntil, updating the Sandbox + CloneProject records
  * each iteration so the frontend can poll progress.
  *
- * Input:  { target_url, max_iterations?: number }
+ * Input:  { target_url, max_iterations?: number, shadow_mode?: boolean, shadow_interval?: number }
  * Output: { ok, sandbox_id, project_id, deployed_url, message }
+ *
+ * Shadow mode: after reaching 100% parity, the sandbox enters monitoring —
+ * it periodically re-fetches the original site, compares to the deployed clone,
+ * and re-iterates (re-resolve → re-synthesize → re-deploy) when changes are
+ * detected. The clone stays private in the sandbox and continuously shadows
+ * the original until the sandbox expires.
  */
 export default async function (req: Request) {
   try {
@@ -30,12 +36,14 @@ export default async function (req: Request) {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { target_url, max_iterations } = body;
+    const { target_url, max_iterations, shadow_mode, shadow_interval } = body;
 
     if (!target_url)
       return Response.json({ error: "target_url is required" }, { status: 400 });
 
     const maxIterations = Math.min(max_iterations || 10, 20);
+    const enableShadow = shadow_mode === true;
+    const monitorIntervalSec = Math.max(shadow_interval || 60, 30);
 
     // ═══════════════════════════════════════════
     // PHASE 1: ACQUISITION
@@ -97,8 +105,8 @@ export default async function (req: Request) {
     // ═══════════════════════════════════════════
     const sandbox = await base44.entities.Sandbox.create({
       name: `Clone Sandbox: ${target_url}`,
-      description: `Recursive clone sandbox for ${target_url} — iterating to 100% parity`,
-      status: "active",
+      description: `Recursive clone sandbox for ${target_url} — iterating to 100% parity${enableShadow ? " (shadow mode)" : ""}`,
+      status: enableShadow ? "shadowing" : "active",
       project_id: projectId,
       engine_url: deployedUrl || "",
       capabilities: ["clone_engine", "scraper", "headless_browser"],
@@ -107,7 +115,10 @@ export default async function (req: Request) {
       region: "us-west",
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       last_activity_at: new Date().toISOString(),
-      provisioning_logs: `Sandboxed recursive clone started. Target: ${target_url}\nDeployed: ${deployedUrl || "pending"}\nMax iterations: ${maxIterations}`,
+      provisioning_logs: `Sandboxed recursive clone started. Target: ${target_url}\nDeployed: ${deployedUrl || "pending"}\nMax iterations: ${maxIterations}\nShadow mode: ${enableShadow ? "ON" : "OFF"}`,
+      shadow_mode: enableShadow,
+      shadow_target_url: enableShadow ? target_url : "",
+      shadow_monitoring_interval: monitorIntervalSec,
     });
 
     // ═══════════════════════════════════════════
@@ -269,10 +280,93 @@ ${deployedHtml.substring(0, 8000)}`,
         });
 
         await base44.entities.Sandbox.update(sandbox.id, {
-          status: parityScore >= 100 ? "active" : "terminated",
-          provisioning_logs: `RECURSIVE CLONE COMPLETE\nIterations: ${iteration}/${maxIterations}\nFinal parity: ${parityScore}%\nVisual: ${visualScore}%\nFunctional: ${functionalScore}%\nDeployed: ${deployedUrl || "N/A"}`,
+          status: enableShadow ? "shadowing" : (parityScore >= 100 ? "active" : "terminated"),
+          provisioning_logs: `RECURSIVE CLONE COMPLETE\nIterations: ${iteration}/${maxIterations}\nFinal parity: ${parityScore}%\nVisual: ${visualScore}%\nFunctional: ${functionalScore}%\nDeployed: ${deployedUrl || "N/A"}\nShadow mode: ${enableShadow ? "monitoring" : "off"}`,
           last_activity_at: new Date().toISOString(),
         });
+
+        // ═══════════════════════════════════════════
+        // SHADOW MODE — continuous monitoring + re-sync
+        // ═══════════════════════════════════════════
+        if (enableShadow && deployedUrl) {
+          let lastOriginalHtml = "";
+          // Capture initial original HTML for baseline comparison
+          try {
+            const origResp = await fetch(target_url, { signal: AbortSignal.timeout(15000) });
+            lastOriginalHtml = await origResp.text();
+          } catch {}
+
+          let shadowSyncCount = 0;
+          const sandboxExpiresAt = new Date(sandbox.expires_at || Date.now() + 24 * 60 * 60 * 1000).getTime();
+
+          while (Date.now() < sandboxExpiresAt) {
+            await new Promise((r) => setTimeout(r, monitorIntervalSec * 1000));
+
+            try {
+              // Re-fetch original site
+              const origResp = await fetch(target_url, { signal: AbortSignal.timeout(15000) });
+              const currentOriginalHtml = await origResp.text();
+
+              // Compare to baseline
+              if (currentOriginalHtml === lastOriginalHtml) {
+                // No change — update heartbeat
+                await base44.entities.Sandbox.update(sandbox.id, {
+                  last_activity_at: new Date().toISOString(),
+                });
+                continue;
+              }
+
+              // CHANGE DETECTED — re-sync the clone
+              lastOriginalHtml = currentOriginalHtml;
+              shadowSyncCount++;
+
+              await base44.entities.Sandbox.update(sandbox.id, {
+                provisioning_logs: `SHADOW MODE: Change detected on original site. Re-syncing clone (sync #${shadowSyncCount})...`,
+                last_activity_at: new Date().toISOString(),
+              });
+
+              // Re-capture the original site
+              try {
+                await base44.functions.invoke("cloneFullSite", { target_url });
+              } catch {}
+
+              // Re-resolve gaps with new data
+              try {
+                await base44.functions.invoke("resolveAllGaps", { clone_project_id: projectId });
+              } catch {}
+
+              // Re-synthesize backend
+              try {
+                await base44.functions.invoke("reconstructBackend", { clone_project_id: projectId });
+              } catch {}
+
+              // Re-deploy
+              try {
+                const redeploy = await base44.functions.invoke("provisionCloneDeployment", { clone_project_id: projectId });
+                const rd = redeploy.data || redeploy;
+                if (rd?.deployed_url) deployedUrl = rd.deployed_url;
+              } catch {}
+
+              await base44.entities.Sandbox.update(sandbox.id, {
+                shadow_last_sync_at: new Date().toISOString(),
+                shadow_sync_count: shadowSyncCount,
+                provisioning_logs: `SHADOW MODE: Clone re-synced (sync #${shadowSyncCount}). Monitoring for next change...`,
+                last_activity_at: new Date().toISOString(),
+              });
+            } catch {
+              // Heartbeat on error
+              await base44.entities.Sandbox.update(sandbox.id, {
+                last_activity_at: new Date().toISOString(),
+              });
+            }
+          }
+
+          // Sandbox expired
+          await base44.entities.Sandbox.update(sandbox.id, {
+            status: "terminated",
+            provisioning_logs: `SHADOW MODE: Sandbox expired. Total syncs: ${shadowSyncCount}.`,
+          });
+        }
       })().catch(() => {})
     );
 

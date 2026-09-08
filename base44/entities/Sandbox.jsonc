@@ -16,7 +16,8 @@
         "active",
         "paused",
         "terminated",
-        "failed"
+        "failed",
+        "shadowing"
       ],
       "default": "creating"
     },
@@ -88,6 +89,30 @@
     },
     "error_message": {
       "type": "string"
+    },
+    "shadow_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the sandbox continuously monitors the original site and re-syncs the clone when changes are detected"
+    },
+    "shadow_target_url": {
+      "type": "string",
+      "description": "The original URL being shadowed \u2014 the clone mirrors this site's changes"
+    },
+    "shadow_last_sync_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time the shadow mode detected and synced a change"
+    },
+    "shadow_sync_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many times shadow mode has re-synced the clone"
+    },
+    "shadow_monitoring_interval": {
+      "type": "number",
+      "default": 60,
+      "description": "Seconds between shadow mode change checks"
     }
   },
   "required": [
