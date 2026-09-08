@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import {
   Loader2, Globe, Rocket, CheckCircle2, XCircle, AlertCircle,
-  RefreshCw, Target, Zap, Eye, Server, Repeat, Box, Ghost, Radio,
+  RefreshCw, Target, Zap, Eye, Server, Repeat, Box, Ghost, Radio, Cloud,
 } from "lucide-react";
 
 export default function SandboxedClone() {
@@ -21,6 +21,9 @@ export default function SandboxedClone() {
   const [sandbox, setSandbox] = useState(null);
   const [project, setProject] = useState(null);
   const [validations, setValidations] = useState([]);
+  const [provisioning, setProvisioning] = useState(false);
+  const [provisionResult, setProvisionResult] = useState(null);
+  const [provisionError, setProvisionError] = useState(null);
 
   const handleStart = async () => {
     if (!url.trim()) return;
@@ -89,6 +92,31 @@ export default function SandboxedClone() {
     if (!iterationsMap[iter]) iterationsMap[iter] = [];
     iterationsMap[iter].push(v);
   }
+  const handleProvision = async () => {
+    if (!sandbox?.project_id) return;
+    setProvisioning(true);
+    setProvisionError(null);
+    setProvisionResult(null);
+    try {
+      const response = await base44.functions.invoke("provisionCloneDeployment", {
+        clone_project_id: sandbox.project_id,
+      });
+      const data = response.data || response;
+      if (!data.ok) {
+        setProvisionError(data.error || "Provisioning failed");
+      } else {
+        setProvisionResult(data);
+        if (data.deployed_url) {
+          setSandbox((s) => ({ ...s, deployed_url: data.deployed_url }));
+        }
+      }
+    } catch (e) {
+      setProvisionError(e.message);
+    } finally {
+      setProvisioning(false);
+    }
+  };
+
   const iterationKeys = Object.keys(iterationsMap).sort((a, b) => Number(a) - Number(b));
 
   return (
@@ -255,6 +283,52 @@ export default function SandboxedClone() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Vercel Provisioning */}
+          <Card className="border-blue-500/20">
+            <CardContent className="pt-4 pb-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <Cloud className="w-5 h-5 text-blue-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Provision on Vercel</p>
+                  <p className="text-xs text-muted-foreground">
+                    Push the clone to a GitHub repo, create a Vercel project, and deploy to production.
+                  </p>
+                </div>
+              </div>
+              {provisionError && (
+                <div className="flex items-start gap-2 text-xs text-red-500 bg-red-500/5 rounded-md p-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span className="break-words">{provisionError}</span>
+                </div>
+              )}
+              {provisionResult && (
+                <div className="space-y-2 rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" /> Deployed to Vercel
+                  </div>
+                  {provisionResult.deployed_url && (
+                    <a href={provisionResult.deployed_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline block truncate">
+                      {provisionResult.deployed_url}
+                    </a>
+                  )}
+                  {provisionResult.github?.repo_url && (
+                    <a href={provisionResult.github.repo_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline block truncate">
+                      GitHub: {provisionResult.github.repo_url}
+                    </a>
+                  )}
+                </div>
+              )}
+              <Button
+                onClick={handleProvision}
+                disabled={provisioning || !sandbox.project_id || isRunning}
+                className="w-full"
+              >
+                {provisioning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+                {provisioning ? "Provisioning..." : "Provision on Vercel"}
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Deployed URL */}
           {sandbox.deployed_url && (
