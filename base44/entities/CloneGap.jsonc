@@ -14,9 +14,12 @@
         "server_logic",
         "websocket",
         "firewall",
+        "payment",
+        "search",
+        "realtime",
         "unknown"
       ],
-      "description": "Category of unclonable element"
+      "description": "Category of unclonable element \u2014 definitively classified by the Gap Intelligence Engine"
     },
     "description": {
       "type": "string",
@@ -42,13 +45,29 @@
       ],
       "default": "POST"
     },
+    "classification_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Deterministic evidence that proves this gap type (from HTTP analysis)"
+    },
+    "definitive": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether classification was definitive (100% certain from HTTP evidence) vs LLM-guessed"
+    },
     "template_matched": {
       "type": "string",
       "description": "Which template from the catalog was matched"
     },
     "mock_logic": {
       "type": "string",
-      "description": "Generated mock backend code for this gap"
+      "description": "Generated mock backend code for this gap (legacy field \u2014 use generated_code)"
+    },
+    "generated_code": {
+      "type": "string",
+      "description": "Final generated mock backend code for this gap"
     },
     "request_schema": {
       "type": "object",
@@ -58,10 +77,53 @@
       "type": "object",
       "description": "Inferred response JSON schema"
     },
+    "resolution_strategy": {
+      "type": "string",
+      "enum": [
+        "template",
+        "scrape_similar",
+        "seed_data",
+        "infer_llm",
+        ""
+      ],
+      "default": "",
+      "description": "Which resolution strategy was applied to resolve this gap"
+    },
+    "resolution_id": {
+      "type": "string",
+      "description": "Reference to the GapResolution record tracking this gap's resolution"
+    },
+    "seed_data": {
+      "type": "object",
+      "description": "Seeded mock data for database/search gaps"
+    },
+    "similar_systems_found": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "inferred_schema": {
+            "type": "object"
+          },
+          "relevance": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Similar systems scraped for schema inference"
+    },
+    "industry_detected": {
+      "type": "string",
+      "description": "Industry detected for the target site (drives data seeding)"
+    },
     "status": {
       "type": "string",
       "enum": [
         "identified",
+        "classifying",
         "inferred",
         "resolved",
         "unresolved"

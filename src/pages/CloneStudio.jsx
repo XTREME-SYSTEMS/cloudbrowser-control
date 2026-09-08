@@ -8,8 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import {
   Copy, Loader2, Search, Globe, CheckCircle2, XCircle, Clock,
   Server, Code2, Eye, Zap, ExternalLink, RefreshCw, AlertCircle,
-  FileSearch, Layers, Rocket, Cpu, Database, Shield, GitBranch,
+  FileSearch, Layers, Rocket, Cpu, Database, Shield, GitBranch, Brain,
 } from "lucide-react";
+import GapIntelligenceTab from "@/components/clone-studio/GapIntelligenceTab";
 
 const STATUS_CONFIG = {
   acquiring: { label: "Acquiring", color: "text-blue-500", bg: "bg-blue-500/10", icon: Loader2, spin: true },
@@ -91,6 +92,7 @@ function CloneDetail({ project, onClose, onRefresh }) {
     { key: "overview", label: "Overview", icon: Layers },
     { key: "screenshots", label: "Screenshots", icon: Eye },
     { key: "endpoints", label: "Endpoints & Gaps", icon: Code2 },
+    { key: "intelligence", label: "Gap Intelligence", icon: Brain },
     { key: "code", label: "Mock Backend", icon: FileSearch },
     { key: "validation", label: "Validation", icon: CheckCircle2 },
   ];
@@ -324,6 +326,28 @@ function CloneDetail({ project, onClose, onRefresh }) {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* GAP INTELLIGENCE */}
+              {activeTab === "intelligence" && (
+                <GapIntelligenceTab
+                  project={project}
+                  gaps={gaps}
+                  onRefresh={() => {
+                    (async () => {
+                      try {
+                        const [a, g, v] = await Promise.all([
+                          base44.entities.CloneAsset.filter({ clone_project_id: project.id }),
+                          base44.entities.CloneGap.filter({ clone_project_id: project.id }),
+                          base44.entities.CloneValidationResult.filter({ clone_project_id: project.id }),
+                        ]);
+                        setAssets(a);
+                        setGaps(g);
+                        setValidations(v);
+                      } catch {}
+                    })();
+                  }}
+                />
               )}
 
               {/* MOCK BACKEND CODE */}
