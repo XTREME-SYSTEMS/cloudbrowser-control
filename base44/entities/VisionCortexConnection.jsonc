@@ -25,6 +25,38 @@
       "default": true,
       "description": "Whether VC can operate autonomously"
     },
+    "bidirectional": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether VC can both read and write/modify the system"
+    },
+    "operations_enabled": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "analyze",
+          "heal",
+          "optimize",
+          "enhance",
+          "manage",
+          "operate",
+          "code",
+          "full_cycle"
+        ]
+      },
+      "default": [
+        "analyze",
+        "heal",
+        "optimize",
+        "enhance",
+        "manage",
+        "operate",
+        "code",
+        "full_cycle"
+      ],
+      "description": "Which operations VC is allowed to perform"
+    },
     "connected_at": {
       "type": "string",
       "format": "date-time"
@@ -37,11 +69,24 @@
       "type": "string",
       "format": "date-time"
     },
+    "last_operate_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time any VC operation ran"
+    },
     "last_audit_result": {
       "type": "string"
     },
     "last_heal_result": {
       "type": "string"
+    },
+    "last_operate_result": {
+      "type": "string",
+      "description": "Result summary of last operation"
+    },
+    "last_operation": {
+      "type": "string",
+      "description": "Which operation was last run"
     },
     "audit_count": {
       "type": "number",
@@ -50,6 +95,11 @@
     "heal_count": {
       "type": "number",
       "default": 0
+    },
+    "operate_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total operations performed"
     },
     "issues_detected": {
       "type": "number",

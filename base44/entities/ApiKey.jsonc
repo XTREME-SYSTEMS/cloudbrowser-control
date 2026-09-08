@@ -6,6 +6,25 @@
       "type": "string",
       "description": "Label for this key (e.g. production, staging)"
     },
+    "description": {
+      "type": "string",
+      "description": "What this key is used for"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user",
+        "service",
+        "vision_cortex"
+      ],
+      "default": "user",
+      "description": "Access role \u2014 determines key prefix and default permissions"
+    },
+    "external_label": {
+      "type": "string",
+      "description": "What this API key should be labeled as in external systems (e.g. 'XTREME_SCRAPER_ADMIN_KEY', 'OPENAI_COMPAT_KEY')"
+    },
     "key_prefix": {
       "type": "string",
       "description": "First 12 chars for display"
@@ -26,7 +45,15 @@
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "description": "Permission scopes (e.g. sessions:read, admin:all)"
+    },
+    "allowed_functions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific backend functions this key can invoke (empty = all allowed for role)"
     },
     "project_id": {
       "type": "string",
@@ -51,7 +78,8 @@
   },
   "required": [
     "name",
-    "key_hash"
+    "key_hash",
+    "role"
   ],
   "rls": {
     "read": {
