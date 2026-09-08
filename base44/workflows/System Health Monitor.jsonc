@@ -1,0 +1,91 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 10,
+      "interval_unit": "minutes",
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "System Health Monitor",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "system_health_monitor",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_engine_health": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "engineHealth",
+            "args": {}
+          },
+          "then": "run_audit",
+          "x-base44": {
+            "title": "Check engine health",
+            "description": "Probe all engine instances"
+          }
+        }
+      },
+      {
+        "run_audit": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runAutonomousAudit",
+            "args": {}
+          },
+          "then": "check_issues",
+          "x-base44": {
+            "title": "Run autonomous audit",
+            "description": "Detect system issues"
+          }
+        }
+      },
+      {
+        "check_issues": {
+          "switch": [
+            {
+              "when": "${ (.run_audit.actions_required // []) | length > 0 }",
+              "then": "trigger_heal"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Issues detected?",
+            "description": "Branch if remediation needed"
+          }
+        }
+      },
+      {
+        "trigger_heal": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "railwayAutoHeal",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Trigger auto-heal",
+            "description": "Remediate detected issues"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Every 10 minutes: probes engine health and runs autonomous audit, triggering auto-heal if issues are detected"
+}
