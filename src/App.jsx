@@ -24,6 +24,9 @@ import Billing from '@/pages/Billing';
 import ShareView from '@/pages/ShareView';
 import AiChat from '@/pages/AiChat';
 import CloneStudio from '@/pages/CloneStudio';
+import BatchClone from '@/pages/BatchClone';
+import GapPlayground from '@/pages/GapPlayground';
+import GapMap from '@/pages/GapMap';
 import ThemeProvider from '@/components/ThemeProvider';
 import Landing from '@/pages/Landing';
 import Pricing from '@/pages/Pricing';
@@ -85,6 +88,9 @@ const AuthenticatedApp = () => {
           <Route path="/agent-builder" element={<AgentBuilder />} />
           <Route path="/sandboxes" element={<SandboxManager />} />
           <Route path="/clone-studio" element={<CloneStudio />} />
+          <Route path="/batch-clone" element={<BatchClone />} />
+          <Route path="/gap-playground" element={<GapPlayground />} />
+          <Route path="/gap-map" element={<GapMap />} />
           <Route path="/mcp-creator" element={<McpCreator />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/api-docs" element={<ApiDocs />} />
