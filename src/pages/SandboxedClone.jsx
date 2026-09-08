@@ -111,7 +111,7 @@ export default function SandboxedClone() {
         }
       }
     } catch (e) {
-      setProvisionError(e.message);
+      setProvisionError(e.response?.data?.error || e.message);
     } finally {
       setProvisioning(false);
     }

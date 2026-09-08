@@ -89,16 +89,26 @@ export default async function (req) {
     const domAsset = assets.find((a) => a.asset_type === "dom");
 
     let mockBackendCode = "";
-    if (mockBackendAsset) {
-      const codeRes = await fetch(mockBackendAsset.file_url);
-      mockBackendCode = await codeRes.text();
+    if (mockBackendAsset?.file_url) {
+      try {
+        const codeRes = await fetch(mockBackendAsset.file_url);
+        if (codeRes.ok) mockBackendCode = await codeRes.text();
+      } catch (err) {
+        console.error("Failed to fetch mock backend code:", err.message);
+      }
     }
 
     let domHtml = "";
-    if (domAsset) {
-      const domRes = await fetch(domAsset.file_url);
-      const domData = await domRes.json();
-      domHtml = domData.html || "";
+    if (domAsset?.file_url) {
+      try {
+        const domRes = await fetch(domAsset.file_url);
+        if (domRes.ok) {
+          const domData = await domRes.json();
+          domHtml = domData.html || "";
+        }
+      } catch (err) {
+        console.error("Failed to fetch DOM snapshot:", err.message);
+      }
     }
 
     // ═══════════════════════════════════════════
