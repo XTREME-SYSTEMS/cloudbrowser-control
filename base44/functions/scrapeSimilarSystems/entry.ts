@@ -71,7 +71,7 @@ IMPORTANT: Return ONLY a valid JSON object (no markdown, no code fences) with th
 
     // Store the similar-systems intelligence as a CloneAsset
     const intelFile = new File(
-      [JSON.stringify({ clone_project_id, gap_type, similar_systems, aggregate_inferences, generated_at: new Date().toISOString() }, null, 2)],
+      [JSON.stringify({ clone_project_id, gap_type, similar_systems: similarSystems, aggregate_inferences: aggregateInferences, generated_at: new Date().toISOString() }, null, 2)],
       `similar-systems-${clone_project_id}-${gap_type}.json`,
       { type: "application/json" }
     );
