@@ -137,7 +137,7 @@ export default function AdminApiKeys() {
       role: preset.role,
       external_label: preset.external_label,
       scopes: preset.scopes,
-      allowed_functions: preset.allowed_functions,
+      allowed_functions: preset.functions || [],
       expiresInDays: 30,
     });
   };
