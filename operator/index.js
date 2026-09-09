@@ -383,7 +383,7 @@ app.post('/api/manual/scraper-domain', async (req, res) => {
   try {
     const data = await railwayGQL(
       `mutation($input: CustomDomainCreateInput!) {
-         customDomainCreate(input: $input) { id domain status { code } }
+         customDomainCreate(input: $input) { id domain }
        }`,
       {
         input: {
@@ -396,7 +396,7 @@ app.post('/api/manual/scraper-domain', async (req, res) => {
     );
     res.json({ ok: true, domain: data.customDomainCreate });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, detail: error.response?.data?.errors || null });
   }
 });
 
