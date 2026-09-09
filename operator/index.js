@@ -407,10 +407,10 @@ app.post('/api/manual/scraper-server-mode', async (req, res) => {
   try {
     const INSTANCE_ID = 'c3633498-2692-4502-a455-04f77f08124e';
     const updated = await railwayGQL(
-      `mutation($id: String!, $input: ServiceInstanceUpdateInput!) {
-         serviceInstanceUpdate(id: $id, input: $input) { id serviceName cronSchedule restartPolicyType }
+      `mutation($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) {
+         serviceInstanceUpdate(serviceId: $serviceId, environmentId: $environmentId, input: $input) { id serviceName cronSchedule restartPolicyType }
        }`,
-      { id: INSTANCE_ID, input: { cronSchedule: null, restartPolicyType: 'ALWAYS' } }
+      { serviceId: 'ae0a7cea-05c6-48f3-b387-ac78ffd97c47', environmentId: 'f2a884f8-924b-431c-a181-b7287e8b2137', input: { cronSchedule: null, restartPolicyType: 'ALWAYS' } }
     );
     res.json({ ok: true, updated: updated.serviceInstanceUpdate });
   } catch (error) {
