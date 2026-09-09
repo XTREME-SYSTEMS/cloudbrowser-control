@@ -400,6 +400,24 @@ app.post('/api/manual/scraper-domain', async (req, res) => {
   }
 });
 
+// POST /api/manual/scraper-server-mode — convert scraper from cron service to
+// persistent server (clears cronSchedule, sets ALWAYS restart) and redeploys.
+// Hardcoded target — safe on a public endpoint.
+app.post('/api/manual/scraper-server-mode', async (req, res) => {
+  try {
+    const INSTANCE_ID = 'c3633498-2692-4502-a455-04f77f08124e';
+    const updated = await railwayGQL(
+      `mutation($id: String!, $input: ServiceInstanceUpdateInput!) {
+         serviceInstanceUpdate(id: $id, input: $input) { id serviceName cronSchedule restartPolicyType }
+       }`,
+      { id: INSTANCE_ID, input: { cronSchedule: null, restartPolicyType: 'ALWAYS' } }
+    );
+    res.json({ ok: true, updated: updated.serviceInstanceUpdate });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================================================
 // STARTUP
 // ============================================================================
