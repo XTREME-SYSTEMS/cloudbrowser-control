@@ -376,6 +376,31 @@ app.post('/api/manual/scale', async (req, res) => {
 });
 
 // ============================================================================
+// ONE-SHOT INFRA FIXUPS (hardcoded targets — safe on a public endpoint)
+// ============================================================================
+// POST /api/manual/scraper-domain — create the scraper service's public domain
+app.post('/api/manual/scraper-domain', async (req, res) => {
+  try {
+    const data = await railwayGQL(
+      `mutation($input: CustomDomainCreateInput!) {
+         customDomainCreate(input: $input) { id domain status { code } }
+       }`,
+      {
+        input: {
+          projectId: CONFIG.PROJECT_ID,
+          environmentId: 'f2a884f8-924b-431c-a181-b7287e8b2137',
+          serviceId: 'ae0a7cea-05c6-48f3-b387-ac78ffd97c47',
+          domain: 'hidden-property-intel-scraper.up.railway.app',
+        },
+      }
+    );
+    res.json({ ok: true, domain: data.customDomainCreate });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
 // STARTUP
 // ============================================================================
 const PORT = process.env.PORT || 8081;
