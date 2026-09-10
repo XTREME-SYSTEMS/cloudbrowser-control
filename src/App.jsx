@@ -28,6 +28,7 @@ import BatchClone from '@/pages/BatchClone';
 import GapPlayground from '@/pages/GapPlayground';
 import GapMap from '@/pages/GapMap';
 import SandboxedClone from '@/pages/SandboxedClone';
+import SkipTracing from '@/pages/SkipTracing';
 import ThemeProvider from '@/components/ThemeProvider';
 import Landing from '@/pages/Landing';
 import Pricing from '@/pages/Pricing';
@@ -93,6 +94,7 @@ const AuthenticatedApp = () => {
           <Route path="/gap-playground" element={<GapPlayground />} />
           <Route path="/gap-map" element={<GapMap />} />
           <Route path="/sandboxed-clone" element={<SandboxedClone />} />
+          <Route path="/skip-tracing" element={<SkipTracing />} />
           <Route path="/mcp-creator" element={<McpCreator />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/api-docs" element={<ApiDocs />} />

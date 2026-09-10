@@ -1,0 +1,206 @@
+{
+  "name": "SkipTrace",
+  "type": "object",
+  "properties": {
+    "target_property_address": {
+      "type": "string",
+      "description": "Property address to trace the owner of"
+    },
+    "target_owner_name": {
+      "type": "string",
+      "description": "Starting owner name if known"
+    },
+    "target_phone": {
+      "type": "string",
+      "description": "Starting phone number if known"
+    },
+    "target_email": {
+      "type": "string",
+      "description": "Starting email if known"
+    },
+    "target_company": {
+      "type": "string",
+      "description": "Company name if known"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "searching",
+        "found",
+        "partial",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "found_owner_name": {
+      "type": "string",
+      "description": "Confirmed owner name from search results"
+    },
+    "found_phone_numbers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "All phone numbers found during the trace"
+    },
+    "found_emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        }
+      },
+      "default": [],
+      "description": "All email addresses found during the trace"
+    },
+    "found_addresses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "All addresses found (current, previous, mailing)"
+    },
+    "found_social_profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          }
+        }
+      },
+      "default": [],
+      "description": "Social media profiles found"
+    },
+    "found_relatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Known relatives and associates"
+    },
+    "property_data": {
+      "type": "object",
+      "description": "Property records data (owner, value, lot size, etc.)"
+    },
+    "sources_checked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "All data sources queried during the trace"
+    },
+    "methods_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "All search methods executed"
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Overall confidence in the trace results (0-100)"
+    },
+    "search_results": {
+      "type": "object",
+      "description": "Raw results from each search method for audit trail"
+    },
+    "search_duration_ms": {
+      "type": "number",
+      "default": 0,
+      "description": "How long the full trace took in milliseconds"
+    },
+    "batch_id": {
+      "type": "string",
+      "description": "Groups skip traces in a batch operation"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
