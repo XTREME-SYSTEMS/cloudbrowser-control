@@ -11,6 +11,7 @@ import {
   FileSearch, Layers, Rocket, Cpu, Database, Shield, GitBranch, Brain,
 } from "lucide-react";
 import GapIntelligenceTab from "@/components/clone-studio/GapIntelligenceTab";
+import AutonomyChart from "@/components/clone-studio/AutonomyChart";
 
 const STATUS_CONFIG = {
   acquiring: { label: "Acquiring", color: "text-blue-500", bg: "bg-blue-500/10", icon: Loader2, spin: true },
@@ -218,6 +219,8 @@ function CloneDetail({ project, onClose, onRefresh }) {
                       Self-heal iterations: {project.inference_iterations} / {project.max_iterations}
                     </div>
                   )}
+
+                  <AutonomyChart projectId={project?.id} />
 
                   {project?.deployed_url && (
                     <Card className="border-emerald-500/30 bg-emerald-500/5">
@@ -466,6 +469,9 @@ export default function CloneStudio() {
           Deterministic web application cloning — 4-phase pipeline: Acquisition → Compilation → Validation → Egress
         </p>
       </div>
+
+      {/* Autonomy Dashboard Chart */}
+      <AutonomyChart />
 
       {/* Clone Input */}
       <Card>
