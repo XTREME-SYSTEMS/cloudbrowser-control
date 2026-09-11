@@ -9,6 +9,7 @@ import ValidationResults from "@/components/architecture/ValidationResults";
 import HealthGauge from "@/components/architecture/HealthGauge";
 import HealingStatusPanel from "@/components/architecture/HealingStatusPanel";
 import FallbackIndicator from "@/components/architecture/FallbackIndicator";
+import SystemHeartbeat from "@/components/architecture/SystemHeartbeat";
 
 export default function Architecture() {
   const [goals, setGoals] = useState([]);
@@ -64,6 +65,8 @@ export default function Architecture() {
           <RefreshCw className="w-4 h-4 mr-1" />Refresh
         </Button>
       </div>
+
+      <SystemHeartbeat />
 
       <HealthGauge architectureHealth={architectureHealth} capabilityScore={capabilityScore} />
 
