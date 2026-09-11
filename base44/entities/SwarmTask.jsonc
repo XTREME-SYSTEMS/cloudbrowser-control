@@ -1,0 +1,108 @@
+{
+  "name": "SwarmTask",
+  "type": "object",
+  "properties": {
+    "agent_name": {
+      "type": "string",
+      "enum": [
+        "property_researcher",
+        "people_finder",
+        "data_enricher"
+      ],
+      "description": "Which swarm agent is assigned this task"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "property_search",
+        "people_search",
+        "data_enrichment",
+        "full_trace"
+      ],
+      "description": "What kind of work the agent should do"
+    },
+    "target_data": {
+      "type": "object",
+      "description": "Input data for the task (address, name, phone, email, company, etc.)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "assigned",
+        "running",
+        "completed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    },
+    "result_data": {
+      "type": "object",
+      "description": "The agent's findings (phones, emails, addresses, social, relatives, etc.)"
+    },
+    "result_summary": {
+      "type": "string",
+      "description": "Short human-readable summary of what the agent found"
+    },
+    "skip_trace_id": {
+      "type": "string",
+      "description": "Links to the SkipTrace record this task contributes to"
+    },
+    "batch_id": {
+      "type": "string",
+      "description": "Groups tasks in a batch operation"
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Confidence in the agent's results (0-100)"
+    },
+    "assigned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agent_name",
+    "task_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

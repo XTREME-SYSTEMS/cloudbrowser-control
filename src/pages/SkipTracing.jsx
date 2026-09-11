@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Clock, Database, Loader2, Building, User, Globe } from "lucide-react";
+import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Clock, Database, Loader2, Building, User, Globe, LayoutDashboard } from "lucide-react";
+import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
 
 export default function SkipTracing() {
   const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "" });
@@ -80,11 +81,17 @@ export default function SkipTracing() {
         </p>
       </div>
 
-      <Tabs defaultValue="search">
+      <Tabs defaultValue="dashboard">
         <TabsList>
+          <TabsTrigger value="dashboard"><LayoutDashboard className="w-4 h-4 mr-1" />Dashboard</TabsTrigger>
           <TabsTrigger value="search"><Search className="w-4 h-4 mr-1" />Search</TabsTrigger>
           <TabsTrigger value="history"><Database className="w-4 h-4 mr-1" />History ({history.length})</TabsTrigger>
         </TabsList>
+
+        {/* Dashboard Tab */}
+        <TabsContent value="dashboard">
+          <SkipTracingDashboard traces={history} loading={loadingHistory} onRefresh={loadHistory} />
+        </TabsContent>
 
         {/* Search Tab */}
         <TabsContent value="search" className="space-y-4">

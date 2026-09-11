@@ -47,6 +47,7 @@ const navGroups = [
       { to: "/gap-map", label: "Gap Map", icon: Sparkles },
       { to: "/sandboxed-clone", label: "Sandbox Clone", icon: Box },
       { to: "/skip-tracing", label: "Skip Tracing", icon: Radar },
+      { to: "/swarm-orchestrator", label: "Swarm Orchestrator", icon: Bot },
       { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
     ],
   },
