@@ -12,6 +12,7 @@ import AdminApiKeys from "@/components/admin/AdminApiKeys";
 import AdminPromos from "@/components/admin/AdminPromos";
 import AdminVisionCortex from "@/components/admin/AdminVisionCortex";
 import AdminUsers from "@/components/admin/AdminUsers";
+import AdminTeam from "@/components/admin/AdminTeam";
 
 const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png";
 
@@ -23,6 +24,7 @@ const tabs = [
   { id: "promos", label: "Promos", icon: Ticket },
   { id: "visioncortex", label: "Vision Cortex", icon: Eye },
   { id: "users", label: "Users", icon: Users },
+  { id: "team", label: "Team", icon: Users },
 ];
 
 export default function AdminPortal() {
@@ -105,6 +107,7 @@ export default function AdminPortal() {
         {activeTab === "promos" && <AdminPromos key={`pr-${refreshKey}`} />}
         {activeTab === "visioncortex" && <AdminVisionCortex key={`vc-${refreshKey}`} />}
         {activeTab === "users" && <AdminUsers key={`us-${refreshKey}`} />}
+        {activeTab === "team" && <AdminTeam key={`tm-${refreshKey}`} />}
       </div>
     </div>
   );

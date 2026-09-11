@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -48,6 +48,7 @@ const navGroups = [
       { to: "/sandboxed-clone", label: "Sandbox Clone", icon: Box },
       { to: "/skip-tracing", label: "Skip Tracing", icon: Radar },
       { to: "/swarm-orchestrator", label: "Swarm Orchestrator", icon: Bot },
+      { to: "/architecture", label: "Architecture", icon: Building2 },
       { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
     ],
   },
@@ -56,6 +57,7 @@ const navGroups = [
     items: [
       { to: "/sessions", label: "Sessions", icon: Monitor },
       { to: "/jobs", label: "Jobs", icon: Briefcase },
+      { to: "/team", label: "Team", icon: Users },
     ],
   },
   {

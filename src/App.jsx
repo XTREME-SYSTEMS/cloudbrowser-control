@@ -30,6 +30,8 @@ import GapMap from '@/pages/GapMap';
 import SandboxedClone from '@/pages/SandboxedClone';
 import SkipTracing from '@/pages/SkipTracing';
 import SwarmOrchestrator from '@/pages/SwarmOrchestrator';
+import Architecture from '@/pages/Architecture';
+import TeamPage from '@/pages/TeamPage';
 import ThemeProvider from '@/components/ThemeProvider';
 import Landing from '@/pages/Landing';
 import Pricing from '@/pages/Pricing';
@@ -97,6 +99,8 @@ const AuthenticatedApp = () => {
           <Route path="/sandboxed-clone" element={<SandboxedClone />} />
           <Route path="/skip-tracing" element={<SkipTracing />} />
           <Route path="/swarm-orchestrator" element={<SwarmOrchestrator />} />
+          <Route path="/architecture" element={<Architecture />} />
+          <Route path="/team" element={<TeamPage />} />
           <Route path="/mcp-creator" element={<McpCreator />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/api-docs" element={<ApiDocs />} />
