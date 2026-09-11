@@ -31,11 +31,7 @@ export default async function (req: Request): Promise<Response> {
       });
       result = llmRaw?.data ?? llmRaw;
       if (result && !result.error) {
-        return Response.json({
-          ...result,
-          tier_used: "llm",
-          tiers_attempted: tiersAttempted,
-        });
+        return Response.json(withUiAliases(result, "llm", tiersAttempted));
       }
     } catch (llmErr: any) {
       // LLM failed — likely credit exhaustion. Fall through to Tier 2.
@@ -48,11 +44,7 @@ export default async function (req: Request): Promise<Response> {
       result = await directScrapeSkipTrace({ property_address, owner_name, phone, email, company });
       if (result) {
         await persistTraceResult(base44, property_address, result);
-        return Response.json({
-          ...result,
-          tier_used: "direct_scrape",
-          tiers_attempted: tiersAttempted,
-        });
+        return Response.json(withUiAliases(result, "direct_scrape", tiersAttempted));
       }
     } catch (scrapeErr: any) {
       console.log("Tier 2 (Direct Scrape) failed, falling back to Tier 3:", scrapeErr.message);
@@ -64,11 +56,7 @@ export default async function (req: Request): Promise<Response> {
       property_address, owner_name, phone, email, company, batch_id,
     });
     result = mockRaw?.data ?? mockRaw;
-    return Response.json({
-      ...result,
-      tier_used: "mock",
-      tiers_attempted: tiersAttempted,
-    });
+    return Response.json(withUiAliases(result, "mock", tiersAttempted));
   } catch (err: any) {
     console.error("runSkipTraceFallback error:", err);
     return Response.json({ error: err.message }, { status: 500 });
@@ -170,6 +158,23 @@ async function directScrapeSkipTrace(params: any): Promise<any | null> {
   }
 
   return null;
+}
+
+function withUiAliases(result: any, tier: string, tiersAttempted: string[]): any {
+  return {
+    ...result,
+    // UI-friendly aliases (the SkipTracing page expects these field names)
+    phone_numbers: result.phone_numbers || result.found_phone_numbers || [],
+    emails: result.emails || result.found_emails || [],
+    addresses: result.addresses || result.found_addresses || [],
+    social_profiles: result.social_profiles || result.found_social_profiles || [],
+    relatives: result.relatives || result.found_relatives || [],
+    sources: result.sources || result.sources_checked || [],
+    methods: result.methods || result.methods_used || [],
+    duration_ms: result.duration_ms || result.search_duration_ms || 0,
+    tier_used: tier,
+    tiers_attempted: tiersAttempted,
+  };
 }
 
 async function persistTraceResult(base44: any, property_address: string, result: any) {

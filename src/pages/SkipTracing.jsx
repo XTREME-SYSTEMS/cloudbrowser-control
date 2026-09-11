@@ -39,7 +39,7 @@ export default function SkipTracing() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runSkipTrace", form);
+      const response = await base44.functions.invoke("runSkipTraceFallback", form);
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
