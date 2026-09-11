@@ -1,0 +1,45 @@
+{
+  "name": "Autonomous Swarm Loop",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Runs the AGI swarm orchestrator every 5 minutes with zero human trigger or command. Picks up pending SwarmTasks, executes them across Property Researcher, People Finder, and Data Enricher agents, and scans for new work. This is the mandatory autonomous loop \u2014 runs 24/7.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "autonomous_swarm_loop",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_swarm": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runAutonomousSwarm",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run Autonomous Swarm",
+            "description": "Execute pending swarm tasks \u2014 zero human trigger"
+          }
+        }
+      }
+    ]
+  }
+}
