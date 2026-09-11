@@ -97,7 +97,7 @@ export default async function (req: Request): Promise<Response> {
         });
 
         const td = task.target_data || {};
-        const traceResponse: any = await base44.functions.invoke("runSkipTrace", {
+        const traceRaw: any = await base44.functions.invoke("runSkipTraceMock", {
           property_address: td.property_address || td.address || "",
           owner_name: td.owner_name || td.name || "",
           phone: td.phone || "",
@@ -105,6 +105,7 @@ export default async function (req: Request): Promise<Response> {
           company: td.company || "",
           batch_id: task.batch_id,
         });
+        const traceResponse = traceRaw?.data ?? traceRaw;
 
         await base44.asServiceRole.entities.SwarmTask.update(task.id, {
           status: "completed",
