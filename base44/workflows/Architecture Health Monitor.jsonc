@@ -1,0 +1,45 @@
+{
+  "name": "Architecture Health Monitor",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 10,
+      "interval_unit": "minutes",
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Autonomous trigger that checks architecture health every 10 minutes. When health < 100 or capabilities < 100, sets the self-healing swarm into motion: retry \u2192 flag \u2192 audit agent \u2192 repair agent \u2192 validate. Runs 24/7 with zero human input.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "architecture_health_monitor",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_healing_loop": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runSelfHealingLoop",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run Self-Healing Loop",
+            "description": "Check architecture health and capabilities. If < 100, retry failed goals, flag issues, audit root cause, repair, and validate \u2014 autonomously."
+          }
+        }
+      }
+    ]
+  }
+}

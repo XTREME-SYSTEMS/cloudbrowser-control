@@ -1,0 +1,128 @@
+{
+  "name": "HealingFlag",
+  "type": "object",
+  "properties": {
+    "flag_type": {
+      "type": "string",
+      "enum": [
+        "task_failure",
+        "health_below_100",
+        "capability_gap",
+        "validation_failure",
+        "search_failure"
+      ],
+      "description": "What kind of issue was flagged"
+    },
+    "source_entity": {
+      "type": "string",
+      "description": "Entity where the issue originated (SwarmTask, SystemEnhancement, etc.)"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "ID of the source record"
+    },
+    "source_title": {
+      "type": "string",
+      "description": "Human-readable name of the source"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "The error that triggered the flag"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many retries were attempted before flagging"
+    },
+    "max_retries": {
+      "type": "number",
+      "default": 3
+    },
+    "root_cause": {
+      "type": "string",
+      "description": "Root cause identified by the audit agent"
+    },
+    "root_cause_confidence": {
+      "type": "number",
+      "default": 0,
+      "description": "Confidence in root cause analysis (0-100)"
+    },
+    "repair_action": {
+      "type": "string",
+      "description": "Repair action suggested or applied by the repair agent"
+    },
+    "repair_applied": {
+      "type": "boolean",
+      "default": false
+    },
+    "repair_result": {
+      "type": "string",
+      "description": "Result of the repair attempt"
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "validation_score": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "flagged",
+        "auditing",
+        "audited",
+        "repairing",
+        "repaired",
+        "validating",
+        "resolved",
+        "escalated"
+      ],
+      "default": "flagged"
+    },
+    "assigned_agent": {
+      "type": "string",
+      "description": "Which agent is currently handling this flag"
+    },
+    "flagged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cycle_id": {
+      "type": "string",
+      "description": "Healing cycle that created this flag"
+    }
+  },
+  "required": [
+    "flag_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

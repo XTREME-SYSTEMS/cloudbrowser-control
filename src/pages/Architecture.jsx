@@ -6,6 +6,9 @@ import ScoreHeader from "@/components/architecture/ScoreHeader";
 import VisionCortexPanel from "@/components/architecture/VisionCortexPanel";
 import ChecklistGrid from "@/components/architecture/ChecklistGrid";
 import ValidationResults from "@/components/architecture/ValidationResults";
+import HealthGauge from "@/components/architecture/HealthGauge";
+import HealingStatusPanel from "@/components/architecture/HealingStatusPanel";
+import FallbackIndicator from "@/components/architecture/FallbackIndicator";
 
 export default function Architecture() {
   const [goals, setGoals] = useState([]);
@@ -27,6 +30,16 @@ export default function Architecture() {
       setLoading(false);
     }
   }, []);
+
+  // Compute health scores for the gauge
+  const goalScores = goals.map((g) => g.audit_result?.score || 0);
+  const architectureHealth = goals.length > 0
+    ? Math.round(goalScores.reduce((a, b) => a + b, 0) / goals.length)
+    : 0;
+  const passingTests = testResults.filter((t) => t.status === "pass").length;
+  const capabilityScore = testResults.length > 0
+    ? Math.round((passingTests / testResults.length) * 100)
+    : 0;
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -52,9 +65,15 @@ export default function Architecture() {
         </Button>
       </div>
 
+      <HealthGauge architectureHealth={architectureHealth} capabilityScore={capabilityScore} />
+
       <ScoreHeader goals={goals} testResults={testResults} />
 
       <VisionCortexPanel onAction={loadData} />
+
+      <HealingStatusPanel />
+
+      <FallbackIndicator />
 
       <ChecklistGrid goals={goals} filter={filter} setFilter={setFilter} />
 

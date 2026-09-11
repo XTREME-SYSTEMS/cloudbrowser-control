@@ -97,7 +97,7 @@ export default async function (req: Request): Promise<Response> {
         });
 
         const td = task.target_data || {};
-        const traceRaw: any = await base44.functions.invoke("runSkipTraceMock", {
+        const traceRaw: any = await base44.functions.invoke("runSkipTraceFallback", {
           property_address: td.property_address || td.address || "",
           owner_name: td.owner_name || td.name || "",
           phone: td.phone || "",
@@ -110,7 +110,7 @@ export default async function (req: Request): Promise<Response> {
         await base44.asServiceRole.entities.SwarmTask.update(task.id, {
           status: "completed",
           result_data: traceResponse,
-          result_summary: `Agent ${task.agent_name} completed ${task.task_type}`,
+          result_summary: `Agent ${task.agent_name} completed ${task.task_type} via ${traceResponse?.tier_used || "unknown"} tier`,
           confidence_score: traceResponse?.confidence_score || 0,
           completed_at: new Date().toISOString(),
           duration_ms: Date.now() - cycleStart,
@@ -125,6 +125,24 @@ export default async function (req: Request): Promise<Response> {
           completed_at: new Date().toISOString(),
           duration_ms: Date.now() - cycleStart,
         });
+
+        // Create a HealingFlag so the audit → repair → validate pipeline can handle it
+        try {
+          await base44.asServiceRole.entities.HealingFlag.create({
+            flag_type: "task_failure",
+            source_entity: "SwarmTask",
+            source_id: task.id,
+            source_title: `${task.agent_name} / ${task.task_type}`,
+            error_message: err.message || "Unknown error",
+            retry_count: 0,
+            max_retries: 3,
+            status: "flagged",
+            flagged_at: new Date().toISOString(),
+            cycle_id: cycleId,
+          });
+        } catch (flagErr) {
+          // Non-fatal — flag creation should not block the swarm
+        }
 
         tasksFailed++;
         agentStats[task.agent_name].failed++;
