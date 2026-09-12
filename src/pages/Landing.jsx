@@ -92,8 +92,8 @@ export default function Landing() {
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-9 h-9 shrink-0" fittingType="fit" />
-            <span className="font-heading font-bold text-lg">XTREME SCRAPER</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/0faeac0c6_generated_image.png" alt="XTREME CLOUD BROWSER" className="w-9 h-9 shrink-0" fittingType="fit" />
+            <span className="font-heading font-bold text-lg">XTREME CLOUD BROWSER</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#products" className="hover:text-foreground transition-colors">Products</a>
@@ -121,7 +121,7 @@ export default function Landing() {
             Give your agents access<br />to the <span className="text-gold-gradient">entire web</span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            XTREME SCRAPER makes the web as reliable and programmable as APIs. Spin up browsers,
+            XTREME CLOUD BROWSER makes the web as reliable and programmable as APIs. Spin up browsers,
             build AI agents, clone websites, and scrape at scale — all from one platform.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -283,8 +283,8 @@ export default function Landing() {
       <footer className="border-t border-border py-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-7 h-7 shrink-0" fittingType="fit" />
-            <span className="font-heading font-semibold">XTREME SCRAPER</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/0faeac0c6_generated_image.png" alt="XTREME CLOUD BROWSER" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <span className="font-heading font-semibold">XTREME CLOUD BROWSER</span>
             <span className="text-sm text-muted-foreground ml-2">© 2026</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
