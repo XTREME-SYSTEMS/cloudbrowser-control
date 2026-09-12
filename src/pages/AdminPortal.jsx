@@ -14,7 +14,7 @@ import AdminVisionCortex from "@/components/admin/AdminVisionCortex";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminTeam from "@/components/admin/AdminTeam";
 
-const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b7132dc90_LOGO.png";
+const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png";
 
 const tabs = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -53,9 +53,9 @@ export default function AdminPortal() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src={LOGO_URL} alt="XTREME AI SYSTEMS" className="w-9 h-9 shrink-0" fittingType="fit" />
+            <Image src={LOGO_URL} alt="Xtreme Cloud Browser" className="w-9 h-9 shrink-0" fittingType="fit" />
             <div>
-              <span className="font-heading font-bold text-lg block leading-tight">XTREME AI SYSTEMS</span>
+              <span className="font-heading font-bold text-lg block leading-tight">Xtreme Cloud Browser</span>
               <span className="text-xs text-muted-foreground">Admin Portal</span>
             </div>
           </div>
