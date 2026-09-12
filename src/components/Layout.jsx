@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -28,43 +28,72 @@ function ThemeToggle() {
   );
 }
 
-const navGroups = [
+const workflowSteps = [
   {
-    label: "Getting Started",
+    step: 1,
+    label: "Start",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/welcome", label: "Onboarding", icon: Rocket },
     ],
   },
   {
-    label: "Build",
+    step: 2,
+    label: "Discover",
+    items: [
+      { to: "/auto-recommender", label: "Recommender", icon: Compass },
+    ],
+  },
+  {
+    step: 3,
+    label: "Provision",
     items: [
       { to: "/sandboxes", label: "Sandboxes", icon: Server },
+    ],
+  },
+  {
+    step: 4,
+    label: "Build",
+    items: [
       { to: "/agent-builder", label: "Build Agent", icon: Bot },
       { to: "/clone-studio", label: "Clone Site", icon: Copy },
-      { to: "/auto-recommender", label: "Recommender", icon: Compass },
       { to: "/batch-clone", label: "Batch Clone", icon: Layers },
       { to: "/gap-playground", label: "Gap Playground", icon: Target },
       { to: "/gap-map", label: "Gap Map", icon: Sparkles },
       { to: "/sandboxed-clone", label: "Sandbox Clone", icon: Box },
+    ],
+  },
+  {
+    step: 5,
+    label: "Automate",
+    items: [
       { to: "/skip-tracing", label: "Skip Tracing", icon: Radar },
       { to: "/swarm-orchestrator", label: "Swarm Orchestrator", icon: Bot },
+    ],
+  },
+  {
+    step: 6,
+    label: "Execute",
+    items: [
+      { to: "/sessions", label: "Sessions", icon: Monitor },
+      { to: "/jobs", label: "Jobs", icon: Briefcase },
+    ],
+  },
+  {
+    step: 7,
+    label: "Govern",
+    items: [
       { to: "/architecture", label: "Architecture", icon: Building2 },
       { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
     ],
   },
   {
-    label: "Workspace",
-    items: [
-      { to: "/sessions", label: "Sessions", icon: Monitor },
-      { to: "/jobs", label: "Jobs", icon: Briefcase },
-      { to: "/team", label: "Team", icon: Users },
-    ],
-  },
-  {
+    step: 8,
     label: "Account",
     items: [
+      { to: "/team", label: "Team", icon: Users },
       { to: "/billing", label: "Billing", icon: CreditCard },
+      { to: "/account", label: "Account", icon: User },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
     ],
   },
@@ -91,9 +120,14 @@ function NavLinks({ onNavigate }) {
           </Link>
         </div>
       )}
-      {navGroups.map((group) => (
+      {workflowSteps.map((group) => (
         <div key={group.label} className="space-y-1">
-          <div className="px-3 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">{group.label}</div>
+          <div className="flex items-center gap-2 px-3 py-1">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+              {group.step}
+            </span>
+            <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">{group.label}</span>
+          </div>
           {group.items.map(({ to, label, icon: Icon }) => {
             const active = location.pathname.startsWith(to);
             return (
@@ -101,7 +135,7 @@ function NavLinks({ onNavigate }) {
                 key={to}
                 to={to}
                 onClick={onNavigate}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-md text-sm transition-colors ${
                   active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
                 }`}
               >
