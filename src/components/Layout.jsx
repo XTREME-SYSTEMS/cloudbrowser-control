@@ -120,8 +120,8 @@ function SidebarContent({ onLogout, onToggleCopilot, copilotOpen }) {
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/0faeac0c6_generated_image.png" alt="XTREME CLOUD BROWSER" className="w-8 h-8 shrink-0" fittingType="fit" />
-          <span className="font-heading font-semibold text-sidebar-foreground">XTREME CLOUD BROWSER</span>
+          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b7132dc90_LOGO.png" alt="XTREME AI SYSTEMS" className="w-8 h-8 shrink-0" fittingType="fit" />
+          <span className="font-heading font-semibold text-sidebar-foreground">XTREME AI SYSTEMS</span>
         </div>
       </div>
       <div className="px-4 pt-4">
@@ -187,8 +187,8 @@ export default function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/0faeac0c6_generated_image.png" alt="XTREME CLOUD BROWSER" className="w-7 h-7 shrink-0" fittingType="fit" />
-            <span className="font-heading font-semibold">XTREME CLOUD BROWSER</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b7132dc90_LOGO.png" alt="XTREME AI SYSTEMS" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <span className="font-heading font-semibold">XTREME AI SYSTEMS</span>
           </div>
           <button onClick={() => setCopilotOpen(!copilotOpen)} className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <Bot className="w-5 h-5" />
