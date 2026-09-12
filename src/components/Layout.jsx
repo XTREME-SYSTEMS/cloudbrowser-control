@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -42,6 +42,7 @@ const navGroups = [
       { to: "/sandboxes", label: "Sandboxes", icon: Server },
       { to: "/agent-builder", label: "Build Agent", icon: Bot },
       { to: "/clone-studio", label: "Clone Site", icon: Copy },
+      { to: "/auto-recommender", label: "Recommender", icon: Compass },
       { to: "/batch-clone", label: "Batch Clone", icon: Layers },
       { to: "/gap-playground", label: "Gap Playground", icon: Target },
       { to: "/gap-map", label: "Gap Map", icon: Sparkles },

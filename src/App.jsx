@@ -41,6 +41,7 @@ import SandboxManager from '@/pages/SandboxManager';
 import AgentBuilder from '@/pages/AgentBuilder';
 import ThankYou from '@/pages/ThankYou';
 import AdminPortal from '@/pages/AdminPortal';
+import AutoRecommender from '@/pages/AutoRecommender';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -100,6 +101,7 @@ const AuthenticatedApp = () => {
           <Route path="/skip-tracing" element={<SkipTracing />} />
           <Route path="/swarm-orchestrator" element={<SwarmOrchestrator />} />
           <Route path="/architecture" element={<Architecture />} />
+          <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/mcp-creator" element={<McpCreator />} />
           <Route path="/billing" element={<Billing />} />
