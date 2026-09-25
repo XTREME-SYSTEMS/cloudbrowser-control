@@ -158,7 +158,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "browser_start": {
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost("/sessions", {
-        viewport: p.viewport, userAgent: p.user_agent, usePool: p.use_pool !== false,
+        viewport: p.viewport, userAgent: p.user_agent, usePool: p.use_pool === true,
         proxy: p.proxy, locale: p.locale, timezone: p.timezone, headers: p.headers,
       });
       const session = await base44.asServiceRole.entities.Session.create({
