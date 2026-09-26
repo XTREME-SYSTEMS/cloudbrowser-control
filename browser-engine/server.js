@@ -978,14 +978,33 @@ app.post("/sessions", async (req, res) => {
       page = await context.newPage();
     }
 
-    // Restore cookies/storage if provided (resume / context)
+    // Restore cookies/storage if provided (resume / context).
+    // localStorage is origin-scoped, so seed it through an init script that
+    // runs on the matching origin before application scripts execute.
     if (opts.cookies?.length) await context.addCookies(opts.cookies);
-    if (opts.storageState?.origins) {
-      for (const origin of opts.storageState.origins) {
-        for (const { key, value: val } of origin.localStorage || []) {
-          await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: key, v: val }).catch(() => {});
+    if (opts.storageState?.origins?.length) {
+      const storageByOrigin = Object.fromEntries(
+        opts.storageState.origins.map((origin) => [
+          origin.origin,
+          (origin.localStorage || []).map(({ name, key, value }) => ({ key: name || key, value })),
+        ])
+      );
+      await context.addInitScript(({ storageByOrigin }) => {
+        const entries = storageByOrigin[location.origin] || [];
+        for (const { key, value } of entries) {
+          if (key) localStorage.setItem(key, value);
         }
-      }
+      }, { storageByOrigin });
+    }
+
+    // A resumed context is not useful until it is on the saved target.
+    // Navigation happens only after cookies + origin storage restoration hooks
+    // are installed, so authenticated state is available during page startup.
+    if (opts.target_url) {
+      await page.goto(opts.target_url, {
+        waitUntil: opts.waitUntil || "domcontentloaded",
+        timeout: opts.timeout || 60000,
+      });
     }
 
     // Network mocking
