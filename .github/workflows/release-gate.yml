@@ -75,6 +75,10 @@ jobs:
         working-directory: browser-engine
         run: node --check server.js
 
+      - name: Run browser engine contract tests
+        working-directory: browser-engine
+        run: npm test
+
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
