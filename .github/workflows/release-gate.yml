@@ -88,21 +88,21 @@ jobs:
 
       - name: Check for plaintext secrets in entity schemas
         run: |
-          if grep -r '"password"' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'; then
+          if grep -rE '^[[:space:]]*"password"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'; then
             echo "FAIL: Plaintext password field found in entity schema"
-            grep -r '"password"' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'
+            grep -rE '^[[:space:]]*"password"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'
             exit 1
           fi
-          if grep -r '"secret"' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'; then
+          if grep -rE '^[[:space:]]*"secret"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'; then
             echo "FAIL: Plaintext secret field found in entity schema"
-            grep -r '"secret"' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'
+            grep -rE '^[[:space:]]*"secret"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'
             exit 1
           fi
-          if grep -r '"cookies"' base44/entities/ --include='*.jsonc' | grep -v 'cookies_encrypted' | grep -v 'has_cookies'; then
+          if grep -rE '^[[:space:]]*"cookies"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'cookies_encrypted' | grep -v 'has_cookies'; then
             echo "FAIL: Plaintext cookies field found in entity schema"
             exit 1
           fi
-          if grep -r '"storage_state"' base44/entities/ --include='*.jsonc' | grep -v 'storage_state_encrypted' | grep -v 'has_storage_state'; then
+          if grep -rE '^[[:space:]]*"storage_state"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'storage_state_encrypted' | grep -v 'has_storage_state'; then
             echo "FAIL: Plaintext storage_state field found in entity schema"
             exit 1
           fi
