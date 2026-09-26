@@ -30,3 +30,11 @@ test("durable restore creates a new runtime session from encrypted server-side c
   assert.match(gateway, /persistence: "durable"/);
   assert.match(gateway, /target_url: targetUrl/);
 });
+
+test("resume seeds origin storage before navigating the saved target", async () => {
+  const server = await readFile(serverPath, "utf8");
+  assert.match(server, /storageByOrigin/);
+  assert.match(server, /addInitScript/);
+  assert.match(server, /if \(opts\.target_url\)/);
+  assert.match(server, /page\.goto\(opts\.target_url/);
+});
