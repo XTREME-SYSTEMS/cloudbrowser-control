@@ -25,7 +25,7 @@ const TOOL_SCOPES: Record<string, string> = {
   get_console: "sessions:read", get_network: "sessions:read", get_requests: "sessions:read", get_responses: "sessions:read", get_errors: "sessions:read",
   download_file: "sessions:write", artifact_get: "sessions:read",
   session_save: "sessions:write", session_restore: "sessions:write",
-  context_create: "sessions:write", context_save: "sessions:write", context_restore: "sessions:write", context_delete: "sessions:write",
+  context_create: "sessions:write", context_save: "sessions:write", context_restore: "sessions:read", context_attach: "sessions:write", context_delete: "sessions:write",
   run_script: "sessions:write", evaluate_dom: "sessions:read",
   compare_screenshots: "sessions:read", compare_visual_reference: "sessions:read",
   run_test: "sessions:write", run_test_suite: "sessions:write", run_playwright_matrix: "sessions:write",
@@ -152,6 +152,66 @@ async function uploadScreenshot(base44, base64, name = "mcp_screenshot.png") {
   return res.file_url;
 }
 
+async function loadStoredContext(base44, keyRecord, contextId) {
+  const ctxs = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: contextId });
+  if (!ctxs.length) throw new Error("Durable browser context not found");
+  const ctx = ctxs[0];
+  if (ctx.revoked) throw new Error("Context revoked");
+  if (ctx.expires_at && new Date(ctx.expires_at) < new Date()) throw new Error("Context expired");
+  if (keyRecord.project_id && ctx.project_id && ctx.project_id !== keyRecord.project_id) throw new Error("Context not found (tenant)");
+
+  let cookies = null;
+  let storageState = null;
+  if (ctx.cookies_encrypted) {
+    const d = await decrypt(ctx.cookies_encrypted);
+    if (d) cookies = JSON.parse(d);
+  }
+  if (ctx.storage_state_encrypted) {
+    const d = await decrypt(ctx.storage_state_encrypted);
+    if (d) storageState = JSON.parse(d);
+  }
+  return { ctx, cookies, storageState };
+}
+
+async function restoreStoredContext(base44, keyRecord, contextId, sourceSessionId = null) {
+  if (!await isEngineConfigured()) throw new Error("Browser engine not configured");
+  const { ctx, cookies, storageState } = await loadStoredContext(base44, keyRecord, contextId);
+  const targetUrl = ctx.metadata?.target_url || null;
+  const res = await enginePost("/sessions", {
+    target_url: targetUrl,
+    cookies,
+    storageState,
+    resume: true,
+    usePool: false,
+  });
+  if (!res.sessionId) throw new Error("Engine returned no runtime session ID");
+
+  const session = await base44.asServiceRole.entities.Session.create({
+    session_id: res.sessionId,
+    status: "running",
+    project_id: keyRecord.project_id || ctx.project_id || null,
+    current_url: targetUrl,
+    target_url: targetUrl,
+    profile_id: ctx.profile_id || null,
+    started_at: new Date().toISOString(),
+    metadata: {
+      resumed_from: sourceSessionId || ctx.metadata?.source_session_id || null,
+      durable_context_id: ctx.context_id,
+      worker_id: res.workerId,
+      region: res.region,
+      engine_version: res.engineVersion,
+    },
+  });
+  await base44.asServiceRole.entities.BrowserContext.update(ctx.id, { last_used: new Date().toISOString() });
+  return {
+    restored: true,
+    session_id: session.id,
+    runtime_session_id: res.sessionId,
+    persistence: "durable",
+    auth_state: ctx.auth_state,
+  };
+}
+
 async function handleTool(base44, tool, p, keyRecord, requestId) {
   switch (tool) {
     // ── Browser lifecycle ──
@@ -261,8 +321,52 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     }
 
     // ── Context / session state ──
-    case "session_save": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "save_state"); await base44.asServiceRole.entities.Session.update(p.session_id, { resume_token: r.data?.stateToken }); return { state_token: r.data?.stateToken }; }
-    case "session_restore": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "restore_state", { options: { stateToken: p.state_token } }); return { restored: r.data }; }
+    case "session_save": {
+      const s = await getSession(base44, keyRecord, p.session_id);
+      const r = await exec(base44, s, "save_state");
+      const snapshot = r.data?.snapshot;
+      if (!snapshot) throw new Error("Engine did not return a persistence snapshot; refusing non-durable save");
+
+      const stateToken = "persist_" + crypto.randomUUID();
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 30 * 86400000).toISOString();
+      const payload = {
+        context_id: stateToken,
+        name: "session:" + s.id,
+        project_id: keyRecord.project_id || s.project_id || null,
+        cookies_encrypted: snapshot.cookies ? await encrypt(JSON.stringify(snapshot.cookies)) : null,
+        storage_state_encrypted: snapshot.storageState ? await encrypt(JSON.stringify(snapshot.storageState)) : null,
+        auth_state: snapshot.cookies?.length ? "authenticated" : "anonymous",
+        last_used: now.toISOString(),
+        expires_at: expiresAt,
+        metadata: {
+          source_session_id: s.id,
+          runtime_session_id: s.session_id,
+          target_url: snapshot.url || s.current_url || null,
+          title: snapshot.title || s.current_title || null,
+          persistence_version: 1,
+        },
+      };
+      await base44.asServiceRole.entities.BrowserContext.create(payload);
+      await base44.asServiceRole.entities.Session.update(p.session_id, { resume_token: stateToken });
+      return { state_token: stateToken, persisted: true, expires_at: expiresAt };
+    }
+    case "session_restore": {
+      if (!p.state_token) throw new Error("state_token required");
+
+      // Backward-compatible fast path for an in-memory token while the original runtime still exists.
+      if (p.session_id && !String(p.state_token).startsWith("persist_")) {
+        try {
+          const s = await getSession(base44, keyRecord, p.session_id);
+          const r = await exec(base44, s, "restore_state", { options: { stateToken: p.state_token } });
+          return { restored: r.data, session_id: s.id, runtime_session_id: s.session_id, persistence: "runtime" };
+        } catch (_) {
+          // Fall through to durable restore if a matching stored context exists.
+        }
+      }
+
+      return restoreStoredContext(base44, keyRecord, p.state_token, p.session_id || null);
+    }
     case "context_create": {
       const ctxId = "ctx_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
       const cookiesEnc = p.cookies ? await encrypt(JSON.stringify(p.cookies)) : null;
@@ -285,13 +389,18 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       return { saved: true };
     }
     case "context_restore": {
-      const ctxs = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: p.context_id });
-      if (!ctxs.length) throw new Error("Context not found");
-      const ctx = ctxs[0]; if (ctx.revoked) throw new Error("Context revoked");
-      let cookies = null, storage = null;
-      if (ctx.cookies_encrypted) { const d = await decrypt(ctx.cookies_encrypted); if (d) cookies = JSON.parse(d); }
-      if (ctx.storage_state_encrypted) { const d = await decrypt(ctx.storage_state_encrypted); if (d) storage = JSON.parse(d); }
-      return { cookies, storage_state: storage, auth_state: ctx.auth_state };
+      const { ctx, cookies, storageState } = await loadStoredContext(base44, keyRecord, p.context_id);
+      return {
+        context_id: ctx.context_id,
+        auth_state: ctx.auth_state,
+        resumable: Boolean(cookies || storageState),
+        last_used: ctx.last_used || null,
+        expires_at: ctx.expires_at || null,
+      };
+    }
+    case "context_attach": {
+      if (!p.context_id) throw new Error("context_id required");
+      return restoreStoredContext(base44, keyRecord, p.context_id, null);
     }
     case "context_delete": { const ctxs = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: p.context_id }); if (!ctxs.length) throw new Error("Context not found"); await base44.asServiceRole.entities.BrowserContext.delete(ctxs[0].id); return { success: true }; }
 

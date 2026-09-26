@@ -5,6 +5,7 @@ import { Image as ImgComponent } from "@/components/ui/image";
 
 const AGENT_NAME = "autonomous_agent";
 const agentsApi = /** @type {any} */ (base44).agents;
+const coreIntegrations = /** @type {any} */ (base44.integrations.Core);
 
 const SUGGESTIONS = [
   { icon: "🚀", text: "Generate product ideas from today's Google trends" },
@@ -24,7 +25,7 @@ function MessageBubble({ message }) {
   const readAloud = async () => {
     setLoadingAudio(true);
     try {
-      const res = await base44.integrations.Core.GenerateSpeech({ text: message.content, voice: "storm" });
+      const res = await coreIntegrations.GenerateSpeech({ text: message.content, voice: "storm" });
       setAudioUrl(res.url);
     } catch (err) { alert("Speech generation failed: " + err.message); }
     finally { setLoadingAudio(false); }
@@ -66,7 +67,7 @@ function MessageBubble({ message }) {
   );
 }
 
-function ChatInput({ onSend, onTranscribe, disabled, large }) {
+function ChatInput({ onSend, onTranscribe, disabled, large = false }) {
   const [text, setText] = useState("");
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -207,8 +208,8 @@ export default function XtremeGPT() {
 
   const handleTranscribe = async (file, callback) => {
     try {
-      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-      const res = await base44.integrations.Core.TranscribeAudio({ audio_url: file_url });
+      const { file_url } = await coreIntegrations.UploadPublicFile({ file });
+      const res = await coreIntegrations.TranscribeAudio({ audio_url: file_url });
       callback(typeof res === "string" ? res : (res?.text || ""));
     } catch (e) { setError("Transcription failed: " + e.message); callback(""); }
   };
