@@ -1242,7 +1242,7 @@ app.post("/sessions/:id/execute", async (req, res) => {
         break;
       }
       case "mock_response": { await page.route(options.url, (route) => route.fulfill({ status: options.status || 200, contentType: options.contentType || "application/json", body: options.body || "" })); result.data = { mocked: options.url }; break; }
-      case "save_state": { const cookies = await s.context.cookies(); const storageState = await s.context.storageState(); const stateToken = "state_" + Math.random().toString(36).slice(2); savedStates.set(stateToken, { cookies, storageState, url: s.url, title: s.title }); result.data = { stateToken, url: s.url }; break; }
+      case "save_state": { const cookies = await s.context.cookies(); const storageState = await s.context.storageState(); const stateToken = "state_" + Math.random().toString(36).slice(2); const snapshot = { cookies, storageState, url: s.url, title: s.title }; savedStates.set(stateToken, snapshot); result.data = { stateToken, url: s.url, snapshot }; break; }
       case "restore_state": { const state = savedStates.get(options.stateToken); if (!state) throw new Error("State not found"); if (state.cookies) await s.context.addCookies(state.cookies); if (state.storageState?.origins) { for (const origin of state.storageState.origins) { for (const { key, value: val } of origin.localStorage || []) { await page.evaluate(({ k, v }) => localStorage.setItem(k, v), { k: key, v: val }); } } } if (state.url) await page.goto(state.url); result.data = { restored: true, url: state.url }; break; }
       case "crawl": { result.data = await crawl(page, options); break; }
       case "paginate": { result.data = await paginate(page, options); break; }
