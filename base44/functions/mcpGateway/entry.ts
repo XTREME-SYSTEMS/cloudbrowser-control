@@ -143,7 +143,12 @@ async function getSession(base44, keyRecord, sessionId) {
 
 async function exec(base44, s, action_type, payload = {}) {
   if (!await isEngineConfigured()) throw new Error("Browser engine not configured");
-  return enginePost("/sessions/" + s.session_id + "/execute", { action_type, ...payload });
+  return enginePost(
+    "/sessions/" + s.session_id + "/execute",
+    { action_type, ...payload },
+    undefined,
+    s.metadata?.engine_url || null
+  );
 }
 
 async function uploadScreenshot(base44, base64, name = "mcp_screenshot.png") {
@@ -164,13 +169,13 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       const session = await base44.asServiceRole.entities.Session.create({
         session_id: res.sessionId, status: "idle", project_id: keyRecord.project_id,
         started_at: new Date().toISOString(),
-        metadata: { worker_id: res.workerId, region: res.region },
+        metadata: { worker_id: res.workerId, region: res.region, engine_url: res.__engine_url || null },
       });
       return { session_id: session.id, runtime_session_id: res.sessionId, status: "idle" };
     }
     case "browser_end": {
       const s = await getSession(base44, keyRecord, p.session_id);
-      if (s.session_id) try { await engineDelete("/sessions/" + s.session_id); } catch (e) {}
+      if (s.session_id) try { await engineDelete("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); } catch (e) {}
       await base44.asServiceRole.entities.Session.update(p.session_id, { status: "ended", ended_at: new Date().toISOString() });
       return { success: true, session_id: p.session_id };
     }
@@ -244,11 +249,11 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "switch_tab": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "switch_tab", { value: String(p.tab_index) }); return { url: r.url }; }
 
     // ── Network / console ──
-    case "get_console": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { console: (r.consoleLogs || []).slice(-100) }; }
-    case "get_errors": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { errors: (r.consoleLogs || []).filter((l) => l.type === "error").slice(-50) }; }
+    case "get_console": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { console: (r.consoleLogs || []).slice(-100) }; }
+    case "get_errors": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { errors: (r.consoleLogs || []).filter((l) => l.type === "error").slice(-50) }; }
     case "get_network":
     case "get_requests":
-    case "get_responses": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { network: (r.networkLogs || []).slice(-100) }; }
+    case "get_responses": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { network: (r.networkLogs || []).slice(-100) }; }
 
     // ── Files ──
     case "download_file": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "download", { selector: p.selector }); return { path: r.path, filename: r.filename, size: r.size }; }

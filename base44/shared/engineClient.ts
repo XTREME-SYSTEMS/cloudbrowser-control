@@ -81,8 +81,17 @@ export async function getEngineKeyFingerprint() {
 // Generic authenticated fetch with multi-engine failover.
 // Tries each candidate URL in order; on network error or 5xx, falls through to the next.
 // L4 fix: forward x-request-id for trace propagation when provided
-export async function engineFetch(path, options = {}, requestId) {
+export async function engineFetch(path, options = {}, requestId, preferredBaseUrl = null) {
   const { urls, key } = await getEngineConfig();
+
+  // Session affinity: a runtime browser session is process-local to the engine
+  // that created it. Pin follow-up requests to that engine when supplied.
+  // Fail closed if persisted routing metadata is not in the configured allowlist.
+  const preferred = preferredBaseUrl ? preferredBaseUrl.replace(/\/$/, "") : null;
+  if (preferred && !urls.includes(preferred)) {
+    throw new Error("Preferred engine URL is not in the configured engine allowlist");
+  }
+  const candidateUrls = preferred ? [preferred] : urls;
   const baseHeaders = {
     "Content-Type": "application/json",
     "x-api-key": key,
@@ -91,7 +100,7 @@ export async function engineFetch(path, options = {}, requestId) {
   if (requestId) baseHeaders["x-request-id"] = requestId;
 
   const errors = [];
-  for (const baseUrl of urls) {
+  for (const baseUrl of candidateUrls) {
     try {
       const res = await fetch(`${baseUrl}${path}`, {
         ...options,
@@ -118,6 +127,11 @@ export async function engineFetch(path, options = {}, requestId) {
         continue;
       }
 
+      // Preserve the exact engine that satisfied this request as non-public
+      // routing metadata. It will not serialize into normal API responses.
+      if (body && typeof body === "object" && !Array.isArray(body)) {
+        Object.defineProperty(body, "__engine_url", { value: baseUrl, enumerable: false });
+      }
       return body;
     } catch (err) {
       // Network error / fetch rejection — record and try next engine
@@ -128,14 +142,14 @@ export async function engineFetch(path, options = {}, requestId) {
   throw new Error(`All engines failed. Attempts: ${errors.join(" | ")}`);
 }
 
-export async function enginePost(path, payload, requestId) {
-  return engineFetch(path, { method: "POST", body: JSON.stringify(payload || {}) }, requestId);
+export async function enginePost(path, payload, requestId, preferredBaseUrl = null) {
+  return engineFetch(path, { method: "POST", body: JSON.stringify(payload || {}) }, requestId, preferredBaseUrl);
 }
 
-export async function engineDelete(path, requestId) {
-  return engineFetch(path, { method: "DELETE" }, requestId);
+export async function engineDelete(path, requestId, preferredBaseUrl = null) {
+  return engineFetch(path, { method: "DELETE" }, requestId, preferredBaseUrl);
 }
 
-export async function engineGet(path, requestId) {
-  return engineFetch(path, { method: "GET" }, requestId);
+export async function engineGet(path, requestId, preferredBaseUrl = null) {
+  return engineFetch(path, { method: "GET" }, requestId, preferredBaseUrl);
 }
