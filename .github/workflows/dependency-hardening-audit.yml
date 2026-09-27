@@ -93,9 +93,34 @@ jobs:
           echo "LOCKFILE_DIFF_BEGIN"
           git diff --no-index -- package-lock.before.json package-lock.json || true
           echo "LOCKFILE_DIFF_END"
-      - name: Upload simulated fixed lockfile
+      - name: Targeted adm-zip hardening simulation
+        shell: bash
+        run: |
+          npm install --package-lock-only --ignore-scripts adm-zip@0.6.1
+          npm audit fix --package-lock-only || true
+          npm ci --ignore-scripts
+          npm run build
+          npm run lint
+          npm run typecheck
+          npm audit --json > npm-audit-targeted.json || true
+          node <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('npm-audit-targeted.json','utf8'));
+          const rows = Object.entries(a.vulnerabilities || {}).map(([name,v]) => ({
+            name,
+            severity:v.severity,
+            isDirect:!!v.isDirect,
+            range:v.range,
+            fixAvailable:v.fixAvailable
+          }));
+          console.log('TARGETED_AFTER_METADATA=' + JSON.stringify(a.metadata || {}));
+          console.log('TARGETED_AFTER_VULNERABILITIES=' + JSON.stringify(rows));
+          NODE
+      - name: Upload targeted hardening candidate
         uses: actions/upload-artifact@v4
         with:
-          name: dependency-hardening-safe-lockfile
-          path: package-lock.json
+          name: dependency-hardening-targeted-candidate
+          path: |
+            package.json
+            package-lock.json
           if-no-files-found: error
