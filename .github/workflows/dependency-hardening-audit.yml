@@ -42,3 +42,23 @@ jobs:
           NODE
           echo "npm_audit_exit=$AUDIT_EXIT"
           exit 0
+      - name: Safe fix dry-run evidence
+        shell: bash
+        run: |
+          set +e
+          npm audit fix --package-lock-only --dry-run --json > npm-audit-fix-dry-run.json
+          FIX_EXIT=$?
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'npm-audit-fix-dry-run.json';
+          const raw = fs.existsSync(p) ? fs.readFileSync(p,'utf8') : '{}';
+          let a = {};
+          try { a = JSON.parse(raw); } catch {}
+          console.log('FIX_DRY_RUN_EXIT=' + process.env.FIX_EXIT);
+          console.log('FIX_DRY_RUN_ADDED=' + JSON.stringify(a.added || []));
+          console.log('FIX_DRY_RUN_REMOVED=' + JSON.stringify(a.removed || []));
+          console.log('FIX_DRY_RUN_CHANGED=' + JSON.stringify(a.changed || []));
+          console.log('FIX_DRY_RUN_METADATA=' + JSON.stringify(a.metadata || {}));
+          NODE
+          echo "fix_dry_run_exit=$FIX_EXIT"
+          exit 0
