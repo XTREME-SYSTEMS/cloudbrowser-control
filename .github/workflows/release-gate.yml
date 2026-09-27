@@ -1,19 +1,4 @@
-# CI/CD Release Gate — CloudBrowser Control V1
-#
-# COMMIT INSTRUCTIONS:
-#   This file is the EXACT content for .github/workflows/release-gate.yml
-#   The Base44 builder cannot write to .github/workflows/.
-#   Copy this file verbatim to .github/workflows/release-gate.yml in your repository
-#   and commit it to the default branch. GitHub Actions will execute it on the
-#   next push or pull_request.
-#
-#   cp ci/release-gate.yml .github/workflows/release-gate.yml
-#   git add .github/workflows/release-gate.yml
-#   git commit -m "ci: add release gate workflow"
-#   git push
-#
-#   Until this workflow exists at .github/workflows/release-gate.yml AND produces
-#   a green run, CI/CD remains PENDING and the release gate is NOT verified.
+# CI/CD Release Gate - CloudBrowser Control V1
 
 name: Release Gate
 
@@ -28,7 +13,7 @@ permissions:
 
 concurrency:
   group: release-gate-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
@@ -50,6 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: AutoComplete source contract tests
+        run: node --test tests/autocomplete-source-contract.test.mjs
 
       - name: Build
         run: npm run build
@@ -82,27 +70,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check for plaintext secrets in entity schemas
+      - name: Check for plaintext credential property keys in entity schemas
+        shell: bash
         run: |
-          if grep -r '"password"' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'; then
-            echo "FAIL: Plaintext password field found in entity schema"
-            grep -r '"password"' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'
+          set -euo pipefail
+          # Only an actual JSONC property key is prohibited. Enum values or descriptive
+          # text such as connection_mode="secret" must not create a false positive.
+          # Encrypted and boolean-presence fields remain allowed because their keys are
+          # password_encrypted/has_password, secret_encrypted/has_secret, etc.
+          if grep -rnE '^[[:space:]]*"(password|secret|cookies|storage_state)"[[:space:]]*:' base44/entities/ --include='*.jsonc'; then
+            echo "FAIL: Plaintext credential property key found in entity schema"
             exit 1
           fi
-          if grep -r '"secret"' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'; then
-            echo "FAIL: Plaintext secret field found in entity schema"
-            grep -r '"secret"' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'
-            exit 1
-          fi
-          if grep -r '"cookies"' base44/entities/ --include='*.jsonc' | grep -v 'cookies_encrypted' | grep -v 'has_cookies'; then
-            echo "FAIL: Plaintext cookies field found in entity schema"
-            exit 1
-          fi
-          if grep -r '"storage_state"' base44/entities/ --include='*.jsonc' | grep -v 'storage_state_encrypted' | grep -v 'has_storage_state'; then
-            echo "FAIL: Plaintext storage_state field found in entity schema"
-            exit 1
-          fi
-          echo "PASS: No plaintext credential fields in entity schemas"
+          echo "PASS: No plaintext password/secret/cookies/storage_state property keys in entity schemas"
 
       - name: Check for hardcoded API keys
         run: |
@@ -138,4 +118,4 @@ jobs:
     runs-on: ubuntu-latest
     needs: [code-quality, engine-syntax, security-audit]
     steps:
-      - run: echo "All required gates passed — release candidate verified"
+      - run: echo "All required gates passed - release candidate verified"

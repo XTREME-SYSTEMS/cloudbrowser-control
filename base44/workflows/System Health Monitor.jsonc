@@ -21,7 +21,7 @@
     "document": {
       "dsl": "1.0.0",
       "name": "system_health_monitor",
-      "version": "1.0",
+      "version": "1.1",
       "namespace": "base44"
     },
     "do": [
@@ -29,7 +29,7 @@
         "run_autocomplete_deep_check": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runAutoCompleteContinuousCycle",
+            "function_name": "runAutoCompleteGovernedCycle",
             "args": {
               "trigger": "health_30m",
               "force_deep": true
@@ -37,12 +37,12 @@
           },
           "then": "end",
           "x-base44": {
-            "title": "Run AutoComplete deep check",
-            "description": "Fallback deep validation through the canonical leased orchestrator"
+            "title": "Run governed AutoComplete deep check",
+            "description": "Deep validation followed by mandatory repair-integrity enforcement"
           }
         }
       }
     ]
   },
-  "description": "Every 30 minutes: invokes a deep AutoComplete validation through the canonical leased orchestrator. It no longer independently triggers production Railway healing."
+  "description": "Every 30 minutes: deep AutoComplete validation through the canonical governed wrapper. It does not independently trigger production Railway healing."
 }
