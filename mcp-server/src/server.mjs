@@ -3,6 +3,7 @@ import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import * as z from "zod/v4";
 import { bearerAuthorized } from "./auth.mjs";
+import { createOAuthManager, OAUTH_SCOPE } from "./oauth.mjs";
 import { EngineClient, EngineError } from "./engine-client.mjs";
 
 const PORT = Number(process.env.PORT || process.env.MCP_PORT || 3000);
@@ -13,6 +14,12 @@ const ENGINE_URL = process.env.BROWSER_ENGINE_URL || "";
 const ENGINE_KEY = process.env.ENGINE_API_KEY || "";
 const ALLOWED_ORIGINS = new Set((process.env.MCP_ALLOWED_ORIGINS || "").split(",").map(v => v.trim()).filter(Boolean));
 const ALLOWED_HOSTS = new Set((process.env.MCP_ALLOWED_HOSTS || "").split(",").map(v => v.trim().toLowerCase()).filter(Boolean));
+const oauth = createOAuthManager({
+  issuer: process.env.OAUTH_ISSUER_URL || "",
+  signingSeed: MCP_KEY,
+  setupUntil: process.env.OAUTH_SETUP_UNTIL || "",
+});
+const TOOL_AUTH_META = { securitySchemes: [{ type: "oauth2", scopes: [OAUTH_SCOPE] }] };
 const SENSITIVE_ENGINE_ACTIONS = new Set(["export_cookies", "save_state", "restore_state"]);
 
 if (MCP_KEY.length < 24) {
@@ -63,7 +70,7 @@ function buildMcpServer() {
 
   server.registerTool(
     "browser_health",
-    { description: "Check the canonical Cloud Browser engine health and runtime identity." },
+    { description: "Check the canonical Cloud Browser engine health and runtime identity.", _meta: TOOL_AUTH_META },
     async () => toolCall(async () => structuredResult(await newEngineClient().health()))
   );
 
@@ -71,6 +78,7 @@ function buildMcpServer() {
     "browser_start",
     {
       description: "Create a new isolated browser session. The returned session_id is the canonical handle for later calls.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({
         use_pool: z.boolean().optional(),
         record_video: z.boolean().optional(),
@@ -100,6 +108,7 @@ function buildMcpServer() {
     "browser_status",
     {
       description: "Read the current state, URL, title and recent runtime metadata for a browser session.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({ session_id: z.string().min(1) }),
     },
     async ({ session_id }) => toolCall(async () => structuredResult(await newEngineClient().status(session_id)))
@@ -109,6 +118,7 @@ function buildMcpServer() {
     "browser_navigate",
     {
       description: "Navigate an existing browser session to an http/https URL.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({
         session_id: z.string().min(1),
         url: z.string().url(),
@@ -132,6 +142,7 @@ function buildMcpServer() {
     "browser_observe",
     {
       description: "Observe an existing browser session without changing page state. Returns URL, title and bounded visible text.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({
         session_id: z.string().min(1),
         max_chars: z.number().int().positive().max(50000).default(20000),
@@ -156,6 +167,7 @@ function buildMcpServer() {
     "browser_execute",
     {
       description: "Execute one canonical browser-engine action on an existing session. Use for click, fill, press, wait, extraction, cookies, crawl, pagination and other supported engine actions.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({
         session_id: z.string().min(1),
         action_type: z.string().min(1),
@@ -181,6 +193,7 @@ function buildMcpServer() {
     "browser_extract",
     {
       description: "Extract text, HTML, an attribute, a table or JSON from the active page.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({
         session_id: z.string().min(1),
         mode: z.enum(["text", "html", "attribute", "table", "json"]),
@@ -208,6 +221,7 @@ function buildMcpServer() {
     "browser_screenshot",
     {
       description: "Capture the current browser viewport as PNG.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({ session_id: z.string().min(1) }),
     },
     async ({ session_id }) => toolCall(async () => {
@@ -226,6 +240,7 @@ function buildMcpServer() {
     "browser_keepalive",
     {
       description: "Extend an active browser session's idle lifetime.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({ session_id: z.string().min(1) }),
     },
     async ({ session_id }) => toolCall(async () => structuredResult(await newEngineClient().keepalive(session_id)))
@@ -235,6 +250,7 @@ function buildMcpServer() {
     "browser_end",
     {
       description: "Close a browser session. This operation is idempotent.",
+      _meta: TOOL_AUTH_META,
       inputSchema: z.object({ session_id: z.string().min(1) }),
     },
     async ({ session_id }) => toolCall(async () => structuredResult(await newEngineClient().end(session_id)))
@@ -249,6 +265,20 @@ const nodeMcpHandler = toNodeHandler(mcpHandler);
 function reject(res, status, body, headers = {}) {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers });
   res.end(JSON.stringify(body));
+}
+
+function sendHtml(res, status, body, headers = {}) {
+  res.writeHead(status, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", ...headers });
+  res.end(body);
+}
+
+async function readForm(req) {
+  let body = "";
+  for await (const chunk of req) {
+    body += chunk.toString("utf8");
+    if (body.length > 65536) throw new Error("Request body too large");
+  }
+  return new URLSearchParams(body);
 }
 
 function requestAllowed(req) {
@@ -266,6 +296,47 @@ const httpServer = createServer(async (req, res) => {
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("Cache-Control", "no-store");
 
+  if (url.pathname === "/.well-known/oauth-protected-resource" || url.pathname === "/.well-known/oauth-protected-resource/mcp") {
+    if (!oauth.configured) return reject(res, 404, { error: "OAuth not configured" });
+    return reject(res, 200, oauth.resourceMetadata());
+  }
+
+  if (url.pathname === "/.well-known/oauth-authorization-server") {
+    if (!oauth.configured) return reject(res, 404, { error: "OAuth not configured" });
+    return reject(res, 200, oauth.authorizationServerMetadata());
+  }
+
+  if (url.pathname === "/oauth/authorize") {
+    if (!oauth.configured) return reject(res, 404, { error: "OAuth not configured" });
+    if (req.method === "GET") {
+      const page = oauth.authorizationPage(url.searchParams);
+      return sendHtml(res, page.status, page.body);
+    }
+    if (req.method === "POST") {
+      try {
+        const approved = oauth.approveAuthorization(await readForm(req));
+        if (!approved.ok) return reject(res, approved.status, { error: approved.error });
+        res.writeHead(302, { location: approved.location, "cache-control": "no-store" });
+        return res.end();
+      } catch {
+        return reject(res, 400, { error: "invalid_request" });
+      }
+    }
+    return reject(res, 405, { error: "method_not_allowed" });
+  }
+
+  if (url.pathname === "/oauth/token") {
+    if (!oauth.configured) return reject(res, 404, { error: "OAuth not configured" });
+    if (req.method !== "POST") return reject(res, 405, { error: "method_not_allowed" });
+    try {
+      const issued = oauth.issueTokens(await readForm(req));
+      if (!issued.ok) return reject(res, issued.status, { error: issued.error });
+      return reject(res, 200, issued.body);
+    } catch {
+      return reject(res, 400, { error: "invalid_request" });
+    }
+  }
+
   if (url.pathname === "/healthz") {
     try {
       const engine = await newEngineClient().health();
@@ -279,6 +350,10 @@ const httpServer = createServer(async (req, res) => {
           version: engine?.engine_version || null,
           worker_id: engine?.worker_id || null,
         },
+        oauth: {
+          configured: oauth.configured,
+          setup_open: oauth.setupOpen(),
+        },
       });
     } catch (error) {
       return reject(res, 503, { ok: false, service: "xtreme-cloud-browser-mcp", engine: "unreachable", error: error.message });
@@ -290,12 +365,15 @@ const httpServer = createServer(async (req, res) => {
   const gate = requestAllowed(req);
   if (!gate.ok) return reject(res, gate.status, { error: gate.error });
 
-  if (!bearerAuthorized(req.headers.authorization, MCP_KEY)) {
+  if (!bearerAuthorized(req.headers.authorization, MCP_KEY) && !oauth.accessAuthorized(req.headers.authorization)) {
+    const challenge = oauth.configured
+      ? `Bearer resource_metadata="${oauth.issuer}/.well-known/oauth-protected-resource", scope="${OAUTH_SCOPE}"`
+      : 'Bearer realm="xtreme-cloud-browser-mcp"';
     return reject(
       res,
       401,
       { error: "Unauthorized" },
-      { "www-authenticate": 'Bearer realm="xtreme-cloud-browser-mcp"' }
+      { "www-authenticate": challenge }
     );
   }
 

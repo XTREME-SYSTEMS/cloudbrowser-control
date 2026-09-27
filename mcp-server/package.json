@@ -8,8 +8,8 @@
   },
   "scripts": {
     "start": "node src/server.mjs",
-    "check": "node --check src/server.mjs && node --check src/engine-client.mjs && node --check src/auth.mjs",
-    "test:unit": "node --test tests/auth.test.mjs tests/engine-client.test.mjs tests/protocol-contract.test.mjs",
+    "check": "node --check src/server.mjs && node --check src/engine-client.mjs && node --check src/auth.mjs && node --check src/oauth.mjs",
+    "test:unit": "node --test tests/auth.test.mjs tests/engine-client.test.mjs tests/protocol-contract.test.mjs tests/oauth.test.mjs",
     "test:protocol": "node tests/protocol-smoke.mjs",
     "test": "npm run check && npm run test:unit && npm run test:protocol"
   },
