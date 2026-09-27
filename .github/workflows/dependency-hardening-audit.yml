@@ -1,0 +1,44 @@
+name: Dependency Hardening Audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install lockfile dependencies
+        run: npm ci --ignore-scripts
+      - name: NPM audit evidence
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > npm-audit.json
+          AUDIT_EXIT=$?
+          node <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('npm-audit.json','utf8'));
+          const rows = Object.entries(a.vulnerabilities || {}).map(([name,v]) => ({
+            name,
+            severity: v.severity,
+            isDirect: !!v.isDirect,
+            range: v.range,
+            fixAvailable: v.fixAvailable
+          }));
+          const rank = {critical:5, high:4, moderate:3, low:2, info:1};
+          rows.sort((a,b)=>(rank[b.severity]||0)-(rank[a.severity]||0)||a.name.localeCompare(b.name));
+          console.log('AUDIT_METADATA=' + JSON.stringify(a.metadata || {}));
+          console.log('AUDIT_VULNERABILITIES=' + JSON.stringify(rows));
+          NODE
+          echo "npm_audit_exit=$AUDIT_EXIT"
+          exit 0
