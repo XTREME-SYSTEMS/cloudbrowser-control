@@ -65,3 +65,37 @@ jobs:
           NODE
           echo "fix_dry_run_exit=$FIX_EXIT"
           exit 0
+      - name: Safe lockfile remediation simulation
+        shell: bash
+        run: |
+          cp package-lock.json package-lock.before.json
+          set +e
+          npm audit fix --package-lock-only
+          SAFE_FIX_EXIT=$?
+          npm audit --json > npm-audit-after-safe-fix.json
+          AFTER_EXIT=$?
+          set -e
+          node <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('npm-audit-after-safe-fix.json','utf8'));
+          const rows = Object.entries(a.vulnerabilities || {}).map(([name,v]) => ({
+            name,
+            severity:v.severity,
+            isDirect:!!v.isDirect,
+            range:v.range,
+            fixAvailable:v.fixAvailable
+          }));
+          console.log('SAFE_FIX_AFTER_METADATA=' + JSON.stringify(a.metadata || {}));
+          console.log('SAFE_FIX_AFTER_VULNERABILITIES=' + JSON.stringify(rows));
+          NODE
+          echo "safe_fix_exit=$SAFE_FIX_EXIT"
+          echo "after_audit_exit=$AFTER_EXIT"
+          echo "LOCKFILE_DIFF_BEGIN"
+          git diff --no-index -- package-lock.before.json package-lock.json || true
+          echo "LOCKFILE_DIFF_END"
+      - name: Upload simulated fixed lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-hardening-safe-lockfile
+          path: package-lock.json
+          if-no-files-found: error
