@@ -46,19 +46,22 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm audit fix --package-lock-only --dry-run --json > npm-audit-fix-dry-run.json
+          npm audit fix --dry-run --json > npm-audit-fix-dry-run.json 2>&1
           FIX_EXIT=$?
           node <<'NODE'
           const fs = require('fs');
           const p = 'npm-audit-fix-dry-run.json';
-          const raw = fs.existsSync(p) ? fs.readFileSync(p,'utf8') : '{}';
-          let a = {};
+          const raw = fs.existsSync(p) ? fs.readFileSync(p,'utf8') : '';
+          let a = null;
           try { a = JSON.parse(raw); } catch {}
-          console.log('FIX_DRY_RUN_EXIT=' + process.env.FIX_EXIT);
-          console.log('FIX_DRY_RUN_ADDED=' + JSON.stringify(a.added || []));
-          console.log('FIX_DRY_RUN_REMOVED=' + JSON.stringify(a.removed || []));
-          console.log('FIX_DRY_RUN_CHANGED=' + JSON.stringify(a.changed || []));
-          console.log('FIX_DRY_RUN_METADATA=' + JSON.stringify(a.metadata || {}));
+          if (a) {
+            console.log('FIX_DRY_RUN_ADDED=' + JSON.stringify(a.added || []));
+            console.log('FIX_DRY_RUN_REMOVED=' + JSON.stringify(a.removed || []));
+            console.log('FIX_DRY_RUN_CHANGED=' + JSON.stringify(a.changed || []));
+            console.log('FIX_DRY_RUN_METADATA=' + JSON.stringify(a.metadata || {}));
+          } else {
+            console.log('FIX_DRY_RUN_RAW=' + raw.replace(/\n/g,' ').slice(0,16000));
+          }
           NODE
           echo "fix_dry_run_exit=$FIX_EXIT"
           exit 0
