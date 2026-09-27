@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   dependency-audit:
@@ -115,6 +115,11 @@ jobs:
           }));
           console.log('TARGETED_AFTER_METADATA=' + JSON.stringify(a.metadata || {}));
           console.log('TARGETED_AFTER_VULNERABILITIES=' + JSON.stringify(rows));
+          const counts = a.metadata?.vulnerabilities || {};
+          if ((counts.critical || 0) > 0 || (counts.high || 0) > 0) {
+            console.error('TARGETED_CANDIDATE_REJECTED: high/critical vulnerabilities remain');
+            process.exit(1);
+          }
           NODE
       - name: Upload targeted hardening candidate
         uses: actions/upload-artifact@v4
@@ -124,3 +129,32 @@ jobs:
             package.json
             package-lock.json
           if-no-files-found: error
+
+      - name: Publish validated dependency candidate to PR 29 branch
+        shell: bash
+        env:
+          TARGET_BRANCH: apex/persistent-cloud-browser-computer-use-20260926
+          EXPECTED_TARGET_SHA: 81138bdaddc6b685e4589c6b6f14cc33a1c24797
+        run: |
+          set -euo pipefail
+          cp package.json /tmp/hardened-package.json
+          cp package-lock.json /tmp/hardened-package-lock.json
+          ACTUAL_TARGET_SHA="$(git ls-remote origin "refs/heads/$TARGET_BRANCH" | awk '{print $1}')"
+          if [ "$ACTUAL_TARGET_SHA" != "$EXPECTED_TARGET_SHA" ]; then
+            echo "Target branch moved: expected $EXPECTED_TARGET_SHA, got $ACTUAL_TARGET_SHA"
+            exit 1
+          fi
+          git fetch origin "$TARGET_BRANCH"
+          git checkout -B "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
+          cp /tmp/hardened-package.json package.json
+          cp /tmp/hardened-package-lock.json package-lock.json
+          git add package.json package-lock.json
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No dependency candidate changes to publish"
+            exit 0
+          fi
+          git config user.name "Strategic Minds Dependency Validator"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "fix(deps): eliminate high and critical npm audit findings"
+          git push origin "HEAD:$TARGET_BRANCH"
