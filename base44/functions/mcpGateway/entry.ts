@@ -232,7 +232,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     }
     case "browser_end": {
       const s = await getSession(base44, keyRecord, p.session_id);
-      if (s.session_id) try { await engineDelete("/sessions/" + s.session_id); } catch (e) {}
+      if (s.session_id) try { await engineSessionDelete("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); } catch (e) {}
       await base44.asServiceRole.entities.Session.update(p.session_id, { status: "ended", ended_at: new Date().toISOString() });
       return { success: true, session_id: p.session_id };
     }
@@ -310,7 +310,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "get_errors": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineSessionGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { errors: (r.consoleLogs || []).filter((l) => l.type === "error").slice(-50) }; }
     case "get_network":
     case "get_requests":
-    case "get_responses": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { network: (r.networkLogs || []).slice(-100) }; }
+    case "get_responses": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineSessionGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { network: (r.networkLogs || []).slice(-100) }; }
 
     // ── Files ──
     case "download_file": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "download", { selector: p.selector }); return { path: r.path, filename: r.filename, size: r.size }; }
