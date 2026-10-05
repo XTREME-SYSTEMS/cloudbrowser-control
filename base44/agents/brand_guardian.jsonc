@@ -28,6 +28,14 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "generateContentAtScale",
+      "description": "Generate brand content assets at scale"
+    },
+    {
+      "function_name": "runAutonomousBrowserTask",
+      "description": "Run a browser task to audit brand presence"
     }
   ],
   "name": "brand_guardian"

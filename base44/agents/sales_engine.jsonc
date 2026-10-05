@@ -28,6 +28,18 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "runMarketingEngine",
+      "description": "Run sales/outreach marketing campaigns"
+    },
+    {
+      "function_name": "generateContentAtScale",
+      "description": "Generate outreach content at scale"
+    },
+    {
+      "function_name": "runAutonomousBrowserTask",
+      "description": "Run a browser task to research prospects"
     }
   ],
   "name": "sales_engine"

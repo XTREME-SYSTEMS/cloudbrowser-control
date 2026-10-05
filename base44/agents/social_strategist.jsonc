@@ -28,6 +28,18 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "runMarketingEngine",
+      "description": "Run social media marketing campaigns"
+    },
+    {
+      "function_name": "generateContentAtScale",
+      "description": "Generate content assets at scale"
+    },
+    {
+      "function_name": "runAutonomousBrowserTask",
+      "description": "Run a browser task to research competitor social profiles"
     }
   ],
   "name": "social_strategist"

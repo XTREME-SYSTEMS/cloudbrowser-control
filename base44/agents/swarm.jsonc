@@ -46,6 +46,18 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "runAutonomousSwarm",
+      "description": "Run the autonomous swarm for parallel task execution"
+    },
+    {
+      "function_name": "runBatchOperation",
+      "description": "Run a batch operation across multiple targets"
+    },
+    {
+      "function_name": "runAgentLoop",
+      "description": "Dispatch an autonomous agent task cycle"
     }
   ],
   "name": "swarm"

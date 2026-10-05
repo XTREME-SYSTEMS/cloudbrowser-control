@@ -55,6 +55,22 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "runBatchOperation",
+      "description": "Run a batch multi-site clone operation"
+    },
+    {
+      "function_name": "provisionCloneDeployment",
+      "description": "Provision a clone deployment to a new target"
+    },
+    {
+      "function_name": "runWebsiteBuilder",
+      "description": "Build and deploy a website for a new target"
+    },
+    {
+      "function_name": "runRepoGenerator",
+      "description": "Create a GitHub repository for a clone"
     }
   ],
   "name": "replicator"
