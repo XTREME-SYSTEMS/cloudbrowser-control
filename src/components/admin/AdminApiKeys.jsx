@@ -11,10 +11,10 @@ import { Plus, Copy, Check, Trash2, ShieldCheck, Crown, User, Wrench, Eye,
 } from "lucide-react";
 
 const ROLES = [
-  { id: "admin", label: "Admin", icon: Crown, color: "text-amber-600 bg-amber-100", desc: "Full system access — all functions, all entities" },
-  { id: "user", label: "User", icon: User, color: "text-blue-600 bg-blue-100", desc: "Standard user — sessions, jobs, scraping" },
-  { id: "service", label: "Service", icon: Wrench, color: "text-purple-600 bg-purple-100", desc: "Service account — automated integrations" },
-  { id: "vision_cortex", label: "Vision Cortex", icon: Eye, color: "text-emerald-600 bg-emerald-100", desc: "Autonomous operator — full bidirectional system control" },
+  { id: "admin", label: "Admin", icon: Crown, color: "text-[#ff8800] bg-[#ff8800]/10", desc: "Full system access — all functions, all entities" },
+  { id: "user", label: "User", icon: User, color: "text-blue-400 bg-blue-500/10", desc: "Standard user — sessions, jobs, scraping" },
+  { id: "service", label: "Service", icon: Wrench, color: "text-purple-400 bg-purple-500/10", desc: "Service account — automated integrations" },
+  { id: "vision_cortex", label: "Vision Cortex", icon: Eye, color: "text-emerald-400 bg-emerald-500/10", desc: "Autonomous operator — full bidirectional system control" },
 ];
 
 const FUNCTION_CATEGORIES = {
@@ -186,66 +186,60 @@ export default function AdminApiKeys() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading) return <div className="text-muted-foreground text-sm">Loading API keys…</div>;
-
-  const roleInfo = ROLES.find(r => r.id === newKey.role);
+  if (loading) return <div className="text-[#9ca3af] text-sm">Loading API keys…</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold">API Key Generator</h1>
-          <p className="text-muted-foreground text-sm mt-1">Generate keys with role-based access, function-level scopes, and external system labels.</p>
+          <h1 className="text-2xl font-heading font-bold text-[#e7e8e9]">API Key Generator</h1>
+          <p className="text-[#9ca3af] text-sm mt-1">Generate keys with role-based access, function-level scopes, and external system labels.</p>
         </div>
-        <Button onClick={() => setShowCreate(!showCreate)} className="bg-gold-gradient text-black">
+        <Button onClick={() => setShowCreate(!showCreate)} className="bg-[#ff8800] text-[#171514] hover:bg-[#ffa333]">
           <Plus className="w-4 h-4 mr-1" /> Generate Key
         </Button>
       </div>
 
-      {/* Generated key display */}
       {generatedKey && (
-        <Card className="border-amber-300 bg-amber-50/50">
+        <Card className="border-[#ff8800]/30 bg-[#ff8800]/5 xa-carbon">
           <CardContent className="pt-5">
             <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="w-5 h-5 text-amber-600" />
-              <h3 className="font-semibold text-sm">API Key Generated — Copy Now!</h3>
+              <ShieldCheck className="w-5 h-5 text-[#ff8800]" />
+              <h3 className="font-semibold text-sm text-[#e7e8e9]">API Key Generated — Copy Now!</h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">This is the only time the full key will be shown. Store it securely.</p>
+            <p className="text-xs text-[#9ca3af] mb-3">This is the only time the full key will be shown. Store it securely.</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 bg-black/5 rounded-md text-xs font-mono break-all">{generatedKey}</code>
-              <Button size="sm" variant="outline" onClick={copyKey}>
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <code className="flex-1 px-3 py-2 bg-[#121214] rounded-md text-xs font-mono break-all text-[#c8cbd0]">{generatedKey}</code>
+              <Button size="sm" variant="outline" onClick={copyKey} className="border-[#34363a] text-[#b5b8bc] hover:bg-white/5">
+                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <Button variant="ghost" size="sm" className="mt-2" onClick={() => setGeneratedKey(null)}>Dismiss</Button>
+            <Button variant="ghost" size="sm" className="mt-2 text-[#9ca3af] hover:bg-white/5" onClick={() => setGeneratedKey(null)}>Dismiss</Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Create form */}
       {showCreate && (
-        <Card>
+        <Card className="border-[#34363a] bg-[#191a1c] xa-carbon">
           <CardContent className="pt-5 space-y-5">
-            {/* Presets */}
             <div>
-              <Label className="mb-2 block">Quick Presets</Label>
+              <Label className="mb-2 block text-[#c0c1c3]">Quick Presets</Label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {PRESETS.map(preset => (
                   <button
                     key={preset.name}
                     onClick={() => applyPreset(preset)}
-                    className="text-left p-3 rounded-lg border border-border/50 hover:border-amber-300 hover:bg-amber-50/30 transition-colors"
+                    className="text-left p-3 rounded-md border border-[#34363a] hover:border-[#ff8800]/30 hover:bg-[#ff8800]/5 transition-colors"
                   >
-                    <div className="text-sm font-medium">{preset.name}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{preset.desc}</div>
+                    <div className="text-sm font-medium text-[#e7e8e9]">{preset.name}</div>
+                    <div className="text-xs text-[#9ca3af] mt-0.5">{preset.desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Role selector */}
             <div>
-              <Label className="mb-2 block">Role</Label>
+              <Label className="mb-2 block text-[#c0c1c3]">Role</Label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {ROLES.map(r => {
                   const Icon = r.icon;
@@ -254,55 +248,52 @@ export default function AdminApiKeys() {
                       key={r.id}
                       onClick={() => setNewKey(prev => ({ ...prev, role: r.id }))}
                       className={cn(
-                        "text-left p-3 rounded-lg border transition-colors",
-                        newKey.role === r.id ? "border-amber-400 bg-amber-50" : "border-border/50 hover:border-amber-300"
+                        "text-left p-3 rounded-md border transition-colors",
+                        newKey.role === r.id ? "border-[#ff8800] bg-[#ff8800]/10" : "border-[#34363a] hover:border-[#ff8800]/30"
                       )}
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", r.color)}>
+                        <div className={cn("w-7 h-7 rounded-md flex items-center justify-center", r.color)}>
                           <Icon className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-medium">{r.label}</span>
+                        <span className="text-sm font-medium text-[#e7e8e9]">{r.label}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">{r.desc}</div>
+                      <div className="text-xs text-[#9ca3af]">{r.desc}</div>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Name + Description */}
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Key Name</Label>
-                <Input placeholder="e.g. Vision Cortex Admin, Production API" value={newKey.name} onChange={e => setNewKey({ ...newKey, name: e.target.value })} />
+                <Label className="text-[#c0c1c3]">Key Name</Label>
+                <Input placeholder="e.g. Vision Cortex Admin, Production API" value={newKey.name} onChange={e => setNewKey({ ...newKey, name: e.target.value })} className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]" />
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
-                <Input placeholder="What this key is used for" value={newKey.description} onChange={e => setNewKey({ ...newKey, description: e.target.value })} />
+                <Label className="text-[#c0c1c3]">Description</Label>
+                <Input placeholder="What this key is used for" value={newKey.description} onChange={e => setNewKey({ ...newKey, description: e.target.value })} className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]" />
               </div>
             </div>
 
-            {/* External Label */}
             <div className="space-y-2">
-              <Label>External System Label</Label>
+              <Label className="text-[#c0c1c3]">External System Label</Label>
               <Input
                 placeholder="e.g. XTREME_SCRAPER_ADMIN_KEY — what this key is called in other systems"
                 value={newKey.external_label}
                 onChange={e => setNewKey({ ...newKey, external_label: e.target.value })}
+                className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]"
               />
-              <p className="text-xs text-muted-foreground">The label used when referencing this key in external systems, config files, or documentation.</p>
+              <p className="text-xs text-[#9ca3af]">The label used when referencing this key in external systems, config files, or documentation.</p>
             </div>
 
-            {/* Expiration */}
             <div className="space-y-2">
-              <Label>Expiration (days)</Label>
-              <Input type="number" value={newKey.expiresInDays} onChange={e => setNewKey({ ...newKey, expiresInDays: Number(e.target.value) })} />
+              <Label className="text-[#c0c1c3]">Expiration (days)</Label>
+              <Input type="number" value={newKey.expiresInDays} onChange={e => setNewKey({ ...newKey, expiresInDays: Number(e.target.value) })} className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9]" />
             </div>
 
-            {/* Scopes */}
             <div className="space-y-2">
-              <Label>Permission Scopes</Label>
+              <Label className="text-[#c0c1c3]">Permission Scopes</Label>
               <div className="flex flex-wrap gap-2">
                 {SCOPE_OPTIONS.map(scope => (
                   <button
@@ -311,8 +302,8 @@ export default function AdminApiKeys() {
                     className={cn(
                       "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                       newKey.scopes.includes(scope)
-                        ? "bg-amber-500 text-black border-amber-500"
-                        : "bg-transparent text-muted-foreground border-border hover:border-amber-300"
+                        ? "bg-[#ff8800] text-[#171514] border-[#ff8800]"
+                        : "bg-transparent text-[#9ca3af] border-[#34363a] hover:border-[#ff8800]/30"
                     )}
                   >
                     {scope}
@@ -321,20 +312,19 @@ export default function AdminApiKeys() {
               </div>
             </div>
 
-            {/* Function-level scopes */}
             <div className="space-y-2">
-              <Label>Allowed Backend Functions {newKey.allowed_functions.length > 0 && `(${newKey.allowed_functions.length} selected)`}</Label>
-              <p className="text-xs text-muted-foreground mb-2">Leave empty to allow all functions for this role. Select specific functions to restrict access.</p>
-              <div className="space-y-1 max-h-64 overflow-y-auto border border-border/50 rounded-lg p-3">
+              <Label className="text-[#c0c1c3]">Allowed Backend Functions {newKey.allowed_functions.length > 0 && `(${newKey.allowed_functions.length} selected)`}</Label>
+              <p className="text-xs text-[#9ca3af] mb-2">Leave empty to allow all functions for this role. Select specific functions to restrict access.</p>
+              <div className="space-y-1 max-h-64 overflow-y-auto border border-[#34363a] rounded-md p-3 bg-[#191a1c]">
                 {Object.entries(FUNCTION_CATEGORIES).map(([cat, fns]) => (
                   <div key={cat}>
                     <div className="flex items-center gap-2 py-1">
-                      <button onClick={() => toggleCategory(cat)} className="flex items-center gap-1 text-sm font-medium hover:text-amber-600">
+                      <button onClick={() => toggleCategory(cat)} className="flex items-center gap-1 text-sm font-medium text-[#c0c1c3] hover:text-[#ff8800]">
                         {expandedCats[cat] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         {cat}
                       </button>
-                      <span className="text-xs text-muted-foreground">({fns.length})</span>
-                      <button onClick={() => selectAllInCategory(cat, fns)} className="text-xs text-amber-600 hover:underline ml-2">
+                      <span className="text-xs text-[#777d83]">({fns.length})</span>
+                      <button onClick={() => selectAllInCategory(cat, fns)} className="text-xs text-[#ff8800] hover:underline ml-2">
                         {fns.every(fn => newKey.allowed_functions.includes(fn)) ? "Clear" : "Select all"}
                       </button>
                     </div>
@@ -347,8 +337,8 @@ export default function AdminApiKeys() {
                             className={cn(
                               "px-2 py-0.5 rounded text-xs font-mono border transition-colors",
                               newKey.allowed_functions.includes(fn)
-                                ? "bg-amber-100 text-amber-800 border-amber-300"
-                                : "bg-transparent text-muted-foreground border-border/50 hover:border-amber-300"
+                                ? "bg-[#ff8800]/10 text-[#ff8800] border-[#ff8800]/30"
+                                : "bg-transparent text-[#9ca3af] border-[#34363a] hover:border-[#ff8800]/30"
                             )}
                           >
                             {fn}
@@ -362,45 +352,44 @@ export default function AdminApiKeys() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleCreate} disabled={creating || !newKey.name.trim()} className="bg-gold-gradient text-black">
+              <Button onClick={handleCreate} disabled={creating || !newKey.name.trim()} className="bg-[#ff8800] text-[#171514] hover:bg-[#ffa333]">
                 {creating ? "Generating…" : "Generate Key"}
               </Button>
-              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setShowCreate(false)} className="border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">Cancel</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Key list */}
       <div className="grid gap-3">
         {keys.map(k => {
           const rInfo = ROLES.find(r => r.id === k.role) || ROLES[1];
           const Icon = rInfo.icon;
           return (
-            <Card key={k.id} className="border-border/50">
+            <Card key={k.id} className="border-[#34363a] bg-[#191a1c] xa-carbon">
               <CardContent className="pt-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", k.active === false ? "bg-muted" : rInfo.color)}>
-                    <Icon className={cn("w-5 h-5", k.active === false && "text-muted-foreground")} />
+                  <div className={cn("w-10 h-10 rounded-md flex items-center justify-center shrink-0", k.active === false ? "bg-[#34363a]" : rInfo.color)}>
+                    <Icon className={cn("w-5 h-5", k.active === false && "text-[#777d83]")} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{k.name}</span>
-                      <Badge variant="outline" className="text-xs capitalize">{k.role}</Badge>
+                      <span className="font-semibold text-sm text-[#e7e8e9]">{k.name}</span>
+                      <Badge variant="outline" className="text-xs capitalize border-[#414347] text-[#aeb1b4]">{k.role}</Badge>
                       {k.external_label && (
-                        <code className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">{k.external_label}</code>
+                        <code className="text-xs px-1.5 py-0.5 rounded bg-[#34363a] text-[#9ca3af] font-mono">{k.external_label}</code>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                    <div className="text-xs text-[#9ca3af] font-mono mt-0.5">
                       {k.key_prefix || "****"}…{k.active === false ? " (revoked)" : ""}
                     </div>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {(k.scopes || []).slice(0, 4).map(s => (
-                        <span key={s} className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{s}</span>
+                        <span key={s} className="text-xs px-1.5 py-0.5 rounded bg-[#34363a] text-[#9ca3af]">{s}</span>
                       ))}
-                      {(k.scopes || []).length > 4 && <span className="text-xs text-muted-foreground">+{(k.scopes || []).length - 4}</span>}
+                      {(k.scopes || []).length > 4 && <span className="text-xs text-[#777d83]">+{(k.scopes || []).length - 4}</span>}
                       {(k.allowed_functions || []).length > 0 && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">{k.allowed_functions.length} functions</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400">{k.allowed_functions.length} functions</span>
                       )}
                     </div>
                   </div>
@@ -410,8 +399,8 @@ export default function AdminApiKeys() {
                     <Badge variant="destructive" className="text-xs">Expired</Badge>
                   )}
                   {k.active !== false && (
-                    <Button size="sm" variant="ghost" onClick={() => handleRevoke(k.id)}>
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                    <Button size="sm" variant="ghost" onClick={() => handleRevoke(k.id)} className="text-[#9ca3af] hover:bg-white/5">
+                      <Trash2 className="w-4 h-4 text-red-400" />
                     </Button>
                   )}
                 </div>
@@ -420,7 +409,7 @@ export default function AdminApiKeys() {
           );
         })}
         {keys.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground text-sm">No API keys yet. Generate one to get started.</div>
+          <div className="text-center py-12 text-[#777d83] text-sm">No API keys yet. Generate one to get started.</div>
         )}
       </div>
     </div>
