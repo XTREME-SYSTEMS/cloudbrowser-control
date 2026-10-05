@@ -2,7 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { secrets } from 'base44:runtime';
 import { engineFetch, isEngineConfigured, setEngineClient } from '../../shared/engineClient.ts';
 import { sanitizeUrl } from '../../shared/urlValidator.ts';
-import { generateFingerprint } from '../../shared/fingerprintRandomizer.ts';
+import { generateFingerprint, buildStealthSessionConfig } from '../../shared/fingerprintRandomizer.ts';
+import { matchFingerprintToUA } from '../../shared/tlsFingerprint.ts';
+import { pickBestProxy, recordProxyResult } from '../../shared/manageProxyRotation.ts';
 import { generateTypingDelays, humanDelay } from '../../shared/humanBehavior.ts';
 import { withRetry } from '../../shared/resilience.ts';
 import { DEPLOYMENT_VERSION } from '../../shared/deploymentVersion.ts';
@@ -17,6 +19,7 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     setEngineClient(base44);
     const body = await req.json().catch(() => ({}));
+    let proxyPick = null;
 
     // Service-role dispatch (from runAgentLoop) OR user auth
     const expectedSecret = secrets.get('WORKER_SECRET');
@@ -44,16 +47,17 @@ export default async function(req) {
     const captureEvidence = goal.screenshot !== false;
     const timeoutMs = Math.min(goal.timeout_ms || 60000, 120000);
 
-    // Randomized fingerprint for shadow/stealth mode
+    // Randomized fingerprint for shadow/stealth mode — full spoofing + TLS match
     const fp = shadow ? generateFingerprint() : null;
-    const sessionConfig = {
-      viewport: fp?.viewport,
-      userAgent: fp?.userAgent,
-      locale: fp?.locale,
-      timezone: fp?.timezone,
-      geolocation: fp?.geolocation,
-      blockedResources: ['image', 'media', 'font'],
-    };
+    const tls = fp ? matchFingerprintToUA(fp.userAgent) : null;
+    const sessionConfig = fp ? buildStealthSessionConfig(fp) : { blockedResources: ['image', 'media', 'font'] };
+    if (tls) sessionConfig.tls = { ja3: tls.ja3_hash, ja4: tls.ja4, alpn: tls.alpn };
+
+    // Proxy rotation — pick best by geo + health if requested
+    if (goal.use_proxy || goal.geo) {
+      proxyPick = await pickBestProxy(base44, { geo: goal.geo, rotationGroup: goal.rotation_group, ipType: goal.ip_type, protocol: goal.protocol });
+      if (proxyPick) sessionConfig.proxy = proxyPick.config;
+    }
 
     const session = await withRetry(() => engineFetch('/sessions', {
       method: 'POST',
@@ -73,7 +77,7 @@ export default async function(req) {
     });
 
     try {
-      await withRetry(() => execStep({ action_type: 'navigate', value: urlCheck.sanitized, options: { timeout: timeoutMs } }), { retries: 1 });
+      await withRetry(() => execStep({ action_type: 'goto', value: urlCheck.sanitized, options: { timeout: timeoutMs } }), { retries: 1 });
       log.push({ step: 'navigate', url: urlCheck.sanitized });
 
       if (action === 'form_fill') {
@@ -93,7 +97,7 @@ export default async function(req) {
         const selectors = Array.isArray(goal.selectors) ? goal.selectors : [];
         const extracted = {};
         for (const sel of selectors) {
-          const res = await execStep({ action_type: 'extract', selector: sel });
+          const res = await execStep({ action_type: 'extract_text', selector: sel });
           extracted[sel] = res.data || res.text || null;
         }
         if (goal.schema) {
@@ -196,20 +200,24 @@ export default async function(req) {
       });
     } catch (e) {}
 
+    if (proxyPick) await recordProxyResult(base44, proxyPick.proxyId, true, 0).catch(() => {});
+
     return Response.json({
       ok: true,
       action,
       session_id: sessionId,
+      proxy_used: proxyPick ? proxyPick.meta : null,
       url: urlCheck.sanitized,
       result,
       captcha_solved: captchaSolved,
       captcha_attempts: captchaAttempts,
       evidence,
       log,
-      fingerprint: fp ? { viewport: fp.viewport, locale: fp.locale, timezone: fp.timezone } : null,
+      fingerprint: fp ? { screen: fp.screen, locale: fp.language, timezone: fp.timezone, tls_ja4: tls?.ja4, stealth: fp.stealth } : null,
       __v: DEPLOYMENT_VERSION,
     });
   } catch (error) {
+    if (proxyPick) await recordProxyResult(base44, proxyPick.proxyId, false, 0).catch(() => {});
     return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
   }
 }

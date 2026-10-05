@@ -137,6 +137,12 @@ export default async function(req) {
             const result = res.data || {};
             reportData = { type: 'Domain Purchase', domain: task.domain, ...result };
             return { purchase: result };
+          } else if (task.task_type === 'proxy_health_sweep') {
+            const res = await withRetry(() => base44.asServiceRole.functions.invoke('testProxyHealth', { worker_secret: body?.worker_secret }), { retries: 1 });
+            const result = res.data || {};
+            if (result.error) throw new Error(result.error);
+            reportData = { type: 'Proxy Health Sweep', ...result };
+            return { proxy_health: result };
           } else if (task.task_type === 'browser_task') {
             let goal = {}; try { goal = JSON.parse(task.description || '{}'); } catch (e) { goal = {}; }
             if (task.domain && !goal.url) goal.url = task.domain;
