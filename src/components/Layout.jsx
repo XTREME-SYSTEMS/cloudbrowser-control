@@ -176,7 +176,7 @@ function SidebarContent({ onLogout }) {
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-8 h-8 shrink-0" fittingType="fit" />
+          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png" alt="Xtreme Cloud Browser" className="w-8 h-8 shrink-0" fittingType="fit" />
           <span className="font-heading font-semibold text-sidebar-foreground">Xtreme Cloud Browser</span>
         </div>
       </div>
@@ -237,7 +237,7 @@ export default function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png" alt="Xtreme Cloud Browser" className="w-7 h-7 shrink-0" fittingType="fit" />
             <span className="font-heading font-semibold">Xtreme Cloud Browser</span>
           </div>
           <Link to="/xtreme-gpt" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
