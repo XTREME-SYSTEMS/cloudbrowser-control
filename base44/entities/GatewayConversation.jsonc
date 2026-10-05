@@ -1,0 +1,49 @@
+{
+  "name": "GatewayConversation",
+  "type": "object",
+  "properties": {
+    "agent_name": {
+      "type": "string",
+      "enum": [
+        "orchestrator",
+        "growth_operator",
+        "code_architect",
+        "social_strategist",
+        "sales_engine",
+        "brand_guardian",
+        "replicator",
+        "swarm"
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "vercel_ai_gateway"
+      ],
+      "default": "vercel_ai_gateway"
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 100
+    }
+  },
+  "required": [
+    "agent_name",
+    "provider",
+    "model"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

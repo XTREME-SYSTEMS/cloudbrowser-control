@@ -1,0 +1,88 @@
+{
+  "name": "GatewayMessage",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "request_key": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant"
+      ]
+    },
+    "content": {
+      "type": "string",
+      "maxLength": 32000
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "vercel_ai_gateway"
+      ],
+      "default": "vercel_ai_gateway"
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "tool_calls": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ]
+          },
+          "arguments_string": {
+            "type": "string",
+            "maxLength": 1500
+          },
+          "results": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ]
+      }
+    }
+  },
+  "required": [
+    "conversation_id",
+    "request_key",
+    "role",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "name": "BatchOperation",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "batch_size": {
+      "type": "number",
+      "default": 1
+    },
+    "template_spec": {
+      "type": "string"
+    },
+    "variables": {
+      "type": "string"
+    },
+    "deploy_targets": {
+      "type": "string"
+    },
+    "google_connect": {
+      "type": "boolean",
+      "default": true
+    },
+    "social_connect": {
+      "type": "boolean",
+      "default": true
+    },
+    "video_generate": {
+      "type": "boolean",
+      "default": false
+    },
+    "content_optimize": {
+      "type": "boolean",
+      "default": true
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "dispatching",
+        "running",
+        "blocked",
+        "complete",
+        "failed"
+      ],
+      "default": "queued"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0
+    },
+    "sites_built": {
+      "type": "number",
+      "default": 0
+    },
+    "sites_deployed": {
+      "type": "number",
+      "default": 0
+    },
+    "videos_generated": {
+      "type": "number",
+      "default": 0
+    },
+    "social_posts": {
+      "type": "number",
+      "default": 0
+    },
+    "task_count": {
+      "type": "number",
+      "default": 0
+    },
+    "sites_failed": {
+      "type": "number",
+      "default": 0
+    },
+    "blockers": {
+      "type": "string",
+      "maxLength": 5000
+    }
+  },
+  "required": [
+    "name",
+    "batch_size"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

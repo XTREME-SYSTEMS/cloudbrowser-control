@@ -1,0 +1,127 @@
+{
+  "name": "Domain",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string",
+      "title": "Domain",
+      "description": "Root domain e.g. benearme.com"
+    },
+    "canonical_url": {
+      "type": "string",
+      "title": "Canonical URL",
+      "description": "https production URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "onboarding",
+        "verifying",
+        "verified",
+        "active",
+        "issues",
+        "paused"
+      ],
+      "default": "onboarding",
+      "title": "Status"
+    },
+    "gsc_property": {
+      "type": "string",
+      "title": "Search Console Property",
+      "description": "sc-domain: or https:// property"
+    },
+    "ga4_property": {
+      "type": "string",
+      "title": "GA4 Property ID"
+    },
+    "gtm_container": {
+      "type": "string",
+      "title": "GTM Container ID"
+    },
+    "sitemap_url": {
+      "type": "string",
+      "title": "Sitemap URL"
+    },
+    "robots_status": {
+      "type": "string",
+      "title": "robots.txt status"
+    },
+    "competitors": {
+      "type": "string",
+      "title": "Competitors",
+      "description": "Comma-separated competitor domains"
+    },
+    "target_keywords": {
+      "type": "string",
+      "title": "Target Keywords",
+      "description": "Comma-separated"
+    },
+    "target_geo": {
+      "type": "string",
+      "title": "Target Geography"
+    },
+    "health_score": {
+      "type": "number",
+      "title": "Health Score",
+      "description": "0-100 autonomous health score"
+    },
+    "index_coverage": {
+      "type": "string",
+      "title": "Index Coverage Summary"
+    },
+    "last_audit": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Audit"
+    },
+    "next_action": {
+      "type": "string",
+      "title": "Next Scheduled Action"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "domain"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

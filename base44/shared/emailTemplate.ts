@@ -1,0 +1,32 @@
+export interface ReportData { type: string; domain?: string; healthScore?: number; sitemapOk?: boolean; urlCount?: number; robotsStatus?: string; domainStatus?: string; tasksCreated?: string[]; [key: string]: any; }
+
+const GOLD = '#FFEA00'; const GOLD_DEEP = '#CCBB00'; const BLACK = '#000000'; const TEXT = '#222222'; const TEXT_MUTED = '#555555'; const TEXT_LIGHT = '#888888'; const BORDER = '#E5E7EB'; const BG = '#F6F5F2'; const CARD = '#FFFFFF';
+
+function escapeHtml(s: any): string { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function scoreColor(score: number): string { if (score >= 80) return '#16a34a'; if (score >= 50) return '#E6D400'; return '#dc2626'; }
+
+function row(label: string, value: string): string {
+  return `<tr><td style="padding:10px 0;border-bottom:1px solid ${BORDER};font-size:14px;color:${TEXT_MUTED};">${label}</td><td style="padding:10px 0;border-bottom:1px solid ${BORDER};font-size:14px;color:${TEXT};font-weight:600;text-align:right;">${value}</td></tr>`;
+}
+
+function buildReportHtml(data: ReportData, recipient: string): string {
+  const domain = escapeHtml(data.domain || '—');
+  const score = data.healthScore;
+  const scoreBadge = score !== undefined ? `<div style="display:inline-block;margin-top:16px;padding:8px 16px;border-radius:9999px;background:${scoreColor(score)}1A;color:${scoreColor(score)};font-size:14px;font-weight:700;">Health Score: ${score}/100</div>` : '';
+  const detailRows: string[] = [];
+  if (data.sitemapOk !== undefined) detailRows.push(row('Sitemap', data.sitemapOk ? '✓ Verified' : '✗ Missing'));
+  if (data.urlCount !== undefined) detailRows.push(row('URLs in sitemap', String(data.urlCount)));
+  if (data.robotsStatus) detailRows.push(row('robots.txt', escapeHtml(data.robotsStatus)));
+  if (data.domainStatus) detailRows.push(row('Domain status', escapeHtml(data.domainStatus)));
+  const detailTable = detailRows.length ? `<table style="width:100%;border-collapse:collapse;margin-top:20px;">${detailRows.join('')}</table>` : '';
+  const tasksList = data.tasksCreated?.length ? `<p style="margin:20px 0 8px;color:${TEXT_MUTED};font-size:14px;">Follow-up tasks queued:</p><ul style="margin:0;padding-left:20px;color:${TEXT};font-size:14px;line-height:1.8;">${data.tasksCreated.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : '';
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:${BG};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:32px 16px;"><tr><td align="center"><table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:${CARD};border:1px solid ${BORDER};border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);"><tr><td style="padding:32px 40px 8px 40px;"><div style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#FFF7B3,${GOLD} 20%,#E6D400 45%,#FFEE33 65%,${GOLD} 80%,${GOLD_DEEP});box-shadow:inset 0 1px #fff6,inset 0 -1px #8c6e0040;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span><span style="font-size:18px;font-weight:900;color:${BLACK};letter-spacing:-0.02em;">XTREME</span></div></td></tr><tr><td style="padding:16px 40px 0 40px;"><h1 style="margin:0;font-size:24px;line-height:1.3;font-weight:800;color:${TEXT};">${escapeHtml(data.type)} — ${domain}</h1>${scoreBadge}</td></tr><tr><td style="padding:24px 40px 0 40px;"><p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:${TEXT};">Hi there,</p><p style="margin:0;font-size:15px;line-height:1.6;color:${TEXT_MUTED};">The autonomous Growth Operator just completed an ${escapeHtml(data.type).toLowerCase()} for <strong style="color:${TEXT};">${domain}</strong>. Here's what it found:</p>${detailTable}${tasksList}</td></tr><tr><td style="padding:28px 40px 8px 40px;"><a href="https://cloud-browser.base44.app/mission-control" style="display:inline-block;padding:12px 24px;border-radius:12px;background:linear-gradient(135deg,#FFF7B3,${GOLD} 20%,#E6D400 45%,#FFEE33 65%,${GOLD} 80%,${GOLD_DEEP});color:${BLACK};font-size:14px;font-weight:700;text-decoration:none;box-shadow:inset 0 1px #fff6,inset 0 -1px #8c6e0040,0 1px 3px rgba(0,0,0,0.15);">View Mission Control &nbsp;→</a></td></tr><tr><td style="padding:24px 40px 32px 40px;border-top:1px solid ${BORDER};"><p style="margin:0;font-size:12px;line-height:1.6;color:${TEXT_LIGHT};">This report was generated and sent autonomously by the Xtreme Domain Operator. No human pressed a button — the loop observed, decided, acted, and recorded.</p><p style="margin:8px 0 0;font-size:12px;line-height:1.6;color:${TEXT_LIGHT};">This email was sent to <a href="mailto:${escapeHtml(recipient)}" style="color:#1A73E8;text-decoration:none;">${escapeHtml(recipient)}</a> because autonomous email reporting is enabled.</p></td></tr></table></td></tr></table></body></html>`;
+}
+
+function buildReportText(data: ReportData, recipient: string): string {
+  return [`XTREME DOMAIN OPERATOR — ${data.type}`, `Domain: ${data.domain || '—'}`, data.healthScore !== undefined ? `Health Score: ${data.healthScore}/100` : '', data.sitemapOk !== undefined ? `Sitemap: ${data.sitemapOk ? 'Verified' : 'Missing'}` : '', data.urlCount !== undefined ? `URLs in sitemap: ${data.urlCount}` : '', data.robotsStatus ? `robots.txt: ${data.robotsStatus}` : '', data.domainStatus ? `Domain status: ${data.domainStatus}` : '', '', 'View Mission Control: https://cloud-browser.base44.app/mission-control', '', 'This report was generated and sent autonomously by the Xtreme Domain Operator.', `This email was sent to ${recipient} because autonomous email reporting is enabled.`].filter(Boolean).join('\n');
+}
+
+export function buildReportEmail(data: ReportData, recipient: string) {
+  return { subject: `${data.type} — ${data.domain || 'system'}`, html: buildReportHtml(data, recipient), text: buildReportText(data, recipient) };
+}
