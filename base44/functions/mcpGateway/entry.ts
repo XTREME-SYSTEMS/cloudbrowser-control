@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
@@ -285,7 +286,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "extract_structured": {
       const s = await getSession(base44, keyRecord, p.session_id);
       const pageRes = await exec(base44, s, "ai_extract");
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: (p.prompt || "Extract the requested data from this page content. Never fabricate absent data.") + "\n\nPage content:\n" + pageRes.data,
         response_json_schema: p.schema || { type: "object", properties: { data: { type: "string" } } },
       });
@@ -415,7 +416,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       const sr = await exec(base44, s, "screenshot", { options: { fullPage: p.full_page !== false } });
       if (!sr.base64) throw new Error("Screenshot failed");
       const actualUrl = await uploadScreenshot(base44, sr.base64, "compare_actual.png");
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: "Compare the ACTUAL screenshot to the APPROVED reference image. Identify every material visual mismatch (layout, spacing, color, typography, copy, component order, missing/extra elements). Return structured JSON with mismatches array. Do not fabricate mismatches. If no material mismatch, return empty array.\n\nReference image URL: " + p.reference_url + "\nActual screenshot URL: " + actualUrl,
         file_urls: [p.reference_url, actualUrl],
         response_json_schema: { type: "object", properties: { mismatches: { type: "array", items: { type: "object", properties: { section: { type: "string" }, component: { type: "string" }, observed: { type: "string" }, expected: { type: "string" }, severity: { type: "string" }, action: { type: "string" } } } }, material_variance: { type: "boolean" } } },
@@ -432,7 +433,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "agent_execute": {
       const s = await getSession(base44, keyRecord, p.session_id);
       const obs = await exec(base44, s, "evaluate", { options: { fn: OBSERVE_SCRIPT } });
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: "You are a browser agent. GOAL: " + (p.goal || "") + "\nCurrent page: " + (obs.data?.url || "") + "\nVisible interactive elements (semantic): " + JSON.stringify((obs.data?.elements || []).slice(0, 40)) + "\nPropose ONE deterministic browser action to progress toward the goal. Return JSON with action_type (goto|click|type|fill|press|scroll|screenshot|extract|done), selector, value, and reasoning. If goal achieved, action_type=done.",
         response_json_schema: { type: "object", properties: { action_type: { type: "string" }, selector: { type: "string" }, value: { type: "string" }, reasoning: { type: "string" }, done: { type: "boolean" } } },
       });

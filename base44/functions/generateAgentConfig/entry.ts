@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -18,7 +19,7 @@ export default async function(req: Request): Promise<Response> {
       intelligence_data = null,
     } = body;
 
-    const llmResponse = await base44.integrations.Core.InvokeLLM({
+    const llmResponse = await invokeLLM({
       prompt: `You are an expert AI agent architect for CloudBrowser, a browser automation platform.
 
 Based on the user's onboarding answers and intelligence scan, generate a personalized AI agent configuration.

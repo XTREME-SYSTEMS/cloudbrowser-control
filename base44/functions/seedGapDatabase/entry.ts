@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { getSeedTemplate, extractSeedDataFromContent, type Industry } from "../../shared/gapIntelligence.ts";
 
@@ -51,7 +52,7 @@ export default async function (req: Request) {
 
     // If industry not set, use LLM to detect it from the HTML
     if (industry === "generic" && htmlContent.length > 100) {
-      const industryResult = await base44.integrations.Core.InvokeLLM({
+      const industryResult = await invokeLLM({
         prompt: `Analyze this HTML content and determine the industry of the website. 
 Return only one of these exact values: ecommerce, real_estate, job_board, saas, social, news, education, healthcare, finance, directory, generic
 

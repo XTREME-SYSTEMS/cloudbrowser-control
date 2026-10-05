@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Dream Factory — Discovery Generator
 // Uses web search (Gemini) to automatically find trends, problems, niches,
@@ -141,7 +142,7 @@ export default async function(req: any) {
   try {
     const prompt = promptFn(count, niche);
 
-    const result: any = await base44.integrations.Core.InvokeLLM({
+    const result: any = await invokeLLM({
       prompt,
       add_context_from_internet: true,
       model: "gemini_3_flash",

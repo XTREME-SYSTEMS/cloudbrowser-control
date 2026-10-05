@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 const SCORING_VERSION = "1.0.0";
 const MAX_SOURCES_PER_RUN = 12;
@@ -150,7 +151,7 @@ export default async function(req) {
         if (!changed || !prior.length) continue;
         changedSources++;
 
-        const analysis = await base44.integrations.Core.InvokeLLM({
+        const analysis = await invokeLLM({
           prompt: `You are analyzing a changed public or permissioned source for early economic signals. Never invent facts. Separate evidence from inference. Identify at most 3 economically meaningful event candidates involving capital movement, AI/data-center/power/industrial infrastructure, government money, M&A, distress, forced transactions, private capital, or commercial real estate.\n\nSOURCE NAME: ${source.source_name}\nSOURCE CATEGORY: ${source.category}\nSOURCE AUTHORITY SCORE: ${source.authority_score || 50}\nSOURCE URL: ${source.url}\n\nCHANGED CONTENT:\n${text.slice(0, 60000)}`,
           response_json_schema: {
             type: "object",

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // ═══════════════════════════════════════════════
@@ -158,7 +159,7 @@ async function processEnhancement(base44, enh, requestId) {
 
 // ── LLM: generate an implementation plan ──
 async function generatePlan(base44, enh) {
-  const res = await base44.integrations.Core.InvokeLLM({
+  const res = await invokeLLM({
     prompt:
       "You are the Fortress Engineer for a self-hosted browser automation platform (Cloud Browser). " +
       "Generate a concrete, ordered implementation plan for this enhancement.\n\n" +
@@ -269,7 +270,7 @@ async function runAudit(base44, enh) {
 
 // ── Auto-fix: LLM proposes a corrective action ──
 async function autoFix(base44, enh, audit) {
-  const res = await base44.integrations.Core.InvokeLLM({
+  const res = await invokeLLM({
     prompt:
       "An audit failed for this Cloud Browser enhancement. Propose ONE concrete corrective action.\n\n" +
       "Title: " + enh.title + "\n" +
@@ -286,7 +287,7 @@ async function autoFix(base44, enh, audit) {
 
 // ── Optimize: LLM proposes an optimization ──
 async function optimize(base44, enh) {
-  const res = await base44.integrations.Core.InvokeLLM({
+  const res = await invokeLLM({
     prompt:
       "This Cloud Browser enhancement passed audit. Propose ONE optimization to make it best-in-class.\n\n" +
       "Title: " + enh.title + "\n" +

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 /**
  * Self-Healing Loop — Autonomous Architecture Repair Pipeline
@@ -256,7 +257,7 @@ export default async function (req: Request): Promise<Response> {
  */
 async function auditRootCause(base44: any, flag: any): Promise<{ cause: string; confidence: number }> {
   try {
-    const llmRaw = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const llmRaw = await invokeLLM({
       prompt: `You are an audit agent analyzing a system failure. Identify the root cause.
 
 Error: ${flag.error_message}

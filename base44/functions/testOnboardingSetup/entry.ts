@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -15,7 +16,7 @@ export default async function(req: Request): Promise<Response> {
     } = body;
 
     // Simulate a test run using LLM — describes what the agent would do on the target site
-    const llmResponse = await base44.integrations.Core.InvokeLLM({
+    const llmResponse = await invokeLLM({
       prompt: `You are simulating a test run of a CloudBrowser AI agent. Do NOT actually browse the web — instead, predict what the agent would find and do based on your knowledge.
 
 Target URL: ${target_url}

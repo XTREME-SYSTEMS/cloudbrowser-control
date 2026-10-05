@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { engineFetch, setEngineClient } from "../../shared/engineClient.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 // LLM Vision CAPTCHA Solver — uses Claude Sonnet 4.6 vision to solve CAPTCHAs
@@ -40,7 +41,7 @@ export default async function(req) {
     }
 
     // Call LLM with vision to analyze the CAPTCHA
-    const llmRes = await base44.integrations.Core.InvokeLLM({
+    const llmRes = await invokeLLM({
       model: "claude_sonnet_4_6",
       file_urls: [imageUrl],
       prompt: "Analyze this CAPTCHA challenge image. Identify the challenge type and provide the solution. For image grid challenges, return the labels/coordinates of correct selections. For slider challenges, return the drag distance. For text challenges, return the text. Return JSON with {solution, confidence, type}.",

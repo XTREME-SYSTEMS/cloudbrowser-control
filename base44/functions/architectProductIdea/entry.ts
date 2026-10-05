@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Universal System Generator: Takes a ProductIdea and produces a complete,
 // deterministic system architecture that can be built autonomously.
@@ -51,7 +52,7 @@ Output a complete architecture spec as JSON with:
 - estimated_build_time, estimated_complexity (1-10)
 - key_differentiators (array), monetization_flow, growth_mechanism, self_healing_plan`;
 
-    const archResult: any = await base44.integrations.Core.InvokeLLM({
+    const archResult: any = await invokeLLM({
       prompt: archPrompt,
       add_context_from_internet: true,
       model: "gemini_3_flash",

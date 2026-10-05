@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Content Engine: Generates content assets at scale — blogs, SEO articles,
 // social posts, video scripts, ad copy, email campaigns. Each piece is
@@ -49,7 +50,7 @@ FOR VIDEO SCRIPTS / SHORT VIDEOS: Hook in first 3 seconds, retention-optimized p
 
 Return JSON with "content" array, each item: title, body, target_keywords, seo_score (0-100), emotional_trigger, viral_potential_score (0-100), google_optimized (boolean)`;
 
-      const result: any = await base44.integrations.Core.InvokeLLM({
+      const result: any = await invokeLLM({
         prompt: contentPrompt,
         model: "gpt_5_4",
         response_json_schema: {

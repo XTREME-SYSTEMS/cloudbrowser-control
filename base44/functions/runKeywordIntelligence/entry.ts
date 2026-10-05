@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 const RESPONSE_SCHEMA = {
   "type": "object",
@@ -99,7 +100,7 @@ export default async function (req) {
   const label = topic || "General trending searches";
 
   try {
-    const llm = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    const llm = await invokeLLM({
       prompt: buildPrompt(topic),
       add_context_from_internet: true,
       response_json_schema: RESPONSE_SCHEMA,

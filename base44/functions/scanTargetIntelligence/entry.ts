@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -14,7 +15,7 @@ export default async function(req: Request): Promise<Response> {
     }
 
     // Use LLM with web search to gather intelligence about the target sites
-    const llmResponse = await base44.integrations.Core.InvokeLLM({
+    const llmResponse = await invokeLLM({
       prompt: `You are an expert web automation analyst. Analyze these target websites and their industry to build an intelligence profile for a browser automation platform.
 
 Target websites: ${target_urls.join(', ')}

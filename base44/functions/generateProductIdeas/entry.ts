@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Dream Factory — Idea Generator: Scans Google trends and online complaints
 // to generate product ideas that solve real problems people are searching for.
@@ -39,7 +40,7 @@ monetization_model, price_point_estimate, world_changing_potential (boolean),
 complaint_sources (array of {source, quote, url}), search_keywords (array),
 competitor_analysis (string)`;
 
-    const trendResult: any = await base44.integrations.Core.InvokeLLM({
+    const trendResult: any = await invokeLLM({
       prompt: trendPrompt,
       add_context_from_internet: true,
       model: "gemini_3_flash",

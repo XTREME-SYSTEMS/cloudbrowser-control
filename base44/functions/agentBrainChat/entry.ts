@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.46";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
@@ -119,7 +120,7 @@ export default async function (req) {
     // This gives the agent an immediate intelligent response while the Brain processes asynchronously
     let llmResponse = null;
     try {
-      const llmResult = await base44.integrations.Core.InvokeLLM({
+      const llmResult = await invokeLLM({
         prompt: `You are the Vision Cortex Brain (V-1), the strategic intelligence center for the Cloud Browser platform (V-2 Eyes).\n\nThe autonomous agent (V-2 Eyes) has sent you the following message:\n\nMessage Type: ${message_type || "agent_update"}\nMessage: ${message}\n\nContext: ${JSON.stringify(context || {})}\n\n${pendingCommands?.length ? `There are ${pendingCommands.length} pending Brain commands queued. The Brain is actively directing operations.` : "No pending Brain commands."}\n\nAs the Brain, provide a concise strategic response. Include:\n1. Acknowledgment of the message\n2. Strategic guidance or next steps\n3. Any priorities or directives for the agent\n\nKeep it actionable and concise (3-5 sentences).`,
         response_json_schema: {
           type: "object",

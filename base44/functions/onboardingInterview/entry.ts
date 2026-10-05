@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // AI-assisted onboarding interview for new projects.
 // Drives an ordered question sequence, then uses InvokeLLM to produce a
@@ -164,7 +165,7 @@ export default async function (req) {
     const action = body.action || "next";
 
     if (action === "finalize") {
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: `You are the provisioning brain for Cloud Browser, a hardened self-hosted browser-automation platform. A user just completed onboarding. Produce a concise, actionable provisioning plan tailored to their answers. Favor max capability, full hardening, and optimization. Answers: ${JSON.stringify(answers)}`,
         response_json_schema: {
           type: "object",

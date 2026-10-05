@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { stagingEngineFetch, isStagingEngineConfigured, requireIsolatedFortressTestEnvironment, STAGING_ENGINE_CONFIGURATION_REQUIRED } from "../../shared/stagingEngineClient.ts";
 import { calculateJobCost } from "../../shared/costCalculator.ts";
 import { logAudit } from "../../shared/auditLogger.ts";
@@ -129,7 +130,7 @@ export default async function (req) {
           }
         } else if (step.action_type === "ai_extract") {
           const engineRes = await stagingEngineFetch(`/sessions/${sessionId}/execute`, { method: "POST", body: JSON.stringify({ action_type: "ai_extract" }) });
-          const llmRes = await base44.integrations.Core.InvokeLLM({
+          const llmRes = await invokeLLM({
             prompt: `${step.options?.prompt || "Extract data from this page."}\n\nPage content:\n${engineRes.data}`,
             response_json_schema: step.options?.schema,
           });

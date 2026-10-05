@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Durable state-machine executor for Autonomous Workflows.
 // Pattern: ingest -> validate -> score -> act/draft -> observe -> receipt
@@ -220,7 +221,7 @@ Input: ${JSON.stringify(input).slice(0, 2000)}
 
 Return JSON: { "score": <0-100>, "reasoning": "<brief>", "action_recommendation": "<proceed|draft|skip>" }`;
 
-      const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt,
         response_json_schema: {
           type: 'object',
@@ -283,7 +284,7 @@ Input: ${JSON.stringify(input).slice(0, 2000)}
 
 Return JSON: { "action": "<execute|draft|observe_only>", "description": "<what to do>", "draft_output": "<if drafting>" }`;
 
-      const actRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const actRes = await invokeLLM({
         prompt: actPrompt,
         response_json_schema: {
           type: 'object',

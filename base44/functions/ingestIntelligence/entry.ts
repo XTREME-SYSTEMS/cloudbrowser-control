@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Vision Cortex Intelligence Ingestion
 // Takes seeded intelligence sources and uses Vision Cortex (LLM) to deeply analyze,
@@ -74,7 +75,7 @@ export default async function(req) {
       }));
 
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_SYSTEM_PROMPT}
 
 Analyze the following ${batch.length} intelligence sources from the Cloud Browser intelligence seed system. For EACH source, extract actionable intelligence and create artifacts.
@@ -185,7 +186,7 @@ Return as JSON: { "artifacts": [ { seed_id, artifact_type, title, content, sourc
     // Generate ingestion summary
     let summary = null;
     try {
-      const summaryRes = await base44.integrations.Core.InvokeLLM({
+      const summaryRes = await invokeLLM({
         prompt: `${VISION_CORTEX_SYSTEM_PROMPT}
 
 You just ingested ${allArtifacts.length} intelligence artifacts from ${seeds.length} sources for the Cloud Browser platform.

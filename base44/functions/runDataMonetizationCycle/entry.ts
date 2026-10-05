@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 // Autonomous Data Monetization Cycle
@@ -60,7 +61,7 @@ export default async function (req) {
       const existing = await base44.asServiceRole.entities.DataAsset.filter({ source_artifact_id: art.id }, "-created_date", 1);
       if (existing.length > 0) continue;
 
-      const scoreRes = await base44.integrations.Core.InvokeLLM({
+      const scoreRes = await invokeLLM({
         prompt: `You are a data monetization expert. Evaluate this intelligence artifact for its monetization potential as a sellable data asset.
 
 Artifact title: ${art.title}
@@ -142,7 +143,7 @@ Return JSON with:
       const brand = BRANDS[brandKey];
 
       // 3a. Discover prospect companies via web search
-      const prospectRes = await base44.integrations.Core.InvokeLLM({
+      const prospectRes = await invokeLLM({
         prompt: `You are a B2B lead generation researcher. For this data asset, find 5 real companies that would be ideal buyers.
 
 Data asset: ${asset.title}
@@ -231,7 +232,7 @@ Return an array of 5 prospects. Only include real, findable companies.`,
       const topBudget = Math.max(...prospects.map(p => p.estimated_data_budget_usd || 0).filter(Boolean));
       const offerPrice = Math.round((topBudget > 0 ? topBudget * 0.4 : asset.estimated_value_usd || 500) / 10) * 10;
 
-      const templateRes = await base44.integrations.Core.InvokeLLM({
+      const templateRes = await invokeLLM({
         prompt: `You are an expert B2B cold outreach copywriter. Create a personalized email campaign for selling this data asset to the prospects found.
 
 Brand: ${brand.name} (${brand.email})

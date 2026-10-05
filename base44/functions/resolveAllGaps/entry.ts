@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { getResolutionPlan, generateGapCode, type GapType } from "../../shared/gapIntelligence.ts";
 import { findClosestFunctionalMatch } from "../../shared/cloneTemplates.ts";
@@ -152,7 +153,7 @@ export default async function (req: Request) {
 
             if (strategy === "scrape_similar" && !resolved) {
               // ── SCRAPE SIMILAR ──
-              const llmResult = await base44.integrations.Core.InvokeLLM({
+              const llmResult = await invokeLLM({
                 prompt: `Find 3 similar websites to ${project?.target_url} (industry: ${gap.industry_detected}) that have public "${gap.gap_type}" API patterns. Infer their API schema.
 
 Return JSON: { "similar_systems": [{ "url": "...", "inferred_schema": {}, "relevance": 0.9 }], "confidence": 75 }`,
@@ -197,7 +198,7 @@ Return JSON: { "similar_systems": [{ "url": "...", "inferred_schema": {}, "relev
 
             if (strategy === "infer_llm" && !resolved) {
               // ── LLM INFERENCE (last resort) ──
-              const llmResult = await base44.integrations.Core.InvokeLLM({
+              const llmResult = await invokeLLM({
                 prompt: `Generate a mock Express.js handler for an unclonable "${gap.gap_type}" endpoint.
 Endpoint: ${gap.inferred_method} ${gap.inferred_endpoint}
 Evidence: ${(gap.classification_evidence || []).join("; ")}

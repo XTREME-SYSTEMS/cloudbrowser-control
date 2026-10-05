@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Marketing Engine: Takes a product idea and creates a comprehensive marketing
 // campaign. Finds the exact target market, creates messaging strategy,
@@ -45,7 +46,7 @@ Return JSON: target_market (object), messaging_strategy (string), channels (arra
 follower_growth_strategy (string), digital_presence_actions (array of {action, target_url}),
 content_plan (array of {content_type, topic, platform, keywords}), projected_reach, projected_conversions, budget_allocation (object)`;
 
-    const marketResult: any = await base44.integrations.Core.InvokeLLM({
+    const marketResult: any = await invokeLLM({
       prompt: marketPrompt,
       add_context_from_internet: true,
       model: "gemini_3_flash",
@@ -88,7 +89,7 @@ content_plan (array of {content_type, topic, platform, keywords}), projected_rea
 
     for (const plan of contentPlan.slice(0, 10)) {
       try {
-        const contentResult: any = await base44.integrations.Core.InvokeLLM({
+        const contentResult: any = await invokeLLM({
           prompt: `Create a ${plan.content_type} about "${plan.topic}" for ${plan.platform}.
 Target keywords: ${(plan.keywords || []).join(", ")}
 Audience: ${idea.target_audience}

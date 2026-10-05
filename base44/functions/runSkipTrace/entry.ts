@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 /**
  * Skip Trace Engine — Multi-Method Owner & Contact Discovery
@@ -67,7 +68,7 @@ export default async function (req: Request): Promise<Response> {
     // === METHOD 1: Property Records Search ===
     if (property_address) {
       try {
-        const propRes: any = await base44.integrations.Core.InvokeLLM({
+        const propRes: any = await invokeLLM({
           model: SEARCH_MODEL,
           add_context_from_internet: true,
           prompt: `You are an expert skip tracer. Search public property records for this property address: "${property_address}".
@@ -124,7 +125,7 @@ Return ONLY data found in actual public records. If you cannot find records for 
       const phoneToSearch = phone || results.phone_numbers[0]?.number;
       if (phoneToSearch) {
         try {
-          const phoneRes: any = await base44.integrations.Core.InvokeLLM({
+          const phoneRes: any = await invokeLLM({
             model: SEARCH_MODEL,
             add_context_from_internet: true,
             prompt: `You are a skip tracing specialist. Perform a reverse phone lookup for: "${phoneToSearch}".
@@ -170,7 +171,7 @@ Search reverse phone directories, caller ID databases, and public records to fin
     // === METHOD 3: People Search ===
     if (searchName) {
       try {
-        const peopleRes: any = await base44.integrations.Core.InvokeLLM({
+        const peopleRes: any = await invokeLLM({
           model: SEARCH_MODEL,
           add_context_from_internet: true,
           prompt: `You are a skip tracing specialist. Find ALL contact information for "${searchName}"${property_address ? ` associated with address: "${property_address}"` : ""}.
@@ -256,7 +257,7 @@ Return ONLY data that appears in public directories or people search results. In
     // === METHOD 4: Social Media Deep Search ===
     if (searchName) {
       try {
-        const socialRes: any = await base44.integrations.Core.InvokeLLM({
+        const socialRes: any = await invokeLLM({
           model: SEARCH_MODEL,
           add_context_from_internet: true,
           prompt: `Search for "${searchName}"${property_address ? ` in ${property_address}` : ""} on ALL social media platforms.
@@ -313,7 +314,7 @@ Also look for any additional emails or phone numbers visible on their profiles.`
     // === METHOD 5: Email Search ===
     if (searchName) {
       try {
-        const emailRes: any = await base44.integrations.Core.InvokeLLM({
+        const emailRes: any = await invokeLLM({
           model: SEARCH_MODEL,
           add_context_from_internet: true,
           prompt: `Find ALL email addresses associated with "${searchName}"${property_address ? ` at "${property_address}"` : ""}.
@@ -360,7 +361,7 @@ For each email, rate your confidence and note the source.`,
     // === METHOD 6: Relatives & Associates Deep Search ===
     if (searchName) {
       try {
-        const relRes: any = await base44.integrations.Core.InvokeLLM({
+        const relRes: any = await invokeLLM({
           model: SEARCH_MODEL,
           add_context_from_internet: true,
           prompt: `Find all known relatives, associates, and business partners of "${searchName}"${property_address ? ` from "${property_address}"` : ""}.
@@ -422,7 +423,7 @@ These contacts can be used to reach the target person through alternative channe
     const bizName = company || (results.owner_name && /LLC|Inc|Corp|LLP|Ltd/i.test(results.owner_name) ? results.owner_name : "");
     if (bizName) {
       try {
-        const bizRes: any = await base44.integrations.Core.InvokeLLM({
+        const bizRes: any = await invokeLLM({
           model: SEARCH_MODEL,
           add_context_from_internet: true,
           prompt: `Search business records for "${bizName}"${property_address ? ` associated with "${property_address}"` : ""}.

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import {
   getResolutionPlan,
@@ -146,7 +147,7 @@ export default async function (req: Request) {
         if (strategy === "scrape_similar" && !resolved) {
           // ── STRATEGY 2: Scrape similar systems ──
           // Use LLM with web context to find similar sites and infer their API schemas
-          const llmResult = await base44.integrations.Core.InvokeLLM({
+          const llmResult = await invokeLLM({
             prompt: `You are analyzing a website clone project. The target site is ${project?.target_url} (industry: ${gap.industry_detected}).
 
 There is an unclonable backend gap of type "${gap.gap_type}" at endpoint "${gap.inferred_method} ${gap.inferred_endpoint}".
@@ -207,7 +208,7 @@ Return a JSON object with:
 
         if (strategy === "infer_llm" && !resolved) {
           // ── STRATEGY 4: LLM inference (last resort) ──
-          const llmResult = await base44.integrations.Core.InvokeLLM({
+          const llmResult = await invokeLLM({
             prompt: `You are a backend architect. A website clone has an unclonable gap:
 
 Gap type: ${gap.gap_type}

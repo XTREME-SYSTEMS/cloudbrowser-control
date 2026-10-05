@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { calculateJobCost } from "../../shared/costCalculator.ts";
 import { logAudit } from "../../shared/auditLogger.ts";
@@ -271,7 +272,7 @@ async function solveCaptchaWithVision(base44, sessionId, sessionEntity, jobId, s
     const uploadRes = await base44.integrations.Core.UploadFile({ file });
 
     // Call LLM with vision to solve the captcha
-    const llmRes = await base44.integrations.Core.InvokeLLM({
+    const llmRes = await invokeLLM({
       model: "claude_sonnet_4_6",
       file_urls: [uploadRes.file_url],
       prompt: "Analyze this CAPTCHA challenge image. Identify the challenge type and provide the solution. For image grid challenges, return the labels/coordinates of correct selections. For slider challenges, return the drag distance. Return JSON with {solution, confidence, type}.",
@@ -545,7 +546,7 @@ export default async function(req) {
             method: "POST",
             body: JSON.stringify({ action_type: "ai_extract" }),
           });
-          const llmRes = await base44.integrations.Core.InvokeLLM({
+          const llmRes = await invokeLLM({
             prompt: `${step.options?.prompt || "Extract data from this page."}\n\nPage content:\n${engineRes.data}`,
             response_json_schema: step.options?.schema,
           });

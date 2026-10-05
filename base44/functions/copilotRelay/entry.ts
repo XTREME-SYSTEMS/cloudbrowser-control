@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { hashKey } from '../../shared/crypto.ts';
 
 // Copilot Relay — bridges ChatGPT (via MCP) to the Copilot panel.
@@ -76,7 +77,7 @@ export default async function(req: Request): Promise<Response> {
       const conversationContext = history.map(m => `${m.role}: ${m.content}`).join('\n\n');
       const prompt = `${SYSTEM_PROMPT}\n\n--- Conversation history ---\n${conversationContext}\n\n--- New message from ChatGPT ---\n${message}\n\nRespond as the CloudBrowser Copilot. If the user wants to perform a browser action, describe what you would do and suggest using the browser_control tool.`;
 
-      const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt,
         model: 'gpt_5_4',
       });

@@ -25,8 +25,8 @@ function MessageBubble({ message }) {
   const readAloud = async () => {
     setLoadingAudio(true);
     try {
-      const res = await coreIntegrations.GenerateSpeech({ text: message.content, voice: "storm" });
-      setAudioUrl(res.url);
+      const res = await base44.functions.invoke("vercelAiGateway", { action: "generateSpeech", text: message.content, voice: "storm" });
+      setAudioUrl(res.data.url);
     } catch (err) { alert("Speech generation failed: " + err.message); }
     finally { setLoadingAudio(false); }
   };
@@ -209,8 +209,8 @@ export default function XtremeGPT() {
   const handleTranscribe = async (file, callback) => {
     try {
       const { file_url } = await coreIntegrations.UploadPublicFile({ file });
-      const res = await coreIntegrations.TranscribeAudio({ audio_url: file_url });
-      callback(typeof res === "string" ? res : (res?.text || ""));
+      const res = await base44.functions.invoke("vercelAiGateway", { action: "transcribeAudio", audio_url: file_url });
+      callback(res.data.text || "");
     } catch (e) { setError("Transcription failed: " + e.message); callback(""); }
   };
 

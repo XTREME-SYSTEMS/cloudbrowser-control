@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { waitUntil } from "base44:runtime";
 
 /**
@@ -150,7 +151,7 @@ export default async function (req: Request) {
             const project = await base44.entities.CloneProject.get(projectId);
             try {
               if (project.desktop_screenshot_url && deployedHtml) {
-                const visualResult = await base44.integrations.Core.InvokeLLM({
+                const visualResult = await invokeLLM({
                   prompt: `Compare this original screenshot of a website to the following HTML from the deployed clone. Score the visual parity from 0 to 100 (100 = pixel-perfect match). List specific issues that reduce parity.
 
 Original screenshot is provided as an image.

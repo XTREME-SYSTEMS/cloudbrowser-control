@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // ═══════════════════════════════════════════════
 // ASYNC BULK INTELLIGENCE INGESTION
@@ -123,7 +124,7 @@ export default async function(req) {
           rank: s.rank,
         }));
 
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_SYSTEM_PROMPT}
 
 Analyze the following ${chunk.length} intelligence sources from the Cloud Browser intelligence feed. For EACH source, extract actionable intelligence and create artifacts.

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -20,7 +21,7 @@ export default async function(req: Request): Promise<Response> {
     } = body;
 
     // Use LLM to generate intelligent account configuration from answers
-    const llmResponse = await base44.integrations.Core.InvokeLLM({
+    const llmResponse = await invokeLLM({
       prompt: `You are an expert at configuring a browser automation SaaS platform called CloudBrowser.
 Based on the user's onboarding answers, generate a personalized account configuration.
 

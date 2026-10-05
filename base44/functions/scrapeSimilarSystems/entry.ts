@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { buildSimilarSystemQueries, type GapType, type Industry } from "../../shared/gapIntelligence.ts";
 
@@ -38,7 +39,7 @@ export default async function (req: Request) {
     );
 
     // Use LLM with web context to find and analyze similar systems
-    const llmText = await base44.integrations.Core.InvokeLLM({
+    const llmText = await invokeLLM({
       prompt: `You are a web intelligence agent. I need you to find SIMILAR websites to ${project.target_url} (industry: ${(project as any).industry || "generic"}) that have observable API patterns for "${gap_type}" endpoints.
 
 Search queries to consider:

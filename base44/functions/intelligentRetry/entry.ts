@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Intelligent retry: analyzes a job error and recommends whether/how to retry.
 // Replaces dumb exponential backoff with context-aware strategy.
@@ -42,7 +43,7 @@ Return JSON:
   "reasoning": "brief explanation"
 }`;
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = await invokeLLM({
       prompt,
       response_json_schema: {
         type: 'object',

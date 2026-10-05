@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -257,7 +258,7 @@ export default async function (req: Request): Promise<Response> {
         errorPatterns: errorPatterns.slice(0, 5).map((e) => ({ pattern: e.pattern, count: e.occurrence_count })),
       });
 
-      const llmResponse = await base44.integrations.Core.InvokeLLM({
+      const llmResponse = await invokeLLM({
         prompt: `You are Vision Cortex, an autonomous system engineer for XTREME SCRAPER, a browser automation platform. Analyze the following system state and generate actionable code/system improvement suggestions. Focus on reliability, performance, and self-healing capabilities.\n\nSystem State:\n${systemContext}\n\nProvide 3-5 specific, actionable improvement suggestions with priority (P0/P1/P2), the affected component, and a brief implementation approach.`,
         response_json_schema: {
           type: "object",
