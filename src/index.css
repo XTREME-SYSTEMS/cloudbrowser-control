@@ -91,7 +91,44 @@
   }
 }
 
+@layer components {
+  .xa-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-black transition-all;
+    background: linear-gradient(135deg, #FFF7B3, #FFEA00 20%, #E6D400 45%, #FFEE33 65%, #FFEA00 80%, #CCBB00);
+    box-shadow: inset 0 1px #fff6, inset 0 -1px #8c6e0040, 0 1px 3px #00000026;
+  }
+  .xa-btn-primary:hover { filter: brightness(1.05); }
+  .xa-btn-primary:active { transform: translateY(1px); }
+  .xa-btn-primary:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .xa-btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-black/70 border border-[#E5E7EB] bg-white transition-all hover:border-[#FFEA00] hover:text-black;
+  }
+
+  .xa-card {
+    @apply bg-white rounded-2xl border border-[#E5E7EB] p-5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .xa-pill-badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide;
+    background: linear-gradient(135deg, #FFF7B3, #FFEA00 20%, #E6D400 45%, #FFEE33 65%, #FFEA00 80%, #CCBB00);
+    color: #000;
+  }
+
+  .xa-input {
+    @apply w-full px-4 py-3 rounded-xl border border-[#E5E7EB] bg-white text-sm text-black placeholder-black/30 transition-all;
+  }
+  .xa-input:focus { @apply outline-none border-[#FFEA00] ring-2 ring-[#FFEA00]/20; }
+  .xa-input:disabled { @apply opacity-60 cursor-not-allowed; }
+}
+
 @layer utilities {
+  .xa-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .xa-scroll::-webkit-scrollbar-track { background: transparent; }
+  .xa-scroll::-webkit-scrollbar-thumb { @apply bg-black/15 rounded-full; }
+  .xa-scroll::-webkit-scrollbar-thumb:hover { @apply bg-black/25; }
+
   .bg-gold-gradient {
     background: linear-gradient(135deg, #C49B00 0%, #FFD700 50%, #FFF82B 100%);
   }

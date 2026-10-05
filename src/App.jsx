@@ -51,6 +51,16 @@ import OperatorConsole from '@/pages/OperatorConsole';
 import AutonomousWorkflows from '@/pages/AutonomousWorkflows';
 import DreamFactory from '@/pages/DreamFactory';
 import XtremeGPT from '@/pages/XtremeGPT';
+import WebsiteFactory from '@/pages/WebsiteFactory';
+import MissionControl from '@/pages/MissionControl';
+import AgentCommandCenter from '@/pages/AgentCommandCenter';
+import AgentChatPage from '@/pages/AgentChatPage';
+import MetaArchitect from '@/pages/MetaArchitect';
+import SystemFactory from '@/pages/SystemFactory';
+import BatchOperations from '@/pages/BatchOperations';
+import DomainRegistry from '@/pages/DomainRegistry';
+import AutonomousMission from '@/pages/AutonomousMission';
+import AgentCommandCenterPage from '@/pages/AgentCommandCenter';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -116,6 +126,15 @@ const AuthenticatedApp = () => {
           <Route path="/autonomous-workflows" element={<AutonomousWorkflows />} />
           <Route path="/dream-factory" element={<DreamFactory />} />
           <Route path="/xtreme-gpt" element={<XtremeGPT />} />
+          <Route path="/website-factory" element={<WebsiteFactory />} />
+          <Route path="/mission-control" element={<MissionControl />} />
+          <Route path="/agents/:agentName" element={<AgentChatPage />} />
+          <Route path="/architect" element={<MetaArchitect />} />
+          <Route path="/factory" element={<SystemFactory />} />
+          <Route path="/batch" element={<BatchOperations />} />
+          <Route path="/domains" element={<DomainRegistry />} />
+          <Route path="/mission" element={<AutonomousMission />} />
+          <Route path="/command-center" element={<AgentCommandCenterPage />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />

@@ -39,6 +39,20 @@ const workflowSteps = [
   },
   {
     step: 2,
+    label: "Super Agents",
+    items: [
+      { to: "/command-center", label: "Command Center", icon: Sparkles },
+      { to: "/website-factory", label: "Website Factory", icon: Rocket },
+      { to: "/mission-control", label: "Mission Control", icon: Activity },
+      { to: "/architect", label: "Meta Architect", icon: Bot },
+      { to: "/factory", label: "System Factory", icon: Layers },
+      { to: "/batch", label: "Batch Operations", icon: Layers },
+      { to: "/domains", label: "Domain Registry", icon: Target },
+      { to: "/mission", label: "Autonomous Mission", icon: Radar },
+    ],
+  },
+  {
+    step: 2,
     label: "Discover",
     items: [
       { to: "/auto-recommender", label: "Recommender", icon: Compass },
