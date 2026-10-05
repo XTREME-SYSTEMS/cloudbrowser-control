@@ -1,0 +1,162 @@
+{
+  "name": "SandboxProject",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "supabase",
+        "railway",
+        "googledrive",
+        "github"
+      ],
+      "description": "Which infrastructure provider this sandbox lives in"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Name of the sandbox project within the provider"
+    },
+    "project_type": {
+      "type": "string",
+      "description": "Resource type: supabase_project, railway_service, drive_folder, github_repo"
+    },
+    "external_id": {
+      "type": "string",
+      "description": "ID assigned by the provider"
+    },
+    "external_url": {
+      "type": "string",
+      "description": "URL to view the sandbox in the provider dashboard"
+    },
+    "parent_build_id": {
+      "type": "string",
+      "description": "SystemBuild this sandbox belongs to"
+    },
+    "sandbox_config": {
+      "type": "object",
+      "description": "Provider-specific configuration (region, plan, visibility, etc.)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "creating",
+        "active",
+        "approved",
+        "promoted",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Lifecycle: pending \u2192 creating \u2192 active \u2192 approved \u2192 promoted"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "User ID who approved"
+    },
+    "promoted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "production_id": {
+      "type": "string",
+      "description": "ID of the production resource after promotion"
+    },
+    "production_url": {
+      "type": "string",
+      "description": "URL of the production resource after promotion"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain purchased and connected after promotion"
+    },
+    "compliance_report": {
+      "type": "object",
+      "description": "Google compliance checklist results from production promotion",
+      "properties": {
+        "gsc_submitted": {
+          "type": "boolean"
+        },
+        "sitemap_submitted": {
+          "type": "boolean"
+        },
+        "robots_txt": {
+          "type": "boolean"
+        },
+        "meta_tags": {
+          "type": "boolean"
+        },
+        "structured_data": {
+          "type": "boolean"
+        },
+        "canonical_urls": {
+          "type": "boolean"
+        },
+        "https_enforced": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "number"
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if creation or promotion failed"
+    }
+  },
+  "required": [
+    "provider",
+    "project_name",
+    "project_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
