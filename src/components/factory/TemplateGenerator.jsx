@@ -23,7 +23,7 @@ export default function TemplateGenerator({ onGenerated }) {
   return (
     <section className="xa-card p-5">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center"><FileCode className="w-5 h-5 text-muted-foreground" /></div>
+        <div className="w-9 h-9 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><FileCode className="w-5 h-5 text-[#8A7300]" /></div>
         <div>
           <h2 className="font-heading font-bold text-lg text-black">Auto Template Generator</h2>
           <p className="text-xs text-black/50">AI generates a full website template spec from your niche</p>
@@ -43,7 +43,7 @@ export default function TemplateGenerator({ onGenerated }) {
             <div className="space-y-1 max-h-48 overflow-y-auto xa-scroll text-xs">
               {Object.entries(template.template).map(([k, v]) => (
                 <div key={k} className="flex gap-2">
-                  <span className="font-bold text-foreground shrink-0">{k}:</span>
+                  <span className="font-bold text-[#CCBB00] shrink-0">{k}:</span>
                   <span className="text-black/60 truncate">{typeof v === "string" ? v.slice(0, 80) : JSON.stringify(v).slice(0, 80)}</span>
                 </div>
               ))}

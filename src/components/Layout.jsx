@@ -41,8 +41,6 @@ const workflowSteps = [
     step: 2,
     label: "Super Agents",
     items: [
-      { to: "/provisioning", label: "Provisioning", icon: ShieldCheck },
-      { to: "/sandbox-provisioning", label: "Sandbox → Prod", icon: Rocket },
       { to: "/command-center", label: "Command Center", icon: Sparkles },
       { to: "/website-factory", label: "Website Factory", icon: Rocket },
       { to: "/mission-control", label: "Mission Control", icon: Activity },
@@ -54,7 +52,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 3,
+    step: 2,
     label: "Discover",
     items: [
       { to: "/auto-recommender", label: "Recommender", icon: Compass },
@@ -62,14 +60,14 @@ const workflowSteps = [
     ],
   },
   {
-    step: 4,
+    step: 3,
     label: "Provision",
     items: [
       { to: "/sandboxes", label: "Sandboxes", icon: Server },
     ],
   },
   {
-    step: 5,
+    step: 4,
     label: "Build",
     items: [
       { to: "/agent-builder", label: "Build Agent", icon: Bot },
@@ -81,7 +79,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 6,
+    step: 5,
     label: "Automate",
     items: [
       { to: "/skip-tracing", label: "Skip Tracing", icon: Radar },
@@ -89,7 +87,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 7,
+    step: 6,
     label: "Execute",
     items: [
       { to: "/sessions", label: "Sessions", icon: Monitor },
@@ -97,7 +95,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 8,
+    step: 7,
     label: "Govern",
     items: [
       { to: "/architecture", label: "Architecture", icon: Building2 },
@@ -108,7 +106,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 9,
+    step: 8,
     label: "Account",
     items: [
       { to: "/team", label: "Team", icon: Users },
@@ -176,8 +174,8 @@ function SidebarContent({ onLogout }) {
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <Image src="https://media.base44.com/images/public/6a9342ffbeff8b7c5a7bff8a/7b63e08e9_generated_image.png" alt="Vision Cortex" className="w-8 h-8 shrink-0" fittingType="fit" />
-          <span className="font-heading font-semibold text-sidebar-foreground">Vision Cortex</span>
+          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-8 h-8 shrink-0" fittingType="fit" />
+          <span className="font-heading font-semibold text-sidebar-foreground">Xtreme Cloud Browser</span>
         </div>
       </div>
       <div className="px-4 pt-4">
@@ -237,8 +235,8 @@ export default function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <Image src="https://media.base44.com/images/public/6a9342ffbeff8b7c5a7bff8a/7b63e08e9_generated_image.png" alt="Vision Cortex" className="w-7 h-7 shrink-0" fittingType="fit" />
-            <span className="font-heading font-semibold">Vision Cortex</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <span className="font-heading font-semibold">Xtreme Cloud Browser</span>
           </div>
           <Link to="/xtreme-gpt" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <Bot className="w-5 h-5" />

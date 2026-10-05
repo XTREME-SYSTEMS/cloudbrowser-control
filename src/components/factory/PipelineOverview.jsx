@@ -2,10 +2,10 @@ import React from "react";
 import { Search, ShoppingCart, FileCode, Sparkles, Hammer, Rocket, Link2, ArrowRight } from "lucide-react";
 
 const STAGES = [
-  { icon: Search, label: "Discover", color: "hsl(var(--muted-foreground))" },
+  { icon: Search, label: "Discover", color: "#8A7300" },
   { icon: ShoppingCart, label: "Buy", color: "#2563EB" },
   { icon: FileCode, label: "Template", color: "#7C3AED" },
-  { icon: Sparkles, label: "Generate", color: "hsl(var(--foreground))" },
+  { icon: Sparkles, label: "Generate", color: "#CCBB00" },
   { icon: Hammer, label: "Build", color: "#EA580C" },
   { icon: Rocket, label: "Deploy", color: "#16A34A" },
   { icon: Link2, label: "Connect", color: "#DC2626" }

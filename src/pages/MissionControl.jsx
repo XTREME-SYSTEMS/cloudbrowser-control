@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, RefreshCw, Play, Activity, CheckCircle2, Clock, AlertTriangle, Zap } from "lucide-react";
 
 const STATUS_META = {
-  pending: { icon: Clock, color: "hsl(var(--muted-foreground))", bg: "hsl(var(--muted))", label: "Pending" },
+  pending: { icon: Clock, color: "#8A7300", bg: "#FFF7B3", label: "Pending" },
   in_progress: { icon: Activity, color: "#2563EB", bg: "#DBEAFE", label: "Running" },
   needs_approval: { icon: AlertTriangle, color: "#DC2626", bg: "#FEE2E2", label: "Approval" },
   completed: { icon: CheckCircle2, color: "#16A34A", bg: "#DCFCE7", label: "Done" },
@@ -64,7 +64,7 @@ export default function MissionControl() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Pending", value: counts.pending || 0, icon: Clock, color: "hsl(var(--muted-foreground))" },
+            { label: "Pending", value: counts.pending || 0, icon: Clock, color: "#8A7300" },
             { label: "Running", value: counts.in_progress || 0, icon: Activity, color: "#2563EB" },
             { label: "Completed", value: counts.completed || 0, icon: CheckCircle2, color: "#16A34A" },
             { label: "Failed", value: counts.failed || 0, icon: AlertTriangle, color: "#DC2626" }
@@ -83,7 +83,7 @@ export default function MissionControl() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="min-w-0">
               <h2 className="font-heading font-bold text-lg text-black flex items-center gap-2">
-                <Zap className="w-5 h-5 text-foreground" /> Agent Loop
+                <Zap className="w-5 h-5 text-[#CCBB00]" /> Agent Loop
               </h2>
               <p className="text-sm text-black/55 mt-1">Runs the full observe → decide → act → record → repeat cycle. Autonomous tasks execute and self-dispatch follow-ups.</p>
             </div>
@@ -97,7 +97,7 @@ export default function MissionControl() {
               <div className="flex flex-wrap gap-4 text-sm">
                 <div><span className="text-black/50">Cycles:</span> <span className="font-bold text-black">{loopResult.cycles_run}</span></div>
                 <div><span className="text-black/50">Actions:</span> <span className="font-bold text-black">{loopResult.actions_executed}</span></div>
-                <div><span className="text-black/50">Follow-ups:</span> <span className="font-bold text-foreground">{loopResult.followups_dispatched}</span></div>
+                <div><span className="text-black/50">Follow-ups:</span> <span className="font-bold text-[#CCBB00]">{loopResult.followups_dispatched}</span></div>
                 <div><span className="text-black/50">LLM:</span> <span className="font-bold text-black">{loopResult.llm_used ? "yes" : "no (deterministic)"}</span></div>
               </div>
               {loopResult.trace && loopResult.trace.length > 0 && (
@@ -106,7 +106,7 @@ export default function MissionControl() {
                   <div className="mt-2 space-y-1 max-h-48 overflow-y-auto xa-scroll">
                     {loopResult.trace.map((t, i) => (
                       <div key={i} className="text-xs font-mono text-black/60 flex gap-2">
-                        <span className="text-foreground shrink-0">{t.phase || t.stage}</span>
+                        <span className="text-[#CCBB00] shrink-0">{t.phase || t.stage}</span>
                         <span className="text-black/40 truncate">{JSON.stringify({...t, phase: undefined, stage: undefined, at: undefined})}</span>
                       </div>
                     ))}
@@ -127,7 +127,7 @@ export default function MissionControl() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-foreground" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div>
           ) : tasks.length === 0 ? (
             <div className="xa-card p-10 text-center">
               <Clock className="w-8 h-8 mx-auto text-black/20" />
@@ -146,7 +146,7 @@ export default function MissionControl() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-black text-sm">{t.title}</span>
-                        {t.autonomous && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">AUTO</span>}
+                        {t.autonomous && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFF7B3] text-[#8A7300]">AUTO</span>}
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.medium}`}>{t.priority}</span>
                       </div>
                       <div className="text-xs text-black/45 mt-0.5">
