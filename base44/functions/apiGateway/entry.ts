@@ -1,5 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { enginePost, engineDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { enginePost, engineDelete, engineSessionPost, engineSessionDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 // v5.0.0 — deployment refresh
 import {
@@ -68,7 +68,7 @@ export default async function (req) {
       return errorResponse(403, `Insufficient scope. Required: ${requiredScope}`, requestId);
     }
 
-    return await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, enginePost, engineDelete, isEngineConfigured);
+    return await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, enginePost, engineDelete, isEngineConfigured, engineSessionPost, engineSessionDelete);
   } catch (error) {
     return errorResponse(500, error.message, requestId);
   }
