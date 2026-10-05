@@ -118,6 +118,7 @@ export async function engineFetch(path, options = {}, requestId) {
         continue;
       }
 
+      if (body && typeof body === "object" && !Array.isArray(body)) body.__engine_url = baseUrl;
       return body;
     } catch (err) {
       // Network error / fetch rejection — record and try next engine
@@ -138,4 +139,86 @@ export async function engineDelete(path, requestId) {
 
 export async function engineGet(path, requestId) {
   return engineFetch(path, { method: "GET" }, requestId);
+}
+
+// Session-aware authenticated fetch.
+// A browser session belongs to one engine process. Never blindly move a known live
+// session to another engine on 5xx. For legacy sessions without stored affinity,
+// probe engines only until the engine that owns the session is found.
+export async function engineSessionFetch(path, options = {}, requestId, preferredUrl = null) {
+  const { urls, key } = await getEngineConfig();
+  const preferred = preferredUrl ? String(preferredUrl).replace(/\/$/, "") : null;
+  const candidates = preferred
+    ? [preferred, ...urls.filter((u) => u !== preferred)]
+    : urls;
+
+  const baseHeaders = {
+    "Content-Type": "application/json",
+    "x-api-key": key,
+    ...(options.headers || {}),
+  };
+  if (requestId) baseHeaders["x-request-id"] = requestId;
+
+  const errors = [];
+  for (const baseUrl of candidates) {
+    try {
+      const res = await fetch(`${baseUrl}${path}`, {
+        ...options,
+        headers: baseHeaders,
+      });
+      const text = await res.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = text; }
+
+      const errMsg = typeof body === "object" && body?.error
+        ? String(body.error)
+        : `Engine error ${res.status}`;
+
+      const sessionMissing = res.status === 404 && /session.*not found|not found/i.test(errMsg);
+      if (sessionMissing) {
+        errors.push(`${baseUrl}: 404 ${errMsg}`);
+        continue;
+      }
+
+      if (res.status >= 500) {
+        errors.push(`${baseUrl}: ${res.status} ${errMsg}`);
+        if (preferred && baseUrl === preferred) {
+          throw new Error(`Owning engine failed for session-bound request: ${baseUrl} returned ${res.status}`);
+        }
+        continue;
+      }
+
+      if (!res.ok) throw new Error(errMsg);
+
+      if (typeof body === "string" && (body.trim().startsWith("<!doctype") || body.trim().startsWith("<html"))) {
+        errors.push(`${baseUrl}: returned HTML, not engine API`);
+        if (preferred && baseUrl === preferred) {
+          throw new Error(`Owning engine returned non-API HTML: ${baseUrl}`);
+        }
+        continue;
+      }
+
+      if (body && typeof body === "object" && !Array.isArray(body)) body.__engine_url = baseUrl;
+      return body;
+    } catch (err) {
+      if (preferred && baseUrl === preferred && !/Session not found/i.test(String(err?.message || ""))) {
+        throw err;
+      }
+      errors.push(`${baseUrl}: ${err.message}`);
+    }
+  }
+
+  throw new Error(`Session unavailable across configured engines. Attempts: ${errors.join(" | ")}`);
+}
+
+export async function engineSessionPost(path, payload, requestId, preferredUrl = null) {
+  return engineSessionFetch(path, { method: "POST", body: JSON.stringify(payload || {}) }, requestId, preferredUrl);
+}
+
+export async function engineSessionGet(path, requestId, preferredUrl = null) {
+  return engineSessionFetch(path, { method: "GET" }, requestId, preferredUrl);
+}
+
+export async function engineSessionDelete(path, requestId, preferredUrl = null) {
+  return engineSessionFetch(path, { method: "DELETE" }, requestId, preferredUrl);
 }
