@@ -18,42 +18,36 @@ const features = [
 ];
 
 function Cell({ value }) {
-  if (value === true) return <Check className="w-4 h-4 text-emerald-400 mx-auto" />;
-  if (value === false) return <X className="w-4 h-4 text-white/20 mx-auto" />;
-  return <Minus className="w-4 h-4 text-white/30 mx-auto" />;
+  if (value === true) return <Check className="w-3.5 h-3.5 text-[#ff8800] mx-auto" />;
+  if (value === false) return <X className="w-3.5 h-3.5 text-[#555] mx-auto" />;
+  return <Minus className="w-3.5 h-3.5 text-[#555] mx-auto" />;
 }
 
 export default function ComparisonTable() {
   return (
-    <div className="rounded-2xl border border-white/10 overflow-hidden bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="grid grid-cols-5 gap-2 px-4 py-4 border-b border-white/10 bg-white/5">
-        <div className="text-xs font-semibold text-white/50 uppercase tracking-wider">Capability</div>
-        <div className="text-center">
-          <div className="text-sm font-bold text-gold-gradient">CloudBrowser</div>
-        </div>
-        <div className="text-center text-sm font-semibold text-white/60">Browserless</div>
-        <div className="text-center text-sm font-semibold text-white/60">Browserbase</div>
-        <div className="text-center text-sm font-semibold text-white/60">Bright Data</div>
-      </div>
-
-      {/* Rows */}
-      <div className="divide-y divide-white/5">
-        {features.map((f, i) => (
-          <div
-            key={f.label}
-            className={`grid grid-cols-5 gap-2 px-4 py-3 items-center ${i % 2 === 0 ? "bg-white/[0.02]" : ""}`}
-          >
-            <div className="text-sm text-white/80">{f.label}</div>
-            <div className="flex justify-center bg-amber-500/5 rounded-md py-1">
-              <Cell value={f.cb} />
-            </div>
-            <div className="flex justify-center"><Cell value={f.bl} /></div>
-            <div className="flex justify-center"><Cell value={f.bd} /></div>
-            <div className="flex justify-center"><Cell value={f.br} /></div>
-          </div>
-        ))}
-      </div>
+    <div className="xa-panel overflow-x-auto">
+      <table className="w-full border-collapse text-[10px] text-[#bfc2c5]">
+        <thead>
+          <tr>
+            <th className="text-left p-2 border-b border-[#36383b] text-[#ff8800] font-bold">Platform</th>
+            <th className="text-center p-2 border-b border-[#36383b] text-[#ff8800] font-bold">CloudBrowser</th>
+            <th className="text-center p-2 border-b border-[#36383b] text-[#ff8800] font-bold">Browserless</th>
+            <th className="text-center p-2 border-b border-[#36383b] text-[#ff8800] font-bold">Browserbase</th>
+            <th className="text-center p-2 border-b border-[#36383b] text-[#ff8800] font-bold">Bright Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {features.map((f) => (
+            <tr key={f.label}>
+              <td className="p-2 border-b border-[#36383b] text-[#bfc2c5]">{f.label}</td>
+              <td className="p-2 border-b border-[#36383b] text-center bg-[#ff8800]/5"><Cell value={f.cb} /></td>
+              <td className="p-2 border-b border-[#36383b] text-center"><Cell value={f.bl} /></td>
+              <td className="p-2 border-b border-[#36383b] text-center"><Cell value={f.bd} /></td>
+              <td className="p-2 border-b border-[#36383b] text-center"><Cell value={f.br} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -1,85 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 50 100% 50%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 50 100% 50%;
-    --chart-1: 12 76% 61%;
+    --background: 240 5% 7%;
+    --foreground: 210 5% 91%;
+    --card: 220 6% 10%;
+    --card-foreground: 210 5% 91%;
+    --popover: 240 5% 7%;
+    --popover-foreground: 210 5% 91%;
+    --primary: 32 100% 50%;
+    --primary-foreground: 20 7% 8%;
+    --secondary: 240 5% 11%;
+    --secondary-foreground: 210 5% 91%;
+    --muted: 240 5% 11%;
+    --muted-foreground: 217 11% 65%;
+    --accent: 240 5% 11%;
+    --accent-foreground: 210 5% 91%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 210 5% 91%;
+    --border: 240 4% 20%;
+    --input: 240 4% 20%;
+    --ring: 32 100% 50%;
+    --chart-1: 32 100% 50%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
-    --chart-4: 50 100% 50%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --font-heading: ui-sans-serif, system-ui, sans-serif;
-    --font-body: ui-sans-serif, system-ui, sans-serif;
-    --font-display: ui-sans-serif, system-ui, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 50 100% 50%;
+    --chart-4: 27 87% 67%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.375rem;
+    --font-heading: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-display: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 240 5% 7%;
+    --sidebar-foreground: 210 5% 91%;
+    --sidebar-primary: 32 100% 50%;
+    --sidebar-primary-foreground: 20 7% 8%;
+    --sidebar-accent: 240 5% 11%;
+    --sidebar-accent-foreground: 210 5% 91%;
+    --sidebar-border: 240 4% 20%;
+    --sidebar-ring: 32 100% 50%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 50 100% 50%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 50 100% 50%;
-    --chart-1: 220 70% 50%;
+    --background: 240 5% 7%;
+    --foreground: 210 5% 91%;
+    --card: 220 6% 10%;
+    --card-foreground: 210 5% 91%;
+    --popover: 240 5% 7%;
+    --popover-foreground: 210 5% 91%;
+    --primary: 32 100% 50%;
+    --primary-foreground: 20 7% 8%;
+    --secondary: 240 5% 11%;
+    --secondary-foreground: 210 5% 91%;
+    --muted: 240 5% 11%;
+    --muted-foreground: 217 11% 65%;
+    --accent: 240 5% 11%;
+    --accent-foreground: 210 5% 91%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 210 5% 91%;
+    --border: 240 4% 20%;
+    --input: 240 4% 20%;
+    --ring: 32 100% 50%;
+    --chart-1: 32 100% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
-    --chart-4: 50 100% 50%;
+    --chart-4: 27 87% 67%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 50 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 50 100% 50%;
+    --sidebar-background: 240 5% 7%;
+    --sidebar-foreground: 210 5% 91%;
+    --sidebar-primary: 32 100% 50%;
+    --sidebar-primary-foreground: 20 7% 8%;
+    --sidebar-accent: 240 5% 11%;
+    --sidebar-accent-foreground: 210 5% 91%;
+    --sidebar-border: 240 4% 20%;
+    --sidebar-ring: 32 100% 50%;
   }
 }
-
-
 
 @layer base {
   * {
@@ -93,34 +93,110 @@
 
 @layer components {
   .xa-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-black transition-all;
-    background: linear-gradient(135deg, #FFF7B3, #FFEA00 20%, #E6D400 45%, #FFEE33 65%, #FFEA00 80%, #CCBB00);
-    box-shadow: inset 0 1px #fff6, inset 0 -1px #8c6e0040, 0 1px 3px #00000026;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 11px 14px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #171514;
+    border: 1px solid #ff8800;
+    background: #ff8800;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    text-decoration: none;
   }
-  .xa-btn-primary:hover { filter: brightness(1.05); }
-  .xa-btn-primary:active { transform: translateY(1px); }
-  .xa-btn-primary:disabled { @apply opacity-50 cursor-not-allowed; }
+  .xa-btn-primary:hover { background: #ffa333; box-shadow: 0 0 16px rgba(255,136,0,0.27); }
+  .xa-btn-primary:active { background: #d76d00; }
+  .xa-btn-primary:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .xa-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .xa-btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-black/70 border border-[#E5E7EB] bg-white transition-all hover:border-[#FFEA00] hover:text-black;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 11px 14px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #eee;
+    border: 1px solid #666;
+    background: #17181a;
+    cursor: pointer;
+    transition: border-color 0.18s, color 0.18s;
+    text-decoration: none;
   }
+  .xa-btn-outline:hover { border-color: #ff8800; color: #fff; }
+
+  .xa-btn-dark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 11px 14px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+    border: 1px solid #171719;
+    background: #171719;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+    text-decoration: none;
+  }
+  .xa-btn-dark:hover { background: #000; border-color: #000; }
 
   .xa-card {
-    @apply bg-white rounded-2xl border border-[#E5E7EB] p-5;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    @apply rounded-[4px] border border-[#3c3f42] p-4;
+    background-color: #191a1c;
+    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 4px);
+    box-shadow: inset 0 1px rgba(255,255,255,0.04);
   }
 
   .xa-pill-badge {
     @apply inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide;
-    background: linear-gradient(135deg, #FFF7B3, #FFEA00 20%, #E6D400 45%, #FFEE33 65%, #FFEA00 80%, #CCBB00);
-    color: #000;
+    background: linear-gradient(135deg, #b95700, #ff8800 50%, #c96708);
+    color: #151413;
   }
 
   .xa-input {
-    @apply w-full px-4 py-3 rounded-xl border border-[#E5E7EB] bg-white text-sm text-black placeholder-black/30 transition-all;
+    @apply w-full px-4 py-3 rounded-xl border border-[#34363a] bg-[#191a1c] text-sm text-[#e7e8e9] placeholder-[#777d83];
   }
-  .xa-input:focus { @apply outline-none border-[#FFEA00] ring-2 ring-[#FFEA00]/20; }
+  .xa-input:focus { @apply outline-none border-[#ff8800] ring-2 ring-[#ff8800]/20; }
   .xa-input:disabled { @apply opacity-60 cursor-not-allowed; }
+
+  .xa-panel {
+    position: relative;
+    border: 1px solid #414347;
+    border-radius: 4px;
+    background-color: #191a1c;
+    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 4px), linear-gradient(#191a1c, #151618);
+    box-shadow: inset 0 1px rgba(255,255,255,0.04), 0 8px 18px rgba(0,0,0,0.2);
+    padding: 17px;
+  }
+  .xa-panel::before, .xa-panel::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #555;
+    z-index: 1;
+  }
+  .xa-panel::before { left: 8px; }
+  .xa-panel::after { right: 8px; }
+
+  .xa-smallcard {
+    border: 1px solid #34373a;
+    border-radius: 3px;
+    padding: 12px;
+    background-color: #191a1c;
+    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 4px);
+  }
 }
 
 @layer utilities {
@@ -130,13 +206,33 @@
   .xa-scroll::-webkit-scrollbar-thumb:hover { @apply bg-black/25; }
 
   .bg-gold-gradient {
-    background: linear-gradient(135deg, #C49B00 0%, #FFD700 50%, #FFF82B 100%);
+    background: linear-gradient(135deg, #b95700 0%, #ff8800 50%, #c96708 100%);
   }
   .text-gold-gradient {
-    background: linear-gradient(135deg, #C49B00 0%, #FFD700 50%, #FFF82B 100%);
+    background: linear-gradient(135deg, #b95700 0%, #ff8800 50%, #c96708 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
   }
+
+  .xa-gauge {
+    height: 4px;
+    margin: 8px auto;
+    background: linear-gradient(90deg, #ff8800 0 76%, #444 76%);
+    max-width: 100px;
+  }
+
+  .xa-scanlines {
+    background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px);
+  }
+
+  @keyframes xa-arrive {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .xa-arrive { animation: xa-arrive 0.8s cubic-bezier(0.2,0.7,0.2,1) both; }
+
+  @keyframes xa-pulse { 50% { opacity: 0.55; } }
+  .xa-pulse { animation: xa-pulse 2s ease-in-out infinite; }
 }
