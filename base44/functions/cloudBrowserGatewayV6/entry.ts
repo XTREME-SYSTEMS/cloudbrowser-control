@@ -1,5 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
-import { enginePost, engineDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { enginePost, engineDelete, engineSessionPost, engineSessionDelete, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import {
   hashKey, deriveClientIP, ipAllowed, checkRateLimit, matchRoute, ROUTE_SCOPES, dispatch
@@ -81,7 +81,7 @@ export default async function (req) {
           headers: { "content-type": "application/json", ...(quota.headers || {}) },
         });
       }
-      const dispatched = await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, enginePost, engineDelete, isEngineConfigured);
+      const dispatched = await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, enginePost, engineDelete, isEngineConfigured, engineSessionPost, engineSessionDelete);
       // Attach rate-limit headers to the success response
       if (quota.headers) {
         const body = await dispatched.text();
