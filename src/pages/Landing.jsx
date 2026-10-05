@@ -100,6 +100,7 @@ export default function Landing() {
             <a href="#use-cases" className="hover:text-foreground transition-colors">Use Cases</a>
             <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+            <Link to="/login" className="hover:text-foreground transition-colors">Admin</Link>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Sign in</Button></Link>

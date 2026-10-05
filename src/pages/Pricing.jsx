@@ -124,16 +124,16 @@ const plans = [
 
 const faqs = [
   {
-    q: "What does XTREME SCRAPER do?",
-    a: "XTREME SCRAPER is the complete platform to build and deploy agents that browse and interact with the web like humans. We provide browser infrastructure, fetch/search APIs, AI agent building, website cloning, and MCP integration — all from one platform.",
+    q: "What does Xtreme Cloud Browser do?",
+    a: "Xtreme Cloud Browser is the complete platform to build and deploy agents that browse and interact with the web like humans. We provide browser infrastructure, fetch/search APIs, AI agent building, website cloning, and MCP integration — all from one platform.",
   },
   {
-    q: "What kinds of use cases do companies use XTREME SCRAPER for?",
+    q: "What kinds of use cases do companies use Xtreme Cloud Browser for?",
     a: "Healthcare (insurance verification, claims processing), Financial Services (loan workflows, compliance), Real Estate (MLS sync, transaction automation), HR & Payroll (benefits, onboarding), and general business operations like data entry, migrations, and web scraping.",
   },
   {
     q: "Can I bring my own proxies?",
-    a: "Yes. XTREME SCRAPER supports custom proxy configurations including residential proxies for geo-specific automation, rotating proxy pools for large-scale operations, and custom proxy authentication.",
+    a: "Yes. Xtreme Cloud Browser supports custom proxy configurations including residential proxies for geo-specific automation, rotating proxy pools for large-scale operations, and custom proxy authentication.",
   },
   {
     q: "What automation frameworks are supported?",
@@ -183,9 +183,13 @@ export default function Pricing() {
       <nav className="border-b border-border/40 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/392c402b4_LOGO.png" alt="XTREME SCRAPER" className="w-9 h-9 shrink-0" fittingType="fit" />
-            <span className="font-heading font-bold text-lg">XTREME SCRAPER</span>
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-9 h-9 shrink-0" fittingType="fit" />
+            <span className="font-heading font-bold text-lg">Xtreme Cloud Browser</span>
           </Link>
+          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+            <Link to="/landing" className="hover:text-foreground transition-colors">Home</Link>
+            <Link to="/login" className="hover:text-foreground transition-colors">Admin</Link>
+          </div>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Sign in</Button></Link>
             <Link to="/register"><Button size="sm">Get started</Button></Link>
