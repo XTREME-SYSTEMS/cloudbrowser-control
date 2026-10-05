@@ -52,7 +52,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 2,
+    step: 3,
     label: "Discover",
     items: [
       { to: "/auto-recommender", label: "Recommender", icon: Compass },
@@ -60,14 +60,14 @@ const workflowSteps = [
     ],
   },
   {
-    step: 3,
+    step: 4,
     label: "Provision",
     items: [
       { to: "/sandboxes", label: "Sandboxes", icon: Server },
     ],
   },
   {
-    step: 4,
+    step: 5,
     label: "Build",
     items: [
       { to: "/agent-builder", label: "Build Agent", icon: Bot },
@@ -79,7 +79,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 5,
+    step: 6,
     label: "Automate",
     items: [
       { to: "/skip-tracing", label: "Skip Tracing", icon: Radar },
@@ -87,7 +87,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 6,
+    step: 7,
     label: "Execute",
     items: [
       { to: "/sessions", label: "Sessions", icon: Monitor },
@@ -95,7 +95,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 7,
+    step: 8,
     label: "Govern",
     items: [
       { to: "/architecture", label: "Architecture", icon: Building2 },
@@ -106,7 +106,7 @@ const workflowSteps = [
     ],
   },
   {
-    step: 8,
+    step: 9,
     label: "Account",
     items: [
       { to: "/team", label: "Team", icon: Users },
