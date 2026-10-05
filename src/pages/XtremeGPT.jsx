@@ -3,10 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { Plus, Trash2, Loader2, MessageSquare, Zap, Mic, Square, Volume2, Copy, Check, User, Bot, ArrowUp, PanelLeft, X, Sparkles } from "lucide-react";
 import { Image as ImgComponent } from "@/components/ui/image";
 
-const AGENT_NAME = "autonomous_agent";
-const agentsApi = /** @type {any} */ (base44).agents;
-const coreIntegrations = /** @type {any} */ (base44.integrations.Core);
-
 const SUGGESTIONS = [
   { icon: "🚀", text: "Generate product ideas from today's Google trends" },
   { icon: "🏗️", text: "Architect a SaaS app for a trending problem" },
@@ -19,8 +15,6 @@ function MessageBubble({ message }) {
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
-  const isImage = message.metadata?.type === "image" || !!message.image_url;
-  const imageUrl = message.metadata?.image_url || message.image_url;
 
   const readAloud = async () => {
     setLoadingAudio(true);
@@ -40,17 +34,10 @@ function MessageBubble({ message }) {
       </div>
       <div className={`flex flex-col gap-1 max-w-[75%] ${isUser ? "items-end" : "items-start"}`}>
         <div className={`rounded-2xl px-4 py-2.5 text-sm ${isUser ? "bg-blue-600 text-white" : "bg-neutral-100 text-neutral-800"}`}>
-          {isImage && imageUrl ? (
-            <div className="space-y-2">
-              <ImgComponent src={imageUrl} className="rounded-xl max-w-sm" fittingType="fit" />
-              {message.content && <p className="text-xs text-neutral-500 italic">{message.content}</p>}
-            </div>
-          ) : (
-            <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
-          )}
+          <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
         </div>
         {audioUrl && <audio controls src={audioUrl} className="w-full max-w-sm h-8" />}
-        {!isUser && !isImage && message.content && (
+        {!isUser && message.content && (
           <div className="flex items-center gap-1">
             <button onClick={readAloud} disabled={loadingAudio} className="text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1 px-2 py-1 rounded transition-colors">
               {loadingAudio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Volume2 className="w-3 h-3" />}
@@ -154,8 +141,31 @@ export default function XtremeGPT() {
 
   const fetchConversations = useCallback(async () => {
     try {
-      const list = await agentsApi.listConversations({ agent_name: AGENT_NAME });
-      setConversations(list || []);
+      const page = await base44.entities.CopilotMessage.filter(
+        { source: "ui" },
+        { sort: "-created_date", limit: 200, fields: ["conversation_id", "role", "content", "created_date"] }
+      );
+      const items = page?.items || [];
+      // Group by conversation_id
+      const grouped = {};
+      for (const m of items) {
+        const cid = m.conversation_id;
+        if (!grouped[cid]) grouped[cid] = { id: cid, messages: [], lastActivity: m.created_date };
+        grouped[cid].messages.push(m);
+        if (new Date(m.created_date) > new Date(grouped[cid].lastActivity)) {
+          grouped[cid].lastActivity = m.created_date;
+        }
+      }
+      const list = Object.values(grouped).map((g) => {
+        const sorted = [...g.messages].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+        const firstUser = sorted.find((m) => m.role === "user");
+        return {
+          id: g.id,
+          title: firstUser?.content?.substring(0, 40) || "New chat",
+          lastActivity: g.lastActivity,
+        };
+      }).sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+      setConversations(list);
     } catch { setConversations([]); }
     setLoading(false);
   }, []);
@@ -165,50 +175,64 @@ export default function XtremeGPT() {
   useEffect(() => {
     if (!activeId) { setMessages([]); return; }
     setSending(false);
-    let unsub = () => {};
     (async () => {
       try {
-        const conv = await agentsApi.getConversation(activeId);
-        setMessages(conv.messages || []);
-        unsub = agentsApi.subscribeToConversation(activeId, (data) => {
-          setMessages(data.messages || []);
-          setSending(false);
-        });
+        const page = await base44.entities.CopilotMessage.filter(
+          { conversation_id: activeId },
+          { sort: "created_date", limit: 100 }
+        );
+        setMessages((page?.items || []).map((m) => ({ role: m.role, content: m.content, metadata: m.metadata })));
       } catch { setMessages([]); }
     })();
-    return () => unsub();
   }, [activeId]);
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, sending]);
 
-  const handleCreate = async () => {
-    try {
-      const conv = await agentsApi.createConversation({
-        agent_name: AGENT_NAME,
-        metadata: { name: `Chat ${conversations.length + 1}`, description: "Xtreme GPT conversation" },
-      });
-      setConversations([conv, ...conversations]);
-      setActiveId(conv.id);
-      setSidebarOpen(false);
-    } catch (err) { setError(err.message); }
+  const handleCreate = () => {
+    const newConv = { id: `conv_${Date.now()}`, title: "New chat", lastActivity: new Date().toISOString() };
+    setConversations([newConv, ...conversations]);
+    setActiveId(newConv.id);
+    setMessages([]);
+    setSidebarOpen(false);
   };
 
   const handleSend = async (text) => {
-    if (!activeId) { handleCreate(); return; }
+    let convId = activeId;
+    if (!convId) {
+      convId = `conv_${Date.now()}`;
+      const newConv = { id: convId, title: text.substring(0, 40), lastActivity: new Date().toISOString() };
+      setConversations([newConv, ...conversations]);
+      setActiveId(convId);
+    }
+
     setSending(true);
     setError("");
+    // Optimistic: show user message immediately
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
+
     try {
-      const conv = conversations.find((c) => c.id === activeId);
-      await agentsApi.addMessage(conv, { role: "user", content: text });
+      const res = await base44.functions.invoke("autonomousAgentChat", { message: text, conversation_id: convId });
+      const data = res?.data || res;
+      if (data.error) { setError(data.error); setSending(false); return; }
+      const returnedMsgs = (data.messages || []).map((m) => ({ role: m.role, content: m.content, metadata: m.metadata }));
+      if (returnedMsgs.length > 0) {
+        setMessages(returnedMsgs);
+      } else {
+        // Fallback: build from the response text
+        setMessages((prev) => [...prev, { role: "assistant", content: data.response || "Done." }]);
+      }
+      // Refresh conversation list
+      fetchConversations();
     } catch (err) {
       setError(err.message);
+    } finally {
       setSending(false);
     }
   };
 
   const handleTranscribe = async (file, callback) => {
     try {
-      const { file_url } = await coreIntegrations.UploadPublicFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
       const res = await base44.functions.invoke("vercelAiGateway", { action: "transcribeAudio", audio_url: file_url });
       callback(res.data.text || "");
     } catch (e) { setError("Transcription failed: " + e.message); callback(""); }
@@ -216,7 +240,12 @@ export default function XtremeGPT() {
 
   const handleDelete = async (id) => {
     try {
-      await agentsApi.updateConversation(id, { metadata: { archived: true } });
+      // Delete all messages in this conversation
+      const page = await base44.entities.CopilotMessage.filter({ conversation_id: id }, { limit: 500, fields: ["id"] });
+      const items = page?.items || [];
+      for (const m of items) {
+        await base44.entities.CopilotMessage.delete(m.id);
+      }
       setConversations(conversations.filter((c) => c.id !== id));
       if (activeId === id) setActiveId(null);
     } catch { /* ignore */ }
@@ -251,7 +280,7 @@ export default function XtremeGPT() {
           conversations.map((c) => (
             <div key={c.id} onClick={() => { setActiveId(c.id); setSidebarOpen(false); }} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${activeId === c.id ? "bg-neutral-200 text-neutral-900" : "text-neutral-600 hover:bg-neutral-100"}`}>
               <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-sm truncate flex-1">{c.metadata?.name || c.messages?.[0]?.content?.substring(0, 28) || "New chat"}</span>
+              <span className="text-sm truncate flex-1">{c.title}</span>
               <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-colors">
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -284,7 +313,7 @@ export default function XtremeGPT() {
           </button>
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-blue-500" />
-            <span className="text-sm text-neutral-500">Autonomous Agent · GPT-5</span>
+            <span className="text-sm text-neutral-500">Autonomous Agent · GPT-5 via Vercel AI Gateway</span>
           </div>
           <div className="w-8" />
         </div>
