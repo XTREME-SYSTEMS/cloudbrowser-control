@@ -46,7 +46,11 @@
     "read": {
       "data.user_id": "{{user.id}}"
     },
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "update": {
       "data.user_id": "{{user.id}}"
     },
