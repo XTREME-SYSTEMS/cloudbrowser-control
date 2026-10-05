@@ -44,7 +44,7 @@ export default function WorkerFleetManager() {
     <section className="xa-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><Server className="w-5 h-5 text-[#8A7300]" /></div>
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center"><Server className="w-5 h-5 text-muted-foreground" /></div>
           <div>
             <h2 className="font-heading font-bold text-lg text-black">Worker Fleet</h2>
             <p className="text-xs text-black/50">Spin up multiple autonomous workers — each with its own config</p>
@@ -73,7 +73,7 @@ export default function WorkerFleetManager() {
         </div>
       )}
 
-      {loading ? <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div> : workers.length === 0 ? (
+      {loading ? <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-foreground" /></div> : workers.length === 0 ? (
         <div className="text-center py-8"><Cpu className="w-8 h-8 mx-auto text-black/20" /><p className="text-sm text-black/50 mt-2">No workers yet. Create one to start spinning up systems.</p></div>
       ) : (
         <div className="space-y-2">

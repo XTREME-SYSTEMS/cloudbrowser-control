@@ -33,7 +33,7 @@ export default function WorkerCommand() {
   return (
     <section className="xa-card p-5">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><Zap className="w-5 h-5 text-[#8A7300]" /></div>
+        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center"><Zap className="w-5 h-5 text-muted-foreground" /></div>
         <div>
           <h2 className="font-heading font-bold text-lg text-black">Worker Command</h2>
           <p className="text-xs text-black/50">Autonomous execution engine — runs locally + Railway</p>
@@ -41,8 +41,8 @@ export default function WorkerCommand() {
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="rounded-xl bg-[#FFF7B3]/40 p-3 text-center">
-          <div className="font-heading font-black text-2xl text-[#8A7300]">{stats?.pending ?? "—"}</div>
+        <div className="rounded-xl bg-muted/40 p-3 text-center">
+          <div className="font-heading font-black text-2xl text-muted-foreground">{stats?.pending ?? "—"}</div>
           <div className="text-[10px] font-bold text-black/50 uppercase">Pending</div>
         </div>
         <div className="rounded-xl bg-green-50 p-3 text-center">
@@ -63,7 +63,7 @@ export default function WorkerCommand() {
 
       {result && (
         <div className="mt-3 p-3 rounded-lg bg-[#FAFAFA] border border-[#E5E7EB] text-xs">
-          <span className="text-black/50">Last run:</span> <span className="font-bold text-black">{result.actions_executed}</span> actions · <span className="font-bold text-[#CCBB00]">{result.followups_dispatched}</span> dispatched · <span className="font-bold text-black">{result.emails_sent || 0}</span> emails
+          <span className="text-black/50">Last run:</span> <span className="font-bold text-black">{result.actions_executed}</span> actions · <span className="font-bold text-foreground">{result.followups_dispatched}</span> dispatched · <span className="font-bold text-black">{result.emails_sent || 0}</span> emails
         </div>
       )}
       {error && <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>}

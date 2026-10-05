@@ -115,8 +115,8 @@ export default function ProvisioningSetup() {
   }).length;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="xa-pill-badge">PROVISIONING</span>
@@ -128,8 +128,8 @@ export default function ProvisioningSetup() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-        <div className="xa-card p-4 flex items-center gap-3 bg-[#FFF7B3]/30 border-[#E6D400]/30">
-          <ShieldCheck className="w-5 h-5 text-[#8A7300] shrink-0" />
+        <div className="xa-card p-4 flex items-center gap-3 bg-muted/30 border-border">
+          <ShieldCheck className="w-5 h-5 text-muted-foreground shrink-0" />
           <div className="flex-1">
             <div className="font-bold text-sm text-black">{configuredCount} of {PROVIDERS.length} providers ready</div>
             <div className="text-xs text-black/50">All credentials are stored as sensitive admin settings — only visible to admins.</div>

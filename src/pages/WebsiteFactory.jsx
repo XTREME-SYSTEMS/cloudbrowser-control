@@ -34,8 +34,8 @@ export default function WebsiteFactory() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="xa-pill-badge">WEBSITE FACTORY</span>
@@ -71,7 +71,7 @@ export default function WebsiteFactory() {
         )}
         {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>}
 
-        <div className="xa-card p-4 bg-[#FFF7B3]/30 border-[#E6D400]/30">
+        <div className="xa-card p-4 bg-muted/30 border-border">
           <p className="text-xs text-black/60 leading-relaxed">
             <strong className="text-black">The full stack:</strong> Discover domains across all TLDs → buy via GoDaddy → AI-generate templates → create GitHub repos → build with Base44 → deploy to Vercel + Railway → connect Supabase backend → store data in Drive → auto-connect Google + social → auto-post → auto-analyze → auto-optimize. All from this one page. The worker executes every phase autonomously.
           </p>

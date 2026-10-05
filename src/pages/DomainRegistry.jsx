@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, Loader2, Globe, ExternalLink } from "lucide-react";
 
 const STATUS_STYLE = {
-  onboarding: "bg-[#FFF7B3] text-[#8A7300]",
+  onboarding: "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
   verifying: "bg-blue-50 text-blue-600",
   verified: "bg-emerald-50 text-emerald-600",
   active: "bg-emerald-50 text-emerald-600",
@@ -45,7 +45,7 @@ export default function DomainRegistry() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-[#E5E7EB]">
+      <header className="border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
           <div>
             <span className="xa-pill-badge">GROWTH OPERATOR</span>
@@ -71,7 +71,7 @@ export default function DomainRegistry() {
 
         <h2 className="font-heading font-bold text-xl text-black mb-4">Registered domains</h2>
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-foreground" /></div>
         ) : domains.length === 0 ? (
           <div className="xa-card p-12 text-center">
             <Globe className="w-10 h-10 mx-auto text-black/20" />
@@ -82,7 +82,7 @@ export default function DomainRegistry() {
             {domains.map((d) => (
               <div key={d.id} className="xa-card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><Globe className="w-5 h-5 text-[#8A7300]" /></div>
+                  <div className="w-10 h-10 rounded-lg bg-[hsl(var(--muted))] flex items-center justify-center"><Globe className="w-5 h-5 text-[hsl(var(--muted-foreground))]" /></div>
                   <div className="min-w-0">
                     <div className="font-bold text-black truncate">{d.domain}</div>
                     <div className="text-xs text-black/45 truncate">{d.canonical_url}</div>
@@ -94,7 +94,7 @@ export default function DomainRegistry() {
                     <div className="font-bold text-black">{d.health_score != null ? `${d.health_score}/100` : "—"}</div>
                   </div>
                   <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${STATUS_STYLE[d.status] || "bg-gray-100 text-gray-500"}`}>{d.status}</span>
-                  <button onClick={() => navigate("/agents/growth_operator")} className="text-[#CCBB00] hover:text-black"><ExternalLink className="w-5 h-5" /></button>
+                  <button onClick={() => navigate("/agents/growth_operator")} className="text-foreground hover:text-black"><ExternalLink className="w-5 h-5" /></button>
                 </div>
               </div>
             ))}

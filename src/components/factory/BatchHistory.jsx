@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, RefreshCw, Layers } from "lucide-react";
 
 const STATUS_META = {
-  queued: { color: "#8A7300", bg: "#FFF7B3", label: "Queued" },
+  queued: { color: "hsl(var(--muted-foreground))", bg: "hsl(var(--muted))", label: "Queued" },
   dispatching: { color: "#2563EB", bg: "#DBEAFE", label: "Dispatching" },
   running: { color: "#2563EB", bg: "#DBEAFE", label: "Running" },
   complete: { color: "#16A34A", bg: "#DCFCE7", label: "Complete" },
@@ -30,7 +30,7 @@ export default function BatchHistory({ refreshKey }) {
     <section className="xa-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><Layers className="w-5 h-5 text-[#8A7300]" /></div>
+          <div className="w-9 h-9 rounded-lg bg-[hsl(var(--muted))] flex items-center justify-center"><Layers className="w-5 h-5 text-[hsl(var(--muted-foreground))]" /></div>
           <div>
             <h2 className="font-heading font-bold text-lg text-black">Batch History</h2>
             <p className="text-xs text-black/50">All mass operations — past + active</p>
@@ -39,7 +39,7 @@ export default function BatchHistory({ refreshKey }) {
         <button onClick={load} className="text-black/50 hover:text-black"><RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /></button>
       </div>
 
-      {loading ? <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div> : batches.length === 0 ? (
+      {loading ? <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-foreground" /></div> : batches.length === 0 ? (
         <div className="text-center py-6"><Layers className="w-8 h-8 mx-auto text-black/20" /><p className="text-sm text-black/50 mt-2">No batches yet. Configure + launch one above.</p></div>
       ) : (
         <div className="space-y-2">

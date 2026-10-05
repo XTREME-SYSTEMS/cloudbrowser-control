@@ -20,7 +20,7 @@ export default function ComplianceReport({ report }) {
   if (!report) return null;
 
   const score = report.score || 0;
-  const scoreColor = score >= 90 ? "#16A34A" : score >= 70 ? "#8A7300" : "#DC2626";
+  const scoreColor = score >= 90 ? "#16A34A" : score >= 70 ? "hsl(var(--muted-foreground))" : "#DC2626";
 
   return (
     <div className="xa-card p-5">

@@ -17,7 +17,7 @@ export default function SandboxCard({ sandbox, onApprove, onReject, promoting })
     creating: { color: "#2563EB", bg: "#DBEAFE", label: "Creating" },
     active: { color: "#16A34A", bg: "#DCFCE7", label: "Active — awaiting approval" },
     approved: { color: "#16A34A", bg: "#DCFCE7", label: "Approved" },
-    promoted: { color: "#8A7300", bg: "#FFF7B3", label: "Promoted to production" },
+    promoted: { color: "hsl(var(--muted-foreground))", bg: "hsl(var(--muted))", label: "Promoted to production" },
     failed: { color: "#DC2626", bg: "#FEE2E2", label: "Failed" },
   };
   const sc = statusConfig[sandbox.status] || statusConfig.pending;
@@ -64,7 +64,7 @@ export default function SandboxCard({ sandbox, onApprove, onReject, promoting })
           <span className="text-[10px] text-green-700 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Ready</span>
         )}
         {sandbox.status === "promoted" && (
-          <span className="text-[10px] text-[#8A7300] font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Live</span>
+          <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Live</span>
         )}
         {sandbox.status === "creating" && (
           <Loader2 className="w-4 h-4 animate-spin text-blue-500" />

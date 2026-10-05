@@ -56,7 +56,7 @@ export default function DomainDiscovery({ onDiscovered }) {
   return (
     <section className="xa-card p-5">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><Globe className="w-5 h-5 text-[#8A7300]" /></div>
+        <div className="w-9 h-9 rounded-lg bg-[hsl(var(--muted))] flex items-center justify-center"><Globe className="w-5 h-5 text-muted-foreground" /></div>
         <div>
           <h2 className="font-heading font-bold text-lg text-black">Domain Discovery & Buyer</h2>
           <p className="text-xs text-black/50">Discover across all TLDs · live GoDaddy pricing · one-click buy</p>
@@ -70,7 +70,7 @@ export default function DomainDiscovery({ onDiscovered }) {
           {TLDS.map(t => (
             <button key={t} onClick={() => toggleTld(t)}
               className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all ${selectedTlds.includes(t) ? "border-transparent text-black" : "border-[#E5E7EB] text-black/40"}`}
-              style={selectedTlds.includes(t) ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)" } : {}}>
+              className={selectedTlds.includes(t) ? "border-primary bg-muted/50" : "border-border"}>
               .{t}
             </button>
           ))}
@@ -87,7 +87,7 @@ export default function DomainDiscovery({ onDiscovered }) {
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs font-bold text-black/60">{results.available_count || 0} available of {results.candidates_checked || 0} checked</div>
               <div className="flex gap-1.5">
-                <button onClick={checkAllPrices} className="text-[10px] font-bold px-2 py-1 rounded-lg bg-[#FFF7B3] text-[#8A7300]"><DollarSign className="w-3 h-3 inline" /> Check all prices</button>
+                <button onClick={checkAllPrices} className="text-[10px] font-bold px-2 py-1 rounded-lg bg-[hsl(var(--muted))] text-muted-foreground"><DollarSign className="w-3 h-3 inline" /> Check all prices</button>
                 <button onClick={buyAll} className="text-[10px] font-bold px-2 py-1 rounded-lg bg-black text-white"><ShoppingCart className="w-3 h-3 inline" /> Buy all</button>
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function DomainDiscovery({ onDiscovered }) {
                     ) : price === "unavailable" ? (
                       <span className="text-[10px] text-red-500 shrink-0">taken</span>
                     ) : (
-                      <button onClick={() => checkPrice(d)} disabled={isLoadingPrice} className="text-[10px] font-bold text-[#CCBB00] hover:underline shrink-0">
+                      <button onClick={() => checkPrice(d)} disabled={isLoadingPrice} className="text-[10px] font-bold text-foreground hover:underline shrink-0">
                         {isLoadingPrice ? <Loader2 className="w-3 h-3 animate-spin" /> : "check price"}
                       </button>
                     )}

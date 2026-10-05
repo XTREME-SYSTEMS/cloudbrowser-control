@@ -7,7 +7,7 @@ export default function AgentCard({ agent, onLaunch }) {
         <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,234,0,.15)" }}>
           <span className="text-2xl">{agent.icon}</span>
         </div>
-        {agent.apex && <span className="xa-pill-badge" style={{ backgroundColor: "#000", color: "#FFEA00", backgroundImage: "none" }}>APEX</span>}
+        {agent.apex && <span className="xa-pill-badge">APEX</span>}
         {agent.flagship && !agent.apex && <span className="xa-pill-badge">FLAGSHIP</span>}
       </div>
       <div>

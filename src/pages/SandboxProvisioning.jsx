@@ -134,7 +134,7 @@ export default function SandboxProvisioning() {
         const done = step > s.n;
         return (
           <React.Fragment key={s.n}>
-            <button onClick={() => s.n <= step && setStep(s.n)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${active ? "bg-black text-white" : done ? "bg-green-100 text-green-700" : "bg-[#FAFAFA] text-black/40"}`}>
+            <button onClick={() => s.n <= step && setStep(s.n)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${active ? "bg-black text-white" : done ? "bg-green-100 text-green-700" : "bg-muted text-black/40"}`}>
               <Icon className="w-3.5 h-3.5" /> {s.n}. {s.label}
             </button>
             {i < 3 && <ArrowRight className="w-3 h-3 text-black/20 shrink-0" />}
@@ -145,8 +145,8 @@ export default function SandboxProvisioning() {
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-10">
+    <div className="min-h-screen bg-muted">
+      <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="xa-pill-badge">SANDBOX → PRODUCTION</span>
@@ -167,7 +167,7 @@ export default function SandboxProvisioning() {
           <div className="space-y-4">
             <div className="xa-card p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Beaker className="w-5 h-5 text-[#8A7300]" />
+                <Beaker className="w-5 h-5 text-muted-foreground" />
                 <h2 className="font-heading font-bold text-base text-black">Create Sandbox Projects</h2>
               </div>
               <p className="text-xs text-black/50 mb-4">GPT will create isolated sandbox projects within each provider. These are free-tier, isolated environments where the agent can build and test without touching production.</p>
@@ -182,13 +182,13 @@ export default function SandboxProvisioning() {
                   const labels = { supabase: "Supabase", railway: "Railway", googledrive: "Google Drive", github: "GitHub" };
                   const icons = { supabase: "🗄️", railway: "🚂", googledrive: "📁", github: "🐙" };
                   return (
-                    <button key={p} onClick={() => toggleProvider(p)} className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-left ${selected ? "border-[#FFEA00] bg-[#FFF7B3]/30" : "border-[#E5E7EB] bg-white"}`}>
+                    <button key={p} onClick={() => toggleProvider(p)} className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-left ${selected ? "border-primary bg-muted/30" : "border-border bg-card"}`}>
                       <span className="text-lg">{icons[p]}</span>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-xs text-black">{labels[p]}</div>
                         <div className="text-[10px] text-black/40">{selected ? "Selected" : "Click to select"}</div>
                       </div>
-                      {selected && <CheckCircle2 className="w-4 h-4 text-[#8A7300] shrink-0" />}
+                      {selected && <CheckCircle2 className="w-4 h-4 text-muted-foreground shrink-0" />}
                     </button>
                   );
                 })}
@@ -213,8 +213,8 @@ export default function SandboxProvisioning() {
         {/* Step 2: Review & Approve */}
         {step === 2 && (
           <div className="space-y-4">
-            <div className="xa-card p-4 flex items-center gap-3 bg-[#FFF7B3]/30 border-[#E6D400]/30">
-              <ShieldCheck className="w-5 h-5 text-[#8A7300] shrink-0" />
+            <div className="xa-card p-4 flex items-center gap-3 bg-muted/30 border-border">
+              <ShieldCheck className="w-5 h-5 text-muted-foreground shrink-0" />
               <div className="flex-1">
                 <div className="font-bold text-sm text-black">Review sandbox projects before production</div>
                 <div className="text-xs text-black/50">Approve each sandbox to allow GPT to promote it to a real production account.</div>
@@ -251,7 +251,7 @@ export default function SandboxProvisioning() {
           <div className="space-y-4">
             <div className="xa-card p-5">
               <div className="flex items-center gap-2 mb-3">
-                <Rocket className="w-5 h-5 text-[#8A7300]" />
+                <Rocket className="w-5 h-5 text-muted-foreground" />
                 <h2 className="font-heading font-bold text-base text-black">Promote to Production</h2>
               </div>
               <p className="text-xs text-black/50 mb-4">On promotion, the system will: buy the domain, deploy to real accounts, submit the URL to Google Search Console, submit the sitemap, and run a 12-point compliance checklist for 100% Google compliance from day 1.</p>
@@ -285,8 +285,8 @@ export default function SandboxProvisioning() {
                 ].map((item, i) => {
                   const Icon = item.icon;
                   return (
-                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-[#FAFAFA] border border-[#E5E7EB]">
-                      <Icon className="w-4 h-4 text-[#8A7300] shrink-0" />
+                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted border border-border">
+                      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                       <span className="text-xs text-black/70">{item.text}</span>
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-600 ml-auto" />
                     </div>

@@ -22,7 +22,7 @@ export default function AgentCommandCenter() {
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="border-b border-[#E5E7EB] bg-gradient-to-b from-[#FFF7B3]/30 to-white">
+      <section className="border-b border-border bg-gradient-to-b from-muted/30 to-background">
         <div className="max-w-6xl mx-auto px-6 py-16">
           <span className="xa-pill-badge">XTREME AI · OPERATIONS</span>
           <h1 className="font-heading font-black text-4xl md:text-5xl text-black mt-4 leading-tight">Autonomous Agent Command Center</h1>
@@ -46,8 +46,8 @@ export default function AgentCommandCenter() {
         <div className="flex flex-wrap gap-2 mb-8">
           {CATEGORIES.map((c) => (
             <button key={c} onClick={() => setCategory(c)}
-              className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all ${category === c ? "border-transparent text-black" : "border-[#E5E7EB] text-black/50 hover:border-[#FFEA00] hover:text-black"}`}
-              style={category === c ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)", boxShadow: "inset 0 1px #fff6, inset 0 -1px #8c6e0040, 0 1px 3px #00000026" } : {}}>
+              className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all ${category === c ? "border-transparent text-black" : "border-border text-black/50 hover:border-primary hover:text-foreground"}`}
+              className={category === c ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground"}>
               {c}
             </button>
           ))}

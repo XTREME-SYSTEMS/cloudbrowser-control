@@ -18,7 +18,7 @@ export default function AgentChat({ agentName, agentLabel, onBack }) {
       </div>
       <div ref={scrollRef} className="xa-scroll flex-1 overflow-y-auto px-4 py-6 space-y-5 bg-white">
         {loading ? (
-          <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div>
+          <div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin text-foreground" /></div>
         ) : error && !conversation ? (
           <div className="flex flex-col items-center justify-center h-full px-6 text-center">
             <AlertCircle className="w-10 h-10 text-red-400 mb-3" />

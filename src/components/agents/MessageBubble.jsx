@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 const StatusIcon = ({ status }) => {
   if (["completed", "success"].includes(status)) return <span className="text-emerald-600">✓</span>;
   if (["failed", "error"].includes(status)) return <span className="text-red-500">✕</span>;
-  if (["pending", "running", "in_progress"].includes(status)) return <span className="text-[#CCBB00] animate-pulse">◐</span>;
+  if (["pending", "running", "in_progress"].includes(status)) return <span className="text-[hsl(var(--foreground))] animate-pulse">◐</span>;
   return <span className="text-gray-400">•</span>;
 };
 
@@ -58,7 +58,7 @@ export default function MessageBubble({ message }) {
         <div className={`rounded-2xl px-4 py-3 ${isUser ? "bg-black text-white rounded-br-md" : "bg-[#FAFAFA] border border-[#E5E7EB] text-black rounded-bl-md"}`}>
           {message.content && (isUser
             ? <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-            : <div className="prose prose-sm max-w-none prose-headings:font-heading prose-headings:text-black prose-a:text-[#CCBB00] prose-strong:text-black"><ReactMarkdown>{message.content}</ReactMarkdown></div>)}
+            : <div className="prose prose-sm max-w-none prose-headings:font-heading prose-headings:text-black prose-a:text-[hsl(var(--foreground))] prose-strong:text-black"><ReactMarkdown>{message.content}</ReactMarkdown></div>)}
         </div>
         {message.tool_calls?.length > 0 && (
           <div className="mt-1 space-y-1">

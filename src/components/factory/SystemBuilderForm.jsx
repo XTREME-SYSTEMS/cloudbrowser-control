@@ -61,7 +61,7 @@ export default function SystemBuilderForm({ onSubmitted }) {
   return (
     <section className="xa-card p-5">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-lg bg-[#FFF7B3] flex items-center justify-center"><Sparkles className="w-5 h-5 text-[#8A7300]" /></div>
+        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center"><Sparkles className="w-5 h-5 text-muted-foreground" /></div>
         <div>
           <h2 className="font-heading font-bold text-lg text-black">System Builder</h2>
           <p className="text-xs text-black/50">Type your spec, press build, get it delivered — autonomously</p>
@@ -75,7 +75,7 @@ export default function SystemBuilderForm({ onSubmitted }) {
           {BUILD_TYPES.map(t => (
             <button key={t.value} onClick={() => set("build_type", t.value)}
               className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${form.build_type === t.value ? "border-transparent text-black" : "border-[#E5E7EB] text-black/50"}`}
-              style={form.build_type === t.value ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)" } : {}}>
+              className={form.build_type === t.value ? "border-primary bg-muted/50" : "border-border"}>
               <span>{t.icon}</span> {t.label}
             </button>
           ))}
