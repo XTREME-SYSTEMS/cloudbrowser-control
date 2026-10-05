@@ -80,9 +80,17 @@ export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
     };
   }
 
-  // Web search — replaces Base44's add_context_from_internet
+  // Web search — replaces Base44's add_context_from_internet.
+  // Vercel AI Gateway requires a provider-specific tool type with a config.query.
+  // We use perplexity_search (good at synthesizing web content into answers).
   if (opts.add_context_from_internet) {
-    body.tools = [{ type: 'web_search' }];
+    body.tools = [{
+      type: 'vercel:perplexity_search',
+      config: {
+        query: opts.prompt.substring(0, 400),
+        max_results: 5,
+      },
+    }];
   }
 
   const res = await fetch(`${BASE_URL}/chat/completions`, {

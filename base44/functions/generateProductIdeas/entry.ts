@@ -75,10 +75,12 @@ competitor_analysis (string)`;
       }
     });
 
-    const rawIdeas = trendResult.ideas || [];
+    const rawIdeas = (trendResult.ideas || []).filter((i: any) => i && i.title);
     const scoredIdeas = rawIdeas.map((idea: any, idx: number) => ({
       ...idea,
       idea_id: `idea_${ts}_${idx}`,
+      title: idea.title || "Untitled Idea",
+      problem_solved: idea.problem_solved || idea.description || "Problem description not available",
       build_status: "idea",
       generated_at: new Date().toISOString(),
       validation_score: Math.min(100, (idea.google_trend_score || 50) + (idea.world_changing_potential ? 20 : 0) + (idea.competition_level === "low" ? 15 : idea.competition_level === "none" ? 20 : 0))
