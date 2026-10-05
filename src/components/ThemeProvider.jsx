@@ -5,7 +5,8 @@ export default function ThemeProvider({ children }) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem={false}
+      storageKey="vision-cortex-theme"
+      enableSystem={true}
       disableTransitionOnChange
     >
       {children}
