@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Loader2, RefreshCw, Play, Activity, CheckCircle2, Clock, AlertTriangle, Zap } from "lucide-react";
+import AgentObservabilityPanel from "@/components/mission-control/AgentObservabilityPanel";
 
 const STATUS_META = {
   pending: { icon: Clock, color: "#8A7300", bg: "#FFF7B3", label: "Pending" },
@@ -117,6 +118,8 @@ export default function MissionControl() {
           )}
           {error && <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>}
         </div>
+
+        <AgentObservabilityPanel />
 
         <div>
           <div className="flex items-center justify-between mb-3">

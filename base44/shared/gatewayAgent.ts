@@ -5,6 +5,7 @@ import { getModelForTask } from './aiRouter.ts';
 import { GATEWAY_AGENTS, GATEWAY_RULES } from './gatewayAgents.ts';
 import { createEntityTools } from './gatewayEntityTools.ts';
 import { createFunctionTools } from './gatewayFunctionTools.ts';
+import { createConnectorTools } from './gatewayConnectorTools.ts';
 
 export async function runGatewayAgent(base44, { agentName, messages }) {
   const config = GATEWAY_AGENTS[agentName];
@@ -20,6 +21,7 @@ export async function runGatewayAgent(base44, { agentName, messages }) {
     tools: {
       ...createEntityTools(base44, config.entities),
       ...createFunctionTools(base44, agentName),
+      ...createConnectorTools(base44, agentName),
       web_search: tool({
         description: 'Research the live public web through Vercel AI Gateway, with source links. Never invent search results or access private competitor analytics.',
         inputSchema: z.object({ query: z.string().min(1).max(1000) }),

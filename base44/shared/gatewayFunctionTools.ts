@@ -24,6 +24,31 @@ export const AGENT_FUNCTIONS: Record<string, { name: string; description: string
     { name: 'runTemplateGenerator', description: 'Generate a site template for a niche' },
     { name: 'runAutonomousBrowserTask', description: 'Run a browser task to test a deployed site' },
   ],
+  social_strategist: [
+    { name: 'runMarketingEngine', description: 'Run social media marketing campaigns' },
+    { name: 'generateContentAtScale', description: 'Generate content assets at scale' },
+    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to research competitor social profiles' },
+  ],
+  sales_engine: [
+    { name: 'runMarketingEngine', description: 'Run sales/outreach marketing campaigns' },
+    { name: 'generateContentAtScale', description: 'Generate outreach content at scale' },
+    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to research prospects' },
+  ],
+  brand_guardian: [
+    { name: 'generateContentAtScale', description: 'Generate brand content assets at scale' },
+    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to audit brand presence' },
+  ],
+  replicator: [
+    { name: 'runBatchOperation', description: 'Run a batch multi-site clone operation' },
+    { name: 'provisionCloneDeployment', description: 'Provision a clone deployment to a new target' },
+    { name: 'runWebsiteBuilder', description: 'Build and deploy a website for a new target' },
+    { name: 'runRepoGenerator', description: 'Create a GitHub repository for a clone' },
+  ],
+  swarm: [
+    { name: 'runAutonomousSwarm', description: 'Run the autonomous swarm for parallel task execution' },
+    { name: 'runBatchOperation', description: 'Run a batch operation across multiple targets' },
+    { name: 'runAgentLoop', description: 'Dispatch an autonomous agent task cycle' },
+  ],
 };
 
 // Creates a single call_function tool scoped to the agent's permitted functions.
