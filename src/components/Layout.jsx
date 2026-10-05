@@ -42,6 +42,7 @@ const workflowSteps = [
     label: "Super Agents",
     items: [
       { to: "/provisioning", label: "Provisioning", icon: ShieldCheck },
+      { to: "/sandbox-provisioning", label: "Sandbox → Prod", icon: Rocket },
       { to: "/command-center", label: "Command Center", icon: Sparkles },
       { to: "/website-factory", label: "Website Factory", icon: Rocket },
       { to: "/mission-control", label: "Mission Control", icon: Activity },
