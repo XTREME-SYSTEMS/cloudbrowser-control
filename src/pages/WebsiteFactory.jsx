@@ -42,6 +42,7 @@ export default function WebsiteFactory() {
             <h1 className="font-heading font-black text-xl sm:text-2xl text-black mt-1 truncate">Full AI-Enhanced Website Factory</h1>
           </div>
           <div className="flex gap-2 shrink-0">
+            <button onClick={() => navigate("/provisioning")} className="xa-btn-outline text-xs px-3 py-2">⚙ Credentials</button>
             <button onClick={() => navigate("/batch")} className="xa-btn-outline text-xs px-3 py-2">⚡ Batch</button>
             <button onClick={() => navigate("/")} className="xa-btn-outline text-xs px-3 py-2">← Home</button>
           </div>
