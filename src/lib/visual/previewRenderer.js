@@ -62,6 +62,27 @@ export const GALLERY_FAMILIES = [
       { id: "recipe_contact", name: "Contact Form" },
     ],
   },
+  {
+    key: "generators",
+    label: "Generators",
+    platform: "recipe",
+    items: [
+      { id: "gen_business_card", name: "Business Card" },
+      { id: "gen_brochure", name: "Tri-Fold Brochure" },
+      { id: "gen_video_card", name: "Video Generator" },
+      { id: "gen_invoice", name: "Invoice" },
+      { id: "gen_resume", name: "Resume" },
+      { id: "gen_certificate", name: "Certificate" },
+      { id: "gen_poster", name: "Event Poster" },
+      { id: "gen_social_post", name: "Social Post" },
+      { id: "gen_newsletter", name: "Newsletter" },
+      { id: "gen_qr_card", name: "QR Code Card" },
+      { id: "gen_menu_card", name: "Restaurant Menu" },
+      { id: "gen_ticket", name: "Event Ticket" },
+      { id: "gen_real_estate", name: "Real Estate Listing" },
+      { id: "gen_logo_studio", name: "Logo Studio" },
+    ],
+  },
 ];
 
 const FS = (n) => `font-size:calc(${n}px * var(--vg-font-scale,1))`;
@@ -583,6 +604,226 @@ function recipeContact(ctx) {
   );
 }
 
+/* ---------- GENERATOR layouts ---------- */
+function genBusinessCard(ctx) {
+  return (
+    `<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,var(--brand-background),var(--brand-card-subtle))">
+      <div style="width:260px;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.14);border:1px solid var(--brand-border)">
+        <div style="background:linear-gradient(135deg,var(--brand-secondary),var(--brand-primary));padding:14px;color:#fff">
+          <div style="display:flex;align-items:center;gap:8px">${logo(ctx)}<div style="flex:1"></div><div style="width:32px;height:32px;border-radius:8px;background:#ffffff26;box-shadow:inset 0 1px #fff4"></div></div>
+          <div style="${FS(15)};font-weight:900;margin-top:14px">${ctx.brandName}</div>
+          <div style="${FS(9)};opacity:.85">${ctx.subtitle}</div>
+        </div>
+        <div style="background:var(--brand-surface);padding:12px">
+          <div style="${FS(10)};font-weight:700">${ctx.heading}</div>
+          <div class="vg-muted" style="${FS(8)};margin-top:2px">Founder & CEO</div>
+          <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px">
+            <div class="vg-row vg-gap2"><span style="color:var(--brand-primary)">✉</span><span style="${FS(8)}">hello@${String(ctx.brandName||"brand").toLowerCase().replace(/\\s/g,"")}.com</span></div>
+            <div class="vg-row vg-gap2"><span style="color:var(--brand-primary)">☎</span><span style="${FS(8)}">+1 (555) 012-3456</span></div>
+            <div class="vg-row vg-gap2"><span style="color:var(--brand-primary)">⌖</span><span style="${FS(8)}">San Francisco, CA</span></div>
+          </div>
+        </div>
+      </div>
+    </div>`
+  );
+}
+
+function genBrochure(ctx) {
+  const panels = [
+    ["About", "We build autonomous agent fleets for modern teams."],
+    ["Services", "Strategy, design, development, and growth."],
+    ["Results", "10x faster delivery, 99.9% uptime."],
+  ];
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto;padding:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;height:100%">
+        ${panels.map((p, i) => `<div style="border:1px solid var(--brand-border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;background:var(--brand-surface)">
+          <div style="background:${i === 0 ? "linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary),var(--brand-gold-deep))" : "var(--brand-muted)"};padding:10px;flex:none;${i === 0 ? "color:#fff" : ""}">
+            <div style="${FS(11)};font-weight:900">${i === 0 ? ctx.brandName : p[0]}</div>
+          </div>
+          <div style="padding:10px;flex:1;display:flex;flex-direction:column;gap:5px">
+            ${i === 0 ? `<div class="vg-muted" style="${FS(8)}">${ctx.subtitle}</div><div style="${FS(9)};font-weight:700;margin-top:6px">${p[0]}</div><div style="${FS(8)}">${p[1]}</div>` : `<div style="${FS(9)};font-weight:700">${p[0]}</div><div class="vg-muted" style="${FS(8)}">${p[1]}</div><div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">${Array.from({length:3},(_,j)=>`<div style="height:5px;border-radius:9999px;background:var(--brand-muted);width:${50+j*15}%"></div>`).join("")}</div>`}
+          </div>
+        </div>`).join("")}
+      </div>
+    </div>`
+  );
+}
+
+function genVideoCard(ctx) {
+  return (
+    `<div style="flex:1;display:flex;flex-direction:column;padding:12px;gap:10px">
+      <div style="flex:1;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(135deg,#0a0a0a,#1a1a2e);border:1px solid var(--brand-border);min-height:180px">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,var(--brand-primary)22,transparent 60%)"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:9999px;background:var(--brand-primary);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px var(--brand-primary)"><span style="font-size:18px;color:var(--brand-on-primary)">▶</span></div>
+        <div style="position:absolute;bottom:10px;left:10px;right:10px;display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:4px;border-radius:9999px;background:#ffffff33;overflow:hidden"><div style="width:35%;height:100%;background:var(--brand-primary);border-radius:9999px"></div></div>
+          <span style="${FS(8)};color:#fff;font-weight:700">0:07</span>
+        </div>
+      </div>
+      <div class="vg-card" style="padding:10px">
+        <div style="${FS(11)};font-weight:900">${ctx.heading}</div>
+        <div class="vg-muted" style="${FS(9)};margin-top:3px">${ctx.subtitle}</div>
+        <div class="vg-row vg-gap2" style="margin-top:8px"><button class="vg-btn pri" style="padding:6px 12px">Generate</button><button class="vg-btn out" style="padding:6px 12px">Customize</button></div>
+      </div>
+    </div>`
+  );
+}
+
+function genInvoice(ctx) {
+  const items = [["Design services","40h","$120","$4,800"],["Development","60h","$95","$5,700"],["Consulting","8h","$150","$1,200"]];
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto;padding:16px">
+      <div class="vg-row vg-between" style="margin-bottom:12px"><div><div style="${FS(16)};font-weight:900">INVOICE</div><div class="vg-muted" style="${FS(9)}">#INV-2026-041</div></div><div style="text-align:right"><div style="${FS(11)};font-weight:900">${ctx.brandName}</div><div class="vg-muted" style="${FS(8)}">Issued: Oct 5, 2026</div></div></div>
+      <div class="vg-card" style="margin-bottom:10px"><div class="vg-table"><div class="h" style="font-size:calc(8px * var(--vg-font-scale,1))"><span>Description</span><span>Qty</span><span>Rate</span><span>Total</span></div>${items.map(r=>`<div class="r" style="font-size:calc(9px * var(--vg-font-scale,1))"><span>${r[0]}</span><span class="vg-muted">${r[1]}</span><span>${r[2]}</span><span style="font-weight:700">${r[3]}</span></div>`).join("")}</div></div>
+      <div class="vg-row vg-between" style="padding:8px 0"><span class="vg-muted" style="${FS(9)}">Subtotal</span><span style="${FS(10)};font-weight:700">$11,700</span></div>
+      <div class="vg-row vg-between" style="padding:4px 0"><span class="vg-muted" style="${FS(9)}">Tax (8.5%)</span><span style="${FS(10)}">$994.50</span></div>
+      <div class="vg-row vg-between" style="border-top:2px solid var(--brand-primary);padding-top:8px;margin-top:4px"><span style="${FS(12)};font-weight:900">Total Due</span><span style="${FS(14)};font-weight:900;color:var(--brand-primary)">$12,694.50</span></div>
+    </div>`
+  );
+}
+
+function genResume(ctx) {
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto;padding:16px">
+      <div style="display:flex;gap:12px;margin-bottom:12px;border-bottom:2px solid var(--brand-primary);padding-bottom:10px">
+        <div style="width:48px;height:48px;border-radius:9999px;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary),var(--brand-gold-deep));flex:none;box-shadow:inset 0 1px #fff6"></div>
+        <div style="flex:1"><div style="${FS(15)};font-weight:900">${ctx.heading}</div><div class="vg-muted" style="${FS(9)}">${ctx.subtitle}</div><div style="${FS(8)};color:var(--brand-primary);margin-top:2px">San Francisco · linkedin.com/in/${String(ctx.brandName||"profile").toLowerCase().replace(/\\s/g,"")}</div></div>
+      </div>
+      <div style="${FS(10)};font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-primary);margin-bottom:5px">Experience</div>
+      ${[["Senior Engineer","Acme Corp · 2023-Present"],["Engineer","Globex · 2020-2023"]].map(e=>`<div class="vg-card" style="margin-bottom:6px;padding:8px"><div style="${FS(10)};font-weight:700">${e[0]}</div><div class="vg-muted" style="${FS(8)}">${e[1]}</div><div style="display:flex;flex-direction:column;gap:3px;margin-top:6px">${Array.from({length:2},(_,i)=>`<div style="height:4px;border-radius:9999px;background:var(--brand-muted);width:${60+i*20}%"></div>`).join("")}</div></div>`).join("")}
+      <div style="${FS(10)};font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-primary);margin:10px 0 5px">Skills</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${["React","TypeScript","Node","Python","AWS","Docker"].map(s=>`<span class="vg-chip">${s}</span>`).join("")}</div>
+    </div>`
+  );
+}
+
+function genCertificate(ctx) {
+  return (
+    `<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--brand-card-subtle)">
+      <div style="width:280px;border:3px double var(--brand-gold-deep);border-radius:10px;background:var(--brand-surface);padding:20px;text-align:center;position:relative">
+        <div style="position:absolute;top:8px;left:8px;right:8px;bottom:8px;border:1px solid var(--brand-gold-light);border-radius:6px;pointer-events:none"></div>
+        <div style="${FS(9)};text-transform:uppercase;letter-spacing:.1em;color:var(--brand-gold-deep);font-weight:700">Certificate of Achievement</div>
+        <div style="${FS(20)};font-weight:900;margin:10px 0 4px">Awarded to</div>
+        <div style="${FS(14)};font-weight:900;color:var(--brand-primary)">${ctx.brandName}</div>
+        <div class="vg-muted" style="${FS(9)};margin-top:8px;max-width:220px;margin-left:auto;margin-right:auto">${ctx.subtitle}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:18px;padding:0 10px"><div style="text-align:left"><div style="border-top:1px solid var(--brand-text);width:70px;padding-top:3px"><div style="${FS(7)};font-weight:700">Date</div></div></div><div style="width:36px;height:36px;border-radius:9999px;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-gold-deep));box-shadow:inset 0 1px #fff6"></div><div style="text-align:right"><div style="border-top:1px solid var(--brand-text);width:70px;padding-top:3px"><div style="${FS(7)};font-weight:700">Signature</div></div></div></div>
+      </div>
+    </div>`
+  );
+}
+
+function genPoster(ctx) {
+  return (
+    `<div style="flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,#0a0a0a,#1a1a2e);color:#fff;overflow:hidden">
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;position:relative">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,var(--brand-primary)33,transparent 60%)"></div>
+        <div style="position:relative"><div style="${FS(9)};text-transform:uppercase;letter-spacing:.15em;color:var(--brand-primary);font-weight:700">Live Event</div><div style="${FS(24)};font-weight:900;line-height:1.1;margin-top:8px">${ctx.heading}</div><div style="${FS(11)};opacity:.8;margin-top:8px;max-width:240px">${ctx.subtitle}</div></div>
+      </div>
+      <div style="padding:14px 20px;background:#ffffff12;backdrop-filter:blur(8px);border-top:1px solid #ffffff22">
+        <div class="vg-row vg-between"><div><div style="${FS(10)};font-weight:700">Oct 15, 2026 · 7PM</div><div style="${FS(8)};opacity:.7">Grand Hall, SF</div></div><button style="background:var(--brand-primary);color:var(--brand-on-primary);border:0;padding:8px 16px;border-radius:8px;font-weight:900;font-size:calc(10px * var(--vg-font-scale,1))">Get tickets</button></div>
+      </div>
+    </div>`
+  );
+}
+
+function genSocialPost(ctx) {
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
+      <div class="vg-card" style="padding:0;overflow:hidden">
+        <div style="aspect-ratio:1;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary) 50%,var(--brand-gold-deep));position:relative">
+          <div style="position:absolute;inset:14px;border:1px solid #fff5;border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;color:#fff;padding:14px">
+            <div style="${FS(16)};font-weight:900;line-height:1.15">${ctx.heading}</div>
+            <div style="${FS(9)};opacity:.9;margin-top:6px">${ctx.subtitle}</div>
+            <div style="margin-top:10px;background:#fff;color:var(--brand-primary);padding:5px 12px;border-radius:9999px;font-size:calc(8px * var(--vg-font-scale,1));font-weight:900">${ctx.brandName}</div>
+          </div>
+        </div>
+      </div>
+      <div class="vg-row vg-gap2" style="justify-content:center"><button class="vg-btn pri" style="padding:7px 14px">Download</button><button class="vg-btn out" style="padding:7px 14px">Share</button></div>
+    </div>`
+  );
+}
+
+function genNewsletter(ctx) {
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto">
+      <div style="background:var(--brand-primary);padding:10px 16px;color:var(--brand-on-primary);text-align:center"><div style="${FS(9)};font-weight:900;text-transform:uppercase;letter-spacing:.08em">${ctx.brandName} · Weekly</div></div>
+      <div style="padding:16px">
+        <div style="${FS(16)};font-weight:900">${ctx.heading}</div>
+        <div class="vg-muted" style="${FS(9)};margin-top:3px">${ctx.subtitle}</div>
+        <div style="aspect-ratio:2.4;border-radius:10px;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary),var(--brand-gold-deep));margin:12px 0;border:1px solid var(--brand-border)"></div>
+        <div style="display:flex;flex-direction:column;gap:5px">${Array.from({length:4},(_,i)=>`<div style="height:6px;border-radius:9999px;background:var(--brand-muted);width:${i===0?"100%":65+((i*17)%30)}%"></div>`).join("")}</div>
+        <button class="vg-btn pri" style="margin-top:12px;padding:8px 16px">Read more</button>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid var(--brand-border);background:var(--brand-muted);text-align:center"><div class="vg-muted" style="${FS(8)}">Unsubscribe · ${ctx.brandName}</div></div>
+    </div>`
+  );
+}
+
+function genQrCard(ctx) {
+  const cells = Array.from({length:49},(_,i)=>{const r=Math.floor(i/7),c=i%7;return(r===0||r===6||c===0||c===6||(r<3&&c<3)||(r<3&&c>3)||(r>3&&c<3)||(r>3&&c>3))?(i%3===0?1:0):(i%2===0?1:0);});
+  return (
+    `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;background:var(--brand-card-subtle)">
+      <div style="width:180px;background:var(--brand-surface);border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.1);border:1px solid var(--brand-border)">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:10px">${cells.map(c=>`<div style="aspect-ratio:1;border-radius:2px;background:${c?"var(--brand-text)":"transparent"}"></div>`).join("")}</div>
+        <div style="text-align:center"><div style="${FS(11)};font-weight:900">${ctx.brandName}</div><div class="vg-muted" style="${FS(8)};margin-top:2px">${ctx.subtitle}</div></div>
+      </div>
+      <div style="${FS(9)};color:var(--brand-muted-foreground);margin-top:12px">Scan to connect</div>
+    </div>`
+  );
+}
+
+function genMenuCard(ctx) {
+  const items = [["Margherita","Fresh basil, mozzarella","$12"],["Pepperoni","San Marzano sauce","$14"],["Quattro Formaggi","Four cheese blend","$16"],["Prosciutto","Aged prosciutto, arugula","$18"]];
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto">
+      <div style="background:linear-gradient(135deg,var(--brand-gold-deep),var(--brand-primary));padding:16px;color:#fff;text-align:center"><div style="${FS(9)};text-transform:uppercase;letter-spacing:.1em;opacity:.85">Menu</div><div style="${FS(18)};font-weight:900;margin-top:4px">${ctx.brandName}</div><div style="${FS(9)};opacity:.85">Wood-fired pizza</div></div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+        ${items.map((it,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px dashed var(--brand-border)"><div style="${FS(10)};font-weight:900;color:var(--brand-gold-deep);width:18px">${String(i+1).padStart(2,"0")}</div><div style="flex:1"><div style="${FS(11)};font-weight:700">${it[0]}</div><div class="vg-muted" style="${FS(8)}">${it[1]}</div></div><div style="${FS(12)};font-weight:900;color:var(--brand-primary)">${it[2]}</div></div>`).join("")}
+      </div>
+    </div>`
+  );
+}
+
+function genTicket(ctx) {
+  return (
+    `<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--brand-card-subtle)">
+      <div style="width:260px;background:var(--brand-surface);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.12);border:1px solid var(--brand-border)">
+        <div style="background:linear-gradient(135deg,var(--brand-secondary),var(--brand-primary));padding:14px;color:#fff"><div style="${FS(9)};text-transform:uppercase;letter-spacing:.1em;opacity:.85">Admit One</div><div style="${FS(15)};font-weight:900;margin-top:4px">${ctx.heading}</div><div style="${FS(9)};opacity:.85;margin-top:2px">${ctx.subtitle}</div></div>
+        <div style="display:flex"><div style="flex:1;padding:12px"><div style="${FS(8)};text-transform:uppercase;color:var(--brand-muted-foreground)">Date</div><div style="${FS(10)};font-weight:700">Oct 15</div></div><div style="width:1px;background:var(--brand-border);position:relative"><div style="position:absolute;top:-6px;left:-6px;width:12px;height:12px;border-radius:9999px;background:var(--brand-card-subtle);border:1px solid var(--brand-border)"></div><div style="position:absolute;bottom:-6px;left:-6px;width:12px;height:12px;border-radius:9999px;background:var(--brand-card-subtle);border:1px solid var(--brand-border)"></div></div><div style="flex:1;padding:12px"><div style="${FS(8)};text-transform:uppercase;color:var(--brand-muted-foreground)">Seat</div><div style="${FS(10)};font-weight:700">A-12</div></div></div>
+        <div style="padding:10px 12px;border-top:1px dashed var(--brand-border);display:flex;align-items:center;gap:8px"><div style="display:flex;gap:1px">${Array.from({length:12},(_,i)=>`<div style="width:2px;height:24px;background:${i%2?"var(--brand-text)":"var(--brand-muted)"}"></div>`).join("")}</div><div style="${FS(8)};font-weight:700">#TX-2026-0410</div></div>
+      </div>
+    </div>`
+  );
+}
+
+function genRealEstate(ctx) {
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto">
+      <div style="aspect-ratio:1.6;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary) 40%,var(--brand-gold-deep));position:relative"><div style="position:absolute;top:10px;left:10px;background:var(--brand-primary);color:var(--brand-on-primary);padding:4px 10px;border-radius:6px;font-size:calc(9px * var(--vg-font-scale,1));font-weight:900">FOR SALE</div><div style="position:absolute;bottom:10px;right:10px;background:#fff;padding:5px 10px;border-radius:6px;font-size:calc(10px * var(--vg-font-scale,1));font-weight:900;color:var(--brand-text)">$1,250,000</div></div>
+      <div style="padding:12px"><div style="${FS(14)};font-weight:900">${ctx.heading}</div><div class="vg-muted" style="${FS(9)};margin-top:2px">${ctx.subtitle} · San Francisco, CA</div>
+      <div class="vg-row vg-gap2" style="margin-top:10px"><span class="vg-chip">4 Beds</span><span class="vg-chip">3 Baths</span><span class="vg-chip">2,400 sqft</span></div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:10px">${Array.from({length:3},(_,i)=>`<div style="height:5px;border-radius:9999px;background:var(--brand-muted);width:${70+i*10}%"></div>`).join("")}</div>
+      <button class="vg-btn pri" style="width:100%;margin-top:12px;padding:9px">Schedule tour</button></div>
+    </div>`
+  );
+}
+
+function genLogoStudio(ctx) {
+  const variants = ["wordmark","monogram","emblem","abstract","lettermark"];
+  return (
+    `<div class="vg-scroll" style="flex:1;overflow:auto;padding:12px">
+      <div style="${FS(13)};font-weight:900;margin-bottom:3px">Logo Studio</div><div class="vg-muted" style="${FS(9)};margin-bottom:12px">${ctx.brandName} · 5 variants</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${variants.map((v,i)=>`<div class="vg-card" style="aspect-ratio:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:${i%2?"var(--brand-surface)":"var(--brand-muted)"}">
+          ${v==="wordmark"?`<div style="${FS(14)};font-weight:900;color:var(--brand-primary)">${ctx.brandName}</div>`:v==="monogram"?`<div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary),var(--brand-gold-deep));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:calc(14px * var(--vg-font-scale,1))">${(ctx.brandName||"C")[0]}</div>`:v==="emblem"?`<div style="width:40px;height:40px;border-radius:9999px;border:2px solid var(--brand-primary);display:flex;align-items:center;justify-content:center"><span style="${FS(12)};font-weight:900;color:var(--brand-primary)">${(ctx.brandName||"C")[0]}</span></div>`:v==="abstract"?`<div style="width:36px;height:36px;background:conic-gradient(from 45deg,var(--brand-gold-light),var(--brand-primary),var(--brand-gold-deep));border-radius:8px;transform:rotate(${i*15}deg)"></div>`:`<div style="display:flex;gap:2px">${String(ctx.brandName||"CB").slice(0,2).split("").map(l=>`<div style="width:16px;height:16px;border-radius:4px;background:var(--brand-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:calc(9px * var(--vg-font-scale,1))">${l}</div>`).join("")}</div>`}
+          <div style="${FS(8)};font-weight:700;color:var(--brand-muted-foreground);text-transform:uppercase">${v}</div>
+        </div>`).join("")}
+      </div>
+    </div>`
+  );
+}
+
 /* ---------- RENDERER DISPATCH ---------- */
 const RENDERERS = {
   sidebar_workspace: sidebarWorkspace, topnav_workspace: topnavWorkspace, data_table: dataTable,
@@ -595,6 +836,11 @@ const RENDERERS = {
   recipe_testimonial: recipeTestimonial, recipe_faq: recipeFaq, recipe_cta_banner: recipeCtaBanner,
   recipe_stats_band: recipeStatsBand, recipe_logo_cloud: recipeLogoCloud, recipe_timeline: recipeTimeline,
   recipe_gallery: recipeGallery, recipe_team: recipeTeam, recipe_contact: recipeContact,
+  gen_business_card: genBusinessCard, gen_brochure: genBrochure, gen_video_card: genVideoCard,
+  gen_invoice: genInvoice, gen_resume: genResume, gen_certificate: genCertificate,
+  gen_poster: genPoster, gen_social_post: genSocialPost, gen_newsletter: genNewsletter,
+  gen_qr_card: genQrCard, gen_menu_card: genMenuCard, gen_ticket: genTicket,
+  gen_real_estate: genRealEstate, gen_logo_studio: genLogoStudio,
 };
 
 export function renderPreview(templateId, config) {
