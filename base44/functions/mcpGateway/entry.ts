@@ -1,6 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
-import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { enginePost, engineDelete, engineGet, engineSessionPost, engineSessionDelete, engineSessionGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
@@ -144,7 +144,7 @@ async function getSession(base44, keyRecord, sessionId) {
 
 async function exec(base44, s, action_type, payload = {}) {
   if (!await isEngineConfigured()) throw new Error("Browser engine not configured");
-  return enginePost("/sessions/" + s.session_id + "/execute", { action_type, ...payload });
+  return engineSessionPost("/sessions/" + s.session_id + "/execute", { action_type, ...payload }, undefined, s.metadata?.engine_url || null);
 }
 
 async function uploadScreenshot(base44, base64, name = "mcp_screenshot.png") {
@@ -201,6 +201,7 @@ async function restoreStoredContext(base44, keyRecord, contextId, sourceSessionI
       worker_id: res.workerId,
       region: res.region,
       engine_version: res.engineVersion,
+      engine_url: res.__engine_url || null,
     },
   });
   await base44.asServiceRole.entities.BrowserContext.update(ctx.id, { last_used: new Date().toISOString() });
@@ -225,7 +226,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       const session = await base44.asServiceRole.entities.Session.create({
         session_id: res.sessionId, status: "idle", project_id: keyRecord.project_id,
         started_at: new Date().toISOString(),
-        metadata: { worker_id: res.workerId, region: res.region },
+        metadata: { worker_id: res.workerId, region: res.region, engine_url: res.__engine_url || null },
       });
       return { session_id: session.id, runtime_session_id: res.sessionId, status: "idle" };
     }
@@ -305,8 +306,8 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "switch_tab": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "switch_tab", { value: String(p.tab_index) }); return { url: r.url }; }
 
     // ── Network / console ──
-    case "get_console": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { console: (r.consoleLogs || []).slice(-100) }; }
-    case "get_errors": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { errors: (r.consoleLogs || []).filter((l) => l.type === "error").slice(-50) }; }
+    case "get_console": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineSessionGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { console: (r.consoleLogs || []).slice(-100) }; }
+    case "get_errors": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineSessionGet("/sessions/" + s.session_id, undefined, s.metadata?.engine_url || null); return { errors: (r.consoleLogs || []).filter((l) => l.type === "error").slice(-50) }; }
     case "get_network":
     case "get_requests":
     case "get_responses": { const s = await getSession(base44, keyRecord, p.session_id); const r = await engineGet("/sessions/" + s.session_id); return { network: (r.networkLogs || []).slice(-100) }; }
