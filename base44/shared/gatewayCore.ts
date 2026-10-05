@@ -141,7 +141,7 @@ export function matchRoute(method, rawPath) {
 
 // Shared dispatch — used by all gateway identities.
 // `gatewayIdentity` is injected into every response for propagation proof.
-export async function dispatch(base44, route, params, data, keyRecord, requestId, gatewayIdentity, enginePost, engineDelete, isEngineConfigured) {
+export async function dispatch(base44, route, params, data, keyRecord, requestId, gatewayIdentity, enginePost, engineDelete, isEngineConfigured, engineSessionPost = null, engineSessionDelete = null) {
   function errResp(status, error) {
     return Response.json({ error, request_id: requestId, gateway: gatewayIdentity }, { status });
   }
@@ -230,6 +230,7 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
           created_at: engineRes.createdAt,
           expires_at: engineRes.expiresAt,
           config_version: engineRes.configVersion,
+          engine_url: engineRes.__engine_url || null,
           project_id: keyRecord.project_id || data.project_id,
           store_id: data.store_id || data.metadata?.store_id || null,
         },
@@ -288,12 +289,13 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
             return errResp(400, e.message);
           }
         }
-        engineRes = await enginePost(`/sessions/${session.session_id}/execute`, {
+        const sessionPost = engineSessionPost || enginePost;
+        engineRes = await sessionPost(`/sessions/${session.session_id}/execute`, {
           action_type: data.action_type,
           selector: data.selector,
           value: data.value,
           options: actionOptions,
-        }, requestId);
+        }, requestId, session.metadata?.engine_url || null);
       } catch (err) {
         return errResp(502, `Engine action failed: ${err.message}`);
       }
@@ -320,7 +322,8 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
 
       if (session.session_id && await isEngineConfigured()) {
         try {
-          await engineDelete(`/sessions/${session.session_id}`, requestId);
+          const sessionDelete = engineSessionDelete || engineDelete;
+          await sessionDelete(`/sessions/${session.session_id}`, requestId, session.metadata?.engine_url || null);
           runtimeClosed = true;
         } catch (err) {
           closeError = err.message;
@@ -493,7 +496,8 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
         return errResp(503, "Engine not configured");
       try {
         // Engine heartbeat resets the TTL timer
-        await enginePost(`/sessions/${session.session_id}/keepalive`, {});
+        const sessionPost = engineSessionPost || enginePost;
+        await sessionPost(`/sessions/${session.session_id}/keepalive`, {}, requestId, session.metadata?.engine_url || null);
       } catch (err) {
         return errResp(502, `Keep-alive failed: ${err.message}`);
       }
@@ -512,9 +516,10 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       if (!session.session_id || !await isEngineConfigured())
         return errResp(503, "Engine not configured");
       try {
-        const engineRes = await enginePost(`/sessions/${session.session_id}/execute`, {
+        const sessionPost = engineSessionPost || enginePost;
+        const engineRes = await sessionPost(`/sessions/${session.session_id}/execute`, {
           action_type: "export_cookies", options: {},
-        });
+        }, requestId, session.metadata?.engine_url || null);
         return Response.json({ cookies: engineRes.data || [], exported: engineRes.exported || 0, request_id: requestId, gateway: gatewayIdentity });
       } catch (err) {
         return errResp(502, `Cookie export failed: ${err.message}`);
@@ -530,9 +535,10 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       if (!session.session_id || !await isEngineConfigured())
         return errResp(503, "Engine not configured");
       try {
-        const engineRes = await enginePost(`/sessions/${session.session_id}/execute`, {
+        const sessionPost = engineSessionPost || enginePost;
+        const engineRes = await sessionPost(`/sessions/${session.session_id}/execute`, {
           action_type: "import_cookies", options: { cookies: data.cookies || [] },
-        });
+        }, requestId, session.metadata?.engine_url || null);
         return Response.json({ imported: engineRes.imported || (data.cookies || []).length, request_id: requestId, gateway: gatewayIdentity });
       } catch (err) {
         return errResp(502, `Cookie import failed: ${err.message}`);
@@ -548,9 +554,10 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
       if (!session.session_id || !await isEngineConfigured())
         return errResp(503, "Engine not configured");
       try {
-        const engineRes = await enginePost(`/sessions/${session.session_id}/execute`, {
+        const sessionPost = engineSessionPost || enginePost;
+        const engineRes = await sessionPost(`/sessions/${session.session_id}/execute`, {
           action_type: "screenshot", options: { fullPage: data.full_page || false },
-        });
+        }, requestId, session.metadata?.engine_url || null);
         return Response.json({
           base64: engineRes.base64, mime_type: engineRes.mimeType || "image/png",
           url: engineRes.url, title: engineRes.title, size: engineRes.size,
@@ -600,6 +607,7 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
               worker_id: engineRes.workerId,
               region: engineRes.region,
               engine_version: engineRes.engineVersion,
+              engine_url: engineRes.__engine_url || null,
               store_id: cfg.store_id || cfg.metadata?.store_id || null,
             },
             started_at: new Date().toISOString(),
