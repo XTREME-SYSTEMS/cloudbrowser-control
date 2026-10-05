@@ -64,7 +64,50 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "runAgentLoop",
+      "description": "Dispatch an autonomous agent task cycle to execute pending AgentTasks"
+    },
+    {
+      "function_name": "runWebsiteBuilder",
+      "description": "Build and deploy a website for a given niche"
+    },
+    {
+      "function_name": "runGrowthMission",
+      "description": "Run a full SEO/growth audit on a domain"
+    },
+    {
+      "function_name": "runDomainDiscovery",
+      "description": "Discover available domains for given keywords"
+    },
+    {
+      "function_name": "runAutonomousBrowserTask",
+      "description": "Run a stealth browser automation task (scrape, form-fill, captcha-solve)"
+    },
+    {
+      "function_name": "runBatchOperation",
+      "description": "Run a batch multi-site operation"
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "orchestrator"
 }

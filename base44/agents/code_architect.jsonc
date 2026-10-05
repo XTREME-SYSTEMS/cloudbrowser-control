@@ -28,7 +28,42 @@
         "delete",
         "read"
       ]
+    },
+    {
+      "function_name": "runWebsiteBuilder",
+      "description": "Build and deploy a website for a given niche"
+    },
+    {
+      "function_name": "runRepoGenerator",
+      "description": "Create a GitHub repository for a project"
+    },
+    {
+      "function_name": "runTemplateGenerator",
+      "description": "Generate a site template for a niche"
+    },
+    {
+      "function_name": "runAutonomousBrowserTask",
+      "description": "Run a browser task to test a deployed site"
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "code_architect"
 }
