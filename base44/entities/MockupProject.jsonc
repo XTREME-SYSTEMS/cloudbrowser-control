@@ -1,0 +1,138 @@
+{
+  "name": "MockupProject",
+  "type": "object",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Human-readable name for this mock-up project"
+    },
+    "file_uri": {
+      "type": "string",
+      "description": "Private storage URI of the uploaded mock-up file"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original filename"
+    },
+    "file_type": {
+      "type": "string",
+      "description": "MIME type of the uploaded file"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Signed URL for viewing the mock-up (time-limited)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ingested",
+        "scanning",
+        "scanned",
+        "approved",
+        "generating",
+        "complete",
+        "failed"
+      ],
+      "default": "ingested"
+    },
+    "scan_result": {
+      "type": "object",
+      "description": "Structured design spec extracted by AI vision scan"
+    },
+    "matched_template": {
+      "type": "string",
+      "description": "Template ID matched from the studio catalog"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": [
+        "website",
+        "web_app",
+        "mobile_app",
+        "platform",
+        "landing_page"
+      ],
+      "description": "What kind of project to generate"
+    },
+    "has_backend": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether backend code is needed"
+    },
+    "backend_spec": {
+      "type": "string",
+      "description": "Backend requirements description if has_backend is true"
+    },
+    "generated_code": {
+      "type": "string",
+      "description": "Complete generated frontend code (HTML/CSS/JS)"
+    },
+    "generated_backend_code": {
+      "type": "string",
+      "description": "Complete generated backend code if requested"
+    },
+    "generation_notes": {
+      "type": "string",
+      "description": "AI notes about the generation"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if status is failed"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Who or what submitted this mock-up (user id, gpt, agent name)"
+    }
+  },
+  "required": [
+    "file_uri",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
