@@ -1,0 +1,215 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { secrets } from 'base44:runtime';
+import { engineFetch, isEngineConfigured, setEngineClient } from '../../shared/engineClient.ts';
+import { sanitizeUrl } from '../../shared/urlValidator.ts';
+import { generateFingerprint } from '../../shared/fingerprintRandomizer.ts';
+import { generateTypingDelays, humanDelay } from '../../shared/humanBehavior.ts';
+import { withRetry } from '../../shared/resilience.ts';
+import { DEPLOYMENT_VERSION } from '../../shared/deploymentVersion.ts';
+
+// Tier-6 Autonomous Browser Task — unified, hardened, agent-dispatchable.
+// Actions: form_fill | scrape | captcha_solve | shadow_browse | interact
+// Hardening: SSRF-safe URL, randomized fingerprint (shadow), human-like typing,
+// engine captcha solve with vision-LLM fallback, private evidence capture.
+
+export default async function(req) {
+  try {
+    const base44 = createClientFromRequest(req);
+    setEngineClient(base44);
+    const body = await req.json().catch(() => ({}));
+
+    // Service-role dispatch (from runAgentLoop) OR user auth
+    const expectedSecret = secrets.get('WORKER_SECRET');
+    const isWorker = !!(body?.worker_secret && expectedSecret && body.worker_secret === expectedSecret);
+    if (!isWorker) {
+      const user = await base44.auth.me();
+      if (!user) return Response.json({ error: 'Unauthorized', __v: DEPLOYMENT_VERSION }, { status: 401 });
+    }
+
+    const goal = body.goal || body;
+    const rawUrl = (goal.url || '').trim();
+    if (!rawUrl) return Response.json({ error: 'url is required', __v: DEPLOYMENT_VERSION }, { status: 400 });
+
+    // SSRF / protocol validation
+    const urlCheck = sanitizeUrl(rawUrl);
+    if (!urlCheck.valid) return Response.json({ error: `URL rejected: ${urlCheck.reason}`, __v: DEPLOYMENT_VERSION }, { status: 400 });
+
+    if (!await isEngineConfigured()) {
+      return Response.json({ error: 'Browser engine not configured. Set ENGINE_URL and ENGINE_API_KEY in Secrets.', __v: DEPLOYMENT_VERSION }, { status: 503 });
+    }
+
+    const action = goal.action || 'shadow_browse';
+    const shadow = goal.shadow !== false;
+    const humanLike = !!goal.human_like;
+    const captureEvidence = goal.screenshot !== false;
+    const timeoutMs = Math.min(goal.timeout_ms || 60000, 120000);
+
+    // Randomized fingerprint for shadow/stealth mode
+    const fp = shadow ? generateFingerprint() : null;
+    const sessionConfig = {
+      viewport: fp?.viewport,
+      userAgent: fp?.userAgent,
+      locale: fp?.locale,
+      timezone: fp?.timezone,
+      geolocation: fp?.geolocation,
+      blockedResources: ['image', 'media', 'font'],
+    };
+
+    const session = await withRetry(() => engineFetch('/sessions', {
+      method: 'POST',
+      body: JSON.stringify(sessionConfig),
+    }), { retries: 2 });
+
+    const sessionId = session.sessionId;
+    const evidence = [];
+    const log = [];
+    let captchaSolved = false;
+    let captchaAttempts = 0;
+    let result = {};
+
+    const execStep = async (step) => engineFetch(`/sessions/${sessionId}/execute`, {
+      method: 'POST',
+      body: JSON.stringify({ action_type: step.action_type, selector: step.selector, value: step.value, options: step.options || {} }),
+    });
+
+    try {
+      await withRetry(() => execStep({ action_type: 'navigate', value: urlCheck.sanitized, options: { timeout: timeoutMs } }), { retries: 1 });
+      log.push({ step: 'navigate', url: urlCheck.sanitized });
+
+      if (action === 'form_fill') {
+        const fields = Array.isArray(goal.fields) ? goal.fields : [];
+        for (const field of fields) {
+          const delays = humanLike ? generateTypingDelays(field.value || '') : null;
+          await execStep({ action_type: 'type', selector: field.selector, value: field.value, options: humanLike ? { typingDelays: delays } : {} });
+          if (humanLike) await new Promise((r) => setTimeout(r, humanDelay(120, 80)));
+          log.push({ step: 'fill', selector: field.selector });
+        }
+        if (goal.submit) {
+          await execStep({ action_type: 'click', selector: goal.submit });
+          log.push({ step: 'submit', selector: goal.submit });
+        }
+        result = { form_filled: fields.length, submitted: !!goal.submit };
+      } else if (action === 'scrape') {
+        const selectors = Array.isArray(goal.selectors) ? goal.selectors : [];
+        const extracted = {};
+        for (const sel of selectors) {
+          const res = await execStep({ action_type: 'extract', selector: sel });
+          extracted[sel] = res.data || res.text || null;
+        }
+        if (goal.schema) {
+          const aiRes = await execStep({ action_type: 'ai_extract' });
+          const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+            prompt: `Extract data from this page content.\n\n${aiRes.data || ''}`,
+            response_json_schema: goal.schema,
+          });
+          result = { extracted, ai: llmRes };
+        } else {
+          result = { extracted };
+        }
+        log.push({ step: 'scrape', selectors: selectors.length });
+      } else if (action === 'captcha_solve') {
+        const captchaType = goal.captcha_type || 'recaptcha';
+        const siteKey = goal.site_key || '';
+        const captchaKey = secrets.get('CAPTCHA_SOLVER_API_KEY') || '';
+        let solved = false;
+        try {
+          const res = await engineFetch(`/sessions/${sessionId}/execute`, {
+            method: 'POST',
+            body: JSON.stringify({ action_type: 'solve_captcha', options: { type: captchaType, siteKey, apiKey: captchaKey } }),
+          });
+          if (res.data?.token || res.data?.solution) solved = true;
+          captchaAttempts++;
+        } catch (e) { log.push({ step: 'captcha_engine_failed', error: e.message }); }
+        if (!solved) {
+          try {
+            const visRes = await base44.asServiceRole.functions.invoke('solveCaptchaVision', { sessionId });
+            if (visRes.data?.solved) { solved = true; captchaSolved = true; }
+            captchaAttempts++;
+          } catch (e) { log.push({ step: 'captcha_vision_failed', error: e.message }); }
+        }
+        result = { captcha_solved: solved, attempts: captchaAttempts };
+        log.push({ step: 'captcha_solve', solved });
+      } else if (action === 'interact') {
+        const steps = Array.isArray(goal.steps) ? goal.steps : [];
+        for (const s of steps) {
+          await execStep(s);
+          if (humanLike) await new Promise((r) => setTimeout(r, humanDelay(200, 120)));
+        }
+        result = { steps_executed: steps.length };
+        log.push({ step: 'interact', count: steps.length });
+      } else {
+        if (goal.scroll) await execStep({ action_type: 'scroll', options: { direction: 'down', amount: goal.scroll } });
+        result = { browsed: true };
+        log.push({ step: 'shadow_browse' });
+      }
+
+      // Auto captcha detection + solve (if enabled and not the primary action)
+      if (goal.solve_captcha && action !== 'captcha_solve') {
+        try {
+          const detect = await execStep({ action_type: 'detect_captcha' });
+          if (detect.data?.detected) {
+            log.push({ step: 'captcha_detected', type: detect.data.type });
+            const captchaKey = secrets.get('CAPTCHA_SOLVER_API_KEY') || '';
+            try {
+              const res = await engineFetch(`/sessions/${sessionId}/execute`, {
+                method: 'POST',
+                body: JSON.stringify({ action_type: 'solve_captcha', options: { type: detect.data.type, apiKey: captchaKey } }),
+              });
+              if (res.data?.token || res.data?.solution) captchaSolved = true;
+            } catch (e) {
+              const visRes = await base44.asServiceRole.functions.invoke('solveCaptchaVision', { sessionId });
+              if (visRes.data?.solved) captchaSolved = true;
+            }
+          }
+        } catch (e) { /* detect_captcha not supported — skip */ }
+      }
+
+      // Capture evidence (screenshot) — stored privately
+      if (captureEvidence) {
+        try {
+          const shot = await engineFetch(`/sessions/${sessionId}/execute`, {
+            method: 'POST',
+            body: JSON.stringify({ action_type: 'screenshot', options: { fullPage: !!goal.full_page } }),
+          });
+          if (shot.base64) {
+            const file = new File([Uint8Array.from(atob(shot.base64), (c) => c.charCodeAt(0))], `evidence_${Date.now()}.png`, { type: 'image/png' });
+            const upload = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file });
+            evidence.push(upload.file_uri);
+          }
+          if (shot.url) result.current_url = shot.url;
+          if (shot.title) result.current_title = shot.title;
+        } catch (e) { log.push({ step: 'screenshot_failed', error: e.message }); }
+      }
+    } finally {
+      try { await engineFetch(`/sessions/${sessionId}`, { method: 'DELETE' }); } catch (e) {}
+    }
+
+    // Audit log (service role)
+    try {
+      await base44.asServiceRole.entities.LogEntry.create({
+        session_id: sessionId,
+        level: 'info',
+        category: 'autonomous_browser',
+        message: `Autonomous ${action} on ${urlCheck.sanitized}`,
+        details: { action, log, captchaSolved, evidenceCount: evidence.length },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (e) {}
+
+    return Response.json({
+      ok: true,
+      action,
+      session_id: sessionId,
+      url: urlCheck.sanitized,
+      result,
+      captcha_solved: captchaSolved,
+      captcha_attempts: captchaAttempts,
+      evidence,
+      log,
+      fingerprint: fp ? { viewport: fp.viewport, locale: fp.locale, timezone: fp.timezone } : null,
+      __v: DEPLOYMENT_VERSION,
+    });
+  } catch (error) {
+    return Response.json({ error: error.message, __v: DEPLOYMENT_VERSION }, { status: 500 });
+  }
+}
