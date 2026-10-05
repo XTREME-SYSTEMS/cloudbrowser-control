@@ -5,6 +5,7 @@ import { sanitizeUrl } from '../../shared/urlValidator.ts';
 import { generateFingerprint, buildStealthSessionConfig } from '../../shared/fingerprintRandomizer.ts';
 import { matchFingerprintToUA } from '../../shared/tlsFingerprint.ts';
 import { pickBestProxy, recordProxyResult } from '../../shared/manageProxyRotation.ts';
+import { solveCaptchaWithFallback } from '../../shared/captchaFallbackChain.ts';
 import { generateTypingDelays, humanDelay } from '../../shared/humanBehavior.ts';
 import { withRetry } from '../../shared/resilience.ts';
 import { DEPLOYMENT_VERSION } from '../../shared/deploymentVersion.ts';
@@ -112,27 +113,11 @@ export default async function(req) {
         }
         log.push({ step: 'scrape', selectors: selectors.length });
       } else if (action === 'captcha_solve') {
-        const captchaType = goal.captcha_type || 'recaptcha';
-        const siteKey = goal.site_key || '';
-        const captchaKey = secrets.get('CAPTCHA_SOLVER_API_KEY') || '';
-        let solved = false;
-        try {
-          const res = await engineFetch(`/sessions/${sessionId}/execute`, {
-            method: 'POST',
-            body: JSON.stringify({ action_type: 'solve_captcha', options: { type: captchaType, siteKey, apiKey: captchaKey } }),
-          });
-          if (res.data?.token || res.data?.solution) solved = true;
-          captchaAttempts++;
-        } catch (e) { log.push({ step: 'captcha_engine_failed', error: e.message }); }
-        if (!solved) {
-          try {
-            const visRes = await base44.asServiceRole.functions.invoke('solveCaptchaVision', { sessionId });
-            if (visRes.data?.solved) { solved = true; captchaSolved = true; }
-            captchaAttempts++;
-          } catch (e) { log.push({ step: 'captcha_vision_failed', error: e.message }); }
-        }
-        result = { captcha_solved: solved, attempts: captchaAttempts };
-        log.push({ step: 'captcha_solve', solved });
+        const chainRes = await solveCaptchaWithFallback(base44, { sessionId, url: urlCheck.sanitized, captchaType: goal.captcha_type || 'recaptcha_v2', siteKey: goal.site_key || '', triggeredBy: 'auto' });
+        captchaSolved = chainRes.solved;
+        captchaAttempts++;
+        result = { captcha_solved: chainRes.solved, provider: chainRes.provider, fallback_level: chainRes.fallbackLevel, token: chainRes.token };
+        log.push({ step: 'captcha_solve', solved: chainRes.solved, provider: chainRes.provider, level: chainRes.fallbackLevel });
       } else if (action === 'interact') {
         const steps = Array.isArray(goal.steps) ? goal.steps : [];
         for (const s of steps) {
@@ -147,23 +132,16 @@ export default async function(req) {
         log.push({ step: 'shadow_browse' });
       }
 
-      // Auto captcha detection + solve (if enabled and not the primary action)
+      // Auto captcha detection + solve with fallback chain (if enabled and not the primary action)
       if (goal.solve_captcha && action !== 'captcha_solve') {
         try {
           const detect = await execStep({ action_type: 'detect_captcha' });
           if (detect.data?.detected) {
             log.push({ step: 'captcha_detected', type: detect.data.type });
-            const captchaKey = secrets.get('CAPTCHA_SOLVER_API_KEY') || '';
-            try {
-              const res = await engineFetch(`/sessions/${sessionId}/execute`, {
-                method: 'POST',
-                body: JSON.stringify({ action_type: 'solve_captcha', options: { type: detect.data.type, apiKey: captchaKey } }),
-              });
-              if (res.data?.token || res.data?.solution) captchaSolved = true;
-            } catch (e) {
-              const visRes = await base44.asServiceRole.functions.invoke('solveCaptchaVision', { sessionId });
-              if (visRes.data?.solved) captchaSolved = true;
-            }
+            const chainRes = await solveCaptchaWithFallback(base44, { sessionId, url: urlCheck.sanitized, captchaType: detect.data.type || 'unknown', triggeredBy: 'auto' });
+            captchaSolved = chainRes.solved;
+            captchaAttempts++;
+            log.push({ step: 'captcha_auto_solved', solved: chainRes.solved, provider: chainRes.provider, level: chainRes.fallbackLevel });
           }
         } catch (e) { /* detect_captcha not supported — skip */ }
       }

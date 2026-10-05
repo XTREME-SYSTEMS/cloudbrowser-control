@@ -14,8 +14,13 @@
       "type": "string",
       "enum": [
         "recaptcha_v2",
+        "recaptcha_v3",
         "hcaptcha",
         "turnstile",
+        "funcaptcha",
+        "image_captcha",
+        "text_captcha",
+        "cloudflare_challenge",
         "unknown"
       ],
       "default": "unknown"
@@ -24,9 +29,12 @@
       "type": "string",
       "enum": [
         "self",
+        "llm_vision",
         "2captcha",
         "anticaptcha",
-        "capmonster"
+        "capmonster",
+        "capsolver",
+        "none"
       ],
       "default": "self"
     },
@@ -40,7 +48,7 @@
     },
     "token": {
       "type": "string",
-      "description": "Solve token (if solved)"
+      "description": "Solve token or solution text (if solved)"
     },
     "error": {
       "type": "string",
@@ -61,6 +69,16 @@
         "test"
       ],
       "default": "test"
+    },
+    "fallback_level": {
+      "type": "number",
+      "default": 0,
+      "description": "Which tier in the fallback chain solved it (1=self, 2=llm_vision, 3=third-party)"
+    },
+    "cost_cents": {
+      "type": "number",
+      "default": 0,
+      "description": "Cost of the solve in cents (third-party providers)"
     }
   },
   "required": [
