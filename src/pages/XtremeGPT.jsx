@@ -44,11 +44,11 @@ function MessageBubble({ message }) {
         {audioUrl && <audio controls src={audioUrl} className="w-full max-w-sm h-8" />}
         {!isUser && message.content && (
           <div className="flex items-center gap-1">
-            <button onClick={readAloud} disabled={loadingAudio} className="text-xs text-neutral-500 hover:text-neutral-300 flex items-center gap-1 px-2 py-1 rounded transition-colors">
+            <button onClick={readAloud} disabled={loadingAudio} className="text-xs text-neutral-500 hover:text-[#00A2FF] flex items-center gap-1 px-2 py-1 rounded transition-colors">
               {loadingAudio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Volume2 className="w-3 h-3" />}
               {audioUrl ? "Playing" : "Read aloud"}
             </button>
-            <button onClick={copyText} className="text-xs text-neutral-500 hover:text-neutral-300 flex items-center gap-1 px-2 py-1 rounded transition-colors">
+            <button onClick={copyText} className="text-xs text-neutral-500 hover:text-[#00A2FF] flex items-center gap-1 px-2 py-1 rounded transition-colors">
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               {copied ? "Copied" : "Copy"}
             </button>
@@ -123,19 +123,19 @@ function ChatInput({ onSend, onTranscribe, disabled, large = false }) {
       />
       <div className="flex items-center justify-between px-3 pb-3 pt-1">
         <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded-lg text-neutral-400 hover:bg-neutral-800 transition-colors" title="Attach">
+          <button className="p-1.5 rounded-lg text-neutral-400 hover:bg-[#00A2FF]/20 transition-colors" title="Attach">
             <Plus className="w-4 h-4" />
           </button>
-          <button className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-neutral-400 hover:bg-neutral-800 transition-colors">
+          <button className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-neutral-400 hover:bg-[#00A2FF]/20 transition-colors">
             <Wrench className="w-3.5 h-3.5" />
             <span>Tools</span>
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={recording ? stopRecording : startRecording} disabled={disabled || transcribing} className={`p-1.5 rounded-lg transition-colors ${recording ? "bg-red-500 text-white animate-pulse" : "text-neutral-400 hover:bg-neutral-800"}`} title="Voice input">
+          <button onClick={recording ? stopRecording : startRecording} disabled={disabled || transcribing} className={`p-1.5 rounded-lg transition-colors ${recording ? "bg-red-500 text-white animate-pulse" : "text-neutral-400 hover:bg-[#00A2FF]/20"}`} title="Voice input">
             {transcribing ? <Loader2 className="w-4 h-4 animate-spin" /> : recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
-          <button onClick={handleSend} disabled={!text.trim() || disabled} className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-blue-600 text-white hover:bg-blue-500 disabled:bg-neutral-700 disabled:text-neutral-500 disabled:cursor-not-allowed">
+          <button onClick={handleSend} disabled={!text.trim() || disabled} className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-blue-600 text-white hover:bg-[#00A2FF] disabled:bg-neutral-700 disabled:text-neutral-500 disabled:cursor-not-allowed">
             {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
           </button>
         </div>
@@ -157,7 +157,7 @@ function WorkbenchPanel() {
       </div>
       <div className="flex items-center justify-around px-2 py-2 border-b border-neutral-800/50">
         {tabs.map((Icon, i) => (
-          <button key={i} className="p-2 rounded-lg text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 transition-colors">
+          <button key={i} className="p-2 rounded-lg text-neutral-500 hover:text-[#00A2FF] hover:bg-[#00A2FF]/20 transition-colors">
             <Icon className="w-4 h-4" />
           </button>
         ))}
@@ -327,25 +327,25 @@ export default function XtremeGPT() {
           </div>
           <span className="font-semibold text-sm text-white">Xtreme GPT</span>
         </div>
-        <button onClick={() => setSidebarOpen(false)} className="md:hidden text-neutral-400 hover:text-neutral-200 p-1">
+        <button onClick={() => setSidebarOpen(false)} className="md:hidden text-neutral-400 hover:text-[#00A2FF] p-1">
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <div className="px-3 pb-2">
-        <button onClick={handleCreate} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-200 hover:bg-neutral-800 transition-colors">
+        <button onClick={handleCreate} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-200 hover:bg-[#00A2FF]/20 transition-colors">
           <Plus className="w-4 h-4" /> New chat
         </button>
       </div>
 
       <div className="px-3 pb-2 space-y-0.5">
-        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors">
+        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-[#00A2FF]/20 hover:text-[#00A2FF] transition-colors">
           <Search className="w-4 h-4" /> Search
         </button>
-        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors">
+        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-[#00A2FF]/20 hover:text-[#00A2FF] transition-colors">
           <FileText className="w-4 h-4" /> Library
         </button>
-        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors">
+        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-[#00A2FF]/20 hover:text-[#00A2FF] transition-colors">
           <FolderOpen className="w-4 h-4" /> Projects
         </button>
       </div>
@@ -361,10 +361,10 @@ export default function XtremeGPT() {
           <p className="text-xs text-neutral-500 text-center p-4">No conversations yet</p>
         ) : (
           conversations.map((c) => (
-            <div key={c.id} onClick={() => { setActiveId(c.id); setSidebarOpen(false); }} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${activeId === c.id ? "bg-neutral-800 text-white" : "text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200"}`}>
+            <div key={c.id} onClick={() => { setActiveId(c.id); setSidebarOpen(false); }} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${activeId === c.id ? "bg-neutral-800 text-white" : "text-neutral-400 hover:bg-[#00A2FF]/20 hover:text-[#00A2FF]"}`}>
               <MessageSquare className="w-3.5 h-3.5 shrink-0" />
               <span className="text-sm truncate flex-1">{c.title}</span>
-              <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-red-500 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-[#00A2FF] transition-colors">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>
@@ -395,7 +395,7 @@ export default function XtremeGPT() {
       <div className="flex-1 flex flex-col min-w-0 h-full">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800/50 shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="md:hidden text-neutral-400 hover:text-neutral-200 p-1">
+          <button onClick={() => setSidebarOpen(true)} className="md:hidden text-neutral-400 hover:text-[#00A2FF] p-1">
             <PanelLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-1.5">
@@ -414,7 +414,7 @@ export default function XtremeGPT() {
                 <p className="text-sm text-neutral-500 mb-6">Autonomous agent with full system access</p>
                 <div className="w-full space-y-1">
                   {SUGGESTIONS.map((s, i) => (
-                    <button key={i} onClick={() => { handleCreate(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 transition-colors text-left">
+                    <button key={i} onClick={() => { handleCreate(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-400 hover:bg-[#00A2FF]/20 hover:text-[#00A2FF] transition-colors text-left">
                       <span className="text-base">{s.icon}</span>
                       {s.text}
                     </button>
