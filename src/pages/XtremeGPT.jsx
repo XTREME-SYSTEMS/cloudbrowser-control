@@ -375,7 +375,7 @@ export default function XtremeGPT() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] md:h-[calc(100vh-4rem)] -m-4 md:-m-8 bg-[#0a0a0a] overflow-hidden">
+    <div className="fixed inset-0 top-0 flex bg-[#0a0a0a] overflow-hidden z-30">
       {/* Left sidebar - desktop */}
       <aside className="hidden md:flex w-64 flex-col bg-[#171717] border-r border-neutral-800/50 shrink-0">
         <Sidebar />
