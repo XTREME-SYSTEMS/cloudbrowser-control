@@ -1,4 +1,5 @@
 export const GATEWAY_AGENTS = {
+  autonomous_agent: { taskType: 'complex_reasoning', model: 'openai/gpt-5', entities: [], functions: [], instructions: 'Admin operations agent using the shared Vercel tool loop.' },
   orchestrator: {
     taskType: 'planning',
     entities: ['Domain', 'AgentTask', 'SystemBuild', 'BatchOperation', 'DomainInventory', 'FactoryPipeline', 'WorkerFleet'],

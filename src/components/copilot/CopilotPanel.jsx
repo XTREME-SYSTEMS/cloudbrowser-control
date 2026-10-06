@@ -97,6 +97,7 @@ export default function CopilotPanel({ onClose }) {
       }
       setSending(true);
       await gatewayConversations.addMessage(conv, { role: "user", content: text });
+      setSending(false);
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -116,6 +117,7 @@ export default function CopilotPanel({ onClose }) {
       const { file_url } = await uploadFile(file);
       const conv = conversations.find((c) => c.id === activeId);
       await gatewayConversations.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
+      setSending(false);
     } catch (err) {
       setError(err.message);
       setSending(false);
