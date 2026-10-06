@@ -1,0 +1,103 @@
+{
+  "name": "Idea",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short idea title"
+    },
+    "description": {
+      "type": "string",
+      "description": "What the idea is, what it improves, and why it matters"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "feature",
+        "refactor",
+        "bugfix",
+        "research",
+        "infrastructure",
+        "content",
+        "growth",
+        "security"
+      ],
+      "default": "feature"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "github",
+        "manual",
+        "web",
+        "metrics",
+        "agent"
+      ],
+      "default": "manual"
+    },
+    "source_ref": {
+      "type": "string",
+      "description": "Reference to the source (repo URL, page URL, metric id, etc.)"
+    },
+    "impact_score": {
+      "type": "number",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "effort_score": {
+      "type": "number",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "risk_score": {
+      "type": "number",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "approved",
+        "rejected",
+        "building",
+        "shipped"
+      ],
+      "default": "proposed"
+    },
+    "swarm_run_id": {
+      "type": "string",
+      "description": "If approved and dispatched, the SwarmRun that built it"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "category",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
