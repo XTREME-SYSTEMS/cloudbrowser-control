@@ -78,7 +78,7 @@ export default function AgentObservabilityPanel() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <StatCard icon={MessageSquare} label="Active (24h)" value={activeConversations} color="#2563EB" />
-            <StatCard icon={Wrench} label="Tool Calls" value={totalToolCalls} color="#8A7300" />
+            <StatCard icon={Wrench} label="Tool Calls" value={totalToolCalls} color="hsl(var(--primary))" />
             <StatCard icon={CheckCircle2} label="Success Rate" value={`${successRate}%`} color={successRate >= 80 ? "#16A34A" : "#DC2626"} />
             <StatCard icon={XCircle} label="Failed Calls" value={failedCalls} color="#DC2626" />
           </div>
@@ -94,8 +94,8 @@ export default function AgentObservabilityPanel() {
                   <div key={key} className="flex items-center gap-3 text-sm">
                     <span className="w-20 font-semibold text-black/70 shrink-0">{label}</span>
                     <div className="flex-1 h-6 bg-[#FAFAFA] rounded-lg overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#FFF7B3] to-[#FFEA00] flex items-center px-2" style={{ width: `${barWidth}%` }}>
-                        <span className="text-[10px] font-bold text-black/60">{stats.messages} msgs</span>
+                      <div className="h-full bg-primary flex items-center px-2" style={{ width: `${barWidth}%` }}>
+                        <span className="text-[10px] font-bold text-primary-foreground">{stats.messages} msgs</span>
                       </div>
                     </div>
                     <span className="w-16 text-xs text-black/50 text-right shrink-0">{stats.toolCalls} calls</span>

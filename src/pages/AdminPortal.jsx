@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { Image } from "@/components/ui/image";
+import BrandLockup from '@/components/BrandLockup';
+import NotificationBell from '@/components/NotificationBell';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,8 +18,6 @@ import AdminPromos from "@/components/admin/AdminPromos";
 import AdminVisionCortex from "@/components/admin/AdminVisionCortex";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminTeam from "@/components/admin/AdminTeam";
-
-const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png";
 
 const NAV_GROUPS = [
   {
@@ -63,7 +62,7 @@ export default function AdminPortal() {
   const [activeTab, setActiveTab] = useState("overview");
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [search, setSearch] = useState("");
+
 
   useEffect(() => {
     if (user && user.role !== "admin") {
@@ -97,13 +96,7 @@ export default function AdminPortal() {
   const SidebarContent = () => (
     <>
       <div className="px-5 py-5 border-b border-[#34363a]">
-        <div className="flex items-center gap-3">
-          <Image src={LOGO_URL} alt="CloudBrowser" className="w-9 h-9 shrink-0 rounded-lg" fittingType="fit" />
-          <div className="min-w-0">
-            <div className="font-bold text-[#e7e8e9] text-sm leading-tight truncate font-heading">CloudBrowser</div>
-            <div className="text-[10px] text-[#ff8800]/80 font-semibold tracking-wider uppercase">Admin Portal</div>
-          </div>
-        </div>
+        <BrandLockup compact subtitle="Admin Portal" />
       </div>
 
       <nav className="flex-1 overflow-y-auto xa-scroll px-3 py-4 space-y-6">
@@ -159,16 +152,17 @@ export default function AdminPortal() {
 
   return (
     <div className="min-h-screen bg-[#121214] flex">
-      <aside className="hidden lg:flex w-64 flex-col bg-[#161619] fixed inset-y-0 left-0 z-40 border-r border-[#34363a]">
+      <aside className="hidden md:flex w-60 xl:w-64 flex-col bg-[#161619] fixed inset-y-0 left-0 z-40 border-r border-[#34363a]">
         <SidebarContent />
       </aside>
 
       {sidebarOpen && (
         <>
-          <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 flex-col bg-[#161619] flex border-r border-[#34363a]">
+          <div className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="md:hidden fixed inset-y-0 left-0 z-50 w-64 flex-col bg-[#161619] flex border-r border-[#34363a]">
             <button
               onClick={() => setSidebarOpen(false)}
+              aria-label="Close admin navigation"
               className="absolute top-4 right-4 p-1.5 rounded-md text-[#b5b8bc] hover:text-[#e7e8e9] hover:bg-white/10"
             >
               <X className="w-5 h-5" />
@@ -178,13 +172,14 @@ export default function AdminPortal() {
         </>
       )}
 
-      <div className="flex-1 lg:ml-64 flex flex-col min-w-0">
+      <div className="flex-1 md:ml-60 xl:ml-64 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 bg-[#161619]/80 backdrop-blur-lg border-b border-[#34363a]">
           <div className="px-4 md:px-8 h-16 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-md hover:bg-white/5 text-[#b5b8bc]"
+                aria-label="Open admin navigation"
+                className="md:hidden p-2 rounded-md hover:bg-white/5 text-[#b5b8bc]"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -195,24 +190,13 @@ export default function AdminPortal() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="hidden md:block relative w-56">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#777d83]" />
-                <Input
-                  placeholder="Search…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-9 h-9 bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]"
-                />
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleRefresh} className="text-[#9ca3af] hover:bg-white/5">
+
+              <Button variant="ghost" size="sm" onClick={handleRefresh} aria-label="Refresh current section" className="text-[#9ca3af] hover:bg-white/5">
                 <RefreshCw className="w-4 h-4" />
               </Button>
-              <button className="p-2 rounded-md text-[#9ca3af] hover:bg-white/5 relative">
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#ff8800]" />
-              </button>
+              <NotificationBell />
               <div className="hidden sm:block w-px h-6 bg-[#34363a]" />
-              <Button variant="outline" size="sm" onClick={() => navigate("/command-center")} className="hidden sm:flex border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">
+              <Button variant="outline" size="sm" onClick={() => navigate("/command-center")} className="hidden xl:flex border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">
                 <Sparkles className="w-4 h-4 mr-1.5 text-[#ff8800]" /> Command Center
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">
@@ -223,7 +207,7 @@ export default function AdminPortal() {
           <div className="h-0.5 bg-gradient-to-r from-[#b95700] via-[#ff8800] to-[#c96708]" />
         </header>
 
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="carbon-workspace flex-1 p-4 lg:p-7 xl:p-8 max-w-screen-2xl w-full mx-auto">
           {activeTab === "overview" && <AdminOverview key={`ov-${refreshKey}`} />}
           {activeTab === "subscriptions" && <AdminSubscriptions key={`sub-${refreshKey}`} />}
           {activeTab === "phone" && <AdminPhoneNumbers key={`ph-${refreshKey}`} />}

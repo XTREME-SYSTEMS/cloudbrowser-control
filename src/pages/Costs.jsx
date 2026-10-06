@@ -8,7 +8,7 @@ import StatCard from "@/components/StatCard";
 import { DollarSign, Cpu, Globe, Brain, HardDrive, TrendingUp, AlertTriangle, Lightbulb, Save } from "lucide-react";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-const CATEGORY_COLORS = { compute: "#3b82f6", proxy: "#f59e0b", llm: "#8b5cf6", storage: "#10b981" };
+const CATEGORY_COLORS = { compute: 'hsl(var(--info))', proxy: 'hsl(var(--warning))', llm: 'hsl(var(--primary))', storage: 'hsl(var(--success))' };
 const CATEGORY_ICONS = { compute: Cpu, proxy: Globe, llm: Brain, storage: HardDrive };
 
 const formatCost = (c) => (c < 0.01 ? `$${c.toFixed(4)}` : c < 1 ? `$${c.toFixed(3)}` : `$${c.toFixed(2)}`);
@@ -198,7 +198,7 @@ export default function Costs() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCost(v)} />
                 <Tooltip formatter={(v) => formatCost(v)} />
-                <Line type="monotone" dataKey="cost" stroke="#0a0a0a" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

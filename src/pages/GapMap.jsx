@@ -253,7 +253,7 @@ export default function GapMap() {
                     <XAxis type="number" tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="type" tick={{ fontSize: 11 }} width={90} />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#C89B00" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

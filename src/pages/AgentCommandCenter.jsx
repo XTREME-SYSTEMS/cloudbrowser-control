@@ -46,8 +46,7 @@ export default function AgentCommandCenter() {
         <div className="flex flex-wrap gap-2 mb-8">
           {CATEGORIES.map((c) => (
             <button key={c} onClick={() => setCategory(c)}
-              className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all ${category === c ? "border-transparent text-black" : "border-[#E5E7EB] text-black/50 hover:border-[#FFEA00] hover:text-black"}`}
-              style={category === c ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)", boxShadow: "inset 0 1px #fff6, inset 0 -1px #8c6e0040, 0 1px 3px #00000026" } : {}}>
+              className={`px-5 py-2.5 rounded-md border text-sm font-semibold transition-colors ${category === c ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-primary'}`} aria-pressed={category === c}>
               {c}
             </button>
           ))}

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Image } from "@/components/ui/image";
+import BrandLockup from '@/components/BrandLockup';
 import { Check, Zap, Building2, Rocket, ArrowRight, Cloud, Sparkles, Loader2 } from "lucide-react";
 
 const plans = [
@@ -178,14 +178,11 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <nav className="border-b border-border/40 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-9 h-9 shrink-0" fittingType="fit" />
-            <span className="font-heading font-bold text-lg">Xtreme Cloud Browser</span>
-          </Link>
+          <Link to="/landing" className="min-w-0"><BrandLockup compact /></Link>
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/landing" className="hover:text-foreground transition-colors">Home</Link>
             <Link to="/login" className="hover:text-foreground transition-colors">Admin</Link>
@@ -198,7 +195,7 @@ export default function Pricing() {
       </nav>
 
       {/* Header */}
-      <section className="pt-16 pb-12 px-4 md:px-8 text-center">
+      <section className="pt-20 pb-14 px-5 md:px-8 text-center bg-gradient-to-b from-primary/5 to-background">
         <div className="max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
@@ -221,7 +218,7 @@ export default function Pricing() {
               key={plan.name}
               className={`relative flex flex-col ${
                 plan.highlight
-                  ? "border-primary shadow-xl ring-2 ring-primary/20 scale-[1.02]"
+                  ? "border-primary/60 shadow-lg ring-1 ring-primary/20"
                   : "border-border/50"
               }`}
             >
@@ -338,7 +335,7 @@ export default function Pricing() {
       {/* CTA */}
       <section className="px-4 md:px-8 pb-20">
         <div className="max-w-4xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl bg-gold-gradient p-12 text-center">
+          <div className="relative overflow-hidden rounded-lg bg-gold-gradient px-6 py-12 text-center">
             <h2 className="text-3xl font-heading font-bold text-black">Ready to start building?</h2>
             <p className="mt-3 text-black/70">Get your API key in minutes. No credit card required.</p>
             <Link to="/register" className="mt-6 inline-block">

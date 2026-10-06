@@ -19,7 +19,7 @@ export default function HeroTerminal() {
   }, [visible]);
 
   return (
-    <div className="xa-scanlines bg-[rgba(18,19,21,0.92)] border border-[#53565b] rounded-[5px] shadow-[0_18px_45px_rgba(0,0,0,0.6)] p-4 backdrop-blur-md font-mono text-[10px] leading-[1.9] text-[#c8cbd0] min-h-[260px]">
+    <div className="xa-panel xa-scanlines border-primary/20 bg-card/95 p-5 sm:p-7 backdrop-blur-md font-mono text-xs sm:text-sm leading-[2] text-foreground min-h-[300px] overflow-x-auto">
       <div className="border-b border-[#424448] pb-2 mb-2 text-[#9ca3af]">
         ◉　◉　◉　　session://engine/live
       </div>

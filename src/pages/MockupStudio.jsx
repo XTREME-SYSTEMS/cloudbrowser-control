@@ -148,7 +148,7 @@ export default function MockupStudio() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="CloudBrowser" className="w-8 h-8 rounded-lg" />
+            <ImageComponent src={LOGO_URL} alt="Xtreme Cloud Browser" fittingType="fit" className="w-8 h-8" />
             <div>
               <span className="font-heading font-bold text-base block leading-tight">Mock-up Studio</span>
               <span className="text-xs text-muted-foreground">Ingest → Scan → Generate</span>
@@ -163,7 +163,7 @@ export default function MockupStudio() {
 
       {/* Stepper */}
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
           {[
             { n: 1, label: "Upload", icon: Upload },
             { n: 2, label: "Scan", icon: ScanLine },
@@ -172,7 +172,7 @@ export default function MockupStudio() {
           ].map((s, i) => (
             <React.Fragment key={s.n}>
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                step >= s.n ? "bg-amber-400 text-black" : "bg-muted text-muted-foreground"
+                step >= s.n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}>
                 <s.icon className="w-3.5 h-3.5" />
                 {s.label}

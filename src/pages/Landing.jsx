@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import HeroTerminal from "@/components/landing/HeroTerminal";
 import ComparisonTable from "@/components/landing/ComparisonTable";
+import BrandLockup from '@/components/BrandLockup';
+import { Image } from '@/components/ui/image';
 
-const LOGO = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png";
 const HERO_IMG = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/95e5949ab_generated_c1209656.jpg";
 const PILLARS_IMG = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/3933df600_generated_29400de6.jpg";
 const ENTERPRISE_IMG = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/be97ddf69_generated_07697d22.jpg";
@@ -18,7 +19,7 @@ const problemLines = [
   { time: "02:15:02", level: "WARN", text: "captcha_challenge detected, blocked" },
   { time: "02:15:44", level: "ERROR", text: "Chrome 130 → 131: launcher args rejected" },
   { time: "02:16:09", level: "ERROR", text: "queue overflow (127 sessions pending)" },
-  { time: "02:16:12", level: "HINT", text: "migrate to CloudBrowser → one-line swap" },
+  { time: "02:16:12", level: "HINT", text: "migrate to Xtreme Cloud Browser → one-line swap" },
 ];
 
 const pillars = [
@@ -109,12 +110,8 @@ export default function Landing() {
       {/* Nav */}
       <nav className="fixed top-0 inset-x-0 z-50 h-16 border-b border-[#34363a] bg-[#161619]">
         <div className="max-w-7xl mx-auto h-full px-6 md:px-8 flex items-center justify-between">
-          <Link to="/landing" className="flex items-center gap-2.5 font-bold tracking-tight">
-            <img src={LOGO} alt="CloudBrowser" className="w-7 h-7 object-contain" />
-            <span className="text-[15px]">CloudBrowser</span>
-            <span className="hidden sm:inline text-[9px] text-[#ff8800] border border-[#754313] px-1.5 py-0.5 tracking-wider">ENTERPRISE</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-[19px] text-xs text-[#b5b8bc]">
+          <Link to="/landing" className="min-w-0"><BrandLockup compact /></Link>
+          <div className="hidden lg:flex items-center gap-5 text-sm text-muted-foreground">
             <a href="#platform" className="hover:text-[#ffae52] transition-colors">Platform</a>
             <a href="#solutions" className="hover:text-[#ffae52] transition-colors">Solutions</a>
             <a href="#features" className="hover:text-[#ffae52] transition-colors">Features</a>
@@ -126,15 +123,15 @@ export default function Landing() {
               {fmtClock(clock)}
             </span>
           </div>
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2">
             <Link to="/register" className="xa-btn-primary text-[10px] px-3 py-2">Get key</Link>
-            <button className="p-2 text-[#b5b8bc]" onClick={() => setMobileNavOpen(!mobileNavOpen)}>
+            <button aria-label="Toggle navigation" aria-expanded={mobileNavOpen} className="p-2 text-muted-foreground" onClick={() => setMobileNavOpen(!mobileNavOpen)}>
               <ChevronDown className="w-5 h-5" />
             </button>
           </div>
         </div>
         {mobileNavOpen && (
-          <div className="md:hidden border-t border-[#34363a] px-6 py-3 space-y-2 bg-[#161619] text-xs text-[#b5b8bc]">
+          <div className="lg:hidden border-t border-[#34363a] px-6 py-3 space-y-2 bg-[#161619] text-xs text-[#b5b8bc]">
             <a href="#platform" onClick={() => setMobileNavOpen(false)} className="block py-1 hover:text-[#ffae52]">Platform</a>
             <a href="#solutions" onClick={() => setMobileNavOpen(false)} className="block py-1 hover:text-[#ffae52]">Solutions</a>
             <a href="#features" onClick={() => setMobileNavOpen(false)} className="block py-1 hover:text-[#ffae52]">Features</a>
@@ -145,8 +142,8 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden grid lg:grid-cols-[1.05fr_0.95fr] gap-6 px-6 md:px-11 pt-20 pb-10 lg:items-center">
-        <img src={HERO_IMG} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+      <section className="relative overflow-hidden grid lg:grid-cols-[1.05fr_0.95fr] gap-10 px-6 md:px-11 xl:px-20 pt-32 pb-20 lg:items-center min-h-[620px]">
+        <Image src={HERO_IMG} alt="" className="absolute inset-0 w-full h-full opacity-35" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#121214] via-[#121214]/85 to-[#121214]/20" />
         <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-[#121214] to-transparent" />
         <div className="relative z-10 xa-arrive" style={{ animationDelay: "0.12s" }}>
@@ -154,15 +151,15 @@ export default function Landing() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#ff8800] shadow-[0_0_10px_#ff8800]" />
             Self-hosted browser infrastructure for AI agents
           </div>
-          <h1 className="text-4xl md:text-[46px] font-extrabold tracking-[-1.7px] leading-[1.03] font-heading">
+          <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold uppercase tracking-tight leading-[0.98] font-heading">
             The browser layer<br />your agents run on.
           </h1>
-          <p className="mt-4 text-sm text-[#c0c1c3] leading-relaxed max-w-xl">
+          <p className="mt-6 text-base text-muted-foreground leading-relaxed max-w-xl">
             Bring your own agent and library, or run ours. Stealth, CAPTCHA, residential proxies,
             and authenticated profiles that persist and scale to thousands. Deploy on your Google Cloud
             or ours. Your agent gets in, and gets it done.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2.5 mt-5">
+          <div className="flex flex-col sm:flex-row gap-3 mt-7">
             <Link to="/register" className="xa-btn-primary">Get your API key →</Link>
             <a href="#platform" className="xa-btn-outline">Read the docs</a>
           </div>
@@ -184,10 +181,10 @@ export default function Landing() {
       </section>
 
       {/* Problem */}
-      <section className="py-9 px-6 md:px-10">
+      <section className="py-16 md:py-20 px-6 md:px-10">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">
               Why your AI automation works in the demo<br className="hidden md:block" /> and dies in production
             </h2>
             <p className="mt-2 text-xs text-[#aeb1b4] max-w-[650px] mx-auto leading-relaxed">
@@ -212,11 +209,11 @@ export default function Landing() {
       </section>
 
       {/* Platform / 3-Line Setup */}
-      <section id="platform" className="py-9 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
+      <section id="platform" className="py-16 md:py-20 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">Connect your scripts in minutes</h2>
-            <p className="mt-2 text-xs text-[#aeb1b4]">Three lines, no rewrite. Swap launch() for connect().</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">Connect your scripts in minutes</h2>
+            <p className="mt-3 text-sm text-muted-foreground">Three lines, no rewrite. Swap launch() for connect().</p>
           </div>
           <div className="grid md:grid-cols-2 gap-3.5">
             <div className="xa-panel">
@@ -255,12 +252,12 @@ export default function Landing() {
       </section>
 
       {/* Pillars */}
-      <section className="py-9 px-6 md:px-10">
+      <section className="py-16 md:py-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
-          <img src={PILLARS_IMG} alt="" className="w-full h-[115px] object-cover rounded-[3px] border border-[#45484b] mb-3" />
+          <Image src={PILLARS_IMG} alt="" className="w-full h-44 md:h-60 rounded-lg border border-border mb-3" />
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">Your browser layer, without the trade-offs</h2>
-            <p className="mt-2 text-xs text-[#aeb1b4]">Scrape anything. Run anywhere. Deploy on your terms.</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">Your browser layer, without the trade-offs</h2>
+            <p className="mt-3 text-sm text-muted-foreground">Scrape anything. Run anywhere. Deploy on your terms.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-3">
             {pillars.map((p) => (
@@ -282,17 +279,17 @@ export default function Landing() {
       </section>
 
       {/* Use Cases */}
-      <section id="solutions" className="py-9 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
+      <section id="solutions" className="py-16 md:py-20 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">Anything you can do in a browser, your agent can too</h2>
-            <p className="mt-2 text-xs text-[#aeb1b4]">Automate what's tedious. Accelerate what's ambitious.</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">Anything you can do in a browser, your agent can too</h2>
+            <p className="mt-3 text-sm text-muted-foreground">Automate what's tedious. Accelerate what's ambitious.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {useCases.map((uc) => (
               <div key={uc.title} className="xa-smallcard">
-                <h3 className="text-[11px] font-bold mb-1.5">{uc.title}</h3>
-                <p className="text-[10px] text-[#aeb1b4] leading-relaxed">{uc.desc}</p>
+                <h3 className="text-lg font-heading font-bold mb-2">{uc.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{uc.desc}</p>
               </div>
             ))}
           </div>
@@ -300,17 +297,17 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-9 px-6 md:px-10">
+      <section id="features" className="py-16 md:py-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">Everything included. Nothing to manage.</h2>
-            <p className="mt-2 text-xs text-[#aeb1b4]">Production-grade infrastructure that scales with you.</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">Everything included. Nothing to manage.</h2>
+            <p className="mt-3 text-sm text-muted-foreground">Production-grade infrastructure that scales with you.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {features.map((f) => (
               <div key={f.title} className="xa-smallcard">
-                <h3 className="text-[11px] font-bold mb-1.5">{f.title}</h3>
-                <p className="text-[10px] text-[#aeb1b4] leading-relaxed">{f.desc}</p>
+                <h3 className="text-lg font-heading font-bold mb-2">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -318,7 +315,7 @@ export default function Landing() {
       </section>
 
       {/* Stats */}
-      <section className="py-9 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
+      <section className="py-16 md:py-20 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-3 text-center">
           {stats.map((s) => (
             <div key={s.label} className="p-3 border border-[#34373a] bg-[#191a1c]">
@@ -331,11 +328,11 @@ export default function Landing() {
       </section>
 
       {/* Comparison */}
-      <section id="comparison" className="py-9 px-6 md:px-10">
+      <section id="comparison" className="py-16 md:py-20 px-6 md:px-10">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">How CloudBrowser compares</h2>
-            <p className="mt-2 text-xs text-[#aeb1b4]">The only platform that's self-hosted, AI-native, and clone-capable.</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">How Xtreme Cloud Browser compares</h2>
+            <p className="mt-3 text-sm text-muted-foreground">The only platform that's self-hosted, AI-native, and clone-capable.</p>
           </div>
           <ComparisonTable />
           <p className="mt-3 text-center text-[10px] text-[#85898d]">
@@ -345,22 +342,22 @@ export default function Landing() {
       </section>
 
       {/* Enterprise */}
-      <section className="py-9 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
+      <section className="py-16 md:py-20 px-6 md:px-10 bg-[#18191b] border-y border-[#2a2c2f]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-5">
-            <h2 className="text-2xl font-extrabold tracking-tight font-heading">Browser infrastructure your security review can approve</h2>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight font-heading">Browser infrastructure your security review can approve</h2>
             <p className="mt-2 text-xs text-[#aeb1b4] max-w-[650px] mx-auto">
-              CloudBrowser runs the headless browsers behind your automation, in our cloud or entirely on your own infrastructure.
+              Xtreme Cloud Browser runs the headless browsers behind your automation, in our cloud or entirely on your own infrastructure.
               Same Puppeteer and Playwright code, no browser fleet to operate.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-3.5 items-center">
-            <img src={ENTERPRISE_IMG} alt="" className="w-full h-[115px] object-cover rounded-[3px] border border-[#45484b]" />
+            <Image src={ENTERPRISE_IMG} alt="" className="w-full h-44 md:h-60 rounded-lg border border-border" />
             <div className="grid grid-cols-2 gap-2">
               {enterpriseFeatures.map((f) => (
                 <div key={f.title} className="xa-smallcard">
                   <h3 className="text-xs font-bold mb-1.5">{f.title}</h3>
-                  <p className="text-[10px] text-[#aeb1b4] leading-relaxed">{f.desc}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
               ))}
             </div>
@@ -369,7 +366,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-9 px-6 md:px-10">
+      <section className="py-16 md:py-20 px-6 md:px-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center bg-gradient-to-r from-[#b95700] via-[#ff8800] to-[#c96708] text-[#151413] rounded-[5px] p-7">
             <h2 className="text-2xl font-extrabold font-heading">100% of the web at production scale</h2>
@@ -388,8 +385,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <img src={LOGO} alt="CloudBrowser" className="w-6 h-6 object-contain" />
-                <span className="font-bold text-[#e7e8e9]">CloudBrowser</span>
+                <BrandLockup compact />
               </div>
               <p className="text-[#777d83] leading-relaxed">
                 Enterprise-grade, self-hosted browser automation platform for AI agents and data extraction.
@@ -411,7 +407,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="pt-5 border-t border-[#333] flex flex-col md:flex-row justify-between gap-3">
-            <p className="text-[#777d83]">&copy; 2026 CloudBrowser. All rights reserved.</p>
+            <p className="text-[#777d83]">&copy; 2026 Xtreme Cloud Browser. All rights reserved.</p>
             <div className="flex gap-5">
               <a href="#" className="hover:text-[#ffae52] transition-colors">Privacy</a>
               <a href="#" className="hover:text-[#ffae52] transition-colors">Terms</a>

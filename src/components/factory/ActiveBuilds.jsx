@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, RefreshCw, ExternalLink, Package } from "lucide-react";
+import { statusTones } from '@/components/branding/statusTones';
 
 const STATUS_META = {
-  spec_submitted: { color: "#8A7300", bg: "#FFF7B3", label: "Submitted" },
-  planning: { color: "#2563EB", bg: "#DBEAFE", label: "Planning" },
-  building: { color: "#2563EB", bg: "#DBEAFE", label: "Building" },
-  deploying: { color: "#7C3AED", bg: "#EDE9FE", label: "Deploying" },
-  delivered: { color: "#16A34A", bg: "#DCFCE7", label: "Delivered" },
-  failed: { color: "#DC2626", bg: "#FEE2E2", label: "Failed" }
+  spec_submitted: { ...statusTones.pending, label: 'Submitted' },
+  planning: { ...statusTones.running, label: 'Planning' },
+  building: { ...statusTones.running, label: 'Building' },
+  deploying: { ...statusTones.pending, label: 'Deploying' },
+  delivered: { ...statusTones.complete, label: 'Delivered' },
+  failed: { ...statusTones.failed, label: 'Failed' },
 };
 
 export default function ActiveBuilds({ refreshKey }) {

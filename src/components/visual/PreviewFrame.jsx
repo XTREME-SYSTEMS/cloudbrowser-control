@@ -31,9 +31,9 @@ export default function PreviewFrame({ html, config, platform = "desktop", theme
           transformOrigin: "top left",
           borderRadius: isPhone ? 24 : 12,
           overflow: "hidden",
-          border: isPhone ? "8px solid #1a1a1a" : "1px solid #d4d4d8",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-          background: "#fff",
+          border: isPhone ? "8px solid hsl(var(--background))" : "1px solid hsl(var(--border))",
+          boxShadow: "0 8px 30px hsl(var(--background) / 0.4)",
+          background: "hsl(var(--card))",
         }}
       >
         {isPhone && (
@@ -45,7 +45,7 @@ export default function PreviewFrame({ html, config, platform = "desktop", theme
               transform: "translateX(-50%)",
               width: 80,
               height: 16,
-              background: "#1a1a1a",
+              background: "hsl(var(--background))",
               borderRadius: "0 0 12px 12px",
               zIndex: 10,
             }}

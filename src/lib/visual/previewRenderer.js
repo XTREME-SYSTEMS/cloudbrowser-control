@@ -384,9 +384,9 @@ function mobileFoodMenu(ctx) {
 
 function mobileRide(ctx) {
   return (
-    `<div style="flex:1;position:relative;background:linear-gradient(135deg,#e6f0ff,#cfe0ff);overflow:hidden">
+    `<div style="flex:1;position:relative;background:linear-gradient(135deg,var(--brand-background),var(--brand-muted));overflow:hidden">
       <div style="position:absolute;inset:0;background-image:linear-gradient(var(--brand-border) 1px,transparent 1px),linear-gradient(90deg,var(--brand-border) 1px,transparent 1px);background-size:28px 28px;opacity:.6"></div>
-      <div style="position:absolute;left:30%;top:30%;width:12px;height:12px;border-radius:9999px;background:var(--brand-primary);box-shadow:0 0 0 6px rgba(255,234,0,.2)"></div>
+      <div style="position:absolute;left:30%;top:30%;width:12px;height:12px;border-radius:9999px;background:var(--brand-primary);box-shadow:0 0 0 6px var(--vg-chip-bg)"></div>
       <div style="position:absolute;right:25%;bottom:35%;width:12px;height:12px;border-radius:9999px;background:var(--brand-gold-deep)"></div>
       <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M30,30 Q50,20 75,65" stroke="var(--brand-primary)" stroke-width="1.5" fill="none" stroke-dasharray="3,2"/></svg>
     </div>` +
@@ -418,7 +418,7 @@ function mobileHabits(ctx) {
     `<div class="vg-scroll" style="flex:1;overflow:auto;padding:12px">
       <div style="${FS(15)};font-weight:900">Habits</div><div class="vg-muted" style="${FS(9)}">4 active · 12 day best streak</div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:12px 0">${cells.map((c) => `<div style="aspect-ratio:1;border-radius:5px;background:${c ? "var(--brand-primary)" : "var(--brand-muted)"};opacity:${c ? 0.9 : 0.5}"></div>`).join("")}</div>
-      ${habits.map((h) => `<div class="vg-card" style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div style="width:32px;height:32px;border-radius:8px;background:rgba(255,234,0,.12);color:var(--brand-gold-deep);display:flex;align-items:center;justify-content:center"><span style="${FS(13)}">🔥</span></div><div style="flex:1"><div style="${FS(10)};font-weight:700">${h[0]}</div><div class="vg-muted" style="${FS(8)}">${h[1]}</div></div><div style="width:28px;height:16px;border-radius:9999px;background:var(--brand-primary)"></div></div>`).join("")}
+      ${habits.map((h) => `<div class="vg-card" style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div style="width:32px;height:32px;border-radius:8px;background:var(--vg-chip-bg);color:var(--brand-primary);display:flex;align-items:center;justify-content:center"><span style="${FS(13)}">🔥</span></div><div style="flex:1"><div style="${FS(10)};font-weight:700">${h[0]}</div><div class="vg-muted" style="${FS(8)}">${h[1]}</div></div><div style="width:28px;height:16px;border-radius:9999px;background:var(--brand-primary)"></div></div>`).join("")}
     </div>` + tabbar(["Habits","Stats","Me"], 0)
   );
 }
@@ -653,8 +653,8 @@ function genBrochure(ctx) {
 function genVideoCard(ctx) {
   return (
     `<div style="flex:1;display:flex;flex-direction:column;padding:12px;gap:10px">
-      <div style="flex:1;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(135deg,#0a0a0a,#1a1a2e);border:1px solid var(--brand-border);min-height:180px">
-        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,var(--brand-primary)22,transparent 60%)"></div>
+      <div style="flex:1;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--brand-background),var(--brand-surface));border:1px solid var(--brand-border);min-height:180px">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,var(--vg-chip-bg),transparent 60%)"></div>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:9999px;background:var(--brand-primary);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px var(--brand-primary)"><span style="font-size:18px;color:var(--brand-on-primary)">▶</span></div>
         <div style="position:absolute;bottom:10px;left:10px;right:10px;display:flex;align-items:center;gap:8px">
           <div style="flex:1;height:4px;border-radius:9999px;background:#ffffff33;overflow:hidden"><div style="width:35%;height:100%;background:var(--brand-primary);border-radius:9999px"></div></div>
@@ -715,9 +715,9 @@ function genCertificate(ctx) {
 
 function genPoster(ctx) {
   return (
-    `<div style="flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,#0a0a0a,#1a1a2e);color:#fff;overflow:hidden">
+    `<div style="flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,var(--brand-background),var(--brand-surface));color:#fff;overflow:hidden">
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;position:relative">
-        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,var(--brand-primary)33,transparent 60%)"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,var(--vg-chip-bg),transparent 60%)"></div>
         <div style="position:relative"><div style="${FS(9)};text-transform:uppercase;letter-spacing:.15em;color:var(--brand-primary);font-weight:700">Live Event</div><div style="${FS(24)};font-weight:900;line-height:1.1;margin-top:8px">${ctx.heading}</div><div style="${FS(11)};opacity:.8;margin-top:8px;max-width:240px">${ctx.subtitle}</div></div>
       </div>
       <div style="padding:14px 20px;background:#ffffff12;backdrop-filter:blur(8px);border-top:1px solid #ffffff22">
@@ -800,7 +800,7 @@ function genTicket(ctx) {
 function genRealEstate(ctx) {
   return (
     `<div class="vg-scroll" style="flex:1;overflow:auto">
-      <div style="aspect-ratio:1.6;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary) 40%,var(--brand-gold-deep));position:relative"><div style="position:absolute;top:10px;left:10px;background:var(--brand-primary);color:var(--brand-on-primary);padding:4px 10px;border-radius:6px;font-size:calc(9px * var(--vg-font-scale,1));font-weight:900">FOR SALE</div><div style="position:absolute;bottom:10px;right:10px;background:#fff;padding:5px 10px;border-radius:6px;font-size:calc(10px * var(--vg-font-scale,1));font-weight:900;color:var(--brand-text)">$1,250,000</div></div>
+      <div style="aspect-ratio:1.6;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary) 40%,var(--brand-gold-deep));position:relative"><div style="position:absolute;top:10px;left:10px;background:var(--brand-primary);color:var(--brand-on-primary);padding:4px 10px;border-radius:6px;font-size:calc(9px * var(--vg-font-scale,1));font-weight:900">FOR SALE</div><div style="position:absolute;bottom:10px;right:10px;background:var(--brand-surface);padding:5px 10px;border-radius:6px;font-size:calc(10px * var(--vg-font-scale,1));font-weight:900;color:var(--brand-text)">$1,250,000</div></div>
       <div style="padding:12px"><div style="${FS(14)};font-weight:900">${ctx.heading}</div><div class="vg-muted" style="${FS(9)};margin-top:2px">${ctx.subtitle} · San Francisco, CA</div>
       <div class="vg-row vg-gap2" style="margin-top:10px"><span class="vg-chip">4 Beds</span><span class="vg-chip">3 Baths</span><span class="vg-chip">2,400 sqft</span></div>
       <div style="display:flex;flex-direction:column;gap:4px;margin-top:10px">${Array.from({length:3},(_,i)=>`<div style="height:5px;border-radius:9999px;background:var(--brand-muted);width:${70+i*10}%"></div>`).join("")}</div>

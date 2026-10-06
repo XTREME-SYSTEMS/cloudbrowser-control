@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, RefreshCw, Layers } from "lucide-react";
+import { statusTones } from '@/components/branding/statusTones';
 
 const STATUS_META = {
-  queued: { color: "#8A7300", bg: "#FFF7B3", label: "Queued" },
-  dispatching: { color: "#2563EB", bg: "#DBEAFE", label: "Dispatching" },
-  running: { color: "#2563EB", bg: "#DBEAFE", label: "Running" },
-  complete: { color: "#16A34A", bg: "#DCFCE7", label: "Complete" },
-  failed: { color: "#DC2626", bg: "#FEE2E2", label: "Failed" }
+  queued: { ...statusTones.pending, label: 'Queued' },
+  dispatching: { ...statusTones.running, label: 'Dispatching' },
+  running: { ...statusTones.running, label: 'Running' },
+  complete: { ...statusTones.complete, label: 'Complete' },
+  failed: { ...statusTones.failed, label: 'Failed' },
 };
 
 export default function BatchHistory({ refreshKey }) {

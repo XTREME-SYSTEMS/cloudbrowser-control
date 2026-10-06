@@ -3,25 +3,25 @@
 // custom properties so every live preview re-renders instantly.
 
 export const DEFAULT_CONFIG = {
-  primaryColor: "#FFEA00",
-  secondaryColor: "#0a0a0a",
-  logoText: "CloudBrowser",
+  primaryColor: "#ff8800",
+  secondaryColor: "#161b22",
+  logoText: "Xtreme Cloud Browser",
   heading: "Mission Control",
   subtitle: "Fleet overview",
-  brandName: "CloudBrowser",
-  themeMode: "light",
+  brandName: "Xtreme Cloud Browser",
+  themeMode: "dark",
   fontColor: "",
-  fontFamily: "Inter",
+  fontFamily: "Barlow",
   fontScale: 1,
   logoImage: "",
 };
 
 export const PRESETS = [
-  { name: "CloudBrowser Gold", primary: "#FFEA00", secondary: "#0a0a0a" },
+  { name: "Carbon Aerospace", primary: "#ff8800", secondary: "#161b22" },
   { name: "Strategic Blue", primary: "#0059ff", secondary: "#0d2f96" },
   { name: "Emererald", primary: "#10b981", secondary: "#065f46" },
   { name: "Sunset", primary: "#f97316", secondary: "#9a3412" },
-  { name: "Violet", primary: "#7c3aed", secondary: "#4c1d95" },
+  { name: "Titanium", primary: "#a7b4c8", secondary: "#202833" },
   { name: "Rose", primary: "#e11d48", secondary: "#881337" },
   { name: "Teal", primary: "#0d9488", secondary: "#134e4a" },
   { name: "Mono", primary: "#111827", secondary: "#000000" },
@@ -38,7 +38,7 @@ export const FONT_OPTIONS = [
 export function loadFont(family) {
   if (typeof document === "undefined") return;
   const id = "vg-google-fonts";
-  const href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replace(/%20/g, "+")}:wght@400;500;700;900&display=swap`;
+  const href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replace(/%20/g, "+")}:wght@400;500;700;900&family=Barlow+Condensed:wght@600;700;800&display=swap`;
   let link = document.getElementById(id);
   if (!link) { link = document.createElement("link"); link.id = id; link.rel = "stylesheet"; document.head.appendChild(link); }
   link.href = href;
@@ -95,17 +95,17 @@ export function themeToCssVars(config) {
     "--vg-chip-bg": dark ? hexToRgba(primary, 0.22) : lighten(primary, 0.86),
     "--vg-chip-fg": dark ? lighten(primary, 0.3) : darken(primary, 0.2),
     "--brand-font-body": `'${c.fontFamily}', sans-serif`,
-    "--brand-font-heading": `'${c.fontFamily}', sans-serif`,
+    "--brand-font-heading": c.fontFamily === 'Barlow' ? "'Barlow Condensed', sans-serif" : `'${c.fontFamily}', sans-serif`,
     "--vg-font-scale": String(c.fontScale || 1),
   };
   if (dark) {
-    vars["--brand-background"] = "#0a0a0a";
-    vars["--brand-surface"] = "#161616";
-    vars["--brand-text"] = "#fafafa";
-    vars["--brand-muted"] = "#1f1f1f";
-    vars["--brand-muted-foreground"] = "#a3a3a3";
-    vars["--brand-border"] = "#262626";
-    vars["--brand-card-subtle"] = "#121212";
+    vars["--brand-background"] = "#101217";
+    vars["--brand-surface"] = "#191d24";
+    vars["--brand-text"] = "#edf0f4";
+    vars["--brand-muted"] = "#242a34";
+    vars["--brand-muted-foreground"] = "#a4adba";
+    vars["--brand-border"] = "#343c46";
+    vars["--brand-card-subtle"] = "#15191f";
   } else {
     vars["--brand-background"] = "#ffffff";
     vars["--brand-surface"] = "#ffffff";
@@ -124,7 +124,10 @@ const KEY = "vg.studio.config";
 export function loadConfig() {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_CONFIG };
+    if (!raw) return { ...DEFAULT_CONFIG };
+    const saved = JSON.parse(raw);
+    const legacyDefault = saved.primaryColor?.toLowerCase() === '#ffea00' && saved.secondaryColor?.toLowerCase() === '#0a0a0a';
+    return legacyDefault ? { ...DEFAULT_CONFIG, ...saved, primaryColor: DEFAULT_CONFIG.primaryColor, secondaryColor: DEFAULT_CONFIG.secondaryColor, themeMode: 'dark', logoText: DEFAULT_CONFIG.logoText, brandName: DEFAULT_CONFIG.brandName, fontFamily: saved.fontFamily === 'Inter' ? DEFAULT_CONFIG.fontFamily : saved.fontFamily } : { ...DEFAULT_CONFIG, ...saved };
   } catch {
     return { ...DEFAULT_CONFIG };
   }

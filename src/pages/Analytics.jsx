@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { Activity, Gauge, AlertTriangle, TrendingUp, DollarSign } from "lucide-react";
 
-const PIE_COLORS = ["#3b82f6", "#22c55e", "#f97316", "#a855f7"];
+const PIE_COLORS = ['hsl(var(--info))', 'hsl(var(--success))', 'hsl(var(--primary))', 'hsl(var(--warning))'];
 
 export default function Analytics() {
   const [jobs, setJobs] = useState([]);

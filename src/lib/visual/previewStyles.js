@@ -4,6 +4,7 @@
 export const PREVIEW_STYLES = `
 .vg-screen{position:relative;display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;font-family:var(--brand-font-body);color:var(--brand-text);background:var(--brand-background);font-size:calc(11px * var(--vg-font-scale,1));line-height:1.4}
 .vg-screen *{box-sizing:border-box}
+.vg-screen h1,.vg-screen h2,.vg-screen h3,.vg-kpi .v,.vg-nav .logo{font-family:var(--brand-font-heading);letter-spacing:.03em}
 .vg-row{display:flex;align-items:center}
 .vg-col{display:flex;flex-direction:column}
 .vg-between{justify-content:space-between}
@@ -14,7 +15,7 @@ export const PREVIEW_STYLES = `
 .vg-muted{color:var(--brand-muted-foreground)}
 .vg-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9999px;background:var(--vg-chip-bg);color:var(--vg-chip-fg);font-size:calc(9px * var(--vg-font-scale,1));font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .vg-chip.soft{background:var(--brand-muted);color:var(--brand-muted-foreground)}
-.vg-card{background:var(--brand-surface);border:1px solid var(--brand-border);border-radius:10px;padding:10px}
+.vg-card{background:var(--brand-surface);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.02) 0 1px,transparent 1px 5px);border:1px solid var(--brand-border);border-radius:6px;padding:10px;box-shadow:inset 0 1px rgba(255,255,255,.04)}
 .vg-bar{height:7px;border-radius:9999px;background:var(--brand-muted);overflow:hidden}
 .vg-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand-primary),var(--brand-gold-bright));border-radius:9999px}
 .vg-avatar{width:22px;height:22px;border-radius:9999px;background:linear-gradient(135deg,var(--brand-gold-light),var(--brand-primary),var(--brand-gold-deep));flex:none;box-shadow:inset 0 1px #fff6}
@@ -67,7 +68,7 @@ export const PREVIEW_STYLES = `
 .vg-tiles .tile{padding:10px;border:1px solid var(--brand-border);border-radius:12px;background:var(--brand-surface);display:flex;flex-direction:column;gap:4px}
 .vg-tiles .tile .v{font-size:calc(17px * var(--vg-font-scale,1));font-weight:900;line-height:1}
 .vg-tiles .tile .l{font-size:calc(8px * var(--vg-font-scale,1));color:var(--brand-muted-foreground);text-transform:uppercase;letter-spacing:.04em}
-.vg-tiles .tile .ic{width:22px;height:22px;border-radius:7px;background:rgba(255,234,0,.15);color:var(--brand-gold-deep);display:flex;align-items:center;justify-content:center;font-size:calc(11px * var(--vg-font-scale,1))}
+.vg-tiles .tile .ic{width:22px;height:22px;border-radius:7px;background:var(--vg-chip-bg);color:var(--brand-primary);display:flex;align-items:center;justify-content:center;font-size:calc(11px * var(--vg-font-scale,1))}
 .vg-flow{display:flex;flex-direction:column;gap:4px}
 .vg-flow .step{display:flex;align-items:center;gap:9px;padding:5px 0}
 .vg-flow .step .n{width:20px;height:20px;border-radius:9999px;background:var(--brand-muted);color:var(--brand-muted-foreground);display:flex;align-items:center;justify-content:center;font-size:calc(9px * var(--vg-font-scale,1));font-weight:800;flex:none}

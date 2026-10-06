@@ -1,5 +1,6 @@
 import React from "react";
 import { CheckCircle2, AlertCircle, Layers, Cloud, Database, HardDrive, Github, Train, Globe, Cpu } from "lucide-react";
+import { statusTones } from '@/components/branding/statusTones';
 
 const STACK = [
   { name: "Base44", role: "Templates + Control", icon: Layers, status: "connected", color: "#CCBB00" },
@@ -8,16 +9,16 @@ const STACK = [
   { name: "Vercel", role: "Frontend hosting", icon: Cloud, status: "connected", color: "#000000" },
   { name: "Google Drive", role: "Data storage", icon: HardDrive, status: "registered", color: "#2563EB" },
   { name: "GitHub", role: "Code source of truth", icon: Github, status: "registered", color: "#000000" },
-  { name: "Railway", role: "Worker hosting 24/7", icon: Train, status: "active", color: "#7C3AED" },
+  { name: "Railway", role: "Worker hosting 24/7", icon: Train, status: "active", color: 'hsl(var(--primary))' },
   { name: "GoDaddy", role: "Domain buying", icon: Globe, status: "needs_api_key", color: "#EA580C" }
 ];
 
 const STATUS_META = {
-  connected: { icon: CheckCircle2, label: "Connected", color: "#16A34A", bg: "#DCFCE7" },
-  registered: { icon: CheckCircle2, label: "Registered", color: "#2563EB", bg: "#DBEAFE" },
-  active: { icon: CheckCircle2, label: "Active", color: "#16A34A", bg: "#DCFCE7" },
-  needs_setup: { icon: AlertCircle, label: "Needs setup", color: "#EA580C", bg: "#FFF7B3" },
-  needs_api_key: { icon: AlertCircle, label: "Needs API key", color: "#EA580C", bg: "#FFF7B3" }
+  connected: { icon: CheckCircle2, label: 'Connected', ...statusTones.complete },
+  registered: { icon: CheckCircle2, label: 'Registered', ...statusTones.running },
+  active: { icon: CheckCircle2, label: 'Active', ...statusTones.complete },
+  needs_setup: { icon: AlertCircle, label: 'Needs setup', ...statusTones.pending },
+  needs_api_key: { icon: AlertCircle, label: 'Needs API key', ...statusTones.pending },
 };
 
 export default function IntegrationStack() {
@@ -39,8 +40,8 @@ export default function IntegrationStack() {
           return (
             <div key={s.name} className="p-3 rounded-xl bg-[#FAFAFA] border border-[#E5E7EB]">
               <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${s.color}15` }}>
-                  <Icon className="w-3.5 h-3.5" style={{ color: s.color }} />
+                <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                  <Icon className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5" style={{ background: meta.bg, color: meta.color }}>
                   <StatusIcon className="w-2.5 h-2.5" /> {meta.label}

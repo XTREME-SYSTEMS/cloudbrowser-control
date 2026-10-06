@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Loader2, RefreshCw, Play, Activity, CheckCircle2, Clock, AlertTriangle, Zap } from "lucide-react";
 import AgentObservabilityPanel from "@/components/mission-control/AgentObservabilityPanel";
+import { statusTones } from '@/components/branding/statusTones';
 
 const STATUS_META = {
-  pending: { icon: Clock, color: "#8A7300", bg: "#FFF7B3", label: "Pending" },
-  in_progress: { icon: Activity, color: "#2563EB", bg: "#DBEAFE", label: "Running" },
-  needs_approval: { icon: AlertTriangle, color: "#DC2626", bg: "#FEE2E2", label: "Approval" },
-  completed: { icon: CheckCircle2, color: "#16A34A", bg: "#DCFCE7", label: "Done" },
-  failed: { icon: AlertTriangle, color: "#DC2626", bg: "#FEE2E2", label: "Failed" }
+  pending: { icon: Clock, ...statusTones.pending, label: 'Pending' },
+  in_progress: { icon: Activity, ...statusTones.running, label: 'Running' },
+  needs_approval: { icon: AlertTriangle, ...statusTones.failed, label: 'Approval' },
+  completed: { icon: CheckCircle2, ...statusTones.complete, label: 'Done' },
+  failed: { icon: AlertTriangle, ...statusTones.failed, label: 'Failed' },
 };
 
 const PRIORITY_STYLE = {
@@ -65,10 +66,10 @@ export default function MissionControl() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Pending", value: counts.pending || 0, icon: Clock, color: "#8A7300" },
-            { label: "Running", value: counts.in_progress || 0, icon: Activity, color: "#2563EB" },
-            { label: "Completed", value: counts.completed || 0, icon: CheckCircle2, color: "#16A34A" },
-            { label: "Failed", value: counts.failed || 0, icon: AlertTriangle, color: "#DC2626" }
+            { label: 'Pending', value: counts.pending || 0, icon: Clock, color: statusTones.pending.color },
+            { label: 'Running', value: counts.in_progress || 0, icon: Activity, color: statusTones.running.color },
+            { label: 'Completed', value: counts.completed || 0, icon: CheckCircle2, color: statusTones.complete.color },
+            { label: 'Failed', value: counts.failed || 0, icon: AlertTriangle, color: statusTones.failed.color }
           ].map((s) => (
             <div key={s.label} className="xa-card p-4">
               <div className="flex items-center justify-between">

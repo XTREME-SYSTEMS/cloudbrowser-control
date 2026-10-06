@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Monitor, Smartphone, Sparkles, Search, Grid3x3, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import BrandLockup from '@/components/BrandLockup';
 import StudioControls from "@/components/visual/StudioControls";
 import PreviewFrame from "@/components/visual/PreviewFrame";
 import { GALLERY_FAMILIES, renderPreview } from "@/lib/visual/previewRenderer";
 import { loadConfig, saveConfig, loadFont, themeToCssVars } from "@/lib/visual/studioConfig";
-
-const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png";
 
 export default function VisualGallery() {
   const navigate = useNavigate();
@@ -40,7 +39,7 @@ export default function VisualGallery() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-lg">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="CloudBrowser" className="w-8 h-8 rounded-lg" />
+            <div className="hidden xl:block"><BrandLockup compact /></div>
             <div>
               <span className="font-heading font-bold text-base block leading-tight">Visual Gallery</span>
               <span className="text-xs text-muted-foreground">Universal Template System</span>
@@ -74,7 +73,7 @@ export default function VisualGallery() {
                   onClick={() => { setActiveFamily(f.key); setSelectedTemplate(null); }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-sm transition-all ${
                     activeFamily === f.key
-                      ? "bg-amber-400 text-black"
+                      ? "bg-primary text-primary-foreground"
                       : "border border-border text-muted-foreground hover:text-foreground hover:border-amber-400"
                   }`}
                 >
@@ -134,7 +133,7 @@ export default function VisualGallery() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {filteredItems.map((template) => (
                   <button
                     key={template.id}
