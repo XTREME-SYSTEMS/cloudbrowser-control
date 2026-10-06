@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "app": {
+      "root": ".",
+      "framework": "vite"
+    },
+    "browser-engine": {
+      "root": "browser-engine",
+      "framework": "express"
+    },
+    "operator": {
+      "root": "operator",
+      "framework": "express"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/engine/(.*)",
+      "destination": { "service": "browser-engine" }
+    },
+    {
+      "source": "/operator/(.*)",
+      "destination": { "service": "operator" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "app" }
+    }
+  ]
+}

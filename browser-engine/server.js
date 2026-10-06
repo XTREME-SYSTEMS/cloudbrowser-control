@@ -92,7 +92,11 @@ function timingSafeEqual(a, b) {
   return result === 0;
 }
 
-app.use((req, res, next) => {
+// API router — mounted at /engine prefix for Vercel services routing
+const api = express.Router();
+
+// Auth middleware (on router so req.path is relative to the /engine mount point)
+api.use((req, res, next) => {
   if (req.path === "/health" || req.path === "/liveness" || req.path === "/readiness") return next();
   const key = req.headers["x-api-key"] || (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   if (!key || !timingSafeEqual(key, ENGINE_API_KEY)) {
@@ -835,7 +839,7 @@ setInterval(() => warmPool(), 120000);
 // Health endpoints
 // ═══════════════════════════════════════════════
 
-app.get("/health", (req, res) => {
+api.get("/health", (req, res) => {
   res.json({
     ok: true,
     status: "healthy",
@@ -853,9 +857,9 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.get("/liveness", (req, res) => res.json({ ok: true, worker_id: WORKER_ID }));
+api.get("/liveness", (req, res) => res.json({ ok: true, worker_id: WORKER_ID }));
 
-app.get("/readiness", async (req, res) => {
+api.get("/readiness", async (req, res) => {
   try {
     const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
     await browser.close();
@@ -865,7 +869,7 @@ app.get("/readiness", async (req, res) => {
   }
 });
 
-app.get("/heartbeat", (req, res) => {
+api.get("/heartbeat", (req, res) => {
   heartbeatSeq++;
   res.json({
     ok: true,
@@ -880,7 +884,7 @@ app.get("/heartbeat", (req, res) => {
   });
 });
 
-app.get("/config", (req, res) => {
+api.get("/config", (req, res) => {
   res.json({
     maxSessions: MAX_SESSIONS, activeSessions: sessions.size, poolSize: pool.length, poolCapacity: POOL_SIZE,
     workerId: WORKER_ID, region: REGION, engineVersion: ENGINE_VERSION, schemaVersion: SCHEMA_VERSION,
@@ -896,7 +900,7 @@ app.get("/config", (req, res) => {
 // Create session — returns REAL runtime session ID
 // ═══════════════════════════════════════════════
 
-app.post("/sessions", async (req, res) => {
+api.post("/sessions", async (req, res) => {
   try {
     const opts = req.body || {};
 
@@ -1054,7 +1058,7 @@ app.post("/sessions", async (req, res) => {
 // Get session
 // ═══════════════════════════════════════════════
 
-app.get("/sessions/:id", (req, res) => {
+api.get("/sessions/:id", (req, res) => {
   const s = sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: "Session not found" });
   res.json({
@@ -1069,7 +1073,7 @@ app.get("/sessions/:id", (req, res) => {
 // Execute action — canonical contract
 // ═══════════════════════════════════════════════
 
-app.post("/sessions/:id/execute", async (req, res) => {
+api.post("/sessions/:id/execute", async (req, res) => {
   const s = sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: "Session not found" });
   const { action_type, selector, value, options = {} } = req.body;
@@ -1282,7 +1286,7 @@ app.post("/sessions/:id/execute", async (req, res) => {
 // Close session — idempotent
 // ═══════════════════════════════════════════════
 
-app.delete("/sessions/:id", async (req, res) => {
+api.delete("/sessions/:id", async (req, res) => {
   const s = sessions.get(req.params.id);
   let videoBase64 = null;
   if (s?.recordVideo) {
@@ -1303,7 +1307,7 @@ app.delete("/sessions/:id", async (req, res) => {
 // List sessions
 // ═══════════════════════════════════════════════
 
-app.get("/sessions", (req, res) => {
+api.get("/sessions", (req, res) => {
   const list = [...sessions.values()].map((s) => ({
     sessionId: s.id, status: s.status, url: s.url, title: s.title,
     createdAt: s.createdAt, lastActivity: s.lastActivity, recordVideo: s.recordVideo,
@@ -1316,7 +1320,7 @@ app.get("/sessions", (req, res) => {
 // Share session
 // ═══════════════════════════════════════════════
 
-app.post("/sessions/:id/share", async (req, res) => {
+api.post("/sessions/:id/share", async (req, res) => {
   const s = sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: "Session not found" });
   const shareToken = Math.random().toString(36).slice(2);
@@ -1328,7 +1332,7 @@ app.post("/sessions/:id/share", async (req, res) => {
 // Keep-alive — extend session TTL (M1 fix)
 // ═══════════════════════════════════════════════
 
-app.post("/sessions/:id/keepalive", (req, res) => {
+api.post("/sessions/:id/keepalive", (req, res) => {
   const s = sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: "Session not found" });
   s.lastActivity = Date.now(); // Reset the TTL timer
@@ -1339,7 +1343,7 @@ app.post("/sessions/:id/keepalive", (req, res) => {
 // Screenshot (for live view)
 // ═══════════════════════════════════════════════
 
-app.get("/sessions/:id/screenshot", async (req, res) => {
+api.get("/sessions/:id/screenshot", async (req, res) => {
   const s = sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: "Session not found" });
   try {
@@ -1352,7 +1356,7 @@ app.get("/sessions/:id/screenshot", async (req, res) => {
 // Pool management
 // ═══════════════════════════════════════════════
 
-app.get("/pool", (req, res) => {
+api.get("/pool", (req, res) => {
   res.json({
     poolSize: pool.length,
     poolCapacity: POOL_SIZE,
@@ -1364,8 +1368,8 @@ app.get("/pool", (req, res) => {
   });
 });
 
-app.post("/pool/warm", async (req, res) => { await warmPool(); res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID }); });
-app.post("/pool/drain", async (req, res) => { while (pool.length > 0) { const id = pool.shift(); await closeSession(id, "drained"); } res.json({ poolSize: 0, workerId: WORKER_ID }); });
+api.post("/pool/warm", async (req, res) => { await warmPool(); res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID }); });
+api.post("/pool/drain", async (req, res) => { while (pool.length > 0) { const id = pool.shift(); await closeSession(id, "drained"); } res.json({ poolSize: 0, workerId: WORKER_ID }); });
 
 // ═══════════════════════════════════════════════
 // Graceful shutdown (H3 fix) — drain sessions on SIGTERM
@@ -1398,6 +1402,9 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   await sessionManager.initSchema();
   sessionManager.startCleanupLoop();
 })();
+
+// Mount the API router at /engine prefix (Vercel services routing)
+app.use('/engine', api);
 
 app.listen(PORT, () => {
   console.log(`Browser engine v${ENGINE_VERSION} running on port ${PORT} (worker: ${WORKER_ID}, region: ${REGION})`);

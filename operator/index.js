@@ -9,6 +9,9 @@ const { EventEmitter } = require('events');
 const app = express();
 app.use(express.json());
 
+// API router — mounted at /operator prefix for Vercel services routing
+const api = express.Router();
+
 const operator = new EventEmitter();
 
 // Configuration from env vars
@@ -271,7 +274,7 @@ async function pollServices() {
 // ============================================================================
 // WEBHOOK HANDLER
 // ============================================================================
-app.post('/webhooks/railway-deploy', async (req, res) => {
+api.post('/webhooks/railway-deploy', async (req, res) => {
  try {
  METRICS.webhooksReceived++;
  const { event, deploymentId, serviceId } = req.body;
@@ -335,7 +338,7 @@ async function notifyCloudBrowserUI(payload) {
 // ============================================================================
 // EXPRESS ROUTES
 // ============================================================================
-app.get('/health', (req, res) => {
+api.get('/health', (req, res) => {
  res.json({
  status: 'healthy',
  version: '1.0.0',
@@ -343,7 +346,7 @@ app.get('/health', (req, res) => {
  });
 });
 
-app.get('/status', (req, res) => {
+api.get('/status', (req, res) => {
  res.json({
  status: 'running',
  config: {
@@ -355,7 +358,7 @@ app.get('/status', (req, res) => {
  });
 });
 
-app.post('/api/manual/deploy', async (req, res) => {
+api.post('/api/manual/deploy', async (req, res) => {
  try {
  const { serviceId } = req.body;
  const deployment = await triggerDeployment(serviceId);
@@ -365,7 +368,7 @@ app.post('/api/manual/deploy', async (req, res) => {
  }
 });
 
-app.post('/api/manual/scale', async (req, res) => {
+api.post('/api/manual/scale', async (req, res) => {
  try {
  const { serviceId, environmentId, replicas } = req.body;
  const result = await updateServiceReplicas(serviceId, environmentId, replicas);
@@ -379,7 +382,7 @@ app.post('/api/manual/scale', async (req, res) => {
 // ONE-SHOT INFRA FIXUPS (hardcoded targets — safe on a public endpoint)
 // ============================================================================
 // POST /api/manual/scraper-domain — create the scraper service's public domain
-app.post('/api/manual/scraper-domain', async (req, res) => {
+api.post('/api/manual/scraper-domain', async (req, res) => {
   try {
     const data = await railwayGQL(
       `mutation($input: CustomDomainCreateInput!) {
@@ -403,7 +406,7 @@ app.post('/api/manual/scraper-domain', async (req, res) => {
 // POST /api/manual/scraper-server-mode — convert scraper from cron service to
 // persistent server (clears cronSchedule, sets ALWAYS restart) and redeploys.
 // Hardcoded target — safe on a public endpoint.
-app.post('/api/manual/scraper-server-mode', async (req, res) => {
+api.post('/api/manual/scraper-server-mode', async (req, res) => {
   try {
     const INSTANCE_ID = 'c3633498-2692-4502-a455-04f77f08124e';
     const updated = await railwayGQL(
@@ -423,8 +426,11 @@ app.post('/api/manual/scraper-server-mode', async (req, res) => {
 // ============================================================================
 const PORT = process.env.PORT || 8081;
 
+// Mount the API router at /operator prefix (Vercel services routing)
+app.use('/operator', api);
+
 app.listen(PORT, () => {
- console.log(`[Start] Railway Autonomous Operator v1.0.0 on port ${PORT}`);
+  console.log(`[Start] Railway Autonomous Operator v1.0.0 on port ${PORT}`);
  console.log(`[Config] Project: ${CONFIG.PROJECT_ID}`);
  console.log(`[Config] Repo: ${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}`);
  console.log(`[Config] Poll: every ${CONFIG.POLL_INTERVAL_MS / 1000 / 60} minutes`);
