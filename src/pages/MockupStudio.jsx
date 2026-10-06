@@ -10,7 +10,7 @@ import {
   FileImage, Sparkles, AlertCircle, Eye, Copy, Server, Monitor,
 } from "lucide-react";
 
-const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png";
+const LOGO_URL = "/icon.svg";
 
 export default function MockupStudio() {
   const navigate = useNavigate();

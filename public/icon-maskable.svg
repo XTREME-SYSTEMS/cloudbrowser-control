@@ -1,9 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0a0a0a"/>
-  <circle cx="256" cy="256" r="120" fill="none" stroke="#ffffff" stroke-width="12"/>
-  <line x1="136" y1="256" x2="376" y2="256" stroke="#ffffff" stroke-width="12"/>
-  <line x1="256" y1="136" x2="256" y2="376" stroke="#ffffff" stroke-width="12"/>
-  <path d="M 256 136 C 200 184, 200 328, 256 376" fill="none" stroke="#ffffff" stroke-width="12"/>
-  <path d="M 256 136 C 312 184, 312 328, 256 376" fill="none" stroke="#ffffff" stroke-width="12"/>
-  <circle cx="256" cy="256" r="20" fill="#3b82f6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="carbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16181d"/>
+      <stop offset="1" stop-color="#0a0b0e"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffae52"/>
+      <stop offset="0.5" stop-color="#ff8800"/>
+      <stop offset="1" stop-color="#c96708"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- full-bleed background for maskable safe zone -->
+  <rect width="512" height="512" fill="url(#carbon)"/>
+
+  <!-- browser window + cloud-bolt centered with padding for maskable crop -->
+  <g transform="translate(56,56) scale(0.78)" filter="url(#glow)">
+    <rect x="120" y="150" width="272" height="212" rx="20" ry="20"
+          fill="none" stroke="url(#amber)" stroke-width="12"/>
+    <line x1="120" y1="190" x2="392" y2="190" stroke="url(#amber)" stroke-width="10"/>
+    <circle cx="142" cy="170" r="6" fill="#ff8800"/>
+    <circle cx="162" cy="170" r="6" fill="#ff8800" fill-opacity="0.6"/>
+    <circle cx="182" cy="170" r="6" fill="#ff8800" fill-opacity="0.3"/>
+    <path d="M200 300 C 200 278, 218 262, 240 262 C 248 244, 268 232, 290 236 C 308 218, 338 220, 348 242 C 366 246, 372 266, 362 282 C 366 296, 354 308, 338 306 L 214 306 C 204 306, 196 296, 200 300 Z"
+          fill="url(#amber)" fill-opacity="0.2" stroke="url(#amber)" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M268 250 L 248 296 L 266 296 L 246 344 L 296 286 L 276 286 L 296 250 Z"
+          fill="url(#amber)" stroke="#ffae52" stroke-width="2" stroke-linejoin="round"/>
+  </g>
 </svg>

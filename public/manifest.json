@@ -11,15 +11,15 @@
   "categories": ["productivity", "developer", "business"],
   "icons": [
     {
-      "src": "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png",
+      "src": "/icon.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png",
+      "src": "/icon-maskable.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ],
