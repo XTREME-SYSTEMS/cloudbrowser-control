@@ -293,7 +293,7 @@ export default function XtremeGPT() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)] bg-white rounded-xl overflow-hidden border border-neutral-200">
+    <div className="flex h-[calc(100vh-7rem)] md:h-[calc(100vh-4rem)] -m-4 md:-m-8 bg-white overflow-hidden">
       <aside className="hidden md:flex w-64 flex-col bg-neutral-50 border-r border-neutral-200">
         <Sidebar />
       </aside>
@@ -307,59 +307,54 @@ export default function XtremeGPT() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200">
+      <div className="flex-1 flex flex-col min-w-0 h-full">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200 shrink-0">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden text-neutral-500 hover:text-neutral-700 p-1">
             <PanelLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-blue-500" />
-            <span className="text-sm text-neutral-500">Autonomous Agent · GPT-5 via Vercel AI Gateway</span>
+            <span className="text-sm text-neutral-500 hidden sm:inline">Autonomous Agent · GPT-5 via Vercel AI Gateway</span>
+            <span className="text-sm text-neutral-500 sm:hidden">Xtreme GPT</span>
           </div>
           <div className="w-8" />
         </div>
 
-        {!activeId ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 overflow-auto">
-            <div className="w-full max-w-2xl flex flex-col items-center">
-              <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900 mb-8 text-center">What can I help with?</h1>
-              <div className="w-full">
-                <ChatInput onSend={handleSend} onTranscribe={handleTranscribe} disabled={sending} large />
+        <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-6 min-h-0">
+          <div className="max-w-3xl mx-auto space-y-6">
+            {!activeId ? (
+              <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                <h1 className="text-2xl md:text-4xl font-semibold text-neutral-900 mb-3">What can I help with?</h1>
+                <p className="text-sm text-neutral-400 mb-6">Autonomous agent with full system access</p>
+                <div className="w-full space-y-1">
+                  {SUGGESTIONS.map((s, i) => (
+                    <button key={i} onClick={() => { handleCreate(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors text-left">
+                      <span className="text-base">{s.icon}</span>
+                      {s.text}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="w-full mt-6 space-y-1">
-                {SUGGESTIONS.map((s, i) => (
-                  <button key={i} onClick={() => { handleCreate(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors text-left">
-                    <span className="text-base">{s.icon}</span>
-                    {s.text}
-                  </button>
-                ))}
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-[50vh] text-center text-neutral-400">
+                <p className="text-sm">Send a message to start. The agent can browse the web, run jobs, manage infra, and more.</p>
               </div>
-            </div>
+            ) : (
+              <>
+                {messages.map((m, i) => <MessageBubble key={i} message={m} />)}
+                {sending && <div className="flex items-center gap-2 text-sm text-neutral-400"><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</div>}
+              </>
+            )}
           </div>
-        ) : (
-          <>
-            <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-6">
-              <div className="max-w-3xl mx-auto space-y-6">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-neutral-400">
-                    <p className="text-sm">Send a message to start. The agent can browse the web, run jobs, manage infra, and more.</p>
-                  </div>
-                ) : (
-                  <>
-                    {messages.map((m, i) => <MessageBubble key={i} message={m} />)}
-                    {sending && <div className="flex items-center gap-2 text-sm text-neutral-400"><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</div>}
-                  </>
-                )}
-              </div>
-            </div>
-            {error && <div className="px-4 py-2 bg-red-50 text-red-600 text-sm border-t border-red-200">{error}</div>}
-            <div className="px-4 py-3 border-t border-neutral-200">
-              <div className="max-w-3xl mx-auto">
-                <ChatInput onSend={handleSend} onTranscribe={handleTranscribe} disabled={sending} />
-              </div>
-            </div>
-          </>
-        )}
+        </div>
+
+        {error && <div className="px-4 py-2 bg-red-50 text-red-600 text-sm border-t border-red-200 shrink-0">{error}</div>}
+
+        <div className="px-4 py-3 border-t border-neutral-200 shrink-0">
+          <div className="max-w-3xl mx-auto">
+            <ChatInput onSend={handleSend} onTranscribe={handleTranscribe} disabled={sending} large={activeId ? false : true} />
+          </div>
+        </div>
       </div>
     </div>
   );
