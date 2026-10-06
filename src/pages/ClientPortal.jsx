@@ -77,7 +77,7 @@ Generate a JSON object with:
           },
         },
       });
-      setRecommendation(llmRes);
+      setRecommendation(res);
     } catch (e) { setError(e.message); }
     setGeneratingRec(false);
   };
