@@ -9,10 +9,10 @@ import { Plus, Trash2, Copy, Check, Gift } from "lucide-react";
 const PLANS = ["free", "developer", "startup", "enterprise"];
 
 const STATUS_COLORS = {
-  active: "bg-emerald-500/10 text-emerald-400",
-  expired: "bg-[#34363a] text-[#777d83]",
-  disabled: "bg-red-500/10 text-red-400",
-  exhausted: "bg-orange-500/10 text-orange-400",
+  active: "bg-emerald-100 text-emerald-700",
+  expired: "bg-muted text-muted-foreground",
+  disabled: "bg-red-100 text-red-700",
+  exhausted: "bg-orange-100 text-orange-700",
 };
 
 export default function AdminPromos() {
@@ -80,49 +80,47 @@ export default function AdminPromos() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  if (loading) return <div className="text-[#9ca3af] text-sm">Loading promos…</div>;
+  if (loading) return <div className="text-muted-foreground text-sm">Loading promos…</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-[#e7e8e9]">Promo Codes</h1>
-          <p className="text-[#9ca3af] text-sm mt-1">Create and manage promotional codes for plan upgrades and trials.</p>
+          <h1 className="text-2xl font-heading font-bold">Promo Codes</h1>
+          <p className="text-muted-foreground text-sm mt-1">Create and manage promotional codes for plan upgrades and trials.</p>
         </div>
-        <Button onClick={() => setShowCreate(!showCreate)} className="bg-[#ff8800] text-[#171514] hover:bg-[#ffa333]">
+        <Button onClick={() => setShowCreate(!showCreate)}>
           <Plus className="w-4 h-4 mr-1" /> Create Promo
         </Button>
       </div>
 
       {showCreate && (
-        <Card className="border-[#34363a] bg-[#191a1c] xa-carbon">
+        <Card>
           <CardContent className="pt-5 space-y-4">
             <div className="space-y-2">
-              <Label className="text-[#c0c1c3]">Promo Code</Label>
+              <Label>Promo Code</Label>
               <div className="flex gap-2">
                 <Input
                   placeholder="XTREME-XXXXXXXXXX"
                   value={form.code}
                   onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                  className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]"
                 />
-                <Button variant="outline" onClick={generateRandomCode} className="border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">Auto-generate</Button>
+                <Button variant="outline" onClick={generateRandomCode}>Auto-generate</Button>
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[#c0c1c3]">Description (internal note)</Label>
+              <Label>Description (internal note)</Label>
               <Input
                 placeholder="e.g. Beta tester bonus, partner referral"
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
-                className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[#c0c1c3]">Granted Plan</Label>
+                <Label>Granted Plan</Label>
                 <select
-                  className="w-full h-9 rounded-md border border-[#34363a] bg-[#191a1c] px-3 text-sm text-[#e7e8e9]"
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                   value={form.granted_plan}
                   onChange={e => setForm({ ...form, granted_plan: e.target.value })}
                 >
@@ -130,42 +128,39 @@ export default function AdminPromos() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[#c0c1c3]">Duration (months)</Label>
+                <Label>Duration (months)</Label>
                 <Input
                   type="number"
                   min="1"
                   value={form.granted_months}
                   onChange={e => setForm({ ...form, granted_months: Number(e.target.value) })}
-                  className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9]"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[#c0c1c3]">Max Uses</Label>
+                <Label>Max Uses</Label>
                 <Input
                   type="number"
                   min="1"
                   value={form.max_uses}
                   onChange={e => setForm({ ...form, max_uses: Number(e.target.value) })}
-                  className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9]"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[#c0c1c3]">Target User Email (optional)</Label>
+                <Label>Target User Email (optional)</Label>
                 <Input
                   placeholder="user@example.com (blank = anyone)"
                   value={form.target_user_email}
                   onChange={e => setForm({ ...form, target_user_email: e.target.value })}
-                  className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]"
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleCreate} disabled={creating || !form.code.trim()} className="bg-[#ff8800] text-[#171514] hover:bg-[#ffa333]">
+              <Button onClick={handleCreate} disabled={creating || !form.code.trim()}>
                 {creating ? "Creating…" : "Create Promo"}
               </Button>
-              <Button variant="outline" onClick={() => setShowCreate(false)} className="border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">Cancel</Button>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             </div>
           </CardContent>
         </Card>
@@ -173,41 +168,41 @@ export default function AdminPromos() {
 
       <div className="grid gap-3">
         {promos.map(p => (
-          <Card key={p.id} className="border-[#34363a] bg-[#191a1c] xa-carbon">
+          <Card key={p.id} className="border-border/50">
             <CardContent className="pt-4 flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-md bg-[#ff8800]/10 flex items-center justify-center shrink-0">
-                  <Gift className="w-5 h-5 text-[#ff8800]" />
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                  <Gift className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <code className="font-mono font-semibold text-sm text-[#e7e8e9]">{p.code}</code>
-                    <button onClick={() => copyCode(p.code)} className="p-1 hover:bg-white/5 rounded">
-                      {copiedCode === p.code ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-[#777d83]" />}
+                    <code className="font-mono font-semibold text-sm">{p.code}</code>
+                    <button onClick={() => copyCode(p.code)} className="p-1 hover:bg-muted rounded">
+                      {copiedCode === p.code ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
                     </button>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status] || STATUS_COLORS.active}`}>
                       {p.status}
                     </span>
                   </div>
-                  <div className="text-xs text-[#9ca3af] mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     Grants <span className="font-medium capitalize">{p.granted_plan}</span> for {p.granted_months}mo ·
                     {" "}Used {p.used_count}/{p.max_uses}
                   </div>
                   {p.description && (
-                    <div className="text-xs text-[#777d83] mt-0.5">{p.description}</div>
+                    <div className="text-xs text-muted-foreground/70 mt-0.5">{p.description}</div>
                   )}
                 </div>
               </div>
               {p.status === "active" && (
-                <Button size="sm" variant="ghost" onClick={() => handleDisable(p.id)} className="text-[#9ca3af] hover:bg-white/5">
-                  <Trash2 className="w-4 h-4 text-red-400" />
+                <Button size="sm" variant="ghost" onClick={() => handleDisable(p.id)}>
+                  <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
               )}
             </CardContent>
           </Card>
         ))}
         {promos.length === 0 && (
-          <div className="text-center py-12 text-[#777d83] text-sm">No promo codes yet. Create one to get started.</div>
+          <div className="text-center py-12 text-muted-foreground text-sm">No promo codes yet. Create one to get started.</div>
         )}
       </div>
     </div>

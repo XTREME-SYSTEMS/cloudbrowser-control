@@ -74,7 +74,8 @@ export default function SystemBuilderForm({ onSubmitted }) {
         <div className="flex flex-wrap gap-2">
           {BUILD_TYPES.map(t => (
             <button key={t.value} onClick={() => set("build_type", t.value)}
-              className={`px-3 py-2 rounded-md border text-xs font-bold transition-colors flex items-center gap-1.5 ${form.build_type === t.value ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`} aria-pressed={form.build_type === t.value}>
+              className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${form.build_type === t.value ? "border-transparent text-black" : "border-[#E5E7EB] text-black/50"}`}
+              style={form.build_type === t.value ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)" } : {}}>
               <span>{t.icon}</span> {t.label}
             </button>
           ))}

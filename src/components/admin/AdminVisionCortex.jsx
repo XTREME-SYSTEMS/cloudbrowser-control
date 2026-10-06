@@ -15,14 +15,14 @@ import {
 const PUBLISHED_URL = "https://cloud-browser.base44.app";
 
 const OPERATIONS = [
-  { id: "analyze", label: "Analyze", icon: ScanLine, color: "text-blue-400 bg-blue-500/10", desc: "Scan entire system, detect issues, audit health" },
-  { id: "heal", label: "Heal", icon: HeartPulse, color: "text-red-400 bg-red-500/10", desc: "Auto-fix detected issues — stale sessions, expired promos, failed sandboxes" },
-  { id: "optimize", label: "Optimize", icon: Zap, color: "text-[#ff8800] bg-[#ff8800]/10", desc: "Analyze usage patterns, auto-pause idle resources, optimize costs" },
-  { id: "enhance", label: "Enhance", icon: Sparkles, color: "text-purple-400 bg-purple-500/10", desc: "Process pending system enhancements and improvements" },
-  { id: "manage", label: "Manage", icon: Settings, color: "text-emerald-400 bg-emerald-500/10", desc: "Process brain commands, reconcile settings drift" },
-  { id: "code", label: "Code", icon: Code, color: "text-indigo-400 bg-indigo-500/10", desc: "AI-driven code analysis and improvement suggestions" },
-  { id: "operate", label: "Operate", icon: Cpu, color: "text-orange-400 bg-orange-500/10", desc: "Full end-to-end system operation — analyze, heal, manage" },
-  { id: "full_cycle", label: "Full Cycle", icon: Rocket, color: "text-[#ff8800] bg-[#ff8800]/20", desc: "Run ALL operations in sequence — complete autonomous cycle" },
+  { id: "analyze", label: "Analyze", icon: ScanLine, color: "text-blue-600 bg-blue-100", desc: "Scan entire system, detect issues, audit health" },
+  { id: "heal", label: "Heal", icon: HeartPulse, color: "text-red-600 bg-red-100", desc: "Auto-fix detected issues — stale sessions, expired promos, failed sandboxes" },
+  { id: "optimize", label: "Optimize", icon: Zap, color: "text-amber-600 bg-amber-100", desc: "Analyze usage patterns, auto-pause idle resources, optimize costs" },
+  { id: "enhance", label: "Enhance", icon: Sparkles, color: "text-purple-600 bg-purple-100", desc: "Process pending system enhancements and improvements" },
+  { id: "manage", label: "Manage", icon: Settings, color: "text-emerald-600 bg-emerald-100", desc: "Process brain commands, reconcile settings drift" },
+  { id: "code", label: "Code", icon: Code, color: "text-indigo-600 bg-indigo-100", desc: "AI-driven code analysis and improvement suggestions" },
+  { id: "operate", label: "Operate", icon: Cpu, color: "text-orange-600 bg-orange-100", desc: "Full end-to-end system operation — analyze, heal, manage" },
+  { id: "full_cycle", label: "Full Cycle", icon: Rocket, color: "text-amber-700 bg-amber-200", desc: "Run ALL operations in sequence — complete autonomous cycle" },
 ];
 
 export default function AdminVisionCortex() {
@@ -120,62 +120,64 @@ export default function AdminVisionCortex() {
     }
   };
 
-  if (loading) return <div className="text-[#9ca3af] text-sm">Loading Vision Cortex connection…</div>;
+  if (loading) return <div className="text-muted-foreground text-sm">Loading Vision Cortex connection…</div>;
 
   const isConnected = connection?.status === "connected";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-heading font-bold text-[#e7e8e9] flex items-center gap-2">
-          <Eye className="w-6 h-6 text-[#ff8800]" /> Vision Cortex — Bidirectional System Operator
+        <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
+          <Eye className="w-6 h-6 text-amber-600" /> Vision Cortex — Bidirectional System Operator
         </h1>
-        <p className="text-[#9ca3af] text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           Vision Cortex operates the entire system end-to-end: analyze, fix, heal, optimize, enhance, code, and manage — autonomously.
         </p>
       </div>
 
-      <Card className={isConnected ? "border-emerald-500/20 bg-[#191a1c] xa-carbon" : "border-[#754313] bg-[#191a1c] xa-carbon"}>
+      {/* Connection Status */}
+      <Card className={isConnected ? "border-emerald-200" : "border-amber-200"}>
         <CardContent className="pt-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              {isConnected ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertTriangle className="w-5 h-5 text-[#ff8800]" />}
-              <span className="font-semibold text-sm text-[#e7e8e9]">Connection: {isConnected ? "Connected" : "Pending"}</span>
+              {isConnected ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <AlertTriangle className="w-5 h-5 text-amber-500" />}
+              <span className="font-semibold text-sm">Connection: {isConnected ? "Connected" : "Pending"}</span>
               {form.bidirectional && isConnected && (
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"><ArrowRightLeft className="w-3 h-3 mr-1" /> Bidirectional</Badge>
+                <Badge className="bg-emerald-100 text-emerald-700"><ArrowRightLeft className="w-3 h-3 mr-1" /> Bidirectional</Badge>
               )}
             </div>
-            <Badge className={isConnected ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-[#ff8800]/10 text-[#ff8800] border-[#ff8800]/20"}>
+            <Badge className={isConnected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}>
               {connection?.status || "pending"}
             </Badge>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-[#c0c1c3]">API Endpoint</Label>
-              <Input value={form.api_endpoint} onChange={e => setForm({ ...form, api_endpoint: e.target.value })} placeholder="https://cloud-browser.base44.app/functions/" className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]" />
-              <p className="text-xs text-[#9ca3af]">Base URL for all backend function calls.</p>
+              <Label>API Endpoint</Label>
+              <Input value={form.api_endpoint} onChange={e => setForm({ ...form, api_endpoint: e.target.value })} placeholder="https://cloud-browser.base44.app/functions/" />
+              <p className="text-xs text-muted-foreground">Base URL for all backend function calls.</p>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#c0c1c3]">Admin API Key</Label>
-              <Input type="password" value={form.admin_api_key} onChange={e => setForm({ ...form, admin_api_key: e.target.value })} placeholder="Generate an admin API key from the API Keys tab" className="bg-[#191a1c] border-[#34363a] text-[#e7e8e9] placeholder-[#777d83]" />
-              <p className="text-xs text-[#9ca3af]">Use a Vision Cortex role key with full scopes for bidirectional control.</p>
+              <Label>Admin API Key</Label>
+              <Input type="password" value={form.admin_api_key} onChange={e => setForm({ ...form, admin_api_key: e.target.value })} placeholder="Generate an admin API key from the API Keys tab" />
+              <p className="text-xs text-muted-foreground">Use a Vision Cortex role key with full scopes for bidirectional control.</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer text-[#c0c1c3]">
-                <input type="checkbox" checked={form.autonomous_mode} onChange={e => setForm({ ...form, autonomous_mode: e.target.checked })} className="w-4 h-4 rounded accent-[#ff8800]" />
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.autonomous_mode} onChange={e => setForm({ ...form, autonomous_mode: e.target.checked })} className="w-4 h-4 rounded" />
                 <span className="text-sm">Autonomous Mode</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-[#c0c1c3]">
-                <input type="checkbox" checked={form.bidirectional} onChange={e => setForm({ ...form, bidirectional: e.target.checked })} className="w-4 h-4 rounded accent-[#ff8800]" />
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.bidirectional} onChange={e => setForm({ ...form, bidirectional: e.target.checked })} className="w-4 h-4 rounded" />
                 <span className="text-sm">Bidirectional (Read + Write)</span>
               </label>
             </div>
 
+            {/* Enabled Operations */}
             <div className="space-y-2">
-              <Label className="text-[#c0c1c3]">Enabled Operations</Label>
+              <Label>Enabled Operations</Label>
               <div className="flex flex-wrap gap-2">
                 {OPERATIONS.map(op => (
                   <button
@@ -184,8 +186,8 @@ export default function AdminVisionCortex() {
                     className={cn(
                       "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                       form.operations_enabled.includes(op.id)
-                        ? "bg-[#ff8800] text-[#171514] border-[#ff8800]"
-                        : "bg-transparent text-[#9ca3af] border-[#34363a] hover:border-[#ff8800]/30"
+                        ? "bg-amber-500 text-black border-amber-500"
+                        : "bg-transparent text-muted-foreground border-border hover:border-amber-300"
                     )}
                   >
                     {op.label}
@@ -195,12 +197,12 @@ export default function AdminVisionCortex() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <Button onClick={handleConnect} disabled={saving || !form.api_endpoint.trim()} className="bg-[#ff8800] text-[#171514] hover:bg-[#ffa333]">
+              <Button onClick={handleConnect} disabled={saving || !form.api_endpoint.trim()} className="bg-gold-gradient text-black">
                 {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Link2 className="w-4 h-4 mr-1" />}
                 {isConnected ? "Update Connection" : "Connect Vision Cortex"}
               </Button>
               {isConnected && (
-                <Button variant="outline" onClick={handleDisconnect} className="border-[#34363a] text-[#b5b8bc] hover:bg-white/5 hover:text-[#e7e8e9]">
+                <Button variant="outline" onClick={handleDisconnect}>
                   <Unlink className="w-4 h-4 mr-1" /> Disconnect
                 </Button>
               )}
@@ -209,24 +211,25 @@ export default function AdminVisionCortex() {
         </CardContent>
       </Card>
 
+      {/* Operation Buttons */}
       <div>
-        <h2 className="text-lg font-heading font-semibold mb-3 text-[#e7e8e9]">Operations</h2>
+        <h2 className="text-lg font-heading font-semibold mb-3">Operations</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {OPERATIONS.map(op => {
             const Icon = op.icon;
             const isRunning = operating === op.id;
             const isEnabled = form.operations_enabled.includes(op.id);
             return (
-              <Card key={op.id} className={cn("border-[#34363a] bg-[#191a1c] xa-carbon transition-colors", !isEnabled && "opacity-50")}>
+              <Card key={op.id} className={cn("border-border/50 transition-colors", !isEnabled && "opacity-50")}>
                 <CardContent className="pt-4">
-                  <div className={cn("w-10 h-10 rounded-md flex items-center justify-center mb-3", op.color)}>
+                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", op.color)}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <div className="font-semibold text-sm text-[#e7e8e9] mb-1">{op.label}</div>
-                  <p className="text-xs text-[#9ca3af] mb-3">{op.desc}</p>
+                  <div className="font-semibold text-sm mb-1">{op.label}</div>
+                  <p className="text-xs text-muted-foreground mb-3">{op.desc}</p>
                   <Button
                     size="sm"
-                    className="w-full bg-[#ff8800] text-[#171514] hover:bg-[#ffa333]"
+                    className="w-full bg-gold-gradient text-black"
                     onClick={() => runOperation(op.id)}
                     disabled={isRunning || !isConnected || !isEnabled}
                   >
@@ -240,69 +243,76 @@ export default function AdminVisionCortex() {
         </div>
       </div>
 
+      {/* Operation Result */}
       {operateResult && (
-        <Card className="border-[#754313] bg-[#191a1c] xa-carbon">
+        <Card className="border-amber-200">
           <CardContent className="pt-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-[#ff8800]" />
-                <h3 className="font-semibold text-sm text-[#e7e8e9] capitalize">{operateResult.operation} Result</h3>
+                <Activity className="w-5 h-5 text-amber-600" />
+                <h3 className="font-semibold text-sm capitalize">{operateResult.operation} Result</h3>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => setOperateResult(null)} className="text-[#9ca3af] hover:bg-white/5">Dismiss</Button>
+              <Button size="sm" variant="ghost" onClick={() => setOperateResult(null)}>Dismiss</Button>
             </div>
             {operateResult.error ? (
-              <div className="text-sm text-red-400">{operateResult.error}</div>
+              <div className="text-sm text-red-500">{operateResult.error}</div>
             ) : (
               <div className="space-y-3">
+                {/* Summary */}
                 {operateResult.data?.summary && Object.keys(operateResult.data.summary).length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {Object.entries(operateResult.data.summary).slice(0, 8).map(([key, val]) => (
-                      <div key={key} className="text-center p-2 rounded-md bg-[#34363a]/50">
-                        <div className="text-sm font-bold text-[#e7e8e9]">{String(val)}</div>
-                        <div className="text-xs text-[#9ca3af]">{key.replace(/_/g, " ")}</div>
+                      <div key={key} className="text-center p-2 rounded-lg bg-muted/50">
+                        <div className="text-sm font-bold">{String(val)}</div>
+                        <div className="text-xs text-muted-foreground">{key.replace(/_/g, " ")}</div>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* Actions */}
                 {operateResult.data?.actions?.map((a, i) => (
-                  <div key={i} className="p-3 rounded-md border border-[#34363a] bg-[#191a1c]">
+                  <div key={i} className="p-3 rounded-lg border border-border/50">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#ff8800]/10 text-[#ff8800]">{a.action}</span>
-                      {a.count !== undefined && <span className="text-sm font-bold text-[#ff8800]">{a.count}</span>}
-                      {a.total_healed !== undefined && <span className="text-sm font-bold text-emerald-400">{a.total_healed} healed</span>}
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-700">{a.action}</span>
+                      {a.count !== undefined && <span className="text-sm font-bold text-amber-600">{a.count}</span>}
+                      {a.total_healed !== undefined && <span className="text-sm font-bold text-emerald-600">{a.total_healed} healed</span>}
                     </div>
+                    {/* Issues list */}
                     {a.issues?.map((issue, j) => (
                       <div key={j} className="flex items-start gap-2 mt-1">
                         <span className={cn("text-xs px-2 py-0.5 rounded-full shrink-0",
-                          issue.severity === "critical" ? "bg-red-500/10 text-red-400" :
-                          issue.severity === "warning" ? "bg-orange-500/10 text-orange-400" :
-                          "bg-blue-500/10 text-blue-400"
+                          issue.severity === "critical" ? "bg-red-100 text-red-700" :
+                          issue.severity === "warning" ? "bg-orange-100 text-orange-700" :
+                          "bg-blue-100 text-blue-700"
                         )}>{issue.severity}</span>
                         <div>
-                          <div className="text-sm text-[#c0c1c3]">{issue.message}</div>
-                          {issue.action && <div className="text-xs text-[#9ca3af]">→ {issue.action}</div>}
+                          <div className="text-sm">{issue.message}</div>
+                          {issue.action && <div className="text-xs text-muted-foreground">→ {issue.action}</div>}
                         </div>
                       </div>
                     ))}
+                    {/* Optimizations */}
                     {a.optimizations?.map((opt, j) => (
-                      <div key={j} className="text-sm mt-1 text-[#c0c1c3]">
+                      <div key={j} className="text-sm mt-1">
                         <span className="font-medium">{opt.type}:</span> {opt.message}
-                        {opt.action && <span className="text-xs text-[#9ca3af]"> → {opt.action}</span>}
+                        {opt.action && <span className="text-xs text-muted-foreground"> → {opt.action}</span>}
                       </div>
                     ))}
+                    {/* Code suggestions */}
                     {a.suggestions?.map((sug, j) => (
-                      <div key={j} className="mt-2 p-2 rounded-md bg-indigo-500/5 border border-indigo-500/20">
+                      <div key={j} className="mt-2 p-2 rounded-lg bg-indigo-50 border border-indigo-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="text-xs border-indigo-500/20 text-indigo-400">{sug.priority}</Badge>
-                          <span className="text-sm font-medium text-[#e7e8e9]">{sug.component}</span>
+                          <Badge variant="outline" className="text-xs">{sug.priority}</Badge>
+                          <span className="text-sm font-medium">{sug.component}</span>
                         </div>
-                        <div className="text-sm text-[#c0c1c3]">{sug.suggestion}</div>
-                        <div className="text-xs text-[#9ca3af] mt-1">{sug.approach}</div>
+                        <div className="text-sm">{sug.suggestion}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{sug.approach}</div>
                       </div>
                     ))}
+                    {/* Other action details */}
                     {a.promos_expired !== undefined && (
-                      <div className="text-xs text-[#777d83] mt-1">
+                      <div className="text-xs text-muted-foreground mt-1">
                         Promos expired: {a.promos_expired} · Sessions cleaned: {a.sessions_cleaned} · Failed jobs: {a.failed_jobs_detected} · Entities managed: {a.total_entities_managed}
                       </div>
                     )}
@@ -314,37 +324,38 @@ export default function AdminVisionCortex() {
         </Card>
       )}
 
+      {/* Activity Stats */}
       {connection && (
-        <Card className="border-[#34363a] bg-[#191a1c] xa-carbon">
+        <Card className="border-border/50">
           <CardContent className="pt-5">
             <div className="flex items-center gap-2 mb-3">
-              <Activity className="w-5 h-5 text-[#ff8800]" />
-              <h3 className="font-semibold text-sm text-[#e7e8e9]">Activity Log</h3>
+              <Activity className="w-5 h-5 text-amber-600" />
+              <h3 className="font-semibold text-sm">Activity Log</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <div className="text-center p-2 rounded-md bg-[#34363a]/50">
-                <div className="text-lg font-bold text-[#e7e8e9] font-heading">{connection.audit_count || 0}</div>
-                <div className="text-xs text-[#9ca3af]">Audits</div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold">{connection.audit_count || 0}</div>
+                <div className="text-xs text-muted-foreground">Audits</div>
               </div>
-              <div className="text-center p-2 rounded-md bg-[#34363a]/50">
-                <div className="text-lg font-bold text-[#e7e8e9] font-heading">{connection.heal_count || 0}</div>
-                <div className="text-xs text-[#9ca3af]">Heals</div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold">{connection.heal_count || 0}</div>
+                <div className="text-xs text-muted-foreground">Heals</div>
               </div>
-              <div className="text-center p-2 rounded-md bg-[#34363a]/50">
-                <div className="text-lg font-bold text-[#e7e8e9] font-heading">{connection.operate_count || 0}</div>
-                <div className="text-xs text-[#9ca3af]">Total Ops</div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold">{connection.operate_count || 0}</div>
+                <div className="text-xs text-muted-foreground">Total Ops</div>
               </div>
-              <div className="text-center p-2 rounded-md bg-[#34363a]/50">
-                <div className="text-lg font-bold text-[#e7e8e9] font-heading">{connection.issues_detected || 0}</div>
-                <div className="text-xs text-[#9ca3af]">Issues Found</div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold">{connection.issues_detected || 0}</div>
+                <div className="text-xs text-muted-foreground">Issues Found</div>
               </div>
-              <div className="text-center p-2 rounded-md bg-[#34363a]/50">
-                <div className="text-lg font-bold text-emerald-400 font-heading">{connection.issues_healed || 0}</div>
-                <div className="text-xs text-[#9ca3af]">Issues Healed</div>
+              <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold text-emerald-600">{connection.issues_healed || 0}</div>
+                <div className="text-xs text-muted-foreground">Issues Healed</div>
               </div>
             </div>
             {connection.last_operate_at && (
-              <div className="text-xs text-[#9ca3af] mt-3">
+              <div className="text-xs text-muted-foreground mt-3">
                 Last operation: <span className="font-medium capitalize">{connection.last_operation || "—"}</span> at {new Date(connection.last_operate_at).toLocaleString()}
                 {connection.last_operate_result && ` — ${connection.last_operate_result}`}
               </div>

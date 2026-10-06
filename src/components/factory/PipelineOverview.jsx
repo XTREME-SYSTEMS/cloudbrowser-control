@@ -4,7 +4,7 @@ import { Search, ShoppingCart, FileCode, Sparkles, Hammer, Rocket, Link2, ArrowR
 const STAGES = [
   { icon: Search, label: "Discover", color: "#8A7300" },
   { icon: ShoppingCart, label: "Buy", color: "#2563EB" },
-  { icon: FileCode, label: "Template", color: 'hsl(var(--primary))' },
+  { icon: FileCode, label: "Template", color: "#7C3AED" },
   { icon: Sparkles, label: "Generate", color: "#CCBB00" },
   { icon: Hammer, label: "Build", color: "#EA580C" },
   { icon: Rocket, label: "Deploy", color: "#16A34A" },
@@ -21,11 +21,11 @@ export default function PipelineOverview({ activeStage }) {
           const isActive = activeStage === s.label.toLowerCase();
           return (
             <React.Fragment key={s.label}>
-              <div className={`flex flex-col items-center gap-2 shrink-0 px-2 py-2 rounded-md transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                <div className={`w-9 h-9 rounded-md border flex items-center justify-center ${isActive ? 'bg-primary/15 border-primary' : 'bg-background border-border'}`}>
-                  <Icon className="w-4 h-4" />
+              <div className={`flex flex-col items-center gap-1 shrink-0 px-2 py-2 rounded-xl transition-all ${isActive ? "scale-110" : "opacity-60"}`}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: isActive ? s.color : "#FAFAFA", border: `2px solid ${isActive ? s.color : "#E5E7EB"}` }}>
+                  <Icon className="w-4 h-4" style={{ color: isActive ? "#fff" : s.color }} />
                 </div>
-                <span className="text-[9px] font-mono font-medium uppercase tracking-wide">{s.label}</span>
+                <span className="text-[9px] font-bold uppercase" style={{ color: isActive ? s.color : "#00000080" }}>{s.label}</span>
               </div>
               {i < STAGES.length - 1 && <ArrowRight className="w-3 h-3 text-black/20 shrink-0" />}
             </React.Fragment>

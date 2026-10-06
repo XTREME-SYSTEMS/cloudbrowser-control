@@ -1,17 +1,13 @@
 import React from "react";
-import { Brain, ShieldCheck, Code2, Megaphone, Rocket, Sparkles, Copy, Network, Cpu } from 'lucide-react';
-
-const AGENT_ICONS = { orchestrator: Brain, growth_operator: ShieldCheck, code_architect: Code2, social_strategist: Megaphone, sales_engine: Rocket, brand_guardian: Sparkles, replicator: Copy, swarm: Network };
 
 export default function AgentCard({ agent, onLaunch }) {
-  const Icon = AGENT_ICONS[agent.name] || Cpu;
   return (
-    <article className="xa-card p-6 flex flex-col gap-4 transition-colors duration-200 hover:border-primary/50">
+    <article className="xa-card p-6 flex flex-col gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.08)]">
       <div className="flex items-start justify-between gap-3">
-        <div className="w-12 h-12 rounded-md border border-primary/25 bg-primary/10 flex items-center justify-center">
-          <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,234,0,.15)" }}>
+          <span className="text-2xl">{agent.icon}</span>
         </div>
-        {agent.apex && <span className="xa-pill-badge">APEX</span>}
+        {agent.apex && <span className="xa-pill-badge" style={{ backgroundColor: "#000", color: "#FFEA00", backgroundImage: "none" }}>APEX</span>}
         {agent.flagship && !agent.apex && <span className="xa-pill-badge">FLAGSHIP</span>}
       </div>
       <div>

@@ -69,7 +69,8 @@ export default function DomainDiscovery({ onDiscovered }) {
         <div className="flex flex-wrap gap-1.5">
           {TLDS.map(t => (
             <button key={t} onClick={() => toggleTld(t)}
-              className={`px-2.5 py-1.5 rounded-md border text-xs font-bold transition-colors ${selectedTlds.includes(t) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`} aria-pressed={selectedTlds.includes(t)}>
+              className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all ${selectedTlds.includes(t) ? "border-transparent text-black" : "border-[#E5E7EB] text-black/40"}`}
+              style={selectedTlds.includes(t) ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)" } : {}}>
               .{t}
             </button>
           ))}

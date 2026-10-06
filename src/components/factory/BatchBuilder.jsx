@@ -70,7 +70,8 @@ export default function BatchBuilder({ form, setForm }) {
           <div className="flex flex-wrap gap-2">
             {DEPLOY_TARGETS.map(d => (
               <button key={d.id} onClick={() => toggleDeploy(d.id)}
-                className={`px-3 py-2 rounded-md border text-xs font-bold transition-colors ${form.deploy_targets.includes(d.id) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`} aria-pressed={form.deploy_targets.includes(d.id)}>
+                className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${form.deploy_targets.includes(d.id) ? "border-transparent text-black" : "border-[#E5E7EB] text-black/50"}`}
+                style={form.deploy_targets.includes(d.id) ? { background: "linear-gradient(135deg,#FFF7B3,#FFEA00 20%,#E6D400 45%,#FFEE33 65%,#FFEA00 80%,#CCBB00)" } : {}}>
                 {d.label}
               </button>
             ))}

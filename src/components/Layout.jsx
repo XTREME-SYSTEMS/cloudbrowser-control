@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass, User, Cable, TrendingUp, Activity, Terminal, ScanLine } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass, User, Cable, TrendingUp, Activity, Terminal } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
-import BrandLockup from '@/components/BrandLockup';
+import { Image } from "@/components/ui/image";
 import { useAuth } from "@/lib/AuthContext";
 
 function ThemeToggle() {
@@ -76,8 +76,6 @@ const workflowSteps = [
       { to: "/gap-playground", label: "Gap Playground", icon: Target },
       { to: "/gap-map", label: "Gap Map", icon: Sparkles },
       { to: "/sandboxed-clone", label: "Sandbox Clone", icon: Box },
-      { to: "/mockup-studio", label: "Mock-up Studio", icon: ScanLine },
-      { to: "/visual-gallery", label: "Visual Gallery", icon: Layers },
     ],
   },
   {
@@ -126,14 +124,14 @@ function NavLinks({ onNavigate }) {
   const isAdmin = user?.role === "admin";
 
   return (
-    <nav aria-label="Workspace navigation" className="flex-1 min-h-0 px-3 py-4 space-y-5 overflow-y-auto xa-scroll">
+    <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
       {isAdmin && (
         <div className="space-y-1 pb-2 border-b border-sidebar-border">
           <Link
             to="/"
             onClick={onNavigate}
             className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              location.pathname === "/" ? "bg-primary/10 text-primary border-l-2 border-primary" : "text-sidebar-foreground hover:bg-sidebar-accent"
+              location.pathname === "/" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
@@ -144,7 +142,7 @@ function NavLinks({ onNavigate }) {
       {workflowSteps.map((group) => (
         <div key={group.label} className="space-y-1">
           <div className="flex items-center gap-2 px-3 py-1">
-            <span className="flex h-5 w-5 items-center justify-center rounded-sm border border-primary/25 bg-primary/10 text-primary text-[10px] font-mono">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
               {group.step}
             </span>
             <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">{group.label}</span>
@@ -157,7 +155,7 @@ function NavLinks({ onNavigate }) {
                 to={to}
                 onClick={onNavigate}
                 className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-md text-sm transition-colors ${
-                  active ? "bg-primary/10 text-primary border-l-2 border-primary" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
+                  active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -171,12 +169,15 @@ function NavLinks({ onNavigate }) {
   );
 }
 
-function SidebarContent({ onLogout, onNavigate }) {
+function SidebarContent({ onLogout }) {
   return (
     <div className="flex flex-col h-full bg-sidebar">
-      <Link to="/dashboard" onClick={onNavigate} className="block border-b border-sidebar-border px-5 py-6">
-        <BrandLockup compact subtitle="Operations Workspace" />
-      </Link>
+      <div className="p-6 border-b border-sidebar-border">
+        <div className="flex items-center gap-2">
+          <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-8 h-8 shrink-0" fittingType="fit" />
+          <span className="font-heading font-semibold text-sidebar-foreground">Xtreme Cloud Browser</span>
+        </div>
+      </div>
       <div className="px-4 pt-4">
         <StartHereHandoff />
       </div>
@@ -189,7 +190,7 @@ function SidebarContent({ onLogout, onNavigate }) {
           Xtreme GPT
         </Link>
       </div>
-      <NavLinks onNavigate={onNavigate} />
+      <NavLinks />
       <div className="p-4 border-t border-sidebar-border space-y-1">
         <ThemeToggle />
         <button
@@ -206,38 +207,37 @@ function SidebarContent({ onLogout, onNavigate }) {
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
 
   const handleLogout = async () => {
     await base44.auth.logout();
     window.location.href = "/login";
   };
 
-  // AdminPortal already owns its sidebar and header; do not nest two shells.
-  if (location.pathname === '/') return <><Outlet /><CommandPalette /></>;
-
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 xl:w-64 shrink-0 border-r border-sidebar-border flex-col">
+      <aside className="hidden md:flex w-64 border-r border-sidebar-border flex-col">
         <SidebarContent onLogout={handleLogout} />
       </aside>
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <SidebarContent onLogout={handleLogout} onNavigate={() => setMobileOpen(false)} />
+          <SidebarContent onLogout={handleLogout} />
         </SheetContent>
       </Sheet>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
         <header className="md:hidden flex items-center gap-3 p-4 border-b bg-sidebar shrink-0">
-          <button onClick={() => setMobileOpen(true)} aria-label="Open navigation" className="p-2 -ml-2 rounded-md text-primary">
+          <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1">
             <Menu className="w-6 h-6" />
           </button>
-          <div className="min-w-0 flex-1"><BrandLockup compact /></div>
+          <div className="flex items-center gap-2 flex-1">
+            <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-7 h-7 shrink-0" fittingType="fit" />
+            <span className="font-heading font-semibold">Xtreme Cloud Browser</span>
+          </div>
           <Link to="/xtreme-gpt" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <Bot className="w-5 h-5" />
           </Link>
@@ -248,7 +248,7 @@ export default function Layout() {
         </header>
 
         <main className="flex-1 overflow-auto">
-          <div className="carbon-workspace p-4 lg:p-7 xl:p-8 max-w-screen-2xl mx-auto">
+          <div className="p-4 md:p-8 max-w-7xl mx-auto">
             <Outlet />
           </div>
         </main>

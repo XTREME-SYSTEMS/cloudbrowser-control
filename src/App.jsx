@@ -61,8 +61,6 @@ import BatchOperations from '@/pages/BatchOperations';
 import DomainRegistry from '@/pages/DomainRegistry';
 import AutonomousMission from '@/pages/AutonomousMission';
 import AgentCommandCenterPage from '@/pages/AgentCommandCenter';
-import VisualGallery from '@/pages/VisualGallery';
-import MockupStudio from '@/pages/MockupStudio';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -137,8 +135,6 @@ const AuthenticatedApp = () => {
           <Route path="/domains" element={<DomainRegistry />} />
           <Route path="/mission" element={<AutonomousMission />} />
           <Route path="/command-center" element={<AgentCommandCenterPage />} />
-          <Route path="/visual-gallery" element={<VisualGallery />} />
-          <Route path="/mockup-studio" element={<MockupStudio />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
