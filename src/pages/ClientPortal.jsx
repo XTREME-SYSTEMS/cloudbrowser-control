@@ -49,7 +49,7 @@ export default function ClientPortal() {
   const generateRecommendation = async () => {
     setGeneratingRec(true);
     try {
-      const res = await base44.integrations.Core.InvokeLLM({
+      const res = await base44.functions.invoke('invokeGatewayLLM', {
         prompt: `You are an AI SEO advisor for the domain ${domain}. Based on these current metrics:
 
 Pages: ${pages.length}
@@ -77,7 +77,7 @@ Generate a JSON object with:
           },
         },
       });
-      setRecommendation(res);
+      setRecommendation(res.data?.result || res.data || res);
     } catch (e) { setError(e.message); }
     setGeneratingRec(false);
   };

@@ -5,6 +5,7 @@
 // Each tier logs to CaptchaSolveLog; auto-escalates on failure.
 import { engineFetch } from './engineClient.ts';
 import { getCaptchaCredentials } from './captchaSolver.ts';
+import { invokeLLM } from './vercelAiGateway.ts';
 
 const TOKEN_BASED = new Set(['recaptcha_v2', 'recaptcha_v3', 'hcaptcha', 'turnstile', 'cloudflare_challenge']);
 const VISION_BASED = new Set(['image_captcha', 'text_captcha', 'funcaptcha']);
@@ -62,7 +63,7 @@ export async function solveCaptchaWithFallback(base44, opts: {
         const file = new File([Uint8Array.from(atob(shot.base64), (c) => c.charCodeAt(0))], `captcha_${Date.now()}.png`, { type: 'image/png' });
         const upload = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file });
         const signed = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({ file_uri: upload.file_uri, expires_in: 120 });
-        const llmRes: any = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        const llmRes: any = await invokeLLM({
           model: 'claude_sonnet_4_6',
           file_urls: [signed.signed_url],
           prompt: 'Analyze this CAPTCHA challenge image. Identify the challenge type and provide the solution. For image grid challenges, return the labels/coordinates of correct selections. For slider challenges, return the drag distance in pixels. For text challenges, return the text. Return JSON with {solution, confidence, type}.',

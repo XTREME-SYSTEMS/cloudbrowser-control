@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Digital Dominance Engine — generates strategically optimized SEO pages
 // from business concepts. Each page includes title tags, meta descriptions,
@@ -39,7 +40,7 @@ export default async function(req) {
 
     for (const concept of concepts) {
       for (const pt of PAGE_TYPES) {
-        const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        const llmRes = await invokeLLM({
           prompt: `Generate a complete SEO-optimized ${pt.desc} for a business.
 
 Business: ${concept.name}

@@ -3,6 +3,7 @@ import { secrets } from 'base44:runtime';
 import { engineFetch, isEngineConfigured, setEngineClient } from '../../shared/engineClient.ts';
 import { sanitizeUrl } from '../../shared/urlValidator.ts';
 import { generateFingerprint, buildStealthSessionConfig } from '../../shared/fingerprintRandomizer.ts';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { matchFingerprintToUA } from '../../shared/tlsFingerprint.ts';
 import { pickBestProxy, recordProxyResult } from '../../shared/manageProxyRotation.ts';
 import { solveCaptchaWithFallback } from '../../shared/captchaFallbackChain.ts';
@@ -103,7 +104,7 @@ export default async function(req) {
         }
         if (goal.schema) {
           const aiRes = await execStep({ action_type: 'ai_extract' });
-          const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          const llmRes = await invokeLLM({
             prompt: `Extract data from this page content.\n\n${aiRes.data || ''}`,
             response_json_schema: goal.schema,
           });

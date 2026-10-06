@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { secrets } from 'base44:runtime';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Daily Growth Opportunity Scan — reads GSC search analytics, identifies
 // keyword gaps, quick wins (page 2 rankings), CTR optimization opportunities,
@@ -95,7 +96,7 @@ export default async function(req) {
 
     // LLM-powered niche insights + competitor piggybacking + AEO opportunities
     try {
-      const llmRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: `You are a digital dominance strategist for domains: ${[...domains].join(', ')}.
 Identify 5 high-impact growth opportunities:
 1. Niche insights — underserved long-tail keywords or content clusters
