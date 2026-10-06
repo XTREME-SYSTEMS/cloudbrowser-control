@@ -120,3 +120,88 @@ export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
 
   return content;
 }
+
+// ─── Image Generation — replaces Core.GenerateImage ─────────────────────────
+export async function generateImage(opts: { prompt: string; model?: string; size?: string; n?: number; existing_image_urls?: string[] }): Promise<{ url: string }> {
+  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const model = opts.model || 'openai/dall-e-3';
+  const body: any = { model, prompt: opts.prompt, n: opts.n || 1, size: opts.size || '1024x1024', response_format: 'url' };
+  const res = await fetch(`${BASE_URL}/images/generations`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`Vercel AI Gateway image error ${res.status}: ${t}`); }
+  const data = await res.json();
+  const url = data.data?.[0]?.url;
+  if (!url) throw new Error('Vercel AI Gateway returned no image URL');
+  return { url };
+}
+
+// ─── Speech Generation — replaces Core.GenerateSpeech ───────────────────────
+export async function generateSpeech(opts: { text: string; voice?: string; language_code?: string; model?: string }): Promise<{ url: string }> {
+  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const model = opts.model || 'openai/tts-1';
+  const voiceMap: Record<string, string> = { river: 'alloy', honey: 'nova', sunny: 'shimmer', storm: 'onyx', spark: 'fable' };
+  const voice = voiceMap[opts.voice || 'river'] || 'alloy';
+  const res = await fetch(`${BASE_URL}/audio/speech`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, input: opts.text.slice(0, 5000), voice, response_format: 'mp3' }),
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`Vercel AI Gateway speech error ${res.status}: ${t}`); }
+  const buffer = await res.arrayBuffer();
+  const blob = new Blob([buffer], { type: 'audio/mpeg' });
+  const file = new File([blob], `tts_${Date.now()}.mp3`, { type: 'audio/mpeg' });
+  try {
+    const { uploadFile } = await import('./storageGateway.ts');
+    const result = await uploadFile({ file });
+    return { url: result.file_url };
+  } catch {
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    return { url: `data:audio/mpeg;base64,${base64}` };
+  }
+}
+
+// ─── Audio Transcription — replaces Core.TranscribeAudio ─────────────────────
+export async function transcribeAudio(opts: { audio_url: string; model?: string }): Promise<string> {
+  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const model = opts.model || 'openai/whisper-1';
+  const audioRes = await fetch(opts.audio_url);
+  const audioBlob = await audioRes.blob();
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'audio.mp3');
+  formData.append('model', model);
+  const res = await fetch(`${BASE_URL}/audio/transcriptions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${API_KEY}` },
+    body: formData,
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`Vercel AI Gateway transcription error ${res.status}: ${t}`); }
+  const data = await res.json();
+  return data.text || '';
+}
+
+// ─── Data Extraction — replaces Core.ExtractDataFromUploadedFile ────────────
+export async function extractDataFromFile(opts: { file_url: string; json_schema: object; model?: string }): Promise<{ status: string; output: any; details?: string }> {
+  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const lower = opts.file_url.toLowerCase();
+  const isImage = lower.match(/\.(jpg|jpeg|png|gif|webp)$/);
+  if (isImage) {
+    const result = await invokeLLM({
+      prompt: `Extract data from this image and return JSON matching this schema:\n${JSON.stringify(opts.json_schema)}`,
+      file_urls: [opts.file_url],
+      response_json_schema: opts.json_schema,
+      model: opts.model,
+    });
+    return { status: 'success', output: result };
+  }
+  const fileRes = await fetch(opts.file_url);
+  const fileText = await fileRes.text();
+  const result = await invokeLLM({
+    prompt: `Extract data from the following file content and return JSON matching this schema:\n${JSON.stringify(opts.json_schema)}\n\nFile content:\n${fileText.substring(0, 100000)}`,
+    response_json_schema: opts.json_schema,
+    model: opts.model,
+  });
+  return { status: 'success', output: result };
+}
