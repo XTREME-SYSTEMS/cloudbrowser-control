@@ -1,0 +1,167 @@
+{
+  "name": "HashtagCampaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Campaign name"
+    },
+    "content_text": {
+      "type": "string",
+      "description": "Post content text"
+    },
+    "hashtags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Hashtags to include in posts"
+    },
+    "target_platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "twitter",
+          "facebook",
+          "instagram",
+          "tiktok",
+          "linkedin",
+          "pinterest",
+          "reddit",
+          "threads",
+          "medium",
+          "quora",
+          "bluesky",
+          "mastodon",
+          "tumblr",
+          "youtube",
+          "discord",
+          "telegram"
+        ]
+      },
+      "default": [],
+      "description": "Platforms to post to"
+    },
+    "media_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Image/video URLs to attach"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "running",
+        "completed",
+        "failed",
+        "scheduled"
+      ],
+      "default": "draft"
+    },
+    "posts_made": {
+      "type": "number",
+      "default": 0
+    },
+    "posts_failed": {
+      "type": "number",
+      "default": 0
+    },
+    "post_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "post_url": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "evidence_uri": {
+            "type": "string"
+          },
+          "posted_at": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "schedule_frequency": {
+      "type": "string",
+      "enum": [
+        "once",
+        "hourly",
+        "daily",
+        "twice_daily",
+        "weekly"
+      ],
+      "default": "once"
+    },
+    "persistent_hashtags": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to append hashtags persistently across all posts"
+    }
+  },
+  "required": [
+    "name",
+    "content_text",
+    "target_platforms"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
