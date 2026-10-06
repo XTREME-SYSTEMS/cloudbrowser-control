@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
@@ -149,7 +150,7 @@ async function exec(base44, s, action_type, payload = {}) {
 
 async function uploadScreenshot(base44, base64, name = "mcp_screenshot.png") {
   const file = new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name, { type: "image/png" });
-  const res = await base44.integrations.Core.UploadFile({ file });
+  const res = await uploadFile({ file });
   return res.file_url;
 }
 

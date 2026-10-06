@@ -6,6 +6,7 @@
 import { engineFetch } from './engineClient.ts';
 import { getCaptchaCredentials } from './captchaSolver.ts';
 import { invokeLLM } from './vercelAiGateway.ts';
+import { uploadPrivateFile, createSignedUrl } from './storageGateway.ts';
 
 const TOKEN_BASED = new Set(['recaptcha_v2', 'recaptcha_v3', 'hcaptcha', 'turnstile', 'cloudflare_challenge']);
 const VISION_BASED = new Set(['image_captcha', 'text_captcha', 'funcaptcha']);
@@ -61,8 +62,8 @@ export async function solveCaptchaWithFallback(base44, opts: {
       });
       if (shot.base64) {
         const file = new File([Uint8Array.from(atob(shot.base64), (c) => c.charCodeAt(0))], `captcha_${Date.now()}.png`, { type: 'image/png' });
-        const upload = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file });
-        const signed = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({ file_uri: upload.file_uri, expires_in: 120 });
+        const upload = await uploadPrivateFile({ file });
+        const signed = await createSignedUrl({ file_uri: upload.file_uri, expires_in: 120 });
         const llmRes: any = await invokeLLM({
           model: 'claude_sonnet_4_6',
           file_urls: [signed.signed_url],

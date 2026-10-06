@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { uploadPublicFile } from '../../shared/storageGateway.ts';
 
 // Vercel AI Gateway — frontend-accessible AI media endpoints.
 // Routes speech, transcription, and image generation through Vercel AI Gateway.
@@ -76,7 +77,7 @@ export default async function(req: any) {
         const result = await res.json();
         const audioBytes = base64ToUint8(result.audio);
         const file = new File([audioBytes], `speech_${Date.now()}.mp3`, { type: 'audio/mpeg' });
-        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+        const { file_url } = await uploadPublicFile({ file });
         return Response.json({ url: file_url });
       }
 

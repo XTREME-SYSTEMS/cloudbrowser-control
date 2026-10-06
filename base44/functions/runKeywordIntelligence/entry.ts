@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { sendEmail } from '../../shared/emailGateway.ts';
 
 const RESPONSE_SCHEMA = {
   "type": "object",
@@ -136,7 +137,7 @@ export default async function (req) {
           });
         } catch (_) {}
         try {
-          await base44.asServiceRole.integrations.Core.SendEmail({
+          await sendEmail({
             to: admin.email,
             subject: `Keyword Intelligence Report — ${label}`,
             body: digest,

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { getSeedTemplate, extractSeedDataFromContent, type Industry } from "../../shared/gapIntelligence.ts";
 
@@ -97,11 +98,11 @@ ${htmlContent.substring(0, 3000)}`,
 
     // Upload seed JSON
     const jsonFile = new File([seedJson], `seed-${clone_project_id}.json`, { type: "application/json" });
-    const jsonUpload = await base44.integrations.Core.UploadFile({ file: jsonFile });
+    const jsonUpload = await uploadFile({ file: jsonFile });
 
     // Upload seed SQL
     const sqlFile = new File([seedSql], `seed-${clone_project_id}.sql`, { type: "text/plain" });
-    const sqlUpload = await base44.integrations.Core.UploadFile({ file: sqlFile });
+    const sqlUpload = await uploadFile({ file: sqlFile });
 
     // Store as CloneAsset
     await base44.entities.CloneAsset.create({

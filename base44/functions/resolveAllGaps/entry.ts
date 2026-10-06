@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { getResolutionPlan, generateGapCode, type GapType } from "../../shared/gapIntelligence.ts";
 import { findClosestFunctionalMatch } from "../../shared/cloneTemplates.ts";
@@ -296,7 +297,7 @@ Return only JavaScript code.`,
       const allCode = allGaps.map((g: any) => `// ═══ ${g.gap_type.toUpperCase()} — ${g.inferred_method} ${g.inferred_endpoint} ═══\n${g.generated_code || g.mock_logic || ""}`).join("\n\n");
 
       const codeFile = new File([allCode], `mock-backend-${clone_project_id}.js`, { type: "text/javascript" });
-      const codeUpload = await base44.integrations.Core.UploadFile({ file: codeFile });
+      const codeUpload = await uploadFile({ file: codeFile });
       await base44.entities.CloneProject.update(clone_project_id, {
         clone_code_url: codeUpload.file_url,
       });

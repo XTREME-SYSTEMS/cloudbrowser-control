@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { engineFetch, setEngineClient } from "../../shared/engineClient.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 // LLM Vision CAPTCHA Solver — uses Claude Sonnet 4.6 vision to solve CAPTCHAs
@@ -36,7 +37,7 @@ export default async function(req) {
         `captcha_${Date.now()}.png`,
         { type: "image/png" }
       );
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const uploadRes = await uploadFile({ file });
       imageUrl = uploadRes.file_url;
     }
 

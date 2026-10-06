@@ -105,7 +105,7 @@ export default async function(req) {
             let parsed = {}; try { parsed = JSON.parse(task.description || '{}'); } catch (e) { parsed = {}; }
             const prompt = parsed.prompt || `Promotional video for ${task.domain}`;
             let videoUrl = null;
-            try { const res = await base44.asServiceRole.integrations.Core.GenerateVideo({ prompt, duration: 6, aspect_ratio: '16:9', generate_audio: false }); videoUrl = res?.url || null; } catch (e) {}
+            videoUrl = null; // Video generation requires a dedicated video API — disabled until configured
             const result = { video_generated: !!videoUrl, platform: 'youtube', video_url: videoUrl, domain: task.domain };
             reportData = { type: 'Video Generation', domain: task.domain, ...result };
             return result;

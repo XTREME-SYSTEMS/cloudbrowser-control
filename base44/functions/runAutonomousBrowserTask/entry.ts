@@ -4,6 +4,7 @@ import { engineFetch, isEngineConfigured, setEngineClient } from '../../shared/e
 import { sanitizeUrl } from '../../shared/urlValidator.ts';
 import { generateFingerprint, buildStealthSessionConfig } from '../../shared/fingerprintRandomizer.ts';
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadPrivateFile } from '../../shared/storageGateway.ts';
 import { matchFingerprintToUA } from '../../shared/tlsFingerprint.ts';
 import { pickBestProxy, recordProxyResult } from '../../shared/manageProxyRotation.ts';
 import { solveCaptchaWithFallback } from '../../shared/captchaFallbackChain.ts';
@@ -156,7 +157,7 @@ export default async function(req) {
           });
           if (shot.base64) {
             const file = new File([Uint8Array.from(atob(shot.base64), (c) => c.charCodeAt(0))], `evidence_${Date.now()}.png`, { type: 'image/png' });
-            const upload = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file });
+            const upload = await uploadPrivateFile({ file });
             evidence.push(upload.file_uri);
           }
           if (shot.url) result.current_url = shot.url;

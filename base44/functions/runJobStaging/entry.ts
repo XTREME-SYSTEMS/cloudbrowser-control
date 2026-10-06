@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { stagingEngineFetch, isStagingEngineConfigured, requireIsolatedFortressTestEnvironment, STAGING_ENGINE_CONFIGURATION_REQUIRED } from "../../shared/stagingEngineClient.ts";
 import { calculateJobCost } from "../../shared/costCalculator.ts";
 import { logAudit } from "../../shared/auditLogger.ts";
@@ -109,7 +110,7 @@ export default async function (req) {
           });
           if (engineRes.base64) {
             const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], `stg_screenshot_${step.order}.png`, { type: "image/png" });
-            const uploadRes = await base44.integrations.Core.UploadFile({ file });
+            const uploadRes = await uploadFile({ file });
             await base44.asServiceRole.entities.Screenshot.create({
               session_id: sessionEntity.id, job_id: jobId, step_id: step.id,
               file_url: uploadRes.file_url, caption: step.name || "", full_page: !!step.options?.fullPage,
@@ -121,7 +122,7 @@ export default async function (req) {
           const engineRes = await stagingEngineFetch(`/sessions/${sessionId}/execute`, { method: "POST", body: JSON.stringify({ action_type: "pdf" }) });
           if (engineRes.base64) {
             const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], `stg_document_${step.order}.pdf`, { type: "application/pdf" });
-            const uploadRes = await base44.integrations.Core.UploadFile({ file });
+            const uploadRes = await uploadFile({ file });
             await base44.asServiceRole.entities.Result.create({
               job_id: jobId, session_id: sessionEntity.id, step_id: step.id, step_order: step.order,
               action_type: "pdf", data_type: "pdf_url", data: { file_url: uploadRes.file_url }, extracted_at: new Date().toISOString(),
@@ -188,7 +189,7 @@ export default async function (req) {
       if (closeRes.videoBase64) {
         try {
           const file = new File([Uint8Array.from(atob(closeRes.videoBase64), (c) => c.charCodeAt(0))], `stg_video_${sessionId}.webm`, { type: "video/webm" });
-          const uploadRes = await base44.integrations.Core.UploadFile({ file });
+          const uploadRes = await uploadFile({ file });
           await base44.asServiceRole.entities.Session.update(sessionEntity.id, { video_url: uploadRes.file_url });
         } catch (e) {}
       }

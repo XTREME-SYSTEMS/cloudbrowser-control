@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { buildSimilarSystemQueries, type GapType, type Industry } from "../../shared/gapIntelligence.ts";
 
@@ -76,7 +77,7 @@ IMPORTANT: Return ONLY a valid JSON object (no markdown, no code fences) with th
       `similar-systems-${clone_project_id}-${gap_type}.json`,
       { type: "application/json" }
     );
-    const intelUpload = await base44.integrations.Core.UploadFile({ file: intelFile });
+    const intelUpload = await uploadFile({ file: intelFile });
     await base44.entities.CloneAsset.create({
       clone_project_id,
       asset_type: "inferred_architecture",

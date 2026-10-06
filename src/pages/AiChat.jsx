@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { uploadFile } from "@/lib/fileUpload";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Bot, Shield, AlertCircle } from "lucide-react";
 import MessageBubble from "@/components/ai-chat/MessageBubble";
@@ -81,7 +82,7 @@ export default function AiChat() {
     if (!activeId) return;
     setSending(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       const conv = conversations.find((c) => c.id === activeId);
       await agentsApi.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
     } catch (err) { setError(err.message); setSending(false); }

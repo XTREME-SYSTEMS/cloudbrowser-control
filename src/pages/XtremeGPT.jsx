@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { uploadPublicFile } from "@/lib/fileUpload";
 import { Plus, Trash2, Loader2, MessageSquare, Zap, Mic, Square, Volume2, Copy, Check, User, Bot, ArrowUp, PanelLeft, X, Sparkles } from "lucide-react";
 import { Image as ImgComponent } from "@/components/ui/image";
 
@@ -232,7 +233,7 @@ export default function XtremeGPT() {
 
   const handleTranscribe = async (file, callback) => {
     try {
-      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      const { file_url } = await uploadPublicFile(file);
       const res = await base44.functions.invoke("vercelAiGateway", { action: "transcribeAudio", audio_url: file_url });
       callback(res.data.text || "");
     } catch (e) { setError("Transcription failed: " + e.message); callback(""); }

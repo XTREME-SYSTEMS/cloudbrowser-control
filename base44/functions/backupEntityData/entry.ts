@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { uploadFile } from '../../shared/storageGateway.ts';
 
 // Entities to back up — user-created business data.
 const BACKUP_ENTITIES = [
@@ -39,7 +40,7 @@ export default async function(req) {
           type: 'application/json',
         });
 
-        const uploadRes = await svc.integrations.Core.UploadFile({ file });
+        const uploadRes = await uploadFile({ file });
         results.push({
           entity: entityName,
           count: records.length,
@@ -63,7 +64,7 @@ export default async function(req) {
     const manifestFile = new File([manifestStr], `backup-manifest-${timestamp}.json`, {
       type: 'application/json',
     });
-    const manifestRes = await svc.integrations.Core.UploadFile({ file: manifestFile });
+    const manifestRes = await uploadFile({ file: manifestFile });
 
     return Response.json({
       status: 'success',

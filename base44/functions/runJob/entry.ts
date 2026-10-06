@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { calculateJobCost } from "../../shared/costCalculator.ts";
 import { logAudit } from "../../shared/auditLogger.ts";
@@ -269,7 +270,7 @@ async function solveCaptchaWithVision(base44, sessionId, sessionEntity, jobId, s
       `captcha_${Date.now()}.png`,
       { type: "image/png" }
     );
-    const uploadRes = await base44.integrations.Core.UploadFile({ file });
+    const uploadRes = await uploadFile({ file });
 
     // Call LLM with vision to solve the captcha
     const llmRes = await invokeLLM({
@@ -514,7 +515,7 @@ export default async function(req) {
           });
           if (engineRes.base64) {
             const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], `screenshot_${step.order}.png`, { type: "image/png" });
-            const uploadRes = await base44.integrations.Core.UploadFile({ file });
+            const uploadRes = await uploadFile({ file });
             await base44.asServiceRole.entities.Screenshot.create({
               session_id: sessionEntity.id,
               job_id: jobId,
@@ -533,7 +534,7 @@ export default async function(req) {
           });
           if (engineRes.base64) {
             const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], `document_${step.order}.pdf`, { type: "application/pdf" });
-            const uploadRes = await base44.integrations.Core.UploadFile({ file });
+            const uploadRes = await uploadFile({ file });
             await base44.asServiceRole.entities.Result.create({
               job_id: jobId, session_id: sessionEntity.id, step_id: step.id,
               step_order: step.order, action_type: "pdf", data_type: "pdf_url",
@@ -640,7 +641,7 @@ export default async function(req) {
       if (closeRes.videoBase64) {
         try {
           const file = new File([Uint8Array.from(atob(closeRes.videoBase64), (c) => c.charCodeAt(0))], `video_${sessionId}.webm`, { type: "video/webm" });
-          const uploadRes = await base44.integrations.Core.UploadFile({ file });
+          const uploadRes = await uploadFile({ file });
           await base44.asServiceRole.entities.Session.update(sessionEntity.id, { video_url: uploadRes.file_url });
         } catch (e) { console.error("Video upload failed:", e.message); }
       }

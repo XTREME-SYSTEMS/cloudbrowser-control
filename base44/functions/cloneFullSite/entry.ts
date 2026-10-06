@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { setEngineClient, enginePost, engineGet, engineDelete, isEngineConfigured } from "../../shared/engineClient.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
+import { uploadFile } from '../../shared/storageGateway.ts';
 
 /**
  * DEEP Phase 1: cloneFullSite — Deterministic Frontend Capture
@@ -16,7 +17,7 @@ import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 async function uploadJsonFile(base44, data, filename) {
   const file = new File([JSON.stringify(data, null, 2)], filename, { type: "application/json" });
-  const result = await base44.integrations.Core.UploadFile({ file });
+  const result = await uploadFile({ file });
   return result.file_url;
 }
 
@@ -27,7 +28,7 @@ async function uploadBase64Image(base44, base64Data, filename, mimeType = "image
     byteArray[i] = byteCharacters.charCodeAt(i);
   }
   const file = new File([byteArray], filename, { type: mimeType });
-  const result = await base44.integrations.Core.UploadFile({ file });
+  const result = await uploadFile({ file });
   return result.file_url;
 }
 

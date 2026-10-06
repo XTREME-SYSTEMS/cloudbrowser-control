@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { parseRelativePath, deriveJSONSchema } from "../../shared/cloneTemplates.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
@@ -184,7 +185,7 @@ export default async function (req) {
       total_gaps: gapsCreated.length,
     };
     const blob = new Blob([JSON.stringify(routeMap, null, 2)], { type: "application/json" });
-    const routeMapUpload = await base44.integrations.Core.UploadFile({ file: blob });
+    const routeMapUpload = await uploadFile({ file: blob });
     await base44.entities.CloneAsset.create({
       clone_project_id,
       asset_type: "route_map",

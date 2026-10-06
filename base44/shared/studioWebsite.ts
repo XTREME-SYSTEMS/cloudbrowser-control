@@ -1,4 +1,5 @@
 import { canAccessBuild } from './factoryAuth.ts';
+import { createSignedUrl } from './storageGateway.ts';
 import { secrets } from 'base44:runtime';
 import { vercelRequest, encodeWebsiteFile } from './vercelApi.ts';
 import { ensureStudioContact } from './websiteAssets.ts';
@@ -44,7 +45,7 @@ export async function readWebsiteSource(base44, build) {
     return ensureStudioContact(validateHtml(new TextDecoder().decode(Uint8Array.from(atob(data.data),char=>char.charCodeAt(0)))));
   }
   if (uri) {
-    const { signed_url } = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({ file_uri: uri });
+    const { signed_url } = await createSignedUrl({ file_uri: uri });
     const response = await fetch(signed_url, { signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error('The saved website source could not be opened.');
     return ensureStudioContact(validateHtml(await response.text()));
