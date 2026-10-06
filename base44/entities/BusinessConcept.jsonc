@@ -1,0 +1,150 @@
+{
+  "name": "BusinessConcept",
+  "type": "object",
+  "properties": {
+    "concept_id": {
+      "type": "string",
+      "description": "External concept ID (e.g. BC-001)"
+    },
+    "name": {
+      "type": "string"
+    },
+    "industry": {
+      "type": "string"
+    },
+    "subindustry": {
+      "type": "string"
+    },
+    "customer": {
+      "type": "string"
+    },
+    "problem": {
+      "type": "string"
+    },
+    "pain": {
+      "type": "string"
+    },
+    "current_alternative": {
+      "type": "string"
+    },
+    "solution": {
+      "type": "string"
+    },
+    "website_model": {
+      "type": "string"
+    },
+    "app_model": {
+      "type": "string"
+    },
+    "data_model": {
+      "type": "string"
+    },
+    "ai_model": {
+      "type": "string"
+    },
+    "agents": {
+      "type": "string"
+    },
+    "workflows": {
+      "type": "string"
+    },
+    "source_data": {
+      "type": "string"
+    },
+    "lead_system": {
+      "type": "string"
+    },
+    "monetization": {
+      "type": "string"
+    },
+    "price": {
+      "type": "string"
+    },
+    "cogs": {
+      "type": "string"
+    },
+    "gross_margin": {
+      "type": "number"
+    },
+    "cac": {
+      "type": "string"
+    },
+    "ltv": {
+      "type": "string"
+    },
+    "time_to_revenue": {
+      "type": "string"
+    },
+    "tam": {
+      "type": "string"
+    },
+    "sam": {
+      "type": "string"
+    },
+    "som": {
+      "type": "string"
+    },
+    "competition": {
+      "type": "string"
+    },
+    "differentiation": {
+      "type": "string"
+    },
+    "moat": {
+      "type": "string"
+    },
+    "automation_pct": {
+      "type": "string"
+    },
+    "human_gates": {
+      "type": "string"
+    },
+    "stack": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number",
+      "default": 0
+    },
+    "recommendation": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "researching",
+        "building",
+        "live",
+        "paused"
+      ],
+      "default": "concept"
+    }
+  },
+  "required": [
+    "concept_id",
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

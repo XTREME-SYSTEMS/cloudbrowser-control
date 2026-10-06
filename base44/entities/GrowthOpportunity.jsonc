@@ -1,0 +1,103 @@
+{
+  "name": "GrowthOpportunity",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string"
+    },
+    "opportunity_type": {
+      "type": "string",
+      "enum": [
+        "keyword_gap",
+        "content_gap",
+        "competitor_piggyback",
+        "niche_insight",
+        "backlink",
+        "social_trend",
+        "aeo_opportunity",
+        "geo_expansion"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "keyword": {
+      "type": "string"
+    },
+    "search_volume": {
+      "type": "number",
+      "default": 0
+    },
+    "difficulty": {
+      "type": "number",
+      "default": 0
+    },
+    "current_position": {
+      "type": "number",
+      "default": 0
+    },
+    "competitor_url": {
+      "type": "string"
+    },
+    "competitor_position": {
+      "type": "number",
+      "default": 0
+    },
+    "estimated_traffic": {
+      "type": "number",
+      "default": 0
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "default": "P2"
+    },
+    "action_required": {
+      "type": "string"
+    },
+    "ai_recommendation": {
+      "type": "string",
+      "description": "LLM-generated recommendation for this opportunity"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "reviewing",
+        "actioned",
+        "dismissed"
+      ],
+      "default": "new"
+    },
+    "discovered_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "opportunity_type",
+    "title"
+  ],
+  "rls": {
+    "read": {},
+    "create": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

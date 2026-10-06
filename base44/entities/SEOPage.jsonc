@@ -1,0 +1,150 @@
+{
+  "name": "SEOPage",
+  "type": "object",
+  "properties": {
+    "business_concept_id": {
+      "type": "string",
+      "description": "Reference to BusinessConcept"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain this page belongs to"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL slug (empty = homepage)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title tag (50-60 chars)"
+    },
+    "meta_description": {
+      "type": "string",
+      "description": "Meta description (150-160 chars)"
+    },
+    "h1": {
+      "type": "string"
+    },
+    "content_markdown": {
+      "type": "string",
+      "description": "Full page content in markdown"
+    },
+    "schema_markup": {
+      "type": "object",
+      "description": "JSON-LD schema (LocalBusiness, Service, FAQ, Article)"
+    },
+    "target_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "target_aeo_query": {
+      "type": "string",
+      "description": "Natural language question for AEO"
+    },
+    "geo_target": {
+      "type": "string",
+      "description": "Geographic target (city, state, or national)"
+    },
+    "page_type": {
+      "type": "string",
+      "enum": [
+        "landing",
+        "service",
+        "location",
+        "blog",
+        "faq",
+        "comparison",
+        "guide"
+      ],
+      "default": "landing"
+    },
+    "gsc_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "submitted",
+        "indexed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "gsc_impressions": {
+      "type": "number",
+      "default": 0
+    },
+    "gsc_clicks": {
+      "type": "number",
+      "default": 0
+    },
+    "gsc_position": {
+      "type": "number",
+      "default": 0
+    },
+    "gsc_ctr": {
+      "type": "number",
+      "default": 0
+    },
+    "ga_pageviews": {
+      "type": "number",
+      "default": 0
+    },
+    "ga_avg_time_sec": {
+      "type": "number",
+      "default": 0
+    },
+    "ga_bounce_rate": {
+      "type": "number",
+      "default": 0
+    },
+    "optimization_score": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last_optimized_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "optimizing",
+        "flagged"
+      ],
+      "default": "draft"
+    }
+  },
+  "required": [
+    "slug",
+    "title",
+    "page_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

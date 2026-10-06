@@ -1,0 +1,59 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_growth_scan",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "scan_opportunities": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runGrowthOpportunityScan",
+            "args": {}
+          },
+          "then": "sync_gsc",
+          "x-base44": {
+            "title": "Scan for growth opportunities",
+            "description": "GSC analytics + AI niche insights"
+          }
+        }
+      },
+      {
+        "sync_gsc": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncGSCAnalytics",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sync GSC analytics",
+            "description": "Bidirectional GSC data refresh"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Scans Google Search Console daily for keyword gaps, quick-win rankings, CTR optimization opportunities, and uses AI to discover niche insights, competitor piggybacking, and AEO opportunities across all client domains.",
+  "name": "Daily Growth Opportunity Scan"
+}
