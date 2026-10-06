@@ -12,7 +12,8 @@
         "sales_engine",
         "brand_guardian",
         "replicator",
-        "swarm"
+        "swarm",
+        "autonomous_agent"
       ]
     },
     "provider": {
@@ -23,6 +24,27 @@
       "default": "vercel_ai_gateway"
     },
     "model": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "archived": {
+      "type": "boolean",
+      "default": false
+    },
+    "legacy_id": {
       "type": "string",
       "maxLength": 100
     }

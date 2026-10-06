@@ -1,9 +1,9 @@
 // Vercel AI Gateway shared client — drop-in replacement for base44.integrations.Core.InvokeLLM.
 // Routes all LLM calls through https://ai-gateway.vercel.sh/v1 instead of Base44 integrations.
-// OAuth connectors, email, and file storage remain on Base44 (no Vercel equivalent).
+import { getGatewayKey, searchGatewayWeb } from './vercelGateway.ts';
+import { buildGatewayContent } from './gatewayAttachments.ts';
 
-const BASE_URL = process.env.VERCEL_AI_GATEWAY_BASE_URL || 'https://ai-gateway.vercel.sh/v1';
-const API_KEY = process.env.VERCEL_AI_GATEWAY_API_KEY;
+const BASE_URL = 'https://ai-gateway.vercel.sh/v1';
 
 // Base44 InvokeLLM model name → Vercel AI Gateway model ID
 const MODEL_MAP: Record<string, string> = {
@@ -40,7 +40,7 @@ interface InvokeLLMOpts {
  * Returns a string (plain text) or a parsed object (when response_json_schema is provided).
  */
 export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
-  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const API_KEY = getGatewayKey();
 
   const model = resolveModel(opts.model);
   const fileUrls = opts.file_urls
@@ -123,7 +123,7 @@ export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
 
 // ─── Image Generation — replaces Core.GenerateImage ─────────────────────────
 export async function generateImage(opts: { prompt: string; model?: string; size?: string; n?: number; existing_image_urls?: string[] }): Promise<{ url: string }> {
-  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const API_KEY = getGatewayKey();
   const model = opts.model || 'openai/dall-e-3';
   const body: any = { model, prompt: opts.prompt, n: opts.n || 1, size: opts.size || '1024x1024', response_format: 'url' };
   const res = await fetch(`${BASE_URL}/images/generations`, {
@@ -140,7 +140,7 @@ export async function generateImage(opts: { prompt: string; model?: string; size
 
 // ─── Speech Generation — replaces Core.GenerateSpeech ───────────────────────
 export async function generateSpeech(opts: { text: string; voice?: string; language_code?: string; model?: string }): Promise<{ url: string }> {
-  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const API_KEY = getGatewayKey();
   const model = opts.model || 'openai/tts-1';
   const voiceMap: Record<string, string> = { river: 'alloy', honey: 'nova', sunny: 'shimmer', storm: 'onyx', spark: 'fable' };
   const voice = voiceMap[opts.voice || 'river'] || 'alloy';
@@ -165,7 +165,7 @@ export async function generateSpeech(opts: { text: string; voice?: string; langu
 
 // ─── Audio Transcription — replaces Core.TranscribeAudio ─────────────────────
 export async function transcribeAudio(opts: { audio_url: string; model?: string }): Promise<string> {
-  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const API_KEY = getGatewayKey();
   const model = opts.model || 'openai/whisper-1';
   const audioRes = await fetch(opts.audio_url);
   const audioBlob = await audioRes.blob();
@@ -184,7 +184,7 @@ export async function transcribeAudio(opts: { audio_url: string; model?: string 
 
 // ─── Data Extraction — replaces Core.ExtractDataFromUploadedFile ────────────
 export async function extractDataFromFile(opts: { file_url: string; json_schema: object; model?: string }): Promise<{ status: string; output: any; details?: string }> {
-  if (!API_KEY) throw new Error('VERCEL_AI_GATEWAY_API_KEY not set');
+  const API_KEY = getGatewayKey();
   const lower = opts.file_url.toLowerCase();
   const isImage = lower.match(/\.(jpg|jpeg|png|gif|webp)$/);
   if (isImage) {

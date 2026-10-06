@@ -179,7 +179,7 @@ export default async function(req: any) {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
-  if (!API_KEY) return Response.json({ error: 'VERCEL_AI_GATEWAY_API_KEY not set' }, { status: 500 });
+  getGatewayKey();
   if (!message) return Response.json({ error: 'message required' }, { status: 400 });
 
   const sr = base44.asServiceRole.entities;
@@ -193,8 +193,7 @@ export default async function(req: any) {
     );
     const history = (historyPage as any)?.items ?? [];
 
-    // Build OpenAI messages
-    const messages: any[] = [{ role: 'system', content: SYSTEM_PROMPT }];
+    const messages: any[] = [];
     for (const m of history) {
       if (m.role === 'user' || m.role === 'assistant') {
         messages.push({ role: m.role, content: m.content });
@@ -210,72 +209,9 @@ export default async function(req: any) {
       source: 'ui',
     });
 
-    // Agent loop
-    let assistantText = '';
-    let toolCallLog: any[] = [];
-
-    for (let step = 0; step < MAX_STEPS; step++) {
-      const res = await fetch(`${GATEWAY_ORIGIN}/v1/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          tools: TOOLS,
-          tool_choice: 'auto',
-          max_tokens: 4096,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Vercel AI Gateway error ${res.status}: ${errText}`);
-      }
-
-      const data = await res.json();
-      const choice = data.choices?.[0];
-      const msg = choice?.message;
-
-      if (!msg) throw new Error('No message in Vercel AI Gateway response');
-
-      const toolCalls = msg.tool_calls;
-
-      if (toolCalls?.length > 0) {
-        // Add assistant message with tool_calls to the conversation
-        messages.push(msg);
-
-        // Execute each tool call
-        for (const tc of toolCalls) {
-          const fnName = tc.function.name;
-          let fnArgs: any = {};
-          try { fnArgs = JSON.parse(tc.function.arguments); } catch {}
-
-          const toolResult = await executeTool(fnName, fnArgs, base44);
-          toolCallLog.push({ tool: fnName, args: fnArgs, result_preview: toolResult.slice(0, 200) });
-
-          messages.push({
-            role: 'tool',
-            tool_call_id: tc.id,
-            content: toolResult,
-          });
-        }
-        continue; // let the model process tool results
-      }
-
-      // No tool calls — final response
-      assistantText = msg.content || '';
-      break;
-    }
-
-    if (!assistantText) {
-      assistantText = toolCallLog.length > 0
-        ? 'I completed the requested actions. See the tool call log for details.'
-        : 'I was unable to generate a response. Please try again.';
-    }
+    const result = await runAutonomousGatewayAgent(base44, { messages });
+    const assistantText = result.content;
+    const toolCallLog = result.tool_calls;
 
     // Store assistant message
     await sr.CopilotMessage.create({
@@ -283,8 +219,8 @@ export default async function(req: any) {
       role: 'assistant',
       content: assistantText,
       source: 'ui',
-      model_used: MODEL,
-      metadata: { tool_calls: toolCallLog.length, tools: toolCallLog.map(t => t.tool) },
+      model_used: result.model,
+      metadata: { tool_calls: toolCallLog.length, tools: toolCallLog.map(t => t.name), provider: result.provider },
     });
 
     // Return the full conversation

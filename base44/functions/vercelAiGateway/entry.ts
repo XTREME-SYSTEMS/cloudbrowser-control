@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { uploadPublicFile } from '../../shared/storageGateway.ts';
+import { getGatewayKey } from '../../shared/vercelGateway.ts';
 
 // Vercel AI Gateway — frontend-accessible AI media endpoints.
 // Routes speech, transcription, and image generation through Vercel AI Gateway.
@@ -11,7 +12,7 @@ import { uploadPublicFile } from '../../shared/storageGateway.ts';
 //   generateImage  { prompt, existing_image_urls? } → { url }
 
 const GATEWAY_ORIGIN = 'https://ai-gateway.vercel.sh';
-const API_KEY = process.env.VERCEL_AI_GATEWAY_API_KEY;
+
 
 // Base44 voice → OpenAI TTS voice
 const VOICE_MAP: Record<string, string> = {
@@ -45,9 +46,8 @@ export default async function(req: any) {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (!API_KEY) return Response.json({ error: 'VERCEL_AI_GATEWAY_API_KEY not set' }, { status: 500 });
-
   try {
+    const API_KEY = getGatewayKey();
     switch (action) {
       // ===== TEXT-TO-SPEECH (POST /v4/ai/speech-model) =====
       case 'generateSpeech': {

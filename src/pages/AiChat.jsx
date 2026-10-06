@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
+import { gatewayConversations as agentsApi } from "@/lib/gatewayConversations";
 import { uploadFile } from "@/lib/fileUpload";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Bot, Shield, AlertCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import ConversationList from "@/components/ai-chat/ConversationList";
 import ChatInput from "@/components/ai-chat/ChatInput";
 
 const AGENT_NAME = "autonomous_agent";
-const agentsApi = /** @type {any} */ (base44).agents;
+
 
 export default function AiChat() {
   const [conversations, setConversations] = useState([]);
@@ -41,7 +41,6 @@ export default function AiChat() {
         setMessages(conv.messages || []);
         unsub = agentsApi.subscribeToConversation(activeId, (data) => {
           setMessages(data.messages || []);
-          setSending(false);
         });
       } catch { setMessages([]); }
     })();
@@ -72,6 +71,7 @@ export default function AiChat() {
     try {
       const conv = conversations.find((c) => c.id === activeId);
       await agentsApi.addMessage(conv, { role: "user", content: text });
+      setSending(false);
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -85,6 +85,7 @@ export default function AiChat() {
       const { file_url } = await uploadFile(file);
       const conv = conversations.find((c) => c.id === activeId);
       await agentsApi.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
+      setSending(false);
     } catch (err) { setError(err.message); setSending(false); }
   };
 

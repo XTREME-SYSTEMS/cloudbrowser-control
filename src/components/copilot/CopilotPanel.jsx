@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { gatewayConversations } from "@/lib/gatewayConversations";
 import { uploadFile } from "@/lib/fileUpload";
 import { Button } from "@/components/ui/button";
 import { Bot, Sparkles, Loader2, AlertCircle, PanelLeftClose } from "lucide-react";
@@ -22,7 +23,7 @@ export default function CopilotPanel({ onClose }) {
 
   const fetchConversations = useCallback(async () => {
     try {
-      const list = await base44.agents.listConversations({ agent_name: AGENT_NAME });
+      const list = await gatewayConversations.listConversations({ agent_name: AGENT_NAME });
       setConversations(list || []);
       if (list && list.length > 0) setActiveId(list[0].id);
     } catch {
@@ -45,11 +46,10 @@ export default function CopilotPanel({ onClose }) {
     let unsub = () => {};
     (async () => {
       try {
-        const conv = await base44.agents.getConversation(activeId);
+        const conv = await gatewayConversations.getConversation(activeId);
         setMessages(conv.messages || []);
-        unsub = base44.agents.subscribeToConversation(activeId, (data) => {
+        unsub = gatewayConversations.subscribeToConversation(activeId, (data) => {
           setMessages(data.messages || []);
-          setSending(false);
         });
       } catch {
         setMessages([]);
@@ -88,7 +88,7 @@ export default function CopilotPanel({ onClose }) {
     try {
       let conv = activeId ? conversations.find((c) => c.id === activeId) : null;
       if (!conv) {
-        conv = await base44.agents.createConversation({
+        conv = await gatewayConversations.createConversation({
           agent_name: AGENT_NAME,
           metadata: { name: `Copilot ${conversations.length + 1}`, description: "Copilot session" },
         });
@@ -96,7 +96,7 @@ export default function CopilotPanel({ onClose }) {
         setActiveId(conv.id);
       }
       setSending(true);
-      await base44.agents.addMessage(conv, { role: "user", content: text });
+      await gatewayConversations.addMessage(conv, { role: "user", content: text });
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -115,7 +115,7 @@ export default function CopilotPanel({ onClose }) {
     try {
       const { file_url } = await uploadFile(file);
       const conv = conversations.find((c) => c.id === activeId);
-      await base44.agents.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
+      await gatewayConversations.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
     } catch (err) {
       setError(err.message);
       setSending(false);
