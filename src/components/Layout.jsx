@@ -29,91 +29,17 @@ function ThemeToggle() {
 const workflowSteps = [
   {
     step: 1,
-    label: "Start",
+    label: "Main",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/dream-factory", label: "Dream Factory", icon: Sparkles },
       { to: "/xtreme-gpt", label: "Xtreme GPT", icon: Bot },
-      { to: "/welcome", label: "Onboarding", icon: Rocket },
-    ],
-  },
-  {
-    step: 2,
-    label: "Super Agents",
-    items: [
       { to: "/command-center", label: "Command Center", icon: Sparkles },
-      { to: "/website-factory", label: "Website Factory", icon: Rocket },
-      { to: "/mission-control", label: "Mission Control", icon: Activity },
-      { to: "/architect", label: "Meta Architect", icon: Bot },
-      { to: "/factory", label: "System Factory", icon: Layers },
-      { to: "/batch", label: "Batch Operations", icon: Layers },
-      { to: "/domains", label: "Domain Registry", icon: Target },
-      { to: "/mission", label: "Autonomous Mission", icon: Radar },
-    ],
-  },
-  {
-    step: 2,
-    label: "Discover",
-    items: [
-      { to: "/auto-recommender", label: "Recommender", icon: Compass },
-      { to: "/keyword-intelligence", label: "Keyword Intel", icon: TrendingUp },
-    ],
-  },
-  {
-    step: 3,
-    label: "Provision",
-    items: [
-      { to: "/sandboxes", label: "Sandboxes", icon: Server },
-    ],
-  },
-  {
-    step: 4,
-    label: "Build",
-    items: [
-      { to: "/agent-builder", label: "Build Agent", icon: Bot },
-      { to: "/clone-studio", label: "Clone Site", icon: Copy },
-      { to: "/batch-clone", label: "Batch Clone", icon: Layers },
-      { to: "/gap-playground", label: "Gap Playground", icon: Target },
-      { to: "/gap-map", label: "Gap Map", icon: Sparkles },
-      { to: "/sandboxed-clone", label: "Sandbox Clone", icon: Box },
-    ],
-  },
-  {
-    step: 5,
-    label: "Automate",
-    items: [
-      { to: "/skip-tracing", label: "Skip Tracing", icon: Radar },
-      { to: "/swarm-orchestrator", label: "Swarm Orchestrator", icon: Bot },
       { to: "/social-presence", label: "Social Presence", icon: Globe },
-    ],
-  },
-  {
-    step: 6,
-    label: "Execute",
-    items: [
+      { to: "/website-factory", label: "Website Factory", icon: Rocket },
+      { to: "/clone-studio", label: "Clone Site", icon: Copy },
+      { to: "/mission-control", label: "Mission Control", icon: Activity },
       { to: "/sessions", label: "Sessions", icon: Monitor },
       { to: "/jobs", label: "Jobs", icon: Briefcase },
-    ],
-  },
-  {
-    step: 7,
-    label: "Govern",
-    items: [
-      { to: "/architecture", label: "Architecture", icon: Building2 },
-      { to: "/autocomplete", label: "AutoComplete", icon: Activity },
-      { to: "/operator-console", label: "Operator Console", icon: Terminal },
-      { to: "/autonomous-workflows", label: "Autonomous Workflows", icon: Activity },
-      { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
-    ],
-  },
-  {
-    step: 8,
-    label: "Account",
-    items: [
-      { to: "/team", label: "Team", icon: Users },
-      { to: "/billing", label: "Billing", icon: CreditCard },
-      { to: "/account", label: "Account", icon: User },
-      { to: "/connect", label: "Connect AI", icon: Cable },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
     ],
   },
