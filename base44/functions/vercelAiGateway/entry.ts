@@ -77,8 +77,13 @@ export default async function(req: any) {
         const result = await res.json();
         const audioBytes = base64ToUint8(result.audio);
         const file = new File([audioBytes], `speech_${Date.now()}.mp3`, { type: 'audio/mpeg' });
-        const { file_url } = await uploadPublicFile({ file });
-        return Response.json({ url: file_url });
+        try {
+          const { file_url } = await uploadPublicFile({ file });
+          return Response.json({ url: file_url });
+        } catch {
+          // Fallback: return base64 data URL if Vercel Blob is not configured
+          return Response.json({ url: `data:audio/mpeg;base64,${result.audio}` });
+        }
       }
 
       // ===== SPEECH-TO-TEXT (POST /v4/ai/transcription-model) =====
