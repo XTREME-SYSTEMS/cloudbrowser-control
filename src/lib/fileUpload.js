@@ -6,7 +6,14 @@ import { base44 } from '@/api/base44Client';
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Expected FileReader data URL result'));
+        return;
+      }
+      resolve(result.split(',')[1]);
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
