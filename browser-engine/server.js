@@ -1403,8 +1403,10 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   sessionManager.startCleanupLoop();
 })();
 
-// Mount the API router at /engine prefix (Vercel services routing)
+// Mount the API router at /engine prefix (Vercel services routing) and at the
+// root so Railway's healthcheck (GET /health) resolves.
 app.use('/engine', api);
+app.use('/', api);
 
 app.listen(PORT, () => {
   console.log(`Browser engine v${ENGINE_VERSION} running on port ${PORT} (worker: ${WORKER_ID}, region: ${REGION})`);
