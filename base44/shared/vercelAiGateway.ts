@@ -1,11 +1,11 @@
-// Vercel AI Gateway shared client — drop-in replacement for base44.integrations.Core.InvokeLLM.
-// Routes all LLM calls through https://ai-gateway.vercel.sh/v1 instead of Base44 integrations.
+// Vercel AI Gateway shared client — all LLM, image, speech, and transcription calls.
+// Routes through https://ai-gateway.vercel.sh/v1 using VERCEL_AI_GATEWAY_API_KEY.
 import { getGatewayKey, searchGatewayWeb } from './vercelGateway.ts';
 import { buildGatewayContent } from './gatewayAttachments.ts';
 
 const BASE_URL = 'https://ai-gateway.vercel.sh/v1';
 
-// Base44 InvokeLLM model name → Vercel AI Gateway model ID
+// Model alias → Vercel AI Gateway model ID
 const MODEL_MAP: Record<string, string> = {
   automatic: 'openai/gpt-6-astra',
   gpt_5_mini: 'openai/gpt-5-mini',
@@ -36,7 +36,7 @@ interface InvokeLLMOpts {
 }
 
 /**
- * Drop-in replacement for base44.integrations.Core.InvokeLLM.
+ * Invokes the Vercel AI Gateway for LLM completions.
  * Returns a string (plain text) or a parsed object (when response_json_schema is provided).
  */
 export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
@@ -95,7 +95,7 @@ export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
   return content;
 }
 
-// ─── Image Generation — replaces Core.GenerateImage ─────────────────────────
+// ─── Image Generation (Vercel AI Gateway) ───────────────────────────────────
 export async function generateImage(opts: { prompt: string; model?: string; size?: string; n?: number; existing_image_urls?: string[] }): Promise<{ url: string }> {
   const API_KEY = getGatewayKey();
   const model = opts.model || 'openai/dall-e-3';
@@ -112,7 +112,7 @@ export async function generateImage(opts: { prompt: string; model?: string; size
   return { url };
 }
 
-// ─── Speech Generation — replaces Core.GenerateSpeech ───────────────────────
+// ─── Speech Generation (Vercel AI Gateway) ──────────────────────────────────
 export async function generateSpeech(opts: { text: string; voice?: string; language_code?: string; model?: string }): Promise<{ url: string }> {
   const API_KEY = getGatewayKey();
   const model = opts.model || 'openai/tts-1';
@@ -137,7 +137,7 @@ export async function generateSpeech(opts: { text: string; voice?: string; langu
   }
 }
 
-// ─── Audio Transcription — replaces Core.TranscribeAudio ─────────────────────
+// ─── Audio Transcription (Vercel AI Gateway) ────────────────────────────────
 export async function transcribeAudio(opts: { audio_url: string; model?: string }): Promise<string> {
   const API_KEY = getGatewayKey();
   const model = opts.model || 'openai/whisper-1';
@@ -156,7 +156,7 @@ export async function transcribeAudio(opts: { audio_url: string; model?: string 
   return data.text || '';
 }
 
-// ─── Data Extraction — replaces Core.ExtractDataFromUploadedFile ────────────
+// ─── Data Extraction (Vercel AI Gateway) ────────────────────────────────────
 export async function extractDataFromFile(opts: { file_url: string; json_schema: object; model?: string }): Promise<{ status: string; output: any; details?: string }> {
   const API_KEY = getGatewayKey();
   const lower = opts.file_url.toLowerCase();

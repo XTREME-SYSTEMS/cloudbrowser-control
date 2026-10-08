@@ -2,8 +2,7 @@ import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 
 // Gateway LLM wrapper — allows frontend pages to call the Vercel AI Gateway
-// without using Base44 integration credits. Accepts the same options as
-// base44.integrations.Core.InvokeLLM and delegates to the Vercel AI Gateway.
+// for all LLM completions. Delegates to the Vercel AI Gateway via VERCEL_AI_GATEWAY_API_KEY.
 
 export default async function(req) {
   try {

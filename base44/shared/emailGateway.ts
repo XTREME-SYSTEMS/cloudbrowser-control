@@ -1,4 +1,4 @@
-// Email Gateway — Resend API replacement for base44.integrations.Core.SendEmail.
+// Email Gateway — Resend API for all outbound email.
 // Requires RESEND_API_KEY and optionally RESEND_FROM_EMAIL secrets.
 // The from address must be a verified domain in your Resend account.
 // For testing, the default onboarding@resend.dev works without domain verification.

@@ -12,7 +12,7 @@ function fileToBase64(file) {
   });
 }
 
-// Drop-in replacement for base44.integrations.Core.UploadFile
+// Upload a file to Vercel Blob storage via the uploadFileGateway backend.
 export async function uploadFile(file) {
   const base64 = await fileToBase64(file);
   const res = await base44.functions.invoke('uploadFileGateway', {
@@ -24,7 +24,7 @@ export async function uploadFile(file) {
   return res.data;
 }
 
-// Drop-in replacement for base44.integrations.Core.UploadPublicFile
+// Upload a public file to Vercel Blob storage via the uploadFileGateway backend.
 export async function uploadPublicFile(file) {
   const base64 = await fileToBase64(file);
   const res = await base44.functions.invoke('uploadFileGateway', {
@@ -36,7 +36,7 @@ export async function uploadPublicFile(file) {
   return res.data;
 }
 
-// Drop-in replacement for base44.integrations.Core.UploadPrivateFile
+// Upload a private file to Vercel Blob storage via the uploadFileGateway backend.
 export async function uploadPrivateFile(file) {
   const base64 = await fileToBase64(file);
   const res = await base44.functions.invoke('uploadFileGateway', {
