@@ -282,6 +282,7 @@ async function pollServices() {
  
  await notifyCloudBrowserUI({
  event: 'deployment_failed',
+ status: 'failed',
  service: service.name,
  serviceId: service.id,
  deploymentId: latestDeployment.id,
@@ -326,6 +327,7 @@ async function handleRailwayWebhook(req, res) {
  const fixResult = await analyzeAndFixFailure(service, logs);
  await notifyCloudBrowserUI({
  event: 'deployment_failed_webhook',
+ status: 'failed',
  service: service.name,
  serviceId,
  deploymentId,
@@ -340,6 +342,7 @@ async function handleRailwayWebhook(req, res) {
  console.log(`[Success] ${deploymentId}`);
  await notifyCloudBrowserUI({
  event: 'deployment_success',
+ status: 'success',
  deploymentId,
  timestamp: new Date().toISOString(),
  });
