@@ -1,0 +1,88 @@
+name: Autonomy Validation
+
+on:
+  push:
+    branches:
+      - 'autonomous/**'
+      - 'repair/**'
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    name: Code Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm run typecheck
+
+  browser-engine-syntax:
+    name: Browser Engine Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node --check browser-engine/server.js
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject plaintext secret fields in entity schemas
+        shell: bash
+        run: |
+          if grep -RniE '"(password|secret|cookies|storage_state)"[[:space:]]*:' base44/entities; then
+            echo 'Forbidden plaintext secret-like entity field found.'
+            exit 1
+          fi
+      - name: Reject hard-coded CloudBrowser live/test keys
+        shell: bash
+        run: |
+          if grep -RniE '(cb_live_|cb_test_)[a-f0-9]{32}' src base44 browser-engine vercel-autonomy 2>/dev/null; then
+            echo 'Hard-coded CloudBrowser key found.'
+            exit 1
+          fi
+      - name: Require SSRF host guard
+        shell: bash
+        run: grep -q 'isBlockedHost' browser-engine/server.js
+      - name: Enforce autonomous production guards
+        shell: bash
+        run: |
+          grep -q "PROTECTED_BRANCHES = new Set(\['main', 'master'\])" vercel-autonomy/src/policy.js
+          grep -q "production_allowed" vercel-autonomy/src/policy.js
+          grep -q "secret_change_allowed" vercel-autonomy/src/policy.js
+
+  autonomy-worker:
+    name: Autonomy Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pinned Workflow SDK
+        working-directory: vercel-autonomy
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Syntax and unit tests
+        working-directory: vercel-autonomy
+        run: |
+          npm run check
+          npm test
+      - name: Verify five-minute heartbeat contract
+        working-directory: vercel-autonomy
+        run: node -e "const c=require('./vercel.json'); if(c.crons?.[0]?.path!=='/api/cron/auto-builder'||c.crons?.[0]?.schedule!=='*/5 * * * *') process.exit(1)"
