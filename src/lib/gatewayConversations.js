@@ -46,9 +46,11 @@ export const gatewayConversations = {
     const page = await base44.entities.GatewayConversation.filter({}, { sort: '-updated_date', limit: 200 });
     const gatewayItems = (page.items || []).filter(item => item.agent_name === agent_name && item.archived !== true);
     const migrated = new Set(gatewayItems.map(item => item.legacy_id).filter(Boolean));
-    const legacy = await base44.agents.listConversations({ agent_name }).catch(() => []);
+    const legacy = await base44.agents.listConversations({}).catch(() => []);
     const conversations = gatewayItems.slice(0, 50).map(normalize);
-    for (const item of legacy || []) if (!migrated.has(item.id) && !item.metadata?.archived) conversations.push(item);
+    for (const item of legacy || []) {
+      if (item.agent_name === agent_name && !migrated.has(item.id) && !item.metadata?.archived) conversations.push(item);
+    }
     return conversations;
   },
   async updateConversation(id, { metadata }) {
