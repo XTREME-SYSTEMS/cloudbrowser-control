@@ -231,15 +231,15 @@ export default function XtremeGPT() {
         const cid = m.conversation_id;
         if (!grouped[cid]) grouped[cid] = { id: cid, messages: [], lastActivity: m.created_date };
         grouped[cid].messages.push(m);
-        if (new Date(m.created_date) > new Date(grouped[cid].lastActivity)) {
+        if (new Date(m.created_date).getTime() > new Date(grouped[cid].lastActivity).getTime()) {
           grouped[cid].lastActivity = m.created_date;
         }
       }
       const list = Object.values(grouped).map((g) => {
-        const sorted = [...g.messages].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+        const sorted = [...g.messages].sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime());
         const firstUser = sorted.find((m) => m.role === "user");
         return { id: g.id, title: firstUser?.content?.substring(0, 40) || "New chat", lastActivity: g.lastActivity };
-      }).sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+      }).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
       setConversations(list);
     } catch { setConversations([]); }
     setLoading(false);
