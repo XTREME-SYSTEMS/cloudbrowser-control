@@ -42,20 +42,29 @@ export default async function(req) {
       return ackResponse;
     }
 
-    // Update engine.status Setting
+    // Update engine.status Setting using the live Setting schema.
     try {
+      const now = new Date().toISOString();
       const existing = await base44.asServiceRole.entities.Setting.filter({ setting_key: "engine.status" });
+      const runtimeState = {
+        effective_value: engineStatus,
+        actual_runtime_value: engineStatus,
+        runtime_target: "engine",
+        apply_status: "verified",
+        drift_status: "none",
+        changed_by: "railway",
+        changed_at: now,
+        last_verified_at: now,
+      };
+
       if (existing.length > 0) {
-        await base44.asServiceRole.entities.Setting.update(existing[0].id, {
-          effective_value: engineStatus,
-          updated_at: new Date().toISOString(),
-        });
+        await base44.asServiceRole.entities.Setting.update(existing[0].id, runtimeState);
       } else {
         await base44.asServiceRole.entities.Setting.create({
           setting_key: "engine.status",
-          effective_value: engineStatus,
-          description: "Current engine status from Railway webhooks",
-          updated_at: new Date().toISOString(),
+          category: "deployment",
+          scope_type: "platform",
+          ...runtimeState,
         });
       }
     } catch (e) {
@@ -70,23 +79,23 @@ export default async function(req) {
       console.error("Audit log failed:", e.message);
     }
 
-    // Store deployment history in AuditLog
+    // Store deployment history using the live AuditLog schema.
     try {
+      const now = new Date().toISOString();
       await base44.asServiceRole.entities.AuditLog.create({
-        action: "railway_deployment",
-        resource_type: "engine",
-        resource_id: deployId || "unknown",
-        actor_id: "railway",
-        actor_name: "Railway Webhook",
-        details: {
+        action: "run",
+        entity_type: "engine",
+        entity_id: deployId || "unknown",
+        description: `Railway ${eventType || deploymentStatus}: ${serviceName} — status=${engineStatus}, commit=${commit || "unknown"}`,
+        metadata: {
+          source: "railway",
           event: eventType || deploymentStatus,
           deploymentId: deployId,
           status: engineStatus,
           commitHash: commit,
           serviceName,
-          timestamp: new Date().toISOString(),
         },
-        created_at: new Date().toISOString(),
+        timestamp: now,
       });
     } catch (e) {
       console.error("Deployment history log failed:", e.message);
