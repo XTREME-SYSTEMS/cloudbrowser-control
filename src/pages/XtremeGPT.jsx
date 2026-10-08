@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { uploadPublicFile } from "@/lib/fileUpload";
 import {
   Plus, Trash2, Loader2, MessageSquare, Zap, Mic, Square, Volume2, Copy, Check,
-  User, Bot, ArrowUp, PanelLeft, X, Sparkles, Wrench, Search, FolderOpen,
+  User, Bot, ArrowUp, PanelLeft, X, Wrench, Search, FolderOpen,
   ChevronDown, Activity, Shield, Terminal, FileText, Puzzle, PieChart,
   MousePointerClick, Play, Cpu, Hash, CircleDot
 } from "lucide-react";
