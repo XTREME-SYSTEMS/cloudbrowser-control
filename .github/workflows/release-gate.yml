@@ -75,6 +75,9 @@ jobs:
         working-directory: browser-engine
         run: node --check server.js
 
+      - name: Check Railway operator syntax
+        run: node --check operator/index.js
+
       - name: Run browser engine contract tests
         working-directory: browser-engine
         run: npm test
