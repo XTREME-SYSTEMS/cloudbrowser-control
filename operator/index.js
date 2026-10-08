@@ -282,6 +282,7 @@ async function pollServices() {
  
  await notifyCloudBrowserUI({
  event: 'deployment_failed',
+ status: 'failed',
  service: service.name,
  serviceId: service.id,
  deploymentId: latestDeployment.id,
@@ -326,6 +327,7 @@ async function handleRailwayWebhook(req, res) {
  const fixResult = await analyzeAndFixFailure(service, logs);
  await notifyCloudBrowserUI({
  event: 'deployment_failed_webhook',
+ status: 'failed',
  service: service.name,
  serviceId,
  deploymentId,
@@ -340,6 +342,7 @@ async function handleRailwayWebhook(req, res) {
  console.log(`[Success] ${deploymentId}`);
  await notifyCloudBrowserUI({
  event: 'deployment_success',
+ status: 'success',
  deploymentId,
  timestamp: new Date().toISOString(),
  });
@@ -367,9 +370,11 @@ function safeWebhookLabel(value) {
 }
 
 async function notifyCloudBrowserUI(payload) {
+ // Prefer the verified canonical Base44 receiver. Keep the configured URL only
+ // as a secondary compatibility target if the canonical endpoint is unavailable.
  const targets = [...new Set([
-   CONFIG.CLOUD_BROWSER_UI_WEBHOOK,
    CONFIG.CLOUD_BROWSER_UI_FALLBACK,
+   CONFIG.CLOUD_BROWSER_UI_WEBHOOK,
  ].filter(Boolean))];
 
  if (!targets.length) {
