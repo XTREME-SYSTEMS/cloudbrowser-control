@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import {   Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass, User, Cable, TrendingUp, Activity, Terminal, Globe } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
-import { Image } from "@/components/ui/image";
 import { useAuth } from "@/lib/AuthContext";
 
 function ThemeToggle() {
