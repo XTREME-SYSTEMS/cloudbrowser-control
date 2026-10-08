@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Play, Zap, Download } from "lucide-react";
+import { Loader2, Play, Zap } from "lucide-react";
 
 export default function WorkerCommand() {
   const [stats, setStats] = useState(null);
