@@ -367,9 +367,11 @@ function safeWebhookLabel(value) {
 }
 
 async function notifyCloudBrowserUI(payload) {
+ // Prefer the verified canonical Base44 receiver. Keep the configured URL only
+ // as a secondary compatibility target if the canonical endpoint is unavailable.
  const targets = [...new Set([
-   CONFIG.CLOUD_BROWSER_UI_WEBHOOK,
    CONFIG.CLOUD_BROWSER_UI_FALLBACK,
+   CONFIG.CLOUD_BROWSER_UI_WEBHOOK,
  ].filter(Boolean))];
 
  if (!targets.length) {
