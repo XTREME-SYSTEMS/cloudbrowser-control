@@ -24,7 +24,8 @@ const CONFIG = {
  GITHUB_OWNER: process.env.GITHUB_OWNER || 'XTREME-SYSTEMS',
  GITHUB_REPO: process.env.GITHUB_REPO || 'cloudbrowser-control',
  PROJECT_ID: process.env.PROJECT_ID || 'b68545a5-c9f8-482d-8e1b-4c1574f7af3b',
- CLOUD_BROWSER_UI_WEBHOOK: process.env.CLOUD_BROWSER_UI_WEBHOOK,
+ CLOUD_BROWSER_UI_WEBHOOK: process.env.CLOUD_BROWSER_UI_WEBHOOK || 'https://cloud-browser.base44.app/functions/receiveRailwayWebhook',
+ CLOUD_BROWSER_UI_FALLBACK: 'https://cloud-browser.base44.app/functions/receiveRailwayWebhook',
  POLL_INTERVAL_MS: parseInt(process.env.POLL_INTERVAL_MS) || 5 * 60 * 1000,
  MAX_RETRY_ATTEMPTS: 3,
  RATE_LIMIT_THRESHOLD: 100,
@@ -356,20 +357,54 @@ api.post('/webhooks/railway-deploy', handleRailwayWebhook);
 // ============================================================================
 // UI NOTIFICATION
 // ============================================================================
-async function notifyCloudBrowserUI(payload) {
- if (!CONFIG.CLOUD_BROWSER_UI_WEBHOOK) {
- console.log('[UI] No webhook URL configured, skipping notification');
- return;
- }
- 
+function safeWebhookLabel(value) {
  try {
- await axios.post(CONFIG.CLOUD_BROWSER_UI_WEBHOOK, payload, {
- timeout: 10000,
- });
- console.log(`[UI] Notified: ${payload.event}`);
- } catch (error) {
- console.warn(`[UI] Notification failed: ${error.message}`);
+   const url = new URL(value);
+   return `${url.origin}${url.pathname}`;
+ } catch {
+   return 'invalid-webhook-url';
  }
+}
+
+async function notifyCloudBrowserUI(payload) {
+ const targets = [...new Set([
+   CONFIG.CLOUD_BROWSER_UI_WEBHOOK,
+   CONFIG.CLOUD_BROWSER_UI_FALLBACK,
+ ].filter(Boolean))];
+
+ if (!targets.length) {
+   console.log('[UI] No webhook URL configured, skipping notification');
+   return { delivered: false, reason: 'not_configured' };
+ }
+
+ let lastError = null;
+ for (let index = 0; index < targets.length; index++) {
+   const target = targets[index];
+   try {
+     const response = await axios.post(target, payload, {
+       timeout: 10000,
+       headers: { 'Content-Type': 'application/json' },
+       validateStatus: () => true,
+     });
+
+     if (response.status >= 200 && response.status < 300) {
+       console.log(`[UI] Notified: ${payload.event} -> ${safeWebhookLabel(target)} (${response.status})`);
+       return { delivered: true, status: response.status, target: safeWebhookLabel(target) };
+     }
+
+     lastError = new Error(`HTTP ${response.status}`);
+     console.warn(`[UI] Notification rejected by ${safeWebhookLabel(target)}: HTTP ${response.status}`);
+
+     const retryableConfigurationError = response.status === 404 || response.status === 405;
+     if (!retryableConfigurationError) break;
+   } catch (error) {
+     lastError = error;
+     console.warn(`[UI] Notification error for ${safeWebhookLabel(target)}: ${error.message}`);
+   }
+ }
+
+ console.warn(`[UI] Notification failed after ${targets.length} target(s): ${lastError?.message || 'unknown error'}`);
+ return { delivered: false, reason: lastError?.message || 'unknown_error' };
 }
 
 // ============================================================================
