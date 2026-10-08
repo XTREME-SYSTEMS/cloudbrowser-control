@@ -13,6 +13,7 @@ app.use(express.json());
 const api = express.Router();
 
 const operator = new EventEmitter();
+const handledFailedDeployments = new Set();
 
 // Configuration from env vars
 const CONFIG = {
@@ -177,21 +178,19 @@ async function triggerDeployment(serviceId, environmentId, commitSha = null) {
 }
 
 async function updateServiceReplicas(serviceId, environmentId, numReplicas) {
+ if (!CONFIG.AUTO_FIX_DEPLOYS) {
+   return { blocked: true, reason: 'AUTO_FIX_DEPLOYS is disabled; production scaling requires operator approval' };
+ }
  const mutation = `
- mutation {
- serviceInstanceUpdate(
- serviceId: "${serviceId}",
- environmentId: "${environmentId}",
- input: { numReplicas: ${numReplicas} }
- ) {
- id
- numReplicas
- }
- }
- `;
- 
- const data = await railwayGQL(mutation);
- return data.serviceInstanceUpdate;
+ mutation serviceInstanceUpdate($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) {
+   serviceInstanceUpdate(serviceId: $serviceId, environmentId: $environmentId, input: $input)
+ }`;
+ const data = await railwayGQL(mutation, {
+   serviceId,
+   environmentId,
+   input: { numReplicas },
+ });
+ return { blocked: false, updated: data.serviceInstanceUpdate === true };
 }
 
 // ============================================================================
@@ -269,6 +268,12 @@ async function pollServices() {
  const latestDeployment = service.activeDeployments.edges[0].node;
  
  if (latestDeployment.status === 'FAILED') {
+ if (handledFailedDeployments.has(latestDeployment.id)) continue;
+ handledFailedDeployments.add(latestDeployment.id);
+ if (handledFailedDeployments.size > 500) {
+   const oldest = handledFailedDeployments.values().next().value;
+   handledFailedDeployments.delete(oldest);
+ }
  METRICS.deploymentsFailed++;
  console.log(`[Alert] ${service.name} deployment FAILED`);
  
@@ -408,6 +413,7 @@ api.post('/api/manual/scale', async (req, res) => {
  try {
  const { serviceId, environmentId, replicas } = req.body;
  const result = await updateServiceReplicas(serviceId, environmentId, replicas);
+ if (result.blocked) return res.status(403).json({ error: result.reason });
  res.json({ ok: true, result });
  } catch (error) {
  res.status(500).json({ error: error.message });
@@ -419,6 +425,7 @@ api.post('/api/manual/scale', async (req, res) => {
 // ============================================================================
 // POST /api/manual/scraper-domain — create the scraper service's public domain
 api.post('/api/manual/scraper-domain', async (req, res) => {
+  if (!CONFIG.AUTO_FIX_DEPLOYS) return res.status(403).json({ error: 'Protected infrastructure mutations are approval-gated' });
   try {
     const data = await railwayGQL(
       `mutation($input: CustomDomainCreateInput!) {
@@ -443,6 +450,7 @@ api.post('/api/manual/scraper-domain', async (req, res) => {
 // persistent server (clears cronSchedule, sets ALWAYS restart) and redeploys.
 // Hardcoded target — safe on a public endpoint.
 api.post('/api/manual/scraper-server-mode', async (req, res) => {
+  if (!CONFIG.AUTO_FIX_DEPLOYS) return res.status(403).json({ error: 'Protected infrastructure mutations are approval-gated' });
   try {
     const INSTANCE_ID = 'c3633498-2692-4502-a455-04f77f08124e';
     const updated = await railwayGQL(
