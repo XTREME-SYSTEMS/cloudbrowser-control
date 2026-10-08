@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Loader2, RefreshCw, TrendingUp, Target, CheckCircle2, Clock, Globe, BarChart3, Bell, FileText, Sparkles, Share2 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { Loader2, RefreshCw, TrendingUp, Target, Clock, Globe, BarChart3, Bell, FileText, Sparkles, Share2 } from "lucide-react";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 export default function ClientPortal() {
   const navigate = useNavigate();
