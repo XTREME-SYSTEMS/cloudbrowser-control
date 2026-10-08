@@ -2,7 +2,7 @@ import { base44 } from '@/api/base44Client';
 import { DEFAULT_AGENTS, getAgentById } from './catalog';
 
 // Create a new SwarmRun and dispatch parallel agent tasks.
-export async function startSwarmRun({ prompt, agentIds, params }) {
+export async function startSwarmRun({ prompt, agentIds, params = {} }) {
   const selected = agentIds?.length ? agentIds : DEFAULT_AGENTS;
   const run = await base44.entities.SwarmRun.create({
     prompt,

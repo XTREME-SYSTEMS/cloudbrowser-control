@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { startSwarmRun, pollSwarmRun, synthesizeRun } from './swarmActions';
-import { DEFAULT_AGENTS } from './catalog';
 
 export function useSwarm() {
   const [runs, setRuns] = useState([]);

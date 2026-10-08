@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Users, Sliders, Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgentLibrary from './AgentLibrary';
-import { DEFAULT_AGENTS } from './catalog';
 
 export default function WorkspaceHeader({ agentIds, onToggleAgent, onOpenParams }) {
   const [libOpen, setLibOpen] = useState(false);
