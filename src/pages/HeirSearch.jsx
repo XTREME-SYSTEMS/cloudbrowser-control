@@ -11,7 +11,7 @@ import { HEIR_SEARCH_CATALOG } from "@/lib/searchSourceCatalog";
 import {
   Users, Phone, Mail, MapPin, Search, AlertCircle, CheckCircle, Clock,
   Database, Loader2, FileText, GitBranch, Gavel, UserX, UserCheck, Crown,
-  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap,
+  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap, ExternalLink,
 } from "lucide-react";
 import TemplateSelector from "@/components/heir-search/TemplateSelector";
 
@@ -34,8 +34,19 @@ export default function HeirSearch() {
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [trackingSheetUrl, setTrackingSheetUrl] = useState("");
 
-  useEffect(() => { loadHistory(); }, []);
+  useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
+
+  const loadTrackingSheet = async () => {
+    try {
+      const res = await base44.functions.invoke("getHeirTrackingSheetUrl", {});
+      const data = res.data || res;
+      if (data.url) setTrackingSheetUrl(data.url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const loadHistory = async () => {
     try {
@@ -86,16 +97,26 @@ export default function HeirSearch() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-semibold flex items-center gap-2">
-          <Users className="w-6 h-6 text-primary" />
-          Heir Search
-        </h1>
-        <p className="text-muted-foreground mt-1 max-w-3xl">
-          Identify and locate heirs of a deceased person. The engine confirms the death via SSDI and obituaries,
-          builds the family tree from genealogy databases, searches probate court records, identifies all potential
-          heirs by inheritance priority, and skip traces each living heir for contact information.
-        </p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-heading font-semibold flex items-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
+            Heir Search
+          </h1>
+          <p className="text-muted-foreground mt-1 max-w-3xl">
+            Identify and locate heirs of a deceased person. The engine confirms the death via SSDI and obituaries,
+            builds the family tree from genealogy databases, searches probate court records, identifies all potential
+            heirs by inheritance priority, and skip traces each living heir for contact information.
+          </p>
+        </div>
+        {trackingSheetUrl && (
+          <a href={trackingSheetUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Open Tracking Sheet
+            </Button>
+          </a>
+        )}
       </div>
 
       <Tabs defaultValue="search">
