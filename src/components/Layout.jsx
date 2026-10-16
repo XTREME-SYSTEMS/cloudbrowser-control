@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -37,6 +37,7 @@ const workflowSteps = [
       { to: "/website-factory", label: "Website Factory", icon: Rocket },
       { to: "/clone-studio", label: "Clone Site", icon: Copy },
       { to: "/mission-control", label: "Mission Control", icon: Activity },
+      { to: "/heir-search", label: "Heir Search", icon: Users },
       { to: "/sessions", label: "Sessions", icon: Monitor },
       { to: "/jobs", label: "Jobs", icon: Briefcase },
       { to: "/settings", label: "Settings", icon: SettingsIcon },

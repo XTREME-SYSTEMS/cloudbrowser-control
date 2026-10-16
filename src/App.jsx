@@ -64,6 +64,7 @@ import AgentCommandCenterPage from '@/pages/AgentCommandCenter';
 import DigitalDominance from '@/pages/DigitalDominance';
 import ClientPortal from '@/pages/ClientPortal';
 import SocialPresence from '@/pages/SocialPresence';
+import HeirSearch from '@/pages/HeirSearch';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -141,6 +142,7 @@ const AuthenticatedApp = () => {
           <Route path="/digital-dominance" element={<DigitalDominance />} />
           <Route path="/client-portal" element={<ClientPortal />} />
           <Route path="/social-presence" element={<SocialPresence />} />
+          <Route path="/heir-search" element={<HeirSearch />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
