@@ -116,9 +116,87 @@ export default async function (req: Request): Promise<Response> {
 
     const appendData = await appendRes.json();
 
+    // Write Extreme Deep Findings summary to a second tab if provided
+    let deepTabExported = 0;
+    if (body.extreme_deep_findings) {
+      const deepSheet = "Deep Findings";
+      const deepSheetExists = (metaData.sheets || []).some((s: any) => s.properties?.title === deepSheet);
+      if (!deepSheetExists) {
+        await fetch(`${SHEETS_API}/${spreadsheetId}:batchUpdate`, {
+          method: "POST", headers,
+          body: JSON.stringify({ requests: [{ addSheet: { properties: { title: deepSheet } } }] }),
+        });
+      }
+
+      const DEEP_COLUMNS = [
+        "Case Ref", "Deceased Name", "Confidence %", "Sources", "Methods",
+        "UCC Filings", "SEC Litigation", "FEC Contributions", "Username Profiles",
+        "Historical WHOIS", "Archived Pages", "Verified Emails", "Verified Phones",
+        "Crypto Wallets", "ENS Domains", "Deed Transfers", "Related Owners",
+        "Permits", "Violations", "Social Graph Nodes", "Hidden Connections",
+        "Central Figures", "Business Entities", "Unclaimed Assets",
+        "Cemetery Family Plot", "Immigration Family", "Intl Relatives",
+        "Missing Relatives", "Professional Members", "Breach Verified Emails",
+        "Export Date",
+      ];
+
+      const deepCheckRes = await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A1:AE1`, { headers });
+      const deepCheckData = deepCheckRes.ok ? await deepCheckRes.json().catch(() => ({})) : {};
+      const deepHasHeaders = deepCheckData.values?.[0]?.length > 1;
+      if (!deepHasHeaders) {
+        await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A1?valueInputOption=RAW`, {
+          method: "PUT", headers,
+          body: JSON.stringify({ values: [DEEP_COLUMNS] }),
+        });
+      }
+
+      const f = body.extreme_deep_findings;
+      const deepRow = [
+        case_reference || "",
+        deceased_name || "",
+        body.confidence_score || 0,
+        body.sources_count || 0,
+        body.methods_count || 0,
+        f.ucc_sec_filings || 0,
+        f.sec_litigation || 0,
+        f.fec_contributions || 0,
+        f.username_profiles || 0,
+        f.historical_whois || 0,
+        f.archived_pages || 0,
+        f.verified_emails || 0,
+        f.verified_phones || 0,
+        f.crypto_wallets || 0,
+        f.ens_domains || 0,
+        f.deed_transfers || 0,
+        f.related_owners || 0,
+        f.permits || 0,
+        f.violations || 0,
+        f.social_graph_nodes || 0,
+        f.hidden_connections || 0,
+        f.central_figures || 0,
+        f.business_entities || 0,
+        f.unclaimed_assets || 0,
+        f.cemetery_family_plot || 0,
+        f.immigration_family || 0,
+        f.intl_relatives || 0,
+        f.missing_relatives || 0,
+        f.professional_members || 0,
+        f.breach_verified_emails || 0,
+        new Date().toISOString(),
+      ];
+
+      const deepAppendUrl = `${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A:A:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+      const deepAppendRes = await fetch(deepAppendUrl, {
+        method: "POST", headers,
+        body: JSON.stringify({ values: [deepRow] }),
+      });
+      if (deepAppendRes.ok) deepTabExported = 1;
+    }
+
     return Response.json({
       ok: true,
       exported: rows.length,
+      deep_findings_exported: deepTabExported,
       spreadsheet_id: spreadsheetId,
       sheet,
       updated_range: appendData.updates?.updatedRange,

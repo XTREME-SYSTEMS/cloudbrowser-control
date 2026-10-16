@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { secrets } from 'base44:runtime';
 import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
 import { HEIR_SEARCH_CATALOG } from '../../shared/searchSourceCatalog.ts';
 
@@ -858,17 +859,54 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
     });
 
     // === AUTO-EXPORT TO GOOGLE SHEETS ===
+    // Auto-syncs to the default tracking sheet when Extreme Deep mode is enabled.
+    // Per-request spreadsheet_url overrides the secret; both write to the same sheet.
     let sheet_export: any = null;
-    if (spreadsheet_url && R.identified_heirs.length > 0) {
+    const trackingSheetUrl = spreadsheet_url || (extreme ? (secrets.get('HEIR_TRACKING_SHEET_URL') || '') : '');
+    const trackingSheetName = sheet_name || (extreme ? 'Extreme Deep Heirs' : 'Heirs');
+    if (trackingSheetUrl && R.identified_heirs.length > 0) {
+      // Build extreme deep findings summary for the Deep Findings tab
+      const extremeFindings = extreme ? {
+        ucc_sec_filings: (R.ucc_sec?.ucc_filings || []).length,
+        sec_litigation: (R.ucc_sec?.sec_litigation || []).length,
+        fec_contributions: (R.fec_lobby?.contributions || []).length,
+        username_profiles: (R.username_correlation?.profiles || []).length,
+        historical_whois: (R.domain_archive?.historical_whois || []).length,
+        archived_pages: (R.domain_archive?.archived_pages || []).length,
+        verified_emails: (R.contact_verification?.verified_emails || []).filter((e:any)=>e.exists).length,
+        verified_phones: (R.contact_verification?.verified_phones || []).length,
+        crypto_wallets: (R.crypto_assets?.wallets || []).length,
+        ens_domains: (R.crypto_assets?.ens_domains || []).length,
+        deed_transfers: (R.deed_chain?.deed_chain || []).length,
+        related_owners: (R.deed_chain?.related_owners || []).length,
+        permits: (R.permits_regulatory?.permits || []).length,
+        violations: (R.permits_regulatory?.violations || []).length,
+        social_graph_nodes: (R.social_graph?.network_nodes || []).length,
+        hidden_connections: (R.social_graph?.hidden_connections || []).length,
+        central_figures: (R.social_graph?.central_figures || []).length,
+        business_entities: (R.business_network?.business_entities || []).length,
+        unclaimed_assets: (R.unclaimed?.unclaimed_assets || []).length,
+        cemetery_family_plot: (R.cemetery_mortuary?.family_plot_members || []).length,
+        immigration_family: (R.immigration_nat?.family_from_immigration || []).length,
+        intl_relatives: (R.intl_genealogy?.international_relatives || []).length,
+        missing_relatives: (R.missing_persons?.missing_relatives || []).length,
+        professional_members: (R.professional_assoc?.association_members || []).length,
+        breach_verified_emails: (R.breach_verification?.verified_emails || []).filter((e:any)=>e.verified).length,
+      } : null;
+
       try {
         const exportRes: any = await base44.functions.invoke("exportHeirToSheet", {
-          spreadsheet_url,
-          sheet_name: sheet_name || "Heirs",
+          spreadsheet_url: trackingSheetUrl,
+          sheet_name: trackingSheetName,
           deceased_name,
           case_reference: case_reference || "",
           identified_heirs: R.identified_heirs,
           probate_info: R.probate_info,
           confidence_score: overall,
+          extreme_deep: extreme,
+          extreme_deep_findings: extremeFindings,
+          sources_count: [...new Set(R.sources)].length,
+          methods_count: [...new Set(R.methods)].length,
         });
         sheet_export = exportRes?.data || exportRes;
         if (sheet_export?.error) {
