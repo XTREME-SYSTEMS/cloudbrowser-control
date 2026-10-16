@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Clock, Database, Loader2, Building, User, Globe, LayoutDashboard } from "lucide-react";
+import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Clock, Database, Loader2, Building, User, Globe, LayoutDashboard, ChevronDown, ChevronRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { SKIP_TRACE_DEEP_CATALOG } from "@/lib/searchSourceCatalog";
 import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
 
 export default function SkipTracing() {
   const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "" });
+  const [deepSearch, setDeepSearch] = useState(false);
+  const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -39,7 +43,7 @@ export default function SkipTracing() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runSkipTraceFallback", form);
+      const response = await base44.functions.invoke("runSkipTraceFallback", { ...form, deep_search: deepSearch });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -76,8 +80,9 @@ export default function SkipTracing() {
         </h1>
         <p className="text-muted-foreground mt-1 max-w-3xl">
           Identify property owners and find their contact info using every available source — property records,
-          people search, reverse phone, social media, email directories, relatives, and business records. The
-          engine runs 7 search methods in sequence, cross-references results, and confidence-scores every finding.
+          people search, reverse phone, social media, email directories, relatives, and business records. Standard
+          mode runs 7 methods; Deep mode adds 11 more (voter, court, licenses, DMV, military, government registries,
+          church, alumni, newspapers, and death confirmation) for a total of 18 search methods.
         </p>
       </div>
 
@@ -131,10 +136,43 @@ export default function SkipTracing() {
                     onChange={e => setForm({ ...form, company: e.target.value })} />
                 </div>
               </div>
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="cursor-pointer font-medium">Deep Search Mode</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Adds 11 more methods: voter records, court records, professional licenses, DMV, military,
+                    tax/financial, government registries, church records, school/alumni, newspaper archives, and death confirmation.
+                  </p>
+                </div>
+                <Switch checked={deepSearch} onCheckedChange={setDeepSearch} />
+              </div>
+
+              <button
+                onClick={() => setShowSources(!showSources)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showSources ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                View all {SKIP_TRACE_DEEP_CATALOG.length} deep search categories
+              </button>
+
+              {showSources && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/20">
+                  {SKIP_TRACE_DEEP_CATALOG.map(cat => (
+                    <div key={cat.id} className="p-2 rounded-md border bg-background">
+                      <p className="text-xs font-semibold flex items-center gap-1">
+                        <Database className="w-3 h-3 text-primary" />
+                        {cat.name}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">{cat.sources.length} sources</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <Button onClick={handleSearch} disabled={searching} className="w-full">
                 {searching
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching all sources — 7 methods in progress...</>
-                  : <><Radar className="w-4 h-4 mr-2" />Run Full Skip Trace</>}
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching {deepSearch ? "all 18 methods" : "7 core methods"}...</>
+                  : <><Radar className="w-4 h-4 mr-2" />Run {deepSearch ? "Deep" : "Standard"} Skip Trace</>}
               </Button>
             </CardContent>
           </Card>

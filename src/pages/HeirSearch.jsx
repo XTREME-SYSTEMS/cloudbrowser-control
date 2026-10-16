@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { HEIR_SEARCH_CATALOG } from "@/lib/searchSourceCatalog";
 import {
   Users, Phone, Mail, MapPin, Search, AlertCircle, CheckCircle, Clock,
   Database, Loader2, FileText, GitBranch, Gavel, UserX, UserCheck, Crown,
+  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight,
 } from "lucide-react";
 
 export default function HeirSearch() {
@@ -21,6 +24,8 @@ export default function HeirSearch() {
     death_location: "",
     case_reference: "",
   });
+  const [deepSearch, setDeepSearch] = useState(true);
+  const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -49,7 +54,7 @@ export default function HeirSearch() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runHeirSearch", form);
+      const response = await base44.functions.invoke("runHeirSearch", { ...form, deep_search: deepSearch });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -144,10 +149,44 @@ export default function HeirSearch() {
                     onChange={e => setForm({ ...form, case_reference: e.target.value })} />
                 </div>
               </div>
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="cursor-pointer font-medium">Deep Search Mode</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Exhausts all 12 source categories ({HEIR_SEARCH_CATALOG.reduce((n, c) => n + c.sources.length, 0)}+ data sources) —
+                    DNA databases, historical records, vital records, international, government registries, and more.
+                  </p>
+                </div>
+                <Switch checked={deepSearch} onCheckedChange={setDeepSearch} />
+              </div>
+
+              <button
+                onClick={() => setShowSources(!showSources)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showSources ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                View all {HEIR_SEARCH_CATALOG.length} source categories
+              </button>
+
+              {showSources && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/20">
+                  {HEIR_SEARCH_CATALOG.map(cat => (
+                    <div key={cat.id} className="p-2 rounded-md border bg-background">
+                      <p className="text-xs font-semibold flex items-center gap-1">
+                        <Database className="w-3 h-3 text-primary" />
+                        {cat.name}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{cat.description}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">{cat.sources.length} sources</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <Button onClick={handleSearch} disabled={searching} className="w-full">
                 {searching
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching death records, building family tree, tracing heirs...</>
-                  : <><Users className="w-4 h-4 mr-2" />Run Full Heir Search</>}
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching {deepSearch ? "all 12 source categories" : "core sources"}...</>
+                  : <><Users className="w-4 h-4 mr-2" />Run {deepSearch ? "Deep" : "Standard"} Heir Search</>}
               </Button>
             </CardContent>
           </Card>
@@ -295,6 +334,108 @@ export default function HeirSearch() {
                       <div className="mt-2 p-2 rounded-md bg-muted/50">
                         <p className="text-xs">{result.probate_info.will_details}</p>
                       </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Deep Search: Historical Records */}
+              {result.historical && Object.keys(result.historical).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Newspaper className="w-4 h-4" />Historical Records</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {result.historical.census_household_members?.length > 0 && (
+                      <div><span className="text-muted-foreground">Census Household:</span> {result.historical.census_household_members.map(m => `${m.name} (${m.relationship}, ${m.year})`).join(", ")}</div>
+                    )}
+                    {result.historical.draft_cards?.length > 0 && (
+                      <div><span className="text-muted-foreground">Draft Cards:</span> {result.historical.draft_cards.map(d => `${d.name} — Next of kin: ${d.next_of_kin}`).join("; ")}</div>
+                    )}
+                    {result.historical.immigration_records?.length > 0 && (
+                      <div><span className="text-muted-foreground">Immigration:</span> {result.historical.immigration_records.map(i => `${i.name} arrived ${i.arrival_date} at ${i.port}`).join("; ")}</div>
+                    )}
+                    {result.historical.additional_relatives_found?.length > 0 && (
+                      <div><span className="text-muted-foreground">Additional Relatives:</span> {result.historical.additional_relatives_found.map(r => `${r.name} (${r.relationship})`).join(", ")}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Deep Search: Vital Records */}
+              {result.vital && Object.keys(result.vital).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><FileText className="w-4 h-4" />Vital Records</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {result.vital.birth_record?.parents && (
+                      <div><span className="text-muted-foreground">Birth — Parents:</span> {result.vital.birth_record.parents.join(", ")} {result.vital.birth_record.mothers_maiden_name ? `(mother's maiden: ${result.vital.birth_record.mothers_maiden_name})` : ""}</div>
+                    )}
+                    {result.vital.marriage_records?.length > 0 && (
+                      <div><span className="text-muted-foreground">Marriages:</span> {result.vital.marriage_records.map(m => `${m.spouse} (${m.date})`).join("; ")}</div>
+                    )}
+                    {result.vital.divorce_records?.length > 0 && (
+                      <div><span className="text-muted-foreground">Divorces:</span> {result.vital.divorce_records.map(d => `${d.ex_spouse} (${d.date})`).join("; ")}</div>
+                    )}
+                    {result.vital.additional_relatives?.length > 0 && (
+                      <div><span className="text-muted-foreground">Additional from Vital:</span> {result.vital.additional_relatives.join(", ")}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Deep Search: DNA / Genetic Genealogy */}
+              {result.dna && Object.keys(result.dna).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Dna className="w-4 h-4" />DNA / Genetic Genealogy</CardTitle>
+                    <CardDescription>For identifying unknown or missing heirs through genetic matches</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div><span className="text-muted-foreground">Unknown Heirs Likely:</span> {result.dna.unknown_heirs_likely ? "Yes" : "No"}</div>
+                    {result.dna.dna_matches_found?.length > 0 && (
+                      <div><span className="text-muted-foreground">DNA Matches:</span> {result.dna.dna_matches_found.map(m => `${m.match_name} (${m.relationship_estimate}, ${m.shared_cm}cM)`).join(", ")}</div>
+                    )}
+                    {result.dna.recommended_dna_strategy && (
+                      <div className="p-2 rounded-md bg-muted/50"><span className="text-xs font-medium">Strategy:</span> <span className="text-xs">{result.dna.recommended_dna_strategy}</span></div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Deep Search: Property & Financial */}
+              {result.property_financial && Object.keys(result.property_financial).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Landmark className="w-4 h-4" />Property & Financial</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {result.property_financial.properties_owned?.length > 0 && (
+                      <div><span className="text-muted-foreground">Properties:</span> {result.property_financial.properties_owned.map(p => `${p.address} (${p.value})`).join("; ")}</div>
+                    )}
+                    {result.property_financial.business_ownership?.length > 0 && (
+                      <div><span className="text-muted-foreground">Businesses:</span> {result.property_financial.business_ownership.map(b => `${b.business_name} (${b.role})`).join("; ")}</div>
+                    )}
+                    {result.property_financial.estimated_estate_value && (
+                      <div><span className="text-muted-foreground">Est. Estate Value:</span> {result.property_financial.estimated_estate_value}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Deep Search: International */}
+              {result.international && Object.keys(result.international).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="w-4 h-4" />International Records</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {result.international.international_heirs_found?.length > 0 && (
+                      <div><span className="text-muted-foreground">International Heirs:</span> {result.international.international_heirs_found.map(h => `${h.name} (${h.relationship}, ${h.country})`).join(", ")}</div>
+                    )}
+                    {result.international.emigration_records?.length > 0 && (
+                      <div><span className="text-muted-foreground">Emigration:</span> {result.international.emigration_records.join(", ")}</div>
                     )}
                   </CardContent>
                 </Card>

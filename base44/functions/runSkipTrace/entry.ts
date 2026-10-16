@@ -1,11 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { SKIP_TRACE_DEEP_CATALOG } from '../../shared/searchSourceCatalog.ts';
 
 /**
  * Skip Trace Engine — Multi-Method Owner & Contact Discovery
  *
- * Exhausts every available source to identify a property owner and find
- * their contact information:
+ * STANDARD MODE (7 methods):
  *   1. Property Records Search (county assessor, tax records, deeds)
  *   2. Reverse Phone Lookup (if no name but phone provided)
  *   3. People Search (whitepages, directories, public records)
@@ -13,6 +13,19 @@ import { invokeLLM } from '../../shared/vercelAiGateway.ts';
  *   5. Email Search (email directories, patterns, verification)
  *   6. Relatives & Associates Search (family members, business partners)
  *   7. Business Records Search (BBB, state filings, corporate registries)
+ *
+ * DEEP MODE adds 11 more methods (8-18):
+ *   8. Death Confirmation (SSDI, obituaries — is the target deceased?)
+ *   9. Voter Registration Records (address, party affiliation)
+ *  10. Court Records (criminal, civil, bankruptcy, divorce)
+ *  11. Professional Licenses (bar, medical, real estate, contractor)
+ *  12. Vehicle & DMV Records (registrations, driver records)
+ *  13. Military Records (VA, National Archives, DD214)
+ *  14. Tax & Financial (tax liens, SEC EDGAR, D&B, corporate filings)
+ *  15. Government Registries (FAA, FINRA, inmate, sex offender, hunting/fishing)
+ *  16. Church & Religious Records (parish, congregation)
+ *  17. School & Alumni Records (university directories, yearbooks)
+ *  18. Newspaper Archives (historical mentions, legal notices, announcements)
  */
 
 const SEARCH_MODEL = "gemini_3_flash";
@@ -24,7 +37,8 @@ export default async function (req: Request): Promise<Response> {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { property_address, owner_name, phone, email, company, batch_id } = body;
+    const { property_address, owner_name, phone, email, company, batch_id, deep_search } = body;
+    const deep = deep_search === true;
 
     if (!property_address && !owner_name && !phone && !email) {
       return Response.json(
@@ -491,6 +505,124 @@ Find:
       } catch (err: any) {
         results.errors.push({ method: "business_records", error: err.message });
       }
+    }
+
+    // === DEEP SEARCH METHODS (8-18) ===
+    if (deep && searchName) {
+      const deepCtx = `"${searchName}"${property_address ? ` associated with "${property_address}"` : ""}`;
+      const deepPasses: Promise<any>[] = [];
+
+      // Method 8: Death Confirmation
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Check if ${deepCtx} is deceased. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "death_confirmation_st")?.sources.join(", ")}. If deceased, note death date and last residence. If living, confirm no death record found.`,
+          response_json_schema: { type: "object", properties: { is_deceased: { type: "boolean" }, death_date: { type: "string" }, last_residence: { type: "string" }, confidence: { type: "number" } } },
+        }).then(r => { results.death_check = r; results.sources.push("ssdi", "obituaries", "find_a_grave"); results.methods.push("death_confirmation"); })
+          .catch(e => results.errors.push({ method: "death_confirmation", error: e.message }))
+      );
+
+      // Method 9: Voter Registration
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search voter registration records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "voter_records")?.sources.join(", ")}. Find registered address, party affiliation, registration date.`,
+          response_json_schema: { type: "object", properties: { registered_address: { type: "string" }, party: { type: "string" }, registration_date: { type: "string" }, confidence: { type: "number" } } },
+        }).then(r => { if (r?.registered_address) results.addresses.push({ address: r.registered_address, type: "voter", confidence: r.confidence || 70, source: "voter_registration" }); results.sources.push("voter_registration"); results.methods.push("voter_records_search"); })
+          .catch(e => results.errors.push({ method: "voter_records", error: e.message }))
+      );
+
+      // Method 10: Court Records
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search court records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "court_records")?.sources.join(", ")}. Find any criminal, civil, bankruptcy, or divorce filings. Court filings often show current address and sometimes phone/email.`,
+          response_json_schema: { type: "object", properties: { cases: { type: "array", items: { type: "object", properties: { case_type: { type: "string" }, court: { type: "string" }, date: { type: "string" }, address_listed: { type: "string" } } } }, address_from_court: { type: "string" }, confidence: { type: "number" } } },
+        }).then(r => { if (r?.address_from_court) results.addresses.push({ address: r.address_from_court, type: "court_record", confidence: r.confidence || 65, source: "court_records" }); results.sources.push("pacer", "state_court", "bankruptcy", "divorce_records"); results.methods.push("court_records_search"); })
+          .catch(e => results.errors.push({ method: "court_records", error: e.message }))
+      );
+
+      // Method 11: Professional Licenses
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search professional license databases for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "professional_licenses")?.sources.join(", ")}. Find any professional licenses (attorney, doctor, real estate, contractor, CPA, insurance). License records show business address and sometimes phone.`,
+          response_json_schema: { type: "object", properties: { licenses: { type: "array", items: { type: "object", properties: { type: { type: "string" }, license_number: { type: "string" }, business_address: { type: "string" }, phone: { type: "string" } } } }, confidence: { type: "number" } } },
+        }).then(r => { (r?.licenses || []).forEach((l: any) => { if (l.business_address) results.addresses.push({ address: l.business_address, type: "professional", confidence: 70, source: "professional_license" }); if (l.phone) results.phone_numbers.push({ number: l.phone, type: "business", confidence: 70, source: "professional_license" }); }); results.sources.push("professional_licenses", "state_bar", "medical_board"); results.methods.push("professional_license_search"); })
+          .catch(e => results.errors.push({ method: "professional_licenses", error: e.message }))
+      );
+
+      // Method 12: Vehicle & DMV
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search vehicle and DMV records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "vehicle_dmv")?.sources.join(", ")}. Find vehicle registrations, boat registrations, aircraft registrations (FAA). These show registered address.`,
+          response_json_schema: { type: "object", properties: { vehicles: { type: "array", items: { type: "object", properties: { type: { type: "string" }, registered_address: { type: "string" } } } }, confidence: { type: "number" } } },
+        }).then(r => { (r?.vehicles || []).forEach((v: any) => { if (v.registered_address) results.addresses.push({ address: v.registered_address, type: "vehicle_registration", confidence: 65, source: "dmv_records" }); }); results.sources.push("dmv", "vehicle_registration", "faa_aircraft"); results.methods.push("vehicle_dmv_search"); })
+          .catch(e => results.errors.push({ method: "vehicle_dmv", error: e.message }))
+      );
+
+      // Method 13: Military Records
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search military records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "military_records")?.sources.join(", ")}. Find VA records, National Archives service records, military burial records, VA home loan records. Military records can show address and next of kin.`,
+          response_json_schema: { type: "object", properties: { military_service: { type: "string" }, va_address: { type: "string" }, next_of_kin: { type: "string" }, confidence: { type: "number" } } },
+        }).then(r => { if (r?.va_address) results.addresses.push({ address: r.va_address, type: "va", confidence: 60, source: "military_records" }); if (r?.next_of_kin) results.relatives.push({ name: r.next_of_kin, relationship: "next_of_kin", phone: "" }); results.sources.push("va_records", "national_archives", "military_service"); results.methods.push("military_records_search"); })
+          .catch(e => results.errors.push({ method: "military_records", error: e.message }))
+      );
+
+      // Method 14: Tax & Financial
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search tax and financial records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "tax_financial")?.sources.join(", ")}. Find property tax records, tax liens, SEC EDGAR filings, Dun & Bradstreet, corporate filings (Secretary of State). These show address and financial connections.`,
+          response_json_schema: { type: "object", properties: { tax_liens: { type: "array", items: { type: "string" } }, sec_filings: { type: "array", items: { type: "string" } }, corporate_filings: { type: "array", items: { type: "object", properties: { business_name: { type: "string" }, registered_address: { type: "string" } } } }, address_from_tax: { type: "string" }, confidence: { type: "number" } } },
+        }).then(r => { if (r?.address_from_tax) results.addresses.push({ address: r.address_from_tax, type: "tax_record", confidence: 65, source: "tax_records" }); (r?.corporate_filings || []).forEach((c: any) => { if (c.registered_address) results.addresses.push({ address: c.registered_address, type: "corporate", confidence: 60, source: "corporate_filing" }); }); results.sources.push("tax_liens", "sec_edgar", "dun_bradstreet", "corporate_filings"); results.methods.push("tax_financial_search"); })
+          .catch(e => results.errors.push({ method: "tax_financial", error: e.message }))
+      );
+
+      // Method 15: Government Registries
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search government registries for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "government_registries")?.sources.join(", ")}. Check FAA pilot registry, FINRA BrokerCheck, inmate locators (state/federal), sex offender registry, hunting/fishing licenses, building permits. Any government record that confirms location.`,
+          response_json_schema: { type: "object", properties: { records: { type: "array", items: { type: "object", properties: { type: { type: "string" }, address: { type: "string" }, details: { type: "string" } } } }, confidence: { type: "number" } } },
+        }).then(r => { (r?.records || []).forEach((rec: any) => { if (rec.address) results.addresses.push({ address: rec.address, type: rec.type, confidence: 60, source: "government_registry" }); }); results.sources.push("faa_pilot", "finra_brokercheck", "inmate_locator", "sex_offender_registry", "hunting_fishing"); results.methods.push("government_registries_search"); })
+          .catch(e => results.errors.push({ method: "government_registries", error: e.message }))
+      );
+
+      // Method 16: Church & Religious Records
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search church and religious records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "church_religious")?.sources.join(", ")}. Find parish records, congregation membership, religious directories. These can show address and family connections.`,
+          response_json_schema: { type: "object", properties: { church_affiliations: { type: "array", items: { type: "object", properties: { church: { type: "string" }, address: { type: "string" } } } }, confidence: { type: "number" } } },
+        }).then(r => { (r?.church_affiliations || []).forEach((c: any) => { if (c.address) results.addresses.push({ address: c.address, type: "church", confidence: 50, source: "church_records" }); }); results.sources.push("church_records", "parish_records"); results.methods.push("church_records_search"); })
+          .catch(e => results.errors.push({ method: "church_records", error: e.message }))
+      );
+
+      // Method 17: School & Alumni Records
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search school and alumni records for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "school_alumni")?.sources.join(", ")}. Find university alumni directories, high school yearbooks, Classmates.com, alumni associations. These can show current city/state and contact info.`,
+          response_json_schema: { type: "object", properties: { alumni_records: { type: "array", items: { type: "object", properties: { school: { type: "string" }, year: { type: "string" }, current_location: { type: "string" } } } }, confidence: { type: "number" } } },
+        }).then(r => { (r?.alumni_records || []).forEach((a: any) => { if (a.current_location) results.addresses.push({ address: a.current_location, type: "alumni", confidence: 50, source: "alumni_records" }); }); results.sources.push("alumni_directories", "yearbooks", "classmates"); results.methods.push("school_alumni_search"); })
+          .catch(e => results.errors.push({ method: "school_alumni", error: e.message }))
+      );
+
+      // Method 18: Newspaper Archives
+      deepPasses.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `Search newspaper archives for ${deepCtx}. Search: ${SKIP_TRACE_DEEP_CATALOG.find(c => c.id === "newspaper_archives")?.sources.join(", ")}. Find any newspaper mentions: legal notices, marriage/birth announcements, business news, obituaries, court notices. These can reveal address, relatives, and contact info.`,
+          response_json_schema: { type: "object", properties: { mentions: { type: "array", items: { type: "object", properties: { date: { type: "string" }, headline: { type: "string" }, address_mentioned: { type: "string" }, relatives_mentioned: { type: "array", items: { type: "string" } } } } }, confidence: { type: "number" } } },
+        }).then(r => { (r?.mentions || []).forEach((m: any) => { if (m.address_mentioned) results.addresses.push({ address: m.address_mentioned, type: "newspaper", confidence: 45, source: "newspaper_archive" }); (m.relatives_mentioned || []).forEach((rel: string) => { if (!results.relatives.find(x => x.name === rel)) results.relatives.push({ name: rel, relationship: "from_newspaper", phone: "" }); }); }); results.sources.push("newspapers", "genealogybank", "chronicling_america"); results.methods.push("newspaper_archive_search"); })
+          .catch(e => results.errors.push({ method: "newspaper_archives", error: e.message }))
+      );
+
+      await Promise.all(deepPasses);
     }
 
     // === DEDUPLICATION ===

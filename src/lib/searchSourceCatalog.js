@@ -1,0 +1,166 @@
+// Frontend copy of the search source catalog for UI display.
+// Mirrors base44/shared/searchSourceCatalog.ts.
+
+export const HEIR_SEARCH_CATALOG = [
+  {
+    id: "death_confirmation",
+    name: "Death Record Confirmation",
+    icon: "UserX",
+    description: "Confirm the deceased person's identity and extract surviving family from obituaries",
+    sources: [
+      "Social Security Death Index (SSDI)", "SSDI / Death Master File (NTIS)",
+      "Obituaries — Legacy.com", "Obituaries — Tributes.com", "Obituaries — newspaper archives",
+      "Obituaries — funeral home websites", "Find A Grave", "Billion Graves", "Interment.net",
+      "Cemetery databases", "Death certificates / vital records", "Mortuary / funeral home records",
+      "SS-5 Application (parents' names)", "State death indexes", "CDC WONDER death database",
+    ],
+  },
+  {
+    id: "genealogy_tree",
+    name: "Genealogy & Family Tree",
+    icon: "GitBranch",
+    description: "Build the complete family tree from genealogy databases and public trees",
+    sources: [
+      "Ancestry.com family trees", "FamilySearch family tree", "MyHeritage family trees",
+      "Find A Grave family links", "Genealogy.com", "RootsWeb WorldConnect", "USGenWeb Archives",
+      "WikiTree", "Geni.com", "Family tree databases", "Church records (baptism, marriage, burial)",
+      "Parish records (Catholic dioceses)", "JewishGen (Jewish genealogy)", "Italian Genealogical Group",
+      "NEHGS (New England Historic Genealogical)",
+    ],
+  },
+  {
+    id: "dna_genealogy",
+    name: "DNA / Genetic Genealogy",
+    icon: "Dna",
+    description: "Identify unknown or missing heirs through genetic genealogy databases",
+    sources: [
+      "GEDmatch (public DNA matches)", "FamilyTreeDNA", "AncestryDNA matches",
+      "MyHeritage DNA", "23andMe relatives", "DNA triangulation for heir identification",
+      "Genetic genealogy consulting notes",
+    ],
+  },
+  {
+    id: "historical_records",
+    name: "Historical Records",
+    icon: "Newspaper",
+    description: "Search historical documents that reveal family connections",
+    sources: [
+      "US Census records (1790-1950)", "City directories (pre-phone book era)",
+      "Historical newspapers — Newspapers.com", "Historical newspapers — GenealogyBank",
+      "Historical newspapers — Chronicling America (LOC)", "Historical newspapers — Google News Archive",
+      "WWI draft registration cards", "WWII draft registration cards",
+      "Military service records (National Archives)", "Immigration records — Ellis Island",
+      "Immigration records — Castle Garden", "Ship passenger lists", "Naturalization records",
+      "BLM land patents", "Homestead records", "Border crossing records",
+    ],
+  },
+  {
+    id: "probate_legal",
+    name: "Probate & Legal Records",
+    icon: "Gavel",
+    description: "Find probate cases, wills, executors, and court filings",
+    sources: [
+      "County probate court records", "Wills and estate filings", "Probate case lookup systems",
+      "County clerk databases", "Divorce records", "Marriage license applications",
+      "Name change records", "Guardianship / conservatorship records", "Bankruptcy filings (PACER)",
+      "Civil court records", "Criminal court records", "Tax lien records",
+      "Published notices to creditors/heirs", "Small estate affidavits",
+    ],
+  },
+  {
+    id: "vital_records",
+    name: "Vital & Life Event Records",
+    icon: "FileText",
+    description: "Birth, death, marriage, and divorce certificates",
+    sources: [
+      "Birth certificates", "Death certificates", "Marriage certificates", "Divorce decrees",
+      "Adoption records (where accessible)", "Church baptism records", "Church marriage records",
+      "Church burial records", "State vital records offices", "VitalChek", "County clerk vital records",
+    ],
+  },
+  {
+    id: "property_financial",
+    name: "Property & Financial Records",
+    icon: "Landmark",
+    description: "Property ownership, tax records, and business filings",
+    sources: [
+      "County assessor / property appraiser", "Property tax records", "Deed records / title searches",
+      "Tax sale / foreclosure records", "SEC filings (business owners)",
+      "Secretary of State business registrations", "Dun & Bradstreet", "Corporate filings",
+      "Real estate transaction records", "HOA records",
+    ],
+  },
+  {
+    id: "people_search",
+    name: "People Search Aggregators",
+    icon: "Search",
+    description: "Commercial people-search engines for finding living heirs",
+    sources: [
+      "Whitepages", "TruePeopleSearch", "FastPeopleSearch", "411.com", "Spokeo",
+      "BeenVerified", "Intelius", "PeopleFinder", "US Search", "Radaris",
+      "ThatsThem", "Pipl", "MyLife", "Instant Checkmate", "SearchQuarry",
+    ],
+  },
+  {
+    id: "social_professional",
+    name: "Social & Professional Networks",
+    icon: "Users",
+    description: "Social media and professional profile searches",
+    sources: [
+      "Facebook", "LinkedIn (including Sales Navigator)", "Instagram", "Twitter / X",
+      "TikTok", "YouTube", "Pinterest", "Nextdoor", "Reddit", "Professional license boards",
+      "State bar associations (attorneys)", "Medical license boards (doctors)",
+      "FAA pilot registry", "FINRA broker records (BrokerCheck)",
+    ],
+  },
+  {
+    id: "government_records",
+    name: "Government & Public Records",
+    icon: "Landmark",
+    description: "Voter registration, DMV, military, and regulatory databases",
+    sources: [
+      "Voter registration records", "DMV / vehicle registrations (where public)",
+      "Driver's license (where public)", "FAA aircraft registry", "Boat registrations (USCG)",
+      "Hunting / fishing licenses", "Inmate locator — state DOC", "Inmate locator — federal BOP",
+      "Sex offender registry (NSOPW)", "Military / VA records", "National Archives",
+      "SEC EDGAR", "Building permits", "Business permits",
+    ],
+  },
+  {
+    id: "email_phone",
+    name: "Email & Phone Discovery",
+    icon: "Phone",
+    description: "Email finding, verification, and reverse phone lookup",
+    sources: [
+      "Hunter.io (email finder)", "Snov.io", "Email pattern generation",
+      "Email verification (HaveIBeenPwned)", "Reverse phone lookup", "Caller ID databases",
+      "VoIP lookup", "Carrier identification", "Phone directory (white/yellow pages)",
+    ],
+  },
+  {
+    id: "international",
+    name: "International Records",
+    icon: "Globe2",
+    description: "For heirs who may have emigrated or live abroad",
+    sources: [
+      "International vital records", "Passport / travel records (where public)",
+      "Immigration / emigration records", "Foreign genealogy databases",
+      "International phone directories", "Embassy / consulate records",
+      "Border crossing records", "Foreign probate records",
+    ],
+  },
+];
+
+export const SKIP_TRACE_DEEP_CATALOG = [
+  { id: "death_confirmation_st", name: "Death Confirmation", sources: ["SSDI", "Obituaries", "Find A Grave", "Death certificates", "Social Security Death Master File"] },
+  { id: "voter_records", name: "Voter Registration Records", sources: ["State voter registration", "County board of elections", "Voter records databases"] },
+  { id: "court_records", name: "Court Records (Criminal, Civil, Bankruptcy)", sources: ["PACER (federal court records)", "State court case lookup", "County court records", "Bankruptcy filings", "Civil lawsuit filings", "Criminal court records", "Small claims court", "Traffic court records"] },
+  { id: "professional_licenses", name: "Professional License Records", sources: ["State bar associations (attorneys)", "Medical boards (doctors, nurses)", "Real estate license boards", "Contractor license boards", "CPA / accountant licenses", "Insurance license databases", "Engineering license boards", "Teaching license databases"] },
+  { id: "vehicle_dmv", name: "Vehicle & DMV Records", sources: ["Vehicle registrations", "Driver records (public portions)", "Boat registrations", "Aircraft registrations (FAA)"] },
+  { id: "military_records", name: "Military Records", sources: ["VA records", "National Archives military service", "DD214 records", "Military burial records", "VA home loan records"] },
+  { id: "tax_financial", name: "Tax & Financial Records", sources: ["Property tax records", "Tax lien records", "SEC EDGAR filings", "Dun & Bradstreet", "Corporate filings (SOS)"] },
+  { id: "government_registries", name: "Government Registries", sources: ["FAA pilot registry", "FINRA BrokerCheck", "Inmate locator (state/federal)", "Sex offender registry", "Hunting/fishing licenses", "Animal/pet licenses (show address)", "Building permits (show address)"] },
+  { id: "church_religious", name: "Church & Religious Records", sources: ["Catholic parish records", "Protestant church records", "Jewish congregation records", "Religious membership directories"] },
+  { id: "school_alumni", name: "School & Alumni Records", sources: ["University alumni directories", "High school yearbooks", "Classmates.com", "Alumni associations", "School reunion databases"] },
+  { id: "newspaper_archives", name: "Newspaper Archives", sources: ["Newspapers.com", "GenealogyBank", "Chronicling America (LOC)", "Google News Archive", "Local newspaper archives", "Legal notice publications", "Marriage/birth announcements"] },
+];
