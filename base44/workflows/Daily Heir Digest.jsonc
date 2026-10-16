@@ -1,0 +1,87 @@
+{
+  "name": "Daily Heir Digest",
+  "description": "Sends a daily email at 8 PM ET summarizing all newly discovered heir information from that day's searches and agent activity",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 20 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_heir_digest",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "fetch_digest": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "getDailyHeirDigest"
+          },
+          "then": "check_cases",
+          "x-base44": {
+            "title": "Fetch today's heir digest",
+            "description": "Queries today's heir searches and agent findings"
+          }
+        }
+      },
+      {
+        "check_cases": {
+          "switch": [
+            {
+              "when": "${ .fetch_digest.has_cases == true }",
+              "then": "send_digest"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Any cases today?",
+            "description": "Skip the email if nothing was found"
+          }
+        }
+      },
+      {
+        "send_digest": {
+          "call": "send_email",
+          "with": {
+            "template_name": "DailyHeirDigest",
+            "to": "${ .fetch_digest.recipient_email }",
+            "description": "Daily summary of newly discovered heir information",
+            "variables": {
+              "date": "${ .fetch_digest.date }",
+              "total_cases": "${ .fetch_digest.total_cases }",
+              "total_heirs": "${ .fetch_digest.total_heirs }",
+              "living_heirs": "${ .fetch_digest.living_heirs }",
+              "confirmed_cases": "${ .fetch_digest.confirmed_cases }",
+              "agent_tasks": "${ .fetch_digest.agent_tasks }",
+              "cases_html": "${ .fetch_digest.cases_html }",
+              "swarm_html": "${ .fetch_digest.swarm_html }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send digest email",
+            "description": "Emails the daily heir summary to the admin"
+          }
+        }
+      }
+    ]
+  }
+}

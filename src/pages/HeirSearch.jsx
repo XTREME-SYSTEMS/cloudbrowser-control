@@ -11,8 +11,9 @@ import { HEIR_SEARCH_CATALOG } from "@/lib/searchSourceCatalog";
 import {
   Users, Phone, Mail, MapPin, Search, AlertCircle, CheckCircle, Clock,
   Database, Loader2, FileText, GitBranch, Gavel, UserX, UserCheck, Crown,
-  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight,
+  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap,
 } from "lucide-react";
+import TemplateSelector from "@/components/heir-search/TemplateSelector";
 
 export default function HeirSearch() {
   const [form, setForm] = useState({
@@ -26,6 +27,7 @@ export default function HeirSearch() {
   });
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [deepSearch, setDeepSearch] = useState(true);
+  const [extremeDeep, setExtremeDeep] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
@@ -55,7 +57,7 @@ export default function HeirSearch() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runHeirSearch", { ...form, deep_search: deepSearch, spreadsheet_url: spreadsheetUrl || undefined });
+      const response = await base44.functions.invoke("runHeirSearch", { ...form, deep_search: deepSearch, extreme_deep: extremeDeep, spreadsheet_url: spreadsheetUrl || undefined });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -113,6 +115,16 @@ export default function HeirSearch() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <TemplateSelector
+                currentSettings={{ deep_search: deepSearch, extreme_deep: extremeDeep, spreadsheet_url: spreadsheetUrl }}
+                onApplyTemplate={(t) => {
+                  if (t.deep_search !== undefined) setDeepSearch(t.deep_search);
+                  if (t.extreme_deep !== undefined) setExtremeDeep(t.extreme_deep);
+                  if (t.spreadsheet_url !== undefined) setSpreadsheetUrl(t.spreadsheet_url);
+                  if (t.death_location !== undefined) setForm(f => ({ ...f, death_location: t.death_location }));
+                  if (t.case_reference !== undefined) setForm(f => ({ ...f, case_reference: t.case_reference }));
+                }}
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
                   <Label><UserX className="w-4 h-4 inline mr-1" />Deceased Person's Full Name *</Label>
@@ -179,6 +191,23 @@ export default function HeirSearch() {
                 </div>
                 <Switch checked={deepSearch} onCheckedChange={setDeepSearch} />
               </div>
+
+              {deepSearch && (
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-primary/5">
+                  <div>
+                    <Label className="cursor-pointer font-medium flex items-center gap-1">
+                      <Zap className="w-4 h-4 text-primary" />
+                      Extreme Deep Mode
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Adds 10 more categories: UCC/SEC litigation, FEC/lobbyist records, username correlation,
+                      domain/web archive history, SMTP/phone verification, crypto assets, deed chain-of-title,
+                      regulatory permits, social graph, and business network analysis.
+                    </p>
+                  </div>
+                  <Switch checked={extremeDeep} onCheckedChange={setExtremeDeep} />
+                </div>
+              )}
 
               <button
                 onClick={() => setShowSources(!showSources)}
@@ -260,6 +289,86 @@ export default function HeirSearch() {
                         the "{result.sheet_export.sheet}" tab — {result.sheet_export.updated_range}
                       </p>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Extreme Deep Tier Results */}
+              {result.extreme_deep && (result.ucc_sec || result.fec_lobby || result.username_correlation ||
+                result.domain_archive || result.contact_verification || result.crypto_assets ||
+                result.deed_chain || result.permits_regulatory || result.social_graph || result.business_network) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Zap className="w-4 h-4 text-primary" />Extreme Deep Results (Categories 21-30)</CardTitle>
+                    <CardDescription>UCC/SEC litigation, FEC/lobbyist, username correlation, domain/archive, contact verification, crypto, deed chain, regulatory, social graph, business network</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    {result.ucc_sec && Object.keys(result.ucc_sec).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">UCC, SEC Litigation & Financial Enforcement</p>
+                        {result.ucc_sec.ucc_filings?.length > 0 && <p className="text-xs text-muted-foreground">UCC filings: {result.ucc_sec.ucc_filings.map(u => u.filer).join("; ")}</p>}
+                        {result.ucc_sec.sec_litigation?.length > 0 && <p className="text-xs text-muted-foreground">SEC actions: {result.ucc_sec.sec_litigation.join("; ")}</p>}
+                      </div>
+                    )}
+                    {result.fec_lobby && Object.keys(result.fec_lobby).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">FEC Donations & Lobbyist Registrations</p>
+                        {result.fec_lobby.contributions?.length > 0 && <p className="text-xs text-muted-foreground">Contributors: {result.fec_lobby.contributions.map(c => `${c.name} (${c.employer || 'employer unknown'})`).join("; ")}</p>}
+                      </div>
+                    )}
+                    {result.username_correlation && Object.keys(result.username_correlation).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Username Correlation & Forum/Gaming</p>
+                        {result.username_correlation.profiles?.length > 0 && <p className="text-xs text-muted-foreground">Profiles: {result.username_correlation.profiles.map(p => `${p.platform}: ${p.username}`).join("; ")}</p>}
+                      </div>
+                    )}
+                    {result.domain_archive && Object.keys(result.domain_archive).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Domain WHOIS History & Web Archive</p>
+                        {result.domain_archive.historical_whois?.length > 0 && <p className="text-xs text-muted-foreground">Historical WHOIS: {result.domain_archive.historical_whois.map(w => `${w.domain} (${w.date})`).join("; ")}</p>}
+                      </div>
+                    )}
+                    {result.contact_verification && Object.keys(result.contact_verification).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Contact Verification (SMTP & Phone Port)</p>
+                        {result.contact_verification.verified_emails?.length > 0 && <p className="text-xs text-muted-foreground">Verified emails: {result.contact_verification.verified_emails.filter(e => e.exists).map(e => e.email).join(", ") || "None confirmed"}</p>}
+                        {result.contact_verification.verified_phones?.length > 0 && <p className="text-xs text-muted-foreground">Verified phones: {result.contact_verification.verified_phones.map(p => `${p.number} (${p.line_type})`).join(", ")}</p>}
+                      </div>
+                    )}
+                    {result.crypto_assets && Object.keys(result.crypto_assets).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Cryptocurrency & Digital Assets</p>
+                        {result.crypto_assets.wallets?.length > 0 && <p className="text-xs text-muted-foreground">Wallets: {result.crypto_assets.wallets.map(w => `${w.currency}: ${w.address}`).join("; ")}</p>}
+                        {result.crypto_assets.ens_domains?.length > 0 && <p className="text-xs text-muted-foreground">ENS domains: {result.crypto_assets.ens_domains.join(", ")}</p>}
+                      </div>
+                    )}
+                    {result.deed_chain && Object.keys(result.deed_chain).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Property Deed Chain-of-Title</p>
+                        {result.deed_chain.deed_chain?.length > 0 && <p className="text-xs text-muted-foreground">Transfers: {result.deed_chain.deed_chain.map(d => `${d.date}: ${d.grantor} to ${d.grantee}`).join("; ")}</p>}
+                        {result.deed_chain.related_owners?.length > 0 && <p className="text-xs text-muted-foreground">Related owners: {result.deed_chain.related_owners.join(", ")}</p>}
+                      </div>
+                    )}
+                    {result.permits_regulatory && Object.keys(result.permits_regulatory).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Regulatory Permits & Violations</p>
+                        {result.permits_regulatory.permits?.length > 0 && <p className="text-xs text-muted-foreground">Permits: {result.permits_regulatory.permits.map(p => `${p.type} (${p.holder})`).join("; ")}</p>}
+                        {result.permits_regulatory.violations?.length > 0 && <p className="text-xs text-muted-foreground">Violations: {result.permits_regulatory.violations.map(v => v.type).join("; ")}</p>}
+                      </div>
+                    )}
+                    {result.social_graph && Object.keys(result.social_graph).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Social Graph & Network Analysis</p>
+                        {result.social_graph.central_figures?.length > 0 && <p className="text-xs text-muted-foreground">Central figures: {result.social_graph.central_figures.join(", ")}</p>}
+                        {result.social_graph.hidden_connections?.length > 0 && <p className="text-xs text-muted-foreground">Hidden connections: {result.social_graph.hidden_connections.map(c => `${c.person_a} - ${c.person_b} (${c.connection})`).join("; ")}</p>}
+                      </div>
+                    )}
+                    {result.business_network && Object.keys(result.business_network).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Business Affiliation Network</p>
+                        {result.business_network.business_entities?.length > 0 && <p className="text-xs text-muted-foreground">Entities: {result.business_network.business_entities.map(b => `${b.business_name} (${b.role}, ${b.state})`).join("; ")}</p>}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}

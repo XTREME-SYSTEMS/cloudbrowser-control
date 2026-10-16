@@ -39,7 +39,7 @@ export default async function (req: Request): Promise<Response> {
     const {
       deceased_name, deceased_dob, deceased_dod, deceased_last_address,
       deceased_ssn, death_location, case_reference, deep_search,
-      spreadsheet_url, sheet_name,
+      extreme_deep, spreadsheet_url, sheet_name,
     } = body;
 
     if (!deceased_name) {
@@ -47,6 +47,7 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const deep = deep_search !== false; // default to deep
+    const extreme = extreme_deep === true && deep; // extreme requires deep
 
     const heirSearch = await base44.entities.HeirSearch.create({
       deceased_name,
@@ -71,6 +72,10 @@ export default async function (req: Request): Promise<Response> {
       unclaimed: {}, cemetery_mortuary: {}, immigration_nat: {},
       patent_whois: {}, intl_genealogy: {}, missing_persons: {},
       professional_assoc: {}, breach_verification: {},
+      // Extreme tier (categories 21-30)
+      ucc_sec: {}, fec_lobby: {}, username_correlation: {}, domain_archive: {},
+      contact_verification: {}, crypto_assets: {}, deed_chain: {},
+      permits_regulatory: {}, social_graph: {}, business_network: {},
       sources: [] as string[], methods: [] as string[], errors: [] as any[],
     };
 
@@ -382,6 +387,186 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       );
     }
 
+    // === EXTREME DEEP TIER (categories 21-30) — runs in parallel with deep passes ===
+    if (extreme) {
+      // 21. UCC, SEC Litigation & Financial Enforcement
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a financial enforcement researcher. For the estate of:\n${ctx}\n\nSearch: ${sourcesList("ucc_sec_litigation")}\n\nFind: UCC filings (secured loans on assets), SEC litigation/enforcement actions, FTC consumer complaints, OSHA inspections, EPA violations, CFPB complaints, IRS Form 990 filings. These reveal business connections, asset ownership, and financial relationships.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              ucc_filings: { type: "array", items: { type: "object", properties: { filer: { type: "string" }, secured_party: { type: "string" }, asset_type: { type: "string" } } } },
+              sec_litigation: { type: "array", items: { type: "string" } },
+              regulatory_actions: { type: "array", items: { type: "object", properties: { agency: { type: "string" }, action: { type: "string" } } } },
+              form_990_filings: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.ucc_sec = r; R.sources.push("ucc_filings", "sec_litigation", "ftc_complaints", "osha", "epa", "cfpb", "form_990"); R.methods.push("ucc_sec_litigation_search"); })
+          .catch(e => R.errors.push({ step: "ucc_sec_litigation", error: e.message }))
+      );
+
+      // 22. FEC Donations & Lobbyist Registrations
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a campaign finance researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("fec_lobbyist")}\n\nFind: FEC individual contributions (show employer and address), OpenSecrets data, lobbying registrations (LD-2), FARA registrations. Political donation records reveal employer, occupation, and address that may not be in other databases.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              contributions: { type: "array", items: { type: "object", properties: { name: { type: "string" }, employer: { type: "string" }, address: { type: "string" }, amount: { type: "string" }, date: { type: "string" } } } },
+              lobbying_registrations: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.fec_lobby = r; R.sources.push("fec_contributions", "opensecrets", "lobbying_disclosure", "fara"); R.methods.push("fec_lobbyist_search"); })
+          .catch(e => R.errors.push({ step: "fec_lobbyist", error: e.message }))
+      );
+
+      // 23. Username Correlation & Forum/Gaming Profiles
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a digital footprint researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("username_correlation")}\n\nFind: gaming profiles (Xbox, Steam, PlayStation), Reddit user history, Stack Overflow/GitHub profiles, forum accounts, dating site profiles, classified ad history, review site profiles (Yelp, Amazon). Cross-reference usernames across platforms — the same username often appears on multiple sites with different contact info.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              profiles: { type: "array", items: { type: "object", properties: { platform: { type: "string" }, username: { type: "string" }, url: { type: "string" }, bio: { type: "string" } } } },
+              correlated_usernames: { type: "array", items: { type: "string" } },
+              additional_contacts: { type: "array", items: { type: "object", properties: { type: { type: "string" }, value: { type: "string" } } } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.username_correlation = r; R.sources.push("gaming_profiles", "reddit", "github", "forums", "dating_profiles", "review_sites"); R.methods.push("username_correlation_search"); })
+          .catch(e => R.errors.push({ step: "username_correlation", error: e.message }))
+      );
+
+      // 24. Domain WHOIS History & Web Archive
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a domain and web archive researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("domain_web_archive")}\n\nFind: historical WHOIS records (DomainTools, WHOISXML), Wayback Machine snapshots, archived web pages, DNS history. Historical WHOIS can reveal past addresses and phone numbers no longer in current records. Archived pages may show contact info that has since been removed.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              historical_whois: { type: "array", items: { type: "object", properties: { domain: { type: "string" }, registrant: { type: "string" }, address: { type: "string" }, date: { type: "string" } } } },
+              archived_pages: { type: "array", items: { type: "object", properties: { url: { type: "string" }, snapshot_date: { type: "string" }, contact_info_found: { type: "string" } } } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.domain_archive = r; R.sources.push("whois_history", "wayback_machine", "archive_today", "dns_history"); R.methods.push("domain_web_archive_search"); })
+          .catch(e => R.errors.push({ step: "domain_web_archive", error: e.message }))
+      );
+
+      // 25. Email SMTP & Phone Port Verification
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a contact verification specialist. For the family of:\n${ctx}\n\nSearch: ${sourcesList("contact_verification")}\n\nVerify all emails and phone numbers found by other passes. Use SMTP RCPT verification to confirm emails exist. Check phone number port history (NPAC) to see if numbers have been ported to new carriers. Determine line type (mobile/landline/VoIP). Detect catch-all and disposable emails. Rate verification confidence for each contact.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              verified_emails: { type: "array", items: { type: "object", properties: { email: { type: "string" }, exists: { type: "boolean" }, catch_all: { type: "boolean" }, disposable: { type: "boolean" } } } },
+              verified_phones: { type: "array", items: { type: "object", properties: { number: { type: "string" }, line_type: { type: "string" }, carrier: { type: "string" }, ported: { type: "boolean" } } } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.contact_verification = r; R.sources.push("smtp_verification", "email_deliverability", "phone_port_history", "carrier_lookup"); R.methods.push("contact_verification_search"); })
+          .catch(e => R.errors.push({ step: "contact_verification", error: e.message }))
+      );
+
+      // 26. Cryptocurrency & Digital Assets
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a cryptocurrency and digital asset researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("crypto_assets")}\n\nFind: Bitcoin/Ethereum wallet addresses associated with the person, ENS domain ownership, NFT marketplace profiles (OpenSea), blockchain transaction history. Digital assets may be part of the estate and reveal financial connections. Note: only public blockchain data, no exchange KYC.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              wallets: { type: "array", items: { type: "object", properties: { currency: { type: "string" }, address: { type: "string" }, balance: { type: "string" } } } },
+              ens_domains: { type: "array", items: { type: "string" } },
+              nft_profiles: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.crypto_assets = r; R.sources.push("bitcoin_wallet", "ethereum_wallet", "ens_domains", "nft_profiles", "blockchain_analysis"); R.methods.push("crypto_assets_search"); })
+          .catch(e => R.errors.push({ step: "crypto_assets", error: e.message }))
+      );
+
+      // 27. Property Deed Chain-of-Title History
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a title researcher. For the estate of:\n${ctx}\n\nSearch: ${sourcesList("deed_chain_title")}\n\nTrace the full chain-of-title for any property owned by the deceased. Find every deed transfer, quitclaim deed, mortgage, lien release, and satisfaction. This reveals past co-owners, family members who transferred property to/from the deceased, and encumbrances on the estate.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              deed_chain: { type: "array", items: { type: "object", properties: { date: { type: "string" }, grantor: { type: "string" }, grantee: { type: "string" }, deed_type: { type: "string" }, amount: { type: "string" } } } },
+              related_owners: { type: "array", items: { type: "string" } },
+              liens_and_releases: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.deed_chain = r; R.sources.push("deed_history", "chain_of_title", "quitclaim_deeds", "mortgage_records", "lien_releases"); R.methods.push("deed_chain_title_search"); })
+          .catch(e => R.errors.push({ step: "deed_chain_title", error: e.message }))
+      );
+
+      // 28. Regulatory Permits & Violations
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a regulatory records researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("permits_regulatory")}\n\nFind: concealed carry/weapons permits, DEA registrations (for prescribers), FCC licenses, code violations, utility records, building permits, zoning violations, health department inspections. These records show current address and sometimes contact info.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              permits: { type: "array", items: { type: "object", properties: { type: { type: "string" }, holder: { type: "string" }, address: { type: "string" }, date: { type: "string" } } } },
+              violations: { type: "array", items: { type: "object", properties: { type: { type: "string" }, address: { type: "string" }, date: { type: "string" } } } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.permits_regulatory = r; R.sources.push("concealed_carry", "dea_registration", "fcc_license", "code_violations", "building_permits", "health_inspections"); R.methods.push("permits_regulatory_search"); })
+          .catch(e => R.errors.push({ step: "permits_regulatory", error: e.message }))
+      );
+
+      // 29. Social Graph & Network Analysis
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a network analysis specialist. For the estate of:\n${ctx}\n\nSearch: ${sourcesList("social_graph")}\n\nMap the complete social graph: all connections between the deceased's associates, relatives, co-owners, and business partners. Cross-reference: who appears together in property records, court cases, business filings, social media. Identify the most connected individuals (likely central to the family network). Find hidden connections between seemingly unrelated people.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              network_nodes: { type: "array", items: { type: "object", properties: { name: { type: "string" }, connections: { type: "number" }, connection_types: { type: "array", items: { type: "string" } } } } },
+              hidden_connections: { type: "array", items: { type: "object", properties: { person_a: { type: "string" }, person_b: { type: "string" }, connection: { type: "string" } } } },
+              central_figures: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.social_graph = r; R.sources.push("social_graph_analysis", "business_network", "co_ownership_network", "associate_cross_reference"); R.methods.push("social_graph_analysis"); })
+          .catch(e => R.errors.push({ step: "social_graph", error: e.message }))
+      );
+
+      // 30. Business Affiliation Network
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a business records researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("business_network")}\n\nFind EVERY business entity linked to the deceased or their family members: all officer/director roles in Secretary of State filings, registered agent listings, DBA/fictitious name registrations, LLC member/manager listings, partnership filings, D&B parent/subsidiary linkages. Each business entity may have its own address and contact info for heirs.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              business_entities: { type: "array", items: { type: "object", properties: { business_name: { type: "string" }, role: { type: "string" }, state: { type: "string" }, address: { type: "string" }, status: { type: "string" } } } },
+              dba_filings: { type: "array", items: { type: "string" } },
+              subsidiary_relationships: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.business_network = r; R.sources.push("sos_officer_roles", "registered_agent", "dba_filings", "llc_members", "subsidiary_linkage", "dun_bradstreet"); R.methods.push("business_network_search"); })
+          .catch(e => R.errors.push({ step: "business_network", error: e.message }))
+      );
+    }
+
     // Probate (always run)
     phase2Passes.push(
       invokeLLM({
@@ -448,6 +633,25 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
         if (m.name && !allRelatives.find(x => x.name.toLowerCase() === m.name.toLowerCase()))
           allRelatives.push({ name: m.name, relationship: "association_member", degree: 5, priority: "distant" });
       });
+      // Extreme tier relatives
+      if (extreme) {
+        (R.fec_lobby?.contributions || []).forEach((c: any) => {
+          if (c.name && !allRelatives.find(x => x.name.toLowerCase() === c.name.toLowerCase()))
+            allRelatives.push({ name: c.name, relationship: "political_donor", degree: 5, priority: "distant" });
+        });
+        (R.deed_chain?.related_owners || []).forEach((n: string) => {
+          if (n && !allRelatives.find(x => x.name.toLowerCase() === n.toLowerCase()))
+            allRelatives.push({ name: n, relationship: "deed_co_owner", degree: 4, priority: "distant" });
+        });
+        (R.social_graph?.central_figures || []).forEach((n: string) => {
+          if (n && !allRelatives.find(x => x.name.toLowerCase() === n.toLowerCase()))
+            allRelatives.push({ name: n, relationship: "network_central_figure", degree: 5, priority: "distant" });
+        });
+        (R.business_network?.business_entities || []).forEach((b: any) => {
+          if (b.business_name && !allRelatives.find(x => x.name.toLowerCase() === b.business_name.toLowerCase()))
+            allRelatives.push({ name: b.business_name, relationship: "business_entity", degree: 5, priority: "distant" });
+        });
+      }
     }
 
     const seen = new Set<string>();
@@ -534,6 +738,40 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
             },
           }).catch(() => null)
         );
+
+        // Extreme heir-level passes
+        if (extreme) {
+          // Username correlation for this heir
+          heirPasses.push(
+            invokeLLM({
+              model: SEARCH_MODEL, add_context_from_internet: true,
+              prompt: `Search for "${heir.name}" across forums, gaming platforms, and review sites.\n${heirCtx}\n\nSearch: ${sourcesList("username_correlation")}\n\nFind: gaming profiles (Xbox, Steam, PlayStation), Reddit history, GitHub/Stack Overflow profiles, forum accounts, review site profiles. Cross-reference usernames — same username often appears on multiple platforms with contact info.`,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  profiles: { type: "array", items: { type: "object", properties: { platform: { type: "string" }, url: { type: "string" }, bio: { type: "string" } } } },
+                  additional_emails: { type: "array", items: { type: "string" } },
+                  additional_phones: { type: "array", items: { type: "string" } },
+                },
+              },
+            }).catch(() => null)
+          );
+
+          // Contact verification for this heir
+          heirPasses.push(
+            invokeLLM({
+              model: SEARCH_MODEL, add_context_from_internet: true,
+              prompt: `Verify all known contact info for "${heir.name}".\n${heirCtx}\n\nSearch: ${sourcesList("contact_verification")}\n\nVerify: email existence via SMTP, phone line type and carrier, phone port history. Confirm or deny each contact found by other passes. Rate verification confidence.`,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  verified_emails: { type: "array", items: { type: "object", properties: { email: { type: "string" }, exists: { type: "boolean" }, confidence: { type: "number" } } } },
+                  verified_phones: { type: "array", items: { type: "object", properties: { number: { type: "string" }, line_type: { type: "string" }, carrier: { type: "string" }, confidence: { type: "number" } } } },
+                },
+              },
+            }).catch(() => null)
+          );
+        }
       }
 
       const passResults = await Promise.all(heirPasses);
@@ -541,6 +779,8 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       const socialRes = deep ? passResults[1] : null;
       const govRes = deep ? passResults[2] : null;
       const emailRes = deep ? passResults[3] : null;
+      const usernameRes = extreme ? passResults[4] : null;
+      const verifyRes = extreme ? passResults[5] : null;
 
       // Merge all contact info
       const phones = [...(peopleRes?.phone_numbers || [])];
@@ -555,6 +795,25 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       if (emailRes) {
         (emailRes.emails || []).forEach((e: any) => emails.push(e));
         (emailRes.phone_numbers || []).forEach((p: any) => phones.push(p));
+      }
+      if (usernameRes) {
+        (usernameRes.profiles || []).forEach((p: any) => socials.push(p));
+        (usernameRes.additional_emails || []).forEach((e: string) => emails.push({ email: e, confidence: 55, source: "username_correlation" }));
+        (usernameRes.additional_phones || []).forEach((p: string) => phones.push({ number: p, confidence: 55, source: "username_correlation" }));
+      }
+      if (verifyRes) {
+        (verifyRes.verified_emails || []).forEach((ve: any) => {
+          if (ve.exists) {
+            const existing = emails.find((e: any) => e.email === ve.email);
+            if (existing) existing.confidence = Math.max(existing.confidence, 90);
+            else emails.push({ email: ve.email, confidence: 90, source: "smtp_verified" });
+          }
+        });
+        (verifyRes.verified_phones || []).forEach((vp: any) => {
+          const existing = phones.find((p: any) => p.number === vp.number);
+          if (existing) { existing.confidence = Math.max(existing.confidence, 85); existing.type = vp.line_type || existing.type; }
+          else phones.push({ number: vp.number, type: vp.line_type, confidence: 85, source: "phone_verified" });
+        });
       }
 
       R.identified_heirs.push({
@@ -575,6 +834,7 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
 
     R.methods.push("heir_contact_tracing");
     if (deep) R.methods.push("deep_heir_contact_tracing");
+    if (extreme) R.methods.push("extreme_heir_contact_tracing");
 
     // === CONFIDENCE SCORING ===
     const dConf = R.deceased_details?.confidence || 0;
@@ -638,9 +898,20 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       missing_persons: deep ? R.missing_persons : undefined,
       professional_assoc: deep ? R.professional_assoc : undefined,
       breach_verification: deep ? R.breach_verification : undefined,
+      // Extreme tier
+      ucc_sec: extreme ? R.ucc_sec : undefined,
+      fec_lobby: extreme ? R.fec_lobby : undefined,
+      username_correlation: extreme ? R.username_correlation : undefined,
+      domain_archive: extreme ? R.domain_archive : undefined,
+      contact_verification: extreme ? R.contact_verification : undefined,
+      crypto_assets: extreme ? R.crypto_assets : undefined,
+      deed_chain: extreme ? R.deed_chain : undefined,
+      permits_regulatory: extreme ? R.permits_regulatory : undefined,
+      social_graph: extreme ? R.social_graph : undefined,
+      business_network: extreme ? R.business_network : undefined,
       identified_heirs: R.identified_heirs, living_heir_count: livingHeirs.length,
       sources: [...new Set(R.sources)], methods: [...new Set(R.methods)],
-      deep_mode: deep, duration_ms: duration,
+      deep_mode: deep, extreme_deep: extreme, duration_ms: duration,
       sheet_export: sheet_export || undefined,
       errors: R.errors.length > 0 ? R.errors : undefined,
     });

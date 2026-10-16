@@ -1,0 +1,59 @@
+<mjml>
+  <mj-head>
+    <mj-title>Daily Heir Digest — {{date}}</mj-title>
+    <mj-preview>Your daily summary of newly discovered heir information</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Arial, Helvetica, sans-serif" />
+      <mj-section background-color="#ffffff" padding="0 24px" />
+      <mj-text color="#0a0a0a" font-size="14px" line-height="1.6" padding="0" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f4f5">
+    <mj-section padding="0" background-color="#007fff">
+      <mj-column>
+        <mj-image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/b9a9faf73_logo.png" alt="CloudBrowser" width="140px" padding="20px 0 8px" />
+        <mj-text color="#000000" font-size="22px" font-weight="bold" align="center" padding="0 0 20px">
+          Daily Heir Digest
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="28px 24px 8px">
+      <mj-column>
+        <mj-text font-size="24px" font-weight="bold" padding="0 0 4px">
+          {{date}}
+        </mj-text>
+        <mj-text color="#737373" font-size="14px" padding="0">
+          Your daily summary of newly discovered heir information.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="12px 24px">
+      <mj-column>
+        <mj-text font-size="15px" padding="0 0 12px">
+          <strong>Today's totals:</strong>
+        </mj-text>
+        <mj-text font-size="14px" line-height="1.8" padding="0 0 16px">
+          Cases searched: <strong>{{total_cases}}</strong><br />
+          Heirs identified: <strong>{{total_heirs}}</strong><br />
+          Living heirs: <strong>{{living_heirs}}</strong><br />
+          Deceased identities confirmed: <strong>{{confirmed_cases}}</strong><br />
+          Agent tasks completed: <strong>{{agent_tasks}}</strong>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="4px 24px 24px">
+      <mj-column>
+        <mj-raw>{{cases_html}}</mj-raw>
+        <mj-raw>{{swarm_html}}</mj-raw>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="16px 24px 32px" background-color="#f4f4f5">
+      <mj-column>
+        <mj-divider border-color="#e5e7eb" padding="0 0 16px" />
+        <mj-text color="#737373" font-size="12px" align="center">
+          Sent by CloudBrowser — your automated heir research assistant
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

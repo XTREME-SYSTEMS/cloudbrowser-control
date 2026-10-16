@@ -1,0 +1,57 @@
+{
+  "name": "HeirSearchTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this template is for (e.g. 'Probate cases in Texas')"
+    },
+    "deep_search": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether deep search mode is enabled"
+    },
+    "extreme_deep": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether extreme deep mode is enabled"
+    },
+    "spreadsheet_url": {
+      "type": "string",
+      "description": "Google Sheet URL for auto-export of heirs"
+    },
+    "sheet_name": {
+      "type": "string",
+      "description": "Google Sheet tab name for export"
+    },
+    "default_death_location": {
+      "type": "string",
+      "description": "Default death location to pre-fill (state/county)"
+    },
+    "case_prefix": {
+      "type": "string",
+      "description": "Auto-prefix for case references (e.g. 'TX-PROB-')"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
