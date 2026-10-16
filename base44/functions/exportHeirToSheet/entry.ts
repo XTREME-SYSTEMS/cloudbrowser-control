@@ -8,7 +8,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
  * then appends one row per identified heir.
  */
 
-const SHEETS_CONNECTOR_ID = "69db1fad3c50db37ad0ce8dd";
 const SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets";
 
 function extractSpreadsheetId(input: string): string | null {
@@ -44,7 +43,7 @@ export default async function (req: Request): Promise<Response> {
     }
 
     const sheet = sheet_name || "Heirs";
-    const { accessToken } = await base44.asServiceRole.connectors.getWorkspaceConnection(SHEETS_CONNECTOR_ID);
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlesheets");
 
     const headers = {
       "Authorization": `Bearer ${accessToken}`,
