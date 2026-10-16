@@ -24,6 +24,7 @@ export default function HeirSearch() {
     death_location: "",
     case_reference: "",
   });
+  const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [deepSearch, setDeepSearch] = useState(true);
   const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -54,7 +55,7 @@ export default function HeirSearch() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runHeirSearch", { ...form, deep_search: deepSearch });
+      const response = await base44.functions.invoke("runHeirSearch", { ...form, deep_search: deepSearch, spreadsheet_url: spreadsheetUrl || undefined });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -149,12 +150,31 @@ export default function HeirSearch() {
                     onChange={e => setForm({ ...form, case_reference: e.target.value })} />
                 </div>
               </div>
+
+              {/* Google Sheets Auto-Export */}
+              <div className="space-y-2 p-3 rounded-lg border bg-primary/5">
+                <Label className="flex items-center gap-1 font-medium">
+                  <Database className="w-4 h-4 text-primary" />
+                  Google Sheet — Auto-Export Heirs
+                </Label>
+                <Input
+                  placeholder="Paste your Google Sheets URL (https://docs.google.com/spreadsheets/d/...)"
+                  value={spreadsheetUrl}
+                  onChange={e => setSpreadsheetUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  When heirs are found, each one is automatically appended as a new row to the "Heirs" tab
+                  with name, relationship, phones, emails, address, and confidence. Leave blank to skip export.
+                </p>
+              </div>
               <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                 <div>
                   <Label className="cursor-pointer font-medium">Deep Search Mode</Label>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Exhausts all 12 source categories ({HEIR_SEARCH_CATALOG.reduce((n, c) => n + c.sources.length, 0)}+ data sources) —
-                    DNA databases, historical records, vital records, international, government registries, and more.
+                    Exhausts all {HEIR_SEARCH_CATALOG.length} source categories ({HEIR_SEARCH_CATALOG.reduce((n, c) => n + c.sources.length, 0)}+ data sources) —
+                    DNA databases, historical records, vital records, international, government registries, unclaimed property,
+                    cemetery/coroner, immigration, patents/WHOIS, international genealogy, missing persons, professional associations,
+                    and breach verification.
                   </p>
                 </div>
                 <Switch checked={deepSearch} onCheckedChange={setDeepSearch} />
@@ -185,7 +205,7 @@ export default function HeirSearch() {
 
               <Button onClick={handleSearch} disabled={searching} className="w-full">
                 {searching
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching {deepSearch ? "all 12 source categories" : "core sources"}...</>
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching {deepSearch ? `all ${HEIR_SEARCH_CATALOG.length} source categories` : "core sources"}...</>
                   : <><Users className="w-4 h-4 mr-2" />Run {deepSearch ? "Deep" : "Standard"} Heir Search</>}
               </Button>
             </CardContent>
@@ -227,6 +247,117 @@ export default function HeirSearch() {
                   </div>
                 </CardHeader>
               </Card>
+
+              {/* Google Sheets Export Status */}
+              {result.sheet_export && (
+                <Card className="border-primary">
+                  <CardContent className="pt-6 flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Exported to Google Sheets</p>
+                      <p className="text-sm text-muted-foreground">
+                        {result.sheet_export.exported} heir{result.sheet_export.exported !== 1 ? "s" : ""} appended to
+                        the "{result.sheet_export.sheet}" tab — {result.sheet_export.updated_range}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Deeper Tier Results */}
+              {deepSearch && (result.unclaimed || result.cemetery_mortuary || result.immigration_nat ||
+                result.patent_whois || result.intl_genealogy || result.missing_persons ||
+                result.professional_assoc || result.breach_verification) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base"><Database className="w-4 h-4 text-primary" />Deeper Tier Results (Categories 13-20)</CardTitle>
+                    <CardDescription>Unclaimed property, cemetery/coroner, immigration, patents/WHOIS, international genealogy, missing persons, professional associations, and breach verification</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    {result.unclaimed && Object.keys(result.unclaimed).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Unclaimed Property & Estate Assets</p>
+                        {result.unclaimed.unclaimed_assets?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">{result.unclaimed.unclaimed_assets.map(a => `${a.type} (${a.source})`).join("; ")}</p>
+                        )}
+                        {result.unclaimed.total_unclaimed_value && (
+                          <p className="text-xs">Total unclaimed: {result.unclaimed.total_unclaimed_value}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.cemetery_mortuary && Object.keys(result.cemetery_mortuary).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Cemetery, Mortuary & Coroner</p>
+                        {result.cemetery_mortuary.cemetery_name && <p className="text-xs text-muted-foreground">Cemetery: {result.cemetery_mortuary.cemetery_name}</p>}
+                        {result.cemetery_mortuary.family_plot_members?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Family plot: {result.cemetery_mortuary.family_plot_members.join(", ")}</p>
+                        )}
+                        {result.cemetery_mortuary.next_of_kin_from_records && (
+                          <p className="text-xs text-muted-foreground">Next of kin (from records): {result.cemetery_mortuary.next_of_kin_from_records}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.immigration_nat && Object.keys(result.immigration_nat).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Immigration & Naturalization</p>
+                        {result.immigration_nat.family_from_immigration?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Family from immigration: {result.immigration_nat.family_from_immigration.join(", ")}</p>
+                        )}
+                        {result.immigration_nat.naturalization_records?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Naturalized: {result.immigration_nat.naturalization_records.map(n => `${n.date} at ${n.court}`).join("; ")}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.patent_whois && Object.keys(result.patent_whois).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Patent, Trademark & Domain WHOIS</p>
+                        {result.patent_whois.patents?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Patents: {result.patent_whois.patents.map(p => p.title).join("; ")}</p>
+                        )}
+                        {result.patent_whois.domain_registrations?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Domains: {result.patent_whois.domain_registrations.map(d => d.domain).join(", ")}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.intl_genealogy && Object.keys(result.intl_genealogy).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">International Genealogy</p>
+                        {result.intl_genealogy.country_of_origin && <p className="text-xs text-muted-foreground">Country of origin: {result.intl_genealogy.country_of_origin}</p>}
+                        {result.intl_genealogy.international_relatives?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">International relatives: {result.intl_genealogy.international_relatives.map(r => `${r.name} (${r.country})`).join(", ")}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.missing_persons && Object.keys(result.missing_persons).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Missing Persons & Unknown Heir Databases</p>
+                        {result.missing_persons.missing_relatives?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Missing: {result.missing_persons.missing_relatives.map(m => `${m.name} (${m.database})`).join(", ")}</p>
+                        )}
+                        {result.missing_persons.deceased_relatives_confirmed?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Confirmed deceased: {result.missing_persons.deceased_relatives_confirmed.map(d => d.name).join(", ")}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.professional_assoc && Object.keys(result.professional_assoc).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Professional & Trade Associations</p>
+                        {result.professional_assoc.association_members?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Members: {result.professional_assoc.association_members.map(m => `${m.name} (${m.association})`).join("; ")}</p>
+                        )}
+                      </div>
+                    )}
+                    {result.breach_verification && Object.keys(result.breach_verification).length > 0 && (
+                      <div className="p-2 rounded-md bg-muted/50">
+                        <p className="font-medium text-xs mb-1">Breach Verification</p>
+                        {result.breach_verification.verified_emails?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">Verified emails: {result.breach_verification.verified_emails.filter(e => e.verified).map(e => e.email).join(", ") || "None verified"}</p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Deceased Details */}
               {result.deceased_details && Object.keys(result.deceased_details).length > 0 && (

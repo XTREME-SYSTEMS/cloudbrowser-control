@@ -39,6 +39,7 @@ export default async function (req: Request): Promise<Response> {
     const {
       deceased_name, deceased_dob, deceased_dod, deceased_last_address,
       deceased_ssn, death_location, case_reference, deep_search,
+      spreadsheet_url, sheet_name,
     } = body;
 
     if (!deceased_name) {
@@ -66,6 +67,10 @@ export default async function (req: Request): Promise<Response> {
       deceased_details: {}, family_tree: {}, identified_heirs: [],
       probate_info: {}, historical: {}, vital: {}, property_financial: {},
       dna: {}, international: {},
+      // Deeper tier (categories 13-20)
+      unclaimed: {}, cemetery_mortuary: {}, immigration_nat: {},
+      patent_whois: {}, intl_genealogy: {}, missing_persons: {},
+      professional_assoc: {}, breach_verification: {},
       sources: [] as string[], methods: [] as string[], errors: [] as any[],
     };
 
@@ -220,6 +225,161 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
         }).then(r => { R.international = r; R.sources.push("international_records", "emigration_records"); R.methods.push("international_search"); })
           .catch(e => R.errors.push({ step: "international", error: e.message }))
       );
+
+      // === DEEPER TIER (categories 13-20) ===
+
+      // 13. Unclaimed Property & Estate Assets
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are an estate asset researcher. For the estate of:\n${ctx}\n\nSearch: ${sourcesList("unclaimed_property")}\n\nFind any unclaimed property, unclaimed funds, unclaimed life insurance, unclaimed pensions, or escheatment records belonging to the deceased or their estate. This helps locate assets and identify heirs entitled to them.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              unclaimed_assets: { type: "array", items: { type: "object", properties: { source: { type: "string" }, type: { type: "string" }, value: { type: "string" }, state: { type: "string" } } } },
+              total_unclaimed_value: { type: "string" },
+              heirs_entitled: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.unclaimed = r; R.sources.push("unclaimed_property", "missingmoney", "state_treasurer", "escheatment"); R.methods.push("unclaimed_property_search"); })
+          .catch(e => R.errors.push({ step: "unclaimed_property", error: e.message }))
+      );
+
+      // 14. Cemetery, Mortuary & Coroner Records
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a cemetery and mortuary records researcher. For:\n${ctx}\n\nSearch: ${sourcesList("cemetery_mortuary")}\n\nFind: burial location (cemetery name, plot), funeral home that handled arrangements, cremation records, coroner/medical examiner records if death was unusual. Burial records sometimes list next of kin and family plot members who may be heirs.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              burial_location: { type: "string" },
+              cemetery_name: { type: "string" },
+              plot_info: { type: "string" },
+              funeral_home: { type: "string" },
+              cremation: { type: "boolean" },
+              family_plot_members: { type: "array", items: { type: "string" } },
+              coroner_records: { type: "string" },
+              next_of_kin_from_records: { type: "string" },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.cemetery_mortuary = r; R.sources.push("cemetery_records", "funeral_home_archives", "coroner_records", "burial_records"); R.methods.push("cemetery_mortuary_search"); })
+          .catch(e => R.errors.push({ step: "cemetery_mortuary", error: e.message }))
+      );
+
+      // 15. Immigration & Naturalization (Detailed)
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are an immigration records researcher. For:\n${ctx}\n\nSearch: ${sourcesList("immigration_naturalization")}\n\nFind: passport applications (show birthplace, parents), naturalization certificates (show birth name, arrival date), alien registration files (A-Files), detailed ship manifests (show traveling companions who may be family), declaration of intention records. These reveal original names, birthplaces, and family members who traveled together.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              passport_records: { type: "array", items: { type: "object", properties: { date: { type: "string" }, birthplace: { type: "string" }, parents: { type: "array", items: { type: "string" } } } } },
+              naturalization_records: { type: "array", items: { type: "object", properties: { date: { type: "string" }, court: { type: "string" }, birth_name: { type: "string" }, arrival_date: { type: "string" } } } },
+              ship_manifests: { type: "array", items: { type: "object", properties: { arrival_date: { type: "string" }, ship: { type: "string" }, traveling_with: { type: "array", items: { type: "string" } } } } },
+              family_from_immigration: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.immigration_nat = r; R.sources.push("uscis_genealogy", "passport_records", "naturalization", "ship_manifests", "alien_registration"); R.methods.push("immigration_naturalization_search"); })
+          .catch(e => R.errors.push({ step: "immigration_naturalization", error: e.message }))
+      );
+
+      // 16. Patent, Trademark & Domain WHOIS
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are an intellectual property and domain records researcher. For:\n${ctx}\n\nSearch: ${sourcesList("patent_trademark_whois")}\n\nFind: any patents filed (shows inventor name and address), trademarks registered, copyright registrations, or domain names registered by the deceased or their business. WHOIS records show registrant name and address. These can reveal business connections and contact info for heirs who inherited IP.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              patents: { type: "array", items: { type: "object", properties: { number: { type: "string" }, title: { type: "string" }, assignee: { type: "string" } } } },
+              trademarks: { type: "array", items: { type: "object", properties: { name: { type: "string" }, owner: { type: "string" } } } },
+              domain_registrations: { type: "array", items: { type: "object", properties: { domain: { type: "string" }, registrant: { type: "string" }, registrant_address: { type: "string" } } } },
+              ip_heirs: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.patent_whois = r; R.sources.push("uspto_patents", "uspto_trademarks", "whois", "domain_registrations"); R.methods.push("patent_trademark_whois_search"); })
+          .catch(e => R.errors.push({ step: "patent_trademark_whois", error: e.message }))
+      );
+
+      // 17. International Genealogy (Country-Specific)
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are an international genealogy researcher. For:\n${ctx}\n\nSearch: ${sourcesList("international_genealogy")}\n\nIf the deceased had immigrant origins, search country-specific vital records and genealogy databases: UK GRO, Canada LAC, Australia BDM, Ireland GRO, Scotland GRO, German/Italian/Polish genealogy, Mexico civil registration. Find ancestors, siblings, and collateral lines that may lead to unknown heirs in the country of origin.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              country_of_origin: { type: "string" },
+              international_relatives: { type: "array", items: { type: "object", properties: { name: { type: "string" }, relationship: { type: "string" }, country: { type: "string" } } } },
+              origin_family: { type: "array", items: { type: "string" } },
+              international_heir_leads: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.intl_genealogy = r; R.sources.push("uk_gro", "canada_lac", "australia_bdm", "ireland_gro", "scotland_gro", "international_genealogy"); R.methods.push("international_genealogy_search"); })
+          .catch(e => R.errors.push({ step: "international_genealogy", error: e.message }))
+      );
+
+      // 18. Missing Persons & Unknown Heir Databases
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a missing persons and unknown heir researcher. For the estate of:\n${ctx}\n\nSearch: ${sourcesList("missing_persons")}\n\nCheck if any known relatives are listed as missing persons (NamUs, NCMEC, Doe Network). Check for unclaimed persons at medical examiners' offices. Check the full Social Security Death Master File for relatives who may have died. Check if any potential heirs are disqualified (FBI most wanted). This is critical for intestate estates where heirs must be exhaustively identified.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              missing_relatives: { type: "array", items: { type: "object", properties: { name: { type: "string" }, database: { type: "string" }, status: { type: "string" } } } },
+              unclaimed_persons: { type: "array", items: { type: "string" } },
+              deceased_relatives_confirmed: { type: "array", items: { type: "object", properties: { name: { type: "string" }, death_date: { type: "string" } } } },
+              disqualified_heirs: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.missing_persons = r; R.sources.push("namus", "ncmec", "doe_network", "unclaimed_persons", "ssdmf_full"); R.methods.push("missing_persons_search"); })
+          .catch(e => R.errors.push({ step: "missing_persons", error: e.message }))
+      );
+
+      // 19. Professional & Trade Associations
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a professional association researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("professional_associations")}\n\nFind: any family members in professional association directories (ABA, AMA, engineering societies, realtor associations), trade union membership records, guild records (one-name studies), academic alumni associations, fraternal organization records (Masons, Elks). These directories often show current address and contact info for professional heirs.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              association_members: { type: "array", items: { type: "object", properties: { name: { type: "string" }, association: { type: "string" }, address: { type: "string" }, member_since: { type: "string" } } } },
+              fraternal_members: { type: "array", items: { type: "string" } },
+              guild_connections: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.professional_assoc = r; R.sources.push("professional_associations", "trade_unions", "fraternal_organizations", "guild_records"); R.methods.push("professional_associations_search"); })
+          .catch(e => R.errors.push({ step: "professional_associations", error: e.message }))
+      );
+
+      // 20. Dark Web & Breach Verification
+      phase2Passes.push(
+        invokeLLM({
+          model: SEARCH_MODEL, add_context_from_internet: true,
+          prompt: `You are a digital footprint and breach verification researcher. For the family of:\n${ctx}\n\nSearch: ${sourcesList("darkweb_breach")}\n\nVerify contact information found through other methods using breach databases (HaveIBeenPwned confirms email exists), data broker aggregators, and public records data brokers. Cross-reference phone numbers and emails found by other passes. Do NOT expose passwords or sensitive breach data — only verify that contact info exists and is associated with the person.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              verified_emails: { type: "array", items: { type: "object", properties: { email: { type: "string" }, verified: { type: "boolean" }, sources: { type: "array", items: { type: "string" } } } } },
+              verified_phones: { type: "array", items: { type: "object", properties: { number: { type: "string" }, verified: { type: "boolean" } } } },
+              additional_contacts: { type: "array", items: { type: "object", properties: { type: { type: "string" }, value: { type: "string" }, source: { type: "string" } } } },
+              confidence: { type: "number" },
+            },
+          },
+        }).then(r => { R.breach_verification = r; R.sources.push("haveibeenpwned", "dehashed", "breach_verification", "data_brokers"); R.methods.push("breach_verification_search"); })
+          .catch(e => R.errors.push({ step: "darkweb_breach", error: e.message }))
+      );
     }
 
     // Probate (always run)
@@ -268,6 +428,25 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       (R.international?.international_heirs_found || []).forEach((r: any) => {
         if (r.name && !allRelatives.find(x => x.name.toLowerCase() === r.name.toLowerCase()))
           allRelatives.push({ name: r.name, relationship: r.relationship || "international heir", degree: 4, priority: "distant" });
+      });
+      // Deeper tier relatives
+      (R.cemetery_mortuary?.family_plot_members || []).forEach((n: string) => {
+        if (n && !allRelatives.find(x => x.name.toLowerCase() === n.toLowerCase()))
+          allRelatives.push({ name: n, relationship: "family_plot_member", degree: 4, priority: "distant" });
+      });
+      if (R.cemetery_mortuary?.next_of_kin_from_records && !allRelatives.find(x => x.name.toLowerCase() === R.cemetery_mortuary.next_of_kin_from_records.toLowerCase()))
+        allRelatives.push({ name: R.cemetery_mortuary.next_of_kin_from_records, relationship: "next_of_kin", degree: 2, priority: "secondary" });
+      (R.immigration_nat?.family_from_immigration || []).forEach((n: string) => {
+        if (n && !allRelatives.find(x => x.name.toLowerCase() === n.toLowerCase()))
+          allRelatives.push({ name: n, relationship: "immigration_relative", degree: 4, priority: "distant" });
+      });
+      (R.intl_genealogy?.international_relatives || []).forEach((r: any) => {
+        if (r.name && !allRelatives.find(x => x.name.toLowerCase() === r.name.toLowerCase()))
+          allRelatives.push({ name: r.name, relationship: r.relationship || "international_relative", degree: 4, priority: "distant" });
+      });
+      (R.professional_assoc?.association_members || []).forEach((m: any) => {
+        if (m.name && !allRelatives.find(x => x.name.toLowerCase() === m.name.toLowerCase()))
+          allRelatives.push({ name: m.name, relationship: "association_member", degree: 5, priority: "distant" });
       });
     }
 
@@ -417,6 +596,29 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       confidence_score: overall, search_duration_ms: duration,
     });
 
+    // === AUTO-EXPORT TO GOOGLE SHEETS ===
+    let sheet_export: any = null;
+    if (spreadsheet_url && R.identified_heirs.length > 0) {
+      try {
+        const exportRes: any = await base44.functions.invoke("exportHeirToSheet", {
+          spreadsheet_url,
+          sheet_name: sheet_name || "Heirs",
+          deceased_name,
+          case_reference: case_reference || "",
+          identified_heirs: R.identified_heirs,
+          probate_info: R.probate_info,
+          confidence_score: overall,
+        });
+        sheet_export = exportRes?.data || exportRes;
+        if (sheet_export?.error) {
+          R.errors.push({ step: "google_sheets_export", error: sheet_export.error });
+          sheet_export = null;
+        }
+      } catch (expErr: any) {
+        R.errors.push({ step: "google_sheets_export", error: expErr.message });
+      }
+    }
+
     return Response.json({
       ok: true, heir_search_id: heirSearch.id, status, confidence_score: overall,
       deceased_confirmed: R.deceased_details?.confirmed || false,
@@ -427,9 +629,19 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       dna: deep ? R.dna : undefined,
       property_financial: deep ? R.property_financial : undefined,
       international: deep ? R.international : undefined,
+      // Deeper tier
+      unclaimed: deep ? R.unclaimed : undefined,
+      cemetery_mortuary: deep ? R.cemetery_mortuary : undefined,
+      immigration_nat: deep ? R.immigration_nat : undefined,
+      patent_whois: deep ? R.patent_whois : undefined,
+      intl_genealogy: deep ? R.intl_genealogy : undefined,
+      missing_persons: deep ? R.missing_persons : undefined,
+      professional_assoc: deep ? R.professional_assoc : undefined,
+      breach_verification: deep ? R.breach_verification : undefined,
       identified_heirs: R.identified_heirs, living_heir_count: livingHeirs.length,
       sources: [...new Set(R.sources)], methods: [...new Set(R.methods)],
       deep_mode: deep, duration_ms: duration,
+      sheet_export: sheet_export || undefined,
       errors: R.errors.length > 0 ? R.errors : undefined,
     });
   } catch (error: any) {
