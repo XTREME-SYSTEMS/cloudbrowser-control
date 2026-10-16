@@ -1,9 +1,14 @@
 // Vercel AI Gateway shared client — all LLM, image, speech, and transcription calls.
 // Routes through https://ai-gateway.vercel.sh/v1 using VERCEL_AI_GATEWAY_API_KEY.
+// Falls back to Base44 Core InvokeLLM when the gateway returns 402 (billing exhausted).
 import { getGatewayKey, searchGatewayWeb } from './vercelGateway.ts';
 import { buildGatewayContent } from './gatewayAttachments.ts';
 
 const BASE_URL = 'https://ai-gateway.vercel.sh/v1';
+
+// Module-level fallback client (set by the backend function via setGatewayFallback)
+let _fallbackClient: any = null;
+export function setGatewayFallback(client: any) { _fallbackClient = client; }
 
 // Model alias → Vercel AI Gateway model ID
 const MODEL_MAP: Record<string, string> = {
@@ -40,6 +45,30 @@ interface InvokeLLMOpts {
  * Returns a string (plain text) or a parsed object (when response_json_schema is provided).
  */
 export async function invokeLLM(opts: InvokeLLMOpts): Promise<string | object> {
+  try {
+    return await _invokeLLMGateway(opts);
+  } catch (err: any) {
+    // Fallback to Base44 Core InvokeLLM on 402 (billing), 429 (rate limit), or gateway key issues
+    if (_fallbackClient && _isGatewayUnavailable(err)) {
+      const fbModel = opts.model || 'gemini_3_flash';
+      const fbRes: any = await _fallbackClient.integrations.Core.InvokeLLM({
+        prompt: opts.prompt,
+        add_context_from_internet: opts.add_context_from_internet || false,
+        response_json_schema: opts.response_json_schema || null,
+        model: fbModel,
+      });
+      return fbRes;
+    }
+    throw err;
+  }
+}
+
+function _isGatewayUnavailable(err: any): boolean {
+  const msg = (err?.message || '').toLowerCase();
+  return msg.includes('402') || msg.includes('429') || msg.includes('gateway key') || msg.includes('rejected the request');
+}
+
+async function _invokeLLMGateway(opts: InvokeLLMOpts): Promise<string | object> {
   const API_KEY = getGatewayKey();
 
   const model = resolveModel(opts.model);

@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
 import { HEIR_SEARCH_CATALOG } from '../../shared/searchSourceCatalog.ts';
 
 /**
@@ -34,6 +34,7 @@ export default async function (req: Request): Promise<Response> {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    setGatewayFallback(base44);
 
     const body = await req.json();
     const {
