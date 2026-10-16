@@ -18,7 +18,7 @@ export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { property_address, owner_name, phone, email, company, batch_id, deep_search } = body as any;
+    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url } = body as any;
 
     const tiersAttempted: string[] = [];
     let result: any = null;
@@ -27,7 +27,7 @@ export default async function (req: Request): Promise<Response> {
     tiersAttempted.push("llm");
     try {
       const llmRaw = await base44.functions.invoke("runSkipTrace", {
-        property_address, owner_name, phone, email, company, batch_id, deep_search,
+        property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url,
       });
       result = llmRaw?.data ?? llmRaw;
       if (result && !result.error) {

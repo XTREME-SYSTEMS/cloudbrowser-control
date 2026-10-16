@@ -37,7 +37,7 @@ export default async function (req: Request): Promise<Response> {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { property_address, owner_name, phone, email, company, batch_id, deep_search } = body;
+    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url } = body;
     const deep = deep_search === true;
 
     if (!property_address && !owner_name && !phone && !email) {
@@ -668,6 +668,39 @@ Find:
       search_duration_ms: duration,
     });
 
+    // === AUTO-EXPORT TO GOOGLE SHEETS ===
+    let sheet_export: any = null;
+    if (spreadsheet_url) {
+      try {
+        const exportRes: any = await base44.functions.invoke("exportSkipTraceToSheet", {
+          spreadsheet_url,
+          target_property_address: property_address || "",
+          target_owner_name: owner_name || "",
+          target_phone: phone || "",
+          target_email: email || "",
+          target_company: company || "",
+          status: finalStatus,
+          found_owner_name: results.owner_name || "",
+          confidence_score: overallConfidence,
+          phone_numbers: dedupPhones,
+          emails: dedupEmails,
+          addresses: dedupAddresses,
+          social_profiles: dedupSocial,
+          relatives: dedupRelatives,
+          sources_checked: [...new Set(results.sources)],
+          methods_used: [...new Set(results.methods)],
+          search_duration_ms: duration,
+        });
+        sheet_export = exportRes?.data || exportRes;
+        if (sheet_export?.error) {
+          results.errors.push({ method: "google_sheets_export", error: sheet_export.error });
+          sheet_export = null;
+        }
+      } catch (expErr: any) {
+        results.errors.push({ method: "google_sheets_export", error: expErr.message });
+      }
+    }
+
     if (allFailed) {
       return Response.json(
         {
@@ -693,6 +726,7 @@ Find:
       sources: [...new Set(results.sources)],
       methods: [...new Set(results.methods)],
       duration_ms: duration,
+      sheet_export: sheet_export || undefined,
       errors: results.errors.length > 0 ? results.errors : undefined,
     });
   } catch (error: any) {

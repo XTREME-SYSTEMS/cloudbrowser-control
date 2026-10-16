@@ -12,7 +12,7 @@ import { SKIP_TRACE_DEEP_CATALOG } from "@/lib/searchSourceCatalog";
 import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
 
 export default function SkipTracing() {
-  const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "" });
+  const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0" });
   const [deepSearch, setDeepSearch] = useState(false);
   const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -43,7 +43,7 @@ export default function SkipTracing() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runSkipTraceFallback", { ...form, deep_search: deepSearch });
+      const response = await base44.functions.invoke("runSkipTraceFallback", { ...form, deep_search: deepSearch, spreadsheet_url: form.spreadsheet_url });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -130,10 +130,16 @@ export default function SkipTracing() {
                   <Input placeholder="john@example.com" value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })} />
                 </div>
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                   <Label><Building className="w-4 h-4 inline mr-1" />Company (if known)</Label>
                   <Input placeholder="ABC Construction LLC" value={form.company}
                     onChange={e => setForm({ ...form, company: e.target.value })} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label><Database className="w-4 h-4 inline mr-1" />Google Sheet URL or ID (auto-export results)</Label>
+                  <Input placeholder="https://docs.google.com/spreadsheets/d/... or sheet ID" value={form.spreadsheet_url}
+                    onChange={e => setForm({ ...form, spreadsheet_url: e.target.value })} />
+                  <p className="text-xs text-muted-foreground">Results auto-export to the "Skip Traces" tab after each trace completes.</p>
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
@@ -309,6 +315,9 @@ export default function SkipTracing() {
                   <span className="flex items-center gap-1"><Database className="w-4 h-4" />{result.sources?.length || 0} sources checked</span>
                   <span className="flex items-center gap-1"><Search className="w-4 h-4" />{result.methods?.length || 0} methods used</span>
                   <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{(result.duration_ms / 1000).toFixed(1)}s</span>
+                  {result.sheet_export?.ok && (
+                    <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-4 h-4" />Exported to Sheet</span>
+                  )}
                 </div>
 
                 {/* Sources breakdown */}
