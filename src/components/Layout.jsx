@@ -2,44 +2,75 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe, Users } from "lucide-react";
+import {
+  Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu,
+  Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe, Users,
+  FileText, Crown, Zap, Network, Brain, Target,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
 import { useAuth } from "@/lib/AuthContext";
 
+function BrandMark() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
+        <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 12px rgba(0,163,255,0.3)" }} />
+        <div className="absolute inset-1 rounded-full border border-primary/20" />
+        <span className="font-heading font-black text-lg chrome-text relative z-10">S</span>
+      </div>
+      <div className="min-w-0">
+        <div className="font-heading font-bold text-sm text-white tracking-wide leading-tight truncate">STRATEGIC CLOUD</div>
+        <div className="font-display text-[10px] text-primary/70 tracking-[0.2em] uppercase leading-tight">Browser</div>
+      </div>
+    </div>
+  );
+}
+
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="w-8 h-8" />;
+  if (!mounted) return <div className="h-8" />;
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent w-full"
+      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:text-primary hover:bg-primary/5 transition-all w-full"
     >
       {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-      {theme === "dark" ? "Light Mode" : "Dark Mode"}
+      <span className="font-display tracking-wide">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
     </button>
   );
 }
 
-const workflowSteps = [
+const navGroups = [
   {
-    step: 1,
-    label: "Main",
+    label: "Core",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/xtreme-gpt", label: "Xtreme GPT", icon: Bot },
-      { to: "/command-center", label: "Command Center", icon: Sparkles },
-      { to: "/social-presence", label: "Social Presence", icon: Globe },
-      { to: "/website-factory", label: "Website Factory", icon: Rocket },
-      { to: "/clone-studio", label: "Clone Site", icon: Copy },
-      { to: "/mission-control", label: "Mission Control", icon: Activity },
       { to: "/heir-search", label: "Heir Search", icon: Users },
+      { to: "/heir-search-dashboard", label: "Case Dashboard", icon: FileText },
+      { to: "/heir-portal", label: "Client Portal", icon: Crown },
       { to: "/sessions", label: "Sessions", icon: Monitor },
       { to: "/jobs", label: "Jobs", icon: Briefcase },
+    ],
+  },
+  {
+    label: "AI Systems",
+    items: [
+      { to: "/xtreme-gpt", label: "Xtreme GPT", icon: Bot },
+      { to: "/command-center", label: "Command Center", icon: Sparkles },
+      { to: "/mission-control", label: "Mission Control", icon: Activity },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { to: "/website-factory", label: "Website Factory", icon: Rocket },
+      { to: "/clone-studio", label: "Clone Site", icon: Copy },
+      { to: "/social-presence", label: "Social Presence", icon: Globe },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
     ],
   },
@@ -51,28 +82,29 @@ function NavLinks({ onNavigate }) {
   const isAdmin = user?.role === "admin";
 
   return (
-    <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+    <nav className="flex-1 px-3 py-4 overflow-y-auto xa-scroll">
       {isAdmin && (
-        <div className="space-y-1 pb-2 border-b border-sidebar-border">
+        <div className="mb-4">
           <Link
             to="/"
             onClick={onNavigate}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              location.pathname === "/" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+              location.pathname === "/"
+                ? "bg-primary/10 text-primary border border-primary/30"
+                : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
             }`}
+            style={location.pathname === "/" ? { boxShadow: "0 0 12px rgba(0,163,255,0.15)" } : {}}
           >
             <ShieldCheck className="w-4 h-4" />
-            Admin Portal
+            <span className="font-display tracking-wide">Admin Portal</span>
           </Link>
         </div>
       )}
-      {workflowSteps.map((group) => (
-        <div key={group.label} className="space-y-1">
-          <div className="flex items-center gap-2 px-3 py-1">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-              {group.step}
-            </span>
-            <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">{group.label}</span>
+      {navGroups.map((group) => (
+        <div key={group.label} className="mb-4">
+          <div className="flex items-center gap-2 px-3 mb-1.5">
+            <span className="text-[10px] font-display font-semibold text-neutral-600 uppercase tracking-[0.15em]">{group.label}</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-neutral-800 to-transparent" />
           </div>
           {group.items.map(({ to, label, icon: Icon }) => {
             const active = location.pathname.startsWith(to);
@@ -81,12 +113,16 @@ function NavLinks({ onNavigate }) {
                 key={to}
                 to={to}
                 onClick={onNavigate}
-                className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-md text-sm transition-colors ${
-                  active ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all group ${
+                  active
+                    ? "bg-primary/10 text-primary border border-primary/25"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
+                style={active ? { boxShadow: "0 0 12px rgba(0,163,255,0.12)" } : {}}
               >
-                <Icon className="w-4 h-4" />
-                {label}
+                <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-neutral-500 group-hover:text-neutral-300"}`} />
+                <span className="font-display tracking-wide">{label}</span>
+                {active && <div className="ml-auto w-1 h-4 rounded-full bg-primary" style={{ boxShadow: "0 0 8px rgba(0,163,255,0.5)" }} />}
               </Link>
             );
           })}
@@ -98,31 +134,23 @@ function NavLinks({ onNavigate }) {
 
 function SidebarContent({ onLogout }) {
   return (
-    <div className="flex flex-col h-full bg-sidebar">
-      <div className="p-6 border-b border-sidebar-border">
-        <span className="font-heading font-semibold text-sidebar-foreground text-lg tracking-tight">Xtreme Cloud Browser</span>
+    <div className="flex flex-col h-full" style={{ background: "rgba(5, 8, 13, 0.95)", backdropFilter: "blur(16px)" }}>
+      <div className="px-5 py-5 border-b border-white/5">
+        <BrandMark />
+        <p className="text-[9px] text-neutral-600 tracking-[0.25em] uppercase mt-2 font-display">Intelligence in Motion</p>
       </div>
-      <div className="px-4 pt-4">
+      <div className="px-3 pt-3">
         <StartHereHandoff />
       </div>
-      <div className="px-4 pt-2">
-        <Link
-          to="/xtreme-gpt"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          <Bot className="w-4 h-4" />
-          Xtreme GPT
-        </Link>
-      </div>
       <NavLinks />
-      <div className="p-4 border-t border-sidebar-border space-y-1">
+      <div className="p-3 border-t border-white/5 space-y-1">
         <ThemeToggle />
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent w-full"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:text-red-400 hover:bg-red-500/5 transition-all w-full"
         >
           <LogOut className="w-4 h-4" />
-          Sign out
+          <span className="font-display tracking-wide">Sign out</span>
         </button>
       </div>
     </div>
@@ -139,38 +167,34 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 border-r border-sidebar-border flex-col">
+      <aside className="hidden md:flex w-64 border-r border-white/5 flex-col shrink-0">
         <SidebarContent onLogout={handleLogout} />
       </aside>
 
-      {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0 border-white/5">
           <SidebarContent onLogout={handleLogout} />
         </SheetContent>
       </Sheet>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile top bar */}
-        <header className="md:hidden flex items-center gap-3 p-4 border-b bg-sidebar shrink-0">
-          <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1">
+        <header className="md:hidden flex items-center gap-3 p-4 border-b border-white/5 bg-sidebar shrink-0">
+          <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1 text-neutral-400 hover:text-white">
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <span className="font-heading font-semibold">Xtreme Cloud Browser</span>
+            <BrandMark />
           </div>
-          <Link to="/xtreme-gpt" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
+          <Link to="/xtreme-gpt" className="p-1 text-neutral-400 hover:text-primary">
             <Bot className="w-5 h-5" />
           </Link>
-          <Link to="/settings" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
+          <Link to="/settings" className="p-1 text-neutral-400 hover:text-primary">
             <SettingsIcon className="w-5 h-5" />
           </Link>
           <NotificationBell />
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto xa-scroll">
           <div className="p-4 md:p-8 max-w-7xl mx-auto">
             <Outlet />
           </div>

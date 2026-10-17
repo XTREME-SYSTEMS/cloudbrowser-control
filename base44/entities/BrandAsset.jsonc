@@ -1,0 +1,92 @@
+{
+  "name": "BrandAsset",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Asset name or label"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Public URL of the ingested brand image"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "logo",
+        "brand_reference",
+        "ui_reference",
+        "color_palette",
+        "typography"
+      ],
+      "default": "brand_reference",
+      "description": "What kind of brand asset this is"
+    },
+    "analysis": {
+      "type": "object",
+      "description": "AI-extracted design tokens from the image",
+      "properties": {
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fonts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style": {
+          "type": "string"
+        },
+        "layout_notes": {
+          "type": "string"
+        },
+        "key_elements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "parity_score": {
+      "type": "number",
+      "default": 0,
+      "description": "How closely the current UI matches this reference (0-100)"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "image_url",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
