@@ -61,6 +61,8 @@ export default function OnboardingWizard({ onComplete }) {
         factory_stage_log: [{ stage: "intake", status: "complete", timestamp: new Date().toISOString(), message: "Client onboarding completed" }]
       });
       onComplete?.(engagement);
+      // Kick off the full discovery lifecycle (runs in background, portal polls for progress)
+      base44.functions.invoke("runClientLifecycle", { engagement_id: engagement.id }).catch(e => console.error("Lifecycle trigger failed:", e));
     } catch (e) {
       console.error(e);
     } finally {

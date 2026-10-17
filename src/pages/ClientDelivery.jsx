@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Loader2, CheckCircle2, AlertCircle, Clock, Rocket, Code,
-  ShieldCheck, Globe, Star, ExternalLink, RefreshCw, FileCode, Trophy
+  ShieldCheck, Globe, Star, ExternalLink, RefreshCw, FileCode, Trophy, Play
 } from "lucide-react";
 
 const STAGES = [
@@ -45,6 +45,17 @@ export default function ClientDelivery() {
     } catch (e) {
       setError(e.message); setLoading(false);
     }
+  };
+
+  const [runningLifecycle, setRunningLifecycle] = useState(false);
+
+  const runLifecycle = async () => {
+    setRunningLifecycle(true);
+    try {
+      await base44.functions.invoke("runClientLifecycle", { engagement_id: engagement.id });
+      loadEngagement();
+    } catch (e) { console.error(e); }
+    finally { setRunningLifecycle(false); }
   };
 
   const submitReview = async (status, notes) => {
@@ -92,7 +103,14 @@ export default function ClientDelivery() {
               <currentStage.icon className={`w-5 h-5 ${progress === 100 ? "text-green-400" : "text-primary"} ${engagement.factory_status === "building" || engagement.factory_status === "discovery" ? "animate-pulse" : ""}`} />
               <span className="font-display font-semibold">{currentStage.label}</span>
             </div>
-            <span className="text-2xl font-heading font-bold text-gold-gradient">{progress}%</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-heading font-bold text-gold-gradient">{progress}%</span>
+              {(engagement.factory_status === "intake" || engagement.factory_status === "failed") && (
+                <Button size="sm" variant="outline" onClick={runLifecycle} disabled={runningLifecycle}>
+                  {runningLifecycle ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />} Run Pipeline
+                </Button>
+              )}
+            </div>
           </div>
           <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
             <div className="h-full bg-gold-gradient transition-all duration-500" style={{ width: `${progress}%` }} />
