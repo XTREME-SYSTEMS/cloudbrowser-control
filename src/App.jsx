@@ -67,6 +67,7 @@ import SocialPresence from '@/pages/SocialPresence';
 import HeirSearch from '@/pages/HeirSearch';
 import HeirSearchDashboard from '@/pages/HeirSearchDashboard';
 import HeirSearchPortal from '@/pages/HeirSearchPortal';
+import ImageReplicator from '@/pages/ImageReplicator';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -147,6 +148,7 @@ const AuthenticatedApp = () => {
           <Route path="/heir-search" element={<HeirSearch />} />
           <Route path="/heir-search-dashboard" element={<HeirSearchDashboard />} />
           <Route path="/heir-portal" element={<HeirSearchPortal />} />
+          <Route path="/image-replicator" element={<ImageReplicator />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />

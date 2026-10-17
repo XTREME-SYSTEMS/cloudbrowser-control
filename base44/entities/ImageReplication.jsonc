@@ -1,0 +1,131 @@
+{
+  "name": "ImageReplication",
+  "type": "object",
+  "properties": {
+    "source_image_url": {
+      "type": "string",
+      "description": "The reference design image to replicate"
+    },
+    "page_name": {
+      "type": "string",
+      "description": "Name for the generated page"
+    },
+    "generated_html": {
+      "type": "string",
+      "maxLength": 100000,
+      "description": "The standalone HTML replica achieving visual parity"
+    },
+    "generated_jsx": {
+      "type": "string",
+      "maxLength": 100000,
+      "description": "The React JSX version achieving operational parity"
+    },
+    "design_tokens": {
+      "type": "object",
+      "description": "Extracted design tokens from the image",
+      "properties": {
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fonts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "layout": {
+          "type": "string"
+        },
+        "spacing": {
+          "type": "string"
+        }
+      }
+    },
+    "parity_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Current visual parity score 0-100"
+    },
+    "target_parity": {
+      "type": "number",
+      "default": 99,
+      "description": "Target parity score to reach"
+    },
+    "iterations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "iteration": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          },
+          "diff_summary": {
+            "type": "string"
+          },
+          "diff_regions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "default": []
+    },
+    "iteration_count": {
+      "type": "number",
+      "default": 0
+    },
+    "max_iterations": {
+      "type": "number",
+      "default": 5
+    },
+    "screenshot_url": {
+      "type": "string",
+      "description": "Last rendered screenshot URL for comparison"
+    },
+    "html_url": {
+      "type": "string",
+      "description": "Public URL of the rendered HTML file"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "generating",
+        "validating",
+        "iterating",
+        "complete",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_image_url",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
