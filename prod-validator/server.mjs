@@ -1,3 +1,4 @@
+import { makeX1QaEndpoint } from "./x1-task-qa.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -152,7 +153,13 @@ async function runValidation() {
   }
 }
 
-createServer((req,res)=>{
+const handleX1Qa=makeX1QaEndpoint({
+  bearerToken:process.env.X1_PREVIEW_QA_TOKEN||"",
+  validatorId:process.env.X1_PREVIEW_QA_VALIDATOR_ID||""
+  // Independent source, browser and receipt adapters require scoped provider authorization.
+});
+createServer(async(req,res)=>{
+  if(await handleX1Qa(req,res))return;
   if (req.url === "/healthz") {
     res.writeHead(200,{"content-type":"application/json","cache-control":"no-store"});
     return res.end(JSON.stringify({ok:true,validator_status:report.status}));
