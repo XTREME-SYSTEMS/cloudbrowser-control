@@ -3,10 +3,11 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 /** @type {React.ForwardRefExoticComponent<React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>>} */
-const Card = React.forwardRef(({ className, ...props }, ref) => (
+const Card = React.forwardRef(({ className, style, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+    className={cn("rounded-xl border border-border bg-card text-card-foreground backdrop-blur-xl transition-all hover:border-primary/20", className)}
+    style={{ boxShadow: "0 4px 24px rgba(0, 0, 0, 0.2)", ...style }}
     {...props} />
 ))
 Card.displayName = "Card"
