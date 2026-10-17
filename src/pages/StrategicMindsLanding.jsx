@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, Phone, Brain, Globe, Rocket, Search, Users,
+  ArrowRight, Brain, Globe, Rocket, Search, Users,
   Target, Zap, Shield, TrendingUp, Code2, Network, Sparkles,
   BarChart3, Bot, Layers, CheckCircle2, Star,
 } from "lucide-react";
@@ -80,9 +80,6 @@ export default function StrategicMindsLanding() {
             ))}
           </nav>
           <div className="flex items-center gap-2.5 shrink-0">
-            <a href="tel:+18000000000" className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-display font-bold tracking-widest text-[#00ff88] border border-[#00ff88]/40 bg-[#00ff88]/5 hover:bg-[#00ff88]/10 transition-all">
-              <Phone className="w-3 h-3" /> CALL EDEN
-            </a>
             <Link to="/client-onboarding" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-display font-bold tracking-widest text-[#00b4ff] border border-[#00b4ff]/40 bg-[#00b4ff]/5 hover:bg-[#00b4ff]/10 transition-all">
               CALL NOW
             </Link>
