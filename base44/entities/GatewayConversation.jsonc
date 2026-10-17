@@ -13,7 +13,8 @@
         "brand_guardian",
         "replicator",
         "swarm",
-        "autonomous_agent"
+        "autonomous_agent",
+        "qa_validator"
       ]
     },
     "provider": {
