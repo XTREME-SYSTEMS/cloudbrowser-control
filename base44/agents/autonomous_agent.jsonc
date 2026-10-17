@@ -1020,6 +1020,214 @@
     {
       "function_name": "getHeirTrackingSheetUrl",
       "description": "Get the Google Sheets tracking URL from the HEIR_TRACKING_SHEET_URL secret for heir search auto-sync"
+    },
+    {
+      "function_name": "getDailyHeirDigest",
+      "description": "Get a daily digest of heir search activity and new cases for monitoring"
+    },
+    {
+      "function_name": "runNationalDemandMap",
+      "description": "Deep search: Build a state-level national demand concentration map for an industry using internet-enabled LLM research"
+    },
+    {
+      "function_name": "runSocialMediaScan",
+      "description": "Deep search: Scan social media for complaints, needs, and conversations relevant to a target market or industry"
+    },
+    {
+      "function_name": "scanTargetIntelligence",
+      "description": "Deep search: Scan a target (company, person, domain) for intelligence \u2014 tech stack, employees, contacts, weaknesses"
+    },
+    {
+      "function_name": "scrapeSimilarSystems",
+      "description": "Deep search: Scrape and analyze similar systems/competitors for reverse engineering and parity gap detection"
+    },
+    {
+      "function_name": "runKeywordIntelligence",
+      "description": "Deep search: Run keyword intelligence research \u2014 search volume, difficulty, SERP analysis, content gaps"
+    },
+    {
+      "function_name": "runGrowthOpportunityScan",
+      "description": "Deep search: Scan for growth opportunities \u2014 keyword gaps, content gaps, competitor piggyback, AEO, geo expansion"
+    },
+    {
+      "function_name": "ingestIntelligenceBulk",
+      "description": "Deep search: Bulk ingest intelligence from multiple sources into artifacts and signals"
+    },
+    {
+      "function_name": "runGoogleIntelSync",
+      "description": "Deep search: Sync intelligence findings to Google Sheets, Drive, and Gmail for persistent tracking"
+    },
+    {
+      "function_name": "runStrategySimulation",
+      "description": "Deep search: Run hundreds-of-scenarios strategy simulation for market entry, competitive positioning, and go-to-market"
+    },
+    {
+      "function_name": "runBrandGenerator",
+      "description": "Deep search: Generate 10 psychology-based brand options with AI-generated logo imagery for a target market"
+    },
+    {
+      "function_name": "runSalesAssetGenerator",
+      "description": "Deep search: Generate sales scripts, rebuttals, and voice templates for outreach campaigns"
+    },
+    {
+      "function_name": "runBuildersDocCompiler",
+      "description": "Deep search: Compile builders/architectural documents from intelligence findings for autonomous factory ingestion"
+    },
+    {
+      "function_name": "runClientLifecycle",
+      "description": "Deep search: Run the full automated client lifecycle pipeline \u2014 discovery, spec, build, QA, deploy, deliver"
+    },
+    {
+      "function_name": "generateBuildSpec",
+      "description": "Deep search: Generate a machine-readable Build Spec from client engagement data for the autonomous coding agent"
+    },
+    {
+      "function_name": "factorySync",
+      "description": "Deep search: Bidirectional factory sync JSON endpoint for external ChatGPT-based orchestration of the autonomous factory"
+    },
+    {
+      "function_name": "runDigitalDominanceEngine",
+      "description": "Deep search: Run the universal SEO/AEO/GEO engine \u2014 generate optimized pages, schema markup, and AEO structures"
+    },
+    {
+      "function_name": "runMarketingEngine",
+      "description": "Deep search: Run the marketing engine \u2014 omnichannel campaign generation, content, and asset creation"
+    },
+    {
+      "function_name": "discoverSubmissionSites",
+      "description": "Deep search: Discover directory submission and citation sites for an industry \u2014 local, niche, industry-specific"
+    },
+    {
+      "function_name": "replicateImageToCode",
+      "description": "Deep search: Recursive image-to-code replication pipeline with vision-based visual parity feedback loop"
+    },
+    {
+      "function_name": "runVisualValidation",
+      "description": "Deep search: Run visual validation and parity scoring against brand reference imagery"
+    },
+    {
+      "function_name": "runGrowthMission",
+      "description": "Deep search: Run a full growth mission \u2014 research, plan, execute, and measure growth campaigns"
+    },
+    {
+      "function_name": "runDiscoveryGenerator",
+      "description": "Deep search: Generate discovery results \u2014 find new targets, markets, and opportunities from intelligence"
+    },
+    {
+      "function_name": "runDomainDiscovery",
+      "description": "Deep search: Discover available domains for digital domination campaigns"
+    },
+    {
+      "function_name": "runDomainBuyer",
+      "description": "Deep search: Purchase domains for digital domination campaigns"
+    },
+    {
+      "function_name": "runHashtagCampaign",
+      "description": "Deep search: Run a hashtag campaign across social platforms with persistent hashtags and media"
+    },
+    {
+      "function_name": "socialMediaOperate",
+      "description": "Deep search: Operate social media accounts \u2014 post, engage, scan, and manage presence across platforms"
+    },
+    {
+      "function_name": "runTemplateGenerator",
+      "description": "Deep search: Generate reusable templates from intelligence findings for the autonomous factory"
+    },
+    {
+      "function_name": "runRepoGenerator",
+      "description": "Deep search: Generate GitHub repositories from build specs for the autonomous factory"
+    },
+    {
+      "function_name": "runWebsiteBuilder",
+      "description": "Deep search: Build websites from build specs and templates for the autonomous factory"
+    },
+    {
+      "function_name": "runMetaArchitect",
+      "description": "Deep search: Run the meta architect \u2014 design system architecture from business concepts"
+    },
+    {
+      "function_name": "runAutonomousSwarm",
+      "description": "Deep search: Run an autonomous swarm of agents in parallel for complex multi-agent research and execution"
+    },
+    {
+      "function_name": "runAutonomousBrowserTask",
+      "description": "Deep search: Run an autonomous browser task with the full agent loop \u2014 browse, scrape, interact, solve CAPTCHAs"
+    },
+    {
+      "function_name": "runAutonomousHeartbeat",
+      "description": "Deep search: Run the autonomous heartbeat \u2014 continuous system monitoring and self-healing"
+    },
+    {
+      "function_name": "runAutonomousWorkflow",
+      "description": "Deep search: Execute a durable autonomous workflow \u2014 ingest, validate, score, act, observe, receipt with checkpointing"
+    },
+    {
+      "function_name": "runAgentLoop",
+      "description": "Deep search: Run the full agent loop \u2014 plan, execute, observe, learn for autonomous task completion"
+    },
+    {
+      "function_name": "runEnhancementCycle",
+      "description": "Deep search: Run the Fortress Engineer enhancement cycle \u2014 implement, audit, optimize system capabilities"
+    },
+    {
+      "function_name": "runSelfHealingLoop",
+      "description": "Deep search: Run the self-healing loop \u2014 detect failures, diagnose, repair, and validate fixes"
+    },
+    {
+      "function_name": "runFullValidation",
+      "description": "Deep search: Run full system validation \u2014 security, reliability, enhancements, tenant isolation"
+    },
+    {
+      "function_name": "runValidationRegression",
+      "description": "Deep search: Run validation regression \u2014 ensure new changes don't break existing capabilities"
+    },
+    {
+      "function_name": "runSystemQA",
+      "description": "Deep search: Run unified system QA \u2014 health, capability, and visual validation reporting"
+    },
+    {
+      "function_name": "generateContentAtScale",
+      "description": "Deep search: Generate content at scale \u2014 blogs, social posts, SEO pages from intelligence findings"
+    },
+    {
+      "function_name": "runPipelineOrchestrator",
+      "description": "Deep search: Run the pipeline orchestrator \u2014 coordinate multi-step intelligence and factory pipelines"
+    },
+    {
+      "function_name": "runAutoCompleteContinuousCycle",
+      "description": "Deep search: Run the continuous auto-complete cycle \u2014 autonomously discover and implement missing capabilities"
+    },
+    {
+      "function_name": "runAutoCompleteAudit",
+      "description": "Deep search: Audit the auto-complete cycle results for completeness and quality"
+    },
+    {
+      "function_name": "runGatewayChat",
+      "description": "Deep search: Run a gateway chat \u2014 multi-turn LLM conversation with tool use for complex research tasks"
+    },
+    {
+      "function_name": "invokeGatewayLLM",
+      "description": "Deep search: Invoke the Verc AI Gateway LLM directly for single-turn research, synthesis, and generation"
+    },
+    {
+      "function_name": "vercelAiGateway",
+      "description": "Deep search: Vercel AI Gateway \u2014 speech, transcription, image generation, and LLM access"
+    },
+    {
+      "function_name": "uploadFileGateway",
+      "description": "Deep search: Upload files via the gateway for persistent storage and sharing"
+    },
+    {
+      "function_name": "generateProductIdeas",
+      "description": "Deep search: Generate product ideas from Google trends and market intelligence"
+    },
+    {
+      "function_name": "architectProductIdea",
+      "description": "Deep search: Architect a product idea into a full system design \u2014 data model, AI model, agents, workflows"
+    },
+    {
+      "function_name": "runAutonomousAudit",
+      "description": "Deep search: Run an autonomous audit of the entire system for compliance and security"
     }
   ],
   "context_files": [],
