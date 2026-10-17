@@ -84,83 +84,91 @@ export default function DigitalDominance() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard icon={FileText} label="Business Concepts" value={concepts.length} color="#2563EB" />
-          <StatCard icon={Globe} label="SEO Pages" value={pageCount} color="#8A7300" />
-          <StatCard icon={TrendingUp} label="Growth Opportunities" value={oppCount} color="#DC2626" />
-          <StatCard icon={Target} label="Quick Wins (P0)" value={opportunities.filter(o => o.priority === "P0").length} color="#16A34A" />
-        </div>
-
-        {/* Action Panel */}
-        <div className="xa-card p-5">
-          <h2 className="font-heading font-bold text-lg text-black mb-3 flex items-center gap-2"><Rocket className="w-5 h-5 text-[#CCBB00]" /> Dominance Actions</h2>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={syncGSC} disabled={syncing} className="xa-btn-primary">
-              {syncing ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing GSC…</> : <><RefreshCw className="w-4 h-4" /> Sync GSC Analytics</>}
-            </button>
-            <button onClick={runScan} disabled={scanning} className="xa-btn-outline">
-              {scanning ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning…</> : <><Target className="w-4 h-4" /> Run Growth Scan</>}
-            </button>
-          </div>
-          {result && (
-            <div className="mt-4 p-3 rounded-xl bg-[#FAFAFA] border border-[#E5E7EB] text-sm">
-              {result.pages_generated != null && <div><span className="text-black/50">Pages generated:</span> <span className="font-bold text-black">{result.pages_generated}</span></div>}
-              {result.pages_synced != null && <div><span className="text-black/50">Pages synced:</span> <span className="font-bold text-black">{result.pages_synced}</span></div>}
-              {result.opportunities_discovered != null && <div><span className="text-black/50">Opportunities found:</span> <span className="font-bold text-black">{result.opportunities_discovered}</span></div>}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+          {/* Left: Dashboard */}
+          <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard icon={FileText} label="Concepts" value={concepts.length} color="#2563EB" />
+              <StatCard icon={Globe} label="SEO Pages" value={pageCount} color="#8A7300" />
+              <StatCard icon={TrendingUp} label="Opportunities" value={oppCount} color="#DC2626" />
+              <StatCard icon={Target} label="Quick Wins" value={opportunities.filter(o => o.priority === "P0").length} color="#16A34A" />
             </div>
-          )}
-          {error && <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</div>}
-        </div>
 
-        {/* Business Concepts */}
-        <div>
-          <h2 className="font-heading font-bold text-lg text-black mb-3">Business Concepts</h2>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div>
-          ) : (
-            <div className="space-y-2">
-              {concepts.map((c) => (
-                <div key={c.id} className="xa-card p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#FFF7B3] flex items-center justify-center shrink-0 font-bold text-[#8A7300] text-xs">{c.concept_id}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-bold text-black text-sm truncate">{c.name}</div>
-                    <div className="text-xs text-black/45 truncate">{c.industry} · {c.customer}</div>
-                  </div>
-                  <div className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ background: c.score >= 75 ? "#DCFCE7" : c.score >= 50 ? "#FFF7B3" : "#FEE2E2", color: c.score >= 75 ? "#16A34A" : c.score >= 50 ? "#8A7300" : "#DC2626" }}>{c.score || 0}</div>
-                  <button onClick={() => generatePages(c.id)} disabled={generating} className="xa-btn-primary !py-2 !px-3 !text-xs shrink-0">
-                    {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />} Generate
-                  </button>
+            {/* Action Panel */}
+            <div className="xa-card p-5">
+              <h2 className="font-heading font-bold text-base text-black mb-3 flex items-center gap-2"><Rocket className="w-4 h-4 text-[#CCBB00]" /> Dominance Actions</h2>
+              <div className="flex flex-col gap-2">
+                <button onClick={syncGSC} disabled={syncing} className="xa-btn-primary w-full justify-center">
+                  {syncing ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing GSC…</> : <><RefreshCw className="w-4 h-4" /> Sync GSC Analytics</>}
+                </button>
+                <button onClick={runScan} disabled={scanning} className="xa-btn-outline w-full justify-center">
+                  {scanning ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning…</> : <><Target className="w-4 h-4" /> Run Growth Scan</>}
+                </button>
+              </div>
+              {result && (
+                <div className="mt-4 p-3 rounded-xl bg-[#FAFAFA] border border-[#E5E7EB] text-sm space-y-1">
+                  {result.pages_generated != null && <div><span className="text-black/50">Pages generated:</span> <span className="font-bold text-black">{result.pages_generated}</span></div>}
+                  {result.pages_synced != null && <div><span className="text-black/50">Pages synced:</span> <span className="font-bold text-black">{result.pages_synced}</span></div>}
+                  {result.opportunities_discovered != null && <div><span className="text-black/50">Opportunities found:</span> <span className="font-bold text-black">{result.opportunities_discovered}</span></div>}
                 </div>
-              ))}
+              )}
+              {error && <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</div>}
             </div>
-          )}
-        </div>
+          </aside>
 
-        {/* Growth Opportunities */}
-        <div>
-          <h2 className="font-heading font-bold text-lg text-black mb-3">Latest Growth Opportunities</h2>
-          {opportunities.length === 0 ? (
-            <div className="xa-card p-8 text-center text-black/40 text-sm">No opportunities yet. Run a growth scan to discover them.</div>
-          ) : (
-            <div className="space-y-2">
-              {opportunities.map((o) => {
-                const Icon = OPP_ICON[o.opportunity_type] || Target;
-                return (
-                  <div key={o.id} className="xa-card p-4 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#FFF7B3] flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-[#8A7300]" /></div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-black text-sm">{o.title}</div>
-                      <div className="text-xs text-black/45 mt-0.5">{o.description}</div>
-                      {o.keyword && <div className="text-xs text-[#CCBB00] font-mono mt-1">"{o.keyword}"</div>}
+          {/* Right: Content */}
+          <div className="space-y-6 min-w-0">
+            {/* Business Concepts */}
+            <div>
+              <h2 className="font-heading font-bold text-lg text-black mb-3">Business Concepts</h2>
+              {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#CCBB00]" /></div>
+              ) : (
+                <div className="space-y-2">
+                  {concepts.map((c) => (
+                    <div key={c.id} className="xa-card p-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[#FFF7B3] flex items-center justify-center shrink-0 font-bold text-[#8A7300] text-xs">{c.concept_id}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-black text-sm truncate">{c.name}</div>
+                        <div className="text-xs text-black/45 truncate">{c.industry} · {c.customer}</div>
+                      </div>
+                      <div className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ background: c.score >= 75 ? "#DCFCE7" : c.score >= 50 ? "#FFF7B3" : "#FEE2E2", color: c.score >= 75 ? "#16A34A" : c.score >= 50 ? "#8A7300" : "#DC2626" }}>{c.score || 0}</div>
+                      <button onClick={() => generatePages(c.id)} disabled={generating} className="xa-btn-primary !py-2 !px-3 !text-xs shrink-0">
+                        {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />} Generate
+                      </button>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${PRIORITY_COLOR[o.priority] || PRIORITY_COLOR.P2}`}>{o.priority}</span>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Growth Opportunities */}
+            <div>
+              <h2 className="font-heading font-bold text-lg text-black mb-3">Latest Growth Opportunities</h2>
+              {opportunities.length === 0 ? (
+                <div className="xa-card p-8 text-center text-black/40 text-sm">No opportunities yet. Run a growth scan to discover them.</div>
+              ) : (
+                <div className="space-y-2">
+                  {opportunities.map((o) => {
+                    const Icon = OPP_ICON[o.opportunity_type] || Target;
+                    return (
+                      <div key={o.id} className="xa-card p-4 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#FFF7B3] flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-[#8A7300]" /></div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-black text-sm">{o.title}</div>
+                          <div className="text-xs text-black/45 mt-0.5">{o.description}</div>
+                          {o.keyword && <div className="text-xs text-[#CCBB00] font-mono mt-1">"{o.keyword}"</div>}
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${PRIORITY_COLOR[o.priority] || PRIORITY_COLOR.P2}`}>{o.priority}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
