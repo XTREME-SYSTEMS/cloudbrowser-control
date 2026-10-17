@@ -80,7 +80,11 @@ export default async function(req) {
     });
 
     try {
-      await withRetry(() => execStep({ action_type: 'goto', value: urlCheck.sanitized, options: { timeout: timeoutMs } }), { retries: 1 });
+      try {
+        await withRetry(() => execStep({ action_type: 'goto', value: urlCheck.sanitized, options: { timeout: timeoutMs } }), { retries: 1 });
+      } catch (navErr) {
+        throw new Error(`Browser navigation failed during observation: ${navErr.message}. Engine is healthy (HTTP 200) but could not navigate to ${urlCheck.sanitized}. This is typically a Playwright launch failure, page timeout, or SSRF block — check engine readiness and memory limits.`);
+      }
       log.push({ step: 'navigate', url: urlCheck.sanitized });
 
       if (action === 'form_fill') {
@@ -128,6 +132,37 @@ export default async function(req) {
         }
         result = { steps_executed: steps.length };
         log.push({ step: 'interact', count: steps.length });
+      } else if (action === 'browser_control') {
+        // Explicit browser control for GPT agents — click, type, fill, press, navigate, screenshot, extract
+        // Each step: { action_type, selector, value, options }
+        // Supported action_types: goto, click, type, fill, press, scroll, hover, select_option,
+        //   screenshot, extract_text, extract_html, wait_for_selector, new_tab, switch_tab, evaluate
+        const steps = Array.isArray(goal.steps) ? goal.steps : [];
+        const stepResults = [];
+        for (const s of steps) {
+          try {
+            const stepRes = await execStep(s);
+            stepResults.push({
+              action_type: s.action_type, selector: s.selector,
+              ok: true, url: stepRes.url, data: stepRes.data,
+              ...(stepRes.base64 ? { has_screenshot: true } : {}),
+            });
+          } catch (stepErr) {
+            stepResults.push({
+              action_type: s.action_type, selector: s.selector,
+              ok: false, error: stepErr.message,
+            });
+          }
+          if (humanLike) await new Promise((r) => setTimeout(r, humanDelay(200, 120)));
+        }
+        result = {
+          steps_executed: steps.length,
+          steps_succeeded: stepResults.filter(r => r.ok).length,
+          steps_failed: stepResults.filter(r => !r.ok).length,
+          step_results: stepResults,
+          current_url: stepResults[stepResults.length - 1]?.url || '',
+        };
+        log.push({ step: 'browser_control', count: steps.length, succeeded: stepResults.filter(r => r.ok).length, failed: stepResults.filter(r => !r.ok).length });
       } else {
         if (goal.scroll) await execStep({ action_type: 'scroll', options: { direction: 'down', amount: goal.scroll } });
         result = { browsed: true };

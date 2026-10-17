@@ -45,9 +45,32 @@ async function probeEngine(baseUrl, key) {
       };
     }
 
+    // Probe readiness — verifies the browser can actually launch (health alone doesn't)
+    let readiness = null;
+    try {
+      const readyController = new AbortController();
+      const readyTimer = setTimeout(() => readyController.abort(), PROBE_TIMEOUT_MS);
+      const readyRes = await fetch(`${baseUrl}/readiness`, {
+        headers: { "x-api-key": key, "Content-Type": "application/json" },
+        signal: readyController.signal,
+      });
+      const readyText = await readyRes.text();
+      let readyBody;
+      try { readyBody = JSON.parse(readyText); } catch { readyBody = { raw: readyText }; }
+      clearTimeout(readyTimer);
+      readiness = {
+        ready: readyRes.ok && readyBody.ok,
+        browser_launch: readyBody.browser_launch || "unknown",
+        error: readyBody.error || null,
+      };
+    } catch (readyErr) {
+      readiness = { ready: false, error: readyErr.name === "AbortError" ? `Timeout after ${PROBE_TIMEOUT_MS}ms` : readyErr.message };
+    }
+
     return {
       ok: true,
-      status: body.ok ? "healthy" : "degraded",
+      status: body.ok ? (readiness?.ready ? "healthy" : "degraded") : "degraded",
+      readiness,
       engine_url: baseUrl,
       response_time_ms: responseTime,
       worker_id: body.worker_id,

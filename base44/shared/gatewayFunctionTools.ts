@@ -3,40 +3,42 @@ import { z } from 'npm:zod@4.4.3';
 
 // Per-agent permitted backend functions — mirrors the in-app agent tool_configs.
 // Each agent can only invoke the functions listed here.
+const BROWSER_CONTROL_DESC = 'Full browser control: navigate URLs, click elements, type text, fill forms, press keys, scroll, take screenshots, scrape data, solve captchas. Pass action="browser_control" with steps=[{action_type:"click|type|fill|press|goto|scroll|screenshot|extract_text", selector:"CSS or //xpath", value:"text or URL"}] for interactive browser sessions. The browser engine supports click, type, fill, press, select_option, scroll, hover, drag_and_drop, upload_file, download, new_tab, switch_tab, frame_switch, evaluate, and more.';
+
 export const AGENT_FUNCTIONS: Record<string, { name: string; description: string }[]> = {
   orchestrator: [
     { name: 'runAgentLoop', description: 'Dispatch an autonomous agent task cycle to execute pending AgentTasks' },
     { name: 'runWebsiteBuilder', description: 'Build and deploy a website for a given niche' },
     { name: 'runGrowthMission', description: 'Run a full SEO/growth audit on a domain' },
     { name: 'runDomainDiscovery', description: 'Discover available domains for given keywords' },
-    { name: 'runAutonomousBrowserTask', description: 'Run a stealth browser automation task (scrape, form-fill, captcha-solve)' },
+    { name: 'runAutonomousBrowserTask', description: BROWSER_CONTROL_DESC },
     { name: 'runBatchOperation', description: 'Run a batch multi-site operation' },
   ],
   growth_operator: [
     { name: 'runGrowthMission', description: 'Run a full SEO/growth audit on a domain' },
     { name: 'runKeywordIntelligence', description: 'Research keywords and search volume for a domain' },
     { name: 'serpMeasurement', description: 'Measure SERP rankings for target keywords' },
-    { name: 'runAutonomousBrowserTask', description: 'Run a stealth browser task to scrape competitor sites' },
+    { name: 'runAutonomousBrowserTask', description: BROWSER_CONTROL_DESC },
   ],
   code_architect: [
     { name: 'runWebsiteBuilder', description: 'Build and deploy a website for a given niche' },
     { name: 'runRepoGenerator', description: 'Create a GitHub repository for a project' },
     { name: 'runTemplateGenerator', description: 'Generate a site template for a niche' },
-    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to test a deployed site' },
+    { name: 'runAutonomousBrowserTask', description: BROWSER_CONTROL_DESC },
   ],
   social_strategist: [
     { name: 'runMarketingEngine', description: 'Run social media marketing campaigns' },
     { name: 'generateContentAtScale', description: 'Generate content assets at scale' },
-    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to research competitor social profiles' },
+    { name: 'runAutonomousBrowserTask', description: BROWSER_CONTROL_DESC },
   ],
   sales_engine: [
     { name: 'runMarketingEngine', description: 'Run sales/outreach marketing campaigns' },
     { name: 'generateContentAtScale', description: 'Generate outreach content at scale' },
-    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to research prospects' },
+    { name: 'runAutonomousBrowserTask', description: BROWSER_CONTROL_DESC },
   ],
   brand_guardian: [
     { name: 'generateContentAtScale', description: 'Generate brand content assets at scale' },
-    { name: 'runAutonomousBrowserTask', description: 'Run a browser task to audit brand presence' },
+    { name: 'runAutonomousBrowserTask', description: BROWSER_CONTROL_DESC },
   ],
   replicator: [
     { name: 'runBatchOperation', description: 'Run a batch multi-site clone operation' },
