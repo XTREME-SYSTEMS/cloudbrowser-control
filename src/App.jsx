@@ -71,6 +71,7 @@ import ImageReplicator from '@/pages/ImageReplicator';
 import IntelligenceCommandCenter from '@/pages/IntelligenceCommandCenter';
 import ClientOnboarding from '@/pages/ClientOnboarding';
 import ClientDelivery from '@/pages/ClientDelivery';
+import StrategicMindsLanding from '@/pages/StrategicMindsLanding';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -109,12 +110,13 @@ const AuthenticatedApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
       <Route path="/share/:token" element={<ShareView />} />
+      <Route path="/" element={<StrategicMindsLanding />} />
       <Route path="/landing" element={<Landing />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ThankYou" element={<ThankYou />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<AdminPortal />} />
+          <Route path="/portal" element={<AdminPortal />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/welcome" element={<SaaSOnboarding />} />
           <Route path="/sessions" element={<Sessions />} />
