@@ -82,7 +82,7 @@ export default function IntelligenceCommandCenter() {
           break;
         }
         case 3: {
-          const res = await base44.functions.invoke("runGrowthOpportunityScan", { domain: pipeline.industry, ...ctx });
+          const res = await base44.functions.invoke("runSocialMediaScan", { industry: pipeline.industry, target_market: pipeline.target_market, pipeline_id: pipeline.id });
           result = res.data || res;
           break;
         }
@@ -102,27 +102,28 @@ export default function IntelligenceCommandCenter() {
           break;
         }
         case 8: {
-          const res = await base44.functions.invoke("runMetaArchitect", { industry: pipeline.industry, goals: pipeline.goals, target_market: pipeline.target_market });
+          const res = await base44.functions.invoke("runStrategySimulation", { industry: pipeline.industry, goals: pipeline.goals, target_market: pipeline.target_market, budget_range: pipeline.budget_range, pipeline_id: pipeline.id });
           result = res.data || res;
           break;
         }
         case 9: {
-          const res = await base44.functions.invoke("generateProductIdeas", { industry: pipeline.industry, target_market: pipeline.target_market });
+          const res = await base44.functions.invoke("runBrandGenerator", { industry: pipeline.industry, target_market: pipeline.target_market, pipeline_id: pipeline.id });
           result = res.data || res;
           break;
         }
         case 10: {
-          const res = await base44.functions.invoke("runMarketingEngine", { industry: pipeline.industry, target_market: pipeline.target_market, goals: pipeline.goals });
+          const res = await base44.functions.invoke("runSalesAssetGenerator", { industry: pipeline.industry, target_market: pipeline.target_market, pipeline_id: pipeline.id });
           result = res.data || res;
           break;
         }
         case 11: {
-          const res = await base44.functions.invoke("generateContentAtScale", { industry: pipeline.industry, target_market: pipeline.target_market });
+          const res = await base44.functions.invoke("runBuildersDocCompiler", { pipeline_id: pipeline.id });
           result = res.data || res;
           break;
         }
         case 12: {
-          result = { status: "synced", message: "Google Drive, Sheets, Gmail, Calendar sync initiated. Use the Connect page to manage connectors." };
+          const res = await base44.functions.invoke("runGoogleIntelSync", { pipeline_id: pipeline.id });
+          result = res.data || res;
           break;
         }
         default:
