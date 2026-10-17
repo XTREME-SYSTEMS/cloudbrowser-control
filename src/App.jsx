@@ -69,6 +69,8 @@ import HeirSearchDashboard from '@/pages/HeirSearchDashboard';
 import HeirSearchPortal from '@/pages/HeirSearchPortal';
 import ImageReplicator from '@/pages/ImageReplicator';
 import IntelligenceCommandCenter from '@/pages/IntelligenceCommandCenter';
+import ClientOnboarding from '@/pages/ClientOnboarding';
+import ClientDelivery from '@/pages/ClientDelivery';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -151,6 +153,8 @@ const AuthenticatedApp = () => {
           <Route path="/heir-portal" element={<HeirSearchPortal />} />
           <Route path="/image-replicator" element={<ImageReplicator />} />
           <Route path="/intelligence-command-center" element={<IntelligenceCommandCenter />} />
+          <Route path="/client-onboarding" element={<ClientOnboarding />} />
+          <Route path="/client-delivery" element={<ClientDelivery />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
