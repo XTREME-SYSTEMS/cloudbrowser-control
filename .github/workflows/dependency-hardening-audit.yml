@@ -1,0 +1,160 @@
+name: Dependency Hardening Audit
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install lockfile dependencies
+        run: npm ci --ignore-scripts
+      - name: NPM audit evidence
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > npm-audit.json
+          AUDIT_EXIT=$?
+          node <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('npm-audit.json','utf8'));
+          const rows = Object.entries(a.vulnerabilities || {}).map(([name,v]) => ({
+            name,
+            severity: v.severity,
+            isDirect: !!v.isDirect,
+            range: v.range,
+            fixAvailable: v.fixAvailable
+          }));
+          const rank = {critical:5, high:4, moderate:3, low:2, info:1};
+          rows.sort((a,b)=>(rank[b.severity]||0)-(rank[a.severity]||0)||a.name.localeCompare(b.name));
+          console.log('AUDIT_METADATA=' + JSON.stringify(a.metadata || {}));
+          console.log('AUDIT_VULNERABILITIES=' + JSON.stringify(rows));
+          NODE
+          echo "npm_audit_exit=$AUDIT_EXIT"
+          exit 0
+      - name: Safe fix dry-run evidence
+        shell: bash
+        run: |
+          set +e
+          npm audit fix --dry-run --json > npm-audit-fix-dry-run.json 2>&1
+          FIX_EXIT=$?
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'npm-audit-fix-dry-run.json';
+          const raw = fs.existsSync(p) ? fs.readFileSync(p,'utf8') : '';
+          let a = null;
+          try { a = JSON.parse(raw); } catch {}
+          if (a) {
+            console.log('FIX_DRY_RUN_ADDED=' + JSON.stringify(a.added || []));
+            console.log('FIX_DRY_RUN_REMOVED=' + JSON.stringify(a.removed || []));
+            console.log('FIX_DRY_RUN_CHANGED=' + JSON.stringify(a.changed || []));
+            console.log('FIX_DRY_RUN_METADATA=' + JSON.stringify(a.metadata || {}));
+          } else {
+            console.log('FIX_DRY_RUN_RAW=' + raw.replace(/\n/g,' ').slice(0,16000));
+          }
+          NODE
+          echo "fix_dry_run_exit=$FIX_EXIT"
+          exit 0
+      - name: Safe lockfile remediation simulation
+        shell: bash
+        run: |
+          cp package-lock.json package-lock.before.json
+          set +e
+          npm audit fix --package-lock-only
+          SAFE_FIX_EXIT=$?
+          npm audit --json > npm-audit-after-safe-fix.json
+          AFTER_EXIT=$?
+          set -e
+          node <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('npm-audit-after-safe-fix.json','utf8'));
+          const rows = Object.entries(a.vulnerabilities || {}).map(([name,v]) => ({
+            name,
+            severity:v.severity,
+            isDirect:!!v.isDirect,
+            range:v.range,
+            fixAvailable:v.fixAvailable
+          }));
+          console.log('SAFE_FIX_AFTER_METADATA=' + JSON.stringify(a.metadata || {}));
+          console.log('SAFE_FIX_AFTER_VULNERABILITIES=' + JSON.stringify(rows));
+          NODE
+          echo "safe_fix_exit=$SAFE_FIX_EXIT"
+          echo "after_audit_exit=$AFTER_EXIT"
+          echo "LOCKFILE_DIFF_BEGIN"
+          git diff --no-index -- package-lock.before.json package-lock.json || true
+          echo "LOCKFILE_DIFF_END"
+      - name: Targeted adm-zip hardening simulation
+        shell: bash
+        run: |
+          npm install --package-lock-only --ignore-scripts adm-zip@0.6.1
+          npm audit fix --package-lock-only || true
+          npm ci --ignore-scripts
+          npm run build
+          npm run lint
+          npm run typecheck
+          npm audit --json > npm-audit-targeted.json || true
+          node <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('npm-audit-targeted.json','utf8'));
+          const rows = Object.entries(a.vulnerabilities || {}).map(([name,v]) => ({
+            name,
+            severity:v.severity,
+            isDirect:!!v.isDirect,
+            range:v.range,
+            fixAvailable:v.fixAvailable
+          }));
+          console.log('TARGETED_AFTER_METADATA=' + JSON.stringify(a.metadata || {}));
+          console.log('TARGETED_AFTER_VULNERABILITIES=' + JSON.stringify(rows));
+          const counts = a.metadata?.vulnerabilities || {};
+          if ((counts.critical || 0) > 0 || (counts.high || 0) > 0) {
+            console.error('TARGETED_CANDIDATE_REJECTED: high/critical vulnerabilities remain');
+            process.exit(1);
+          }
+          NODE
+      - name: Upload targeted hardening candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-hardening-targeted-candidate
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+
+      - name: Publish validated dependency candidate to PR 29 branch
+        shell: bash
+        env:
+          TARGET_BRANCH: apex/persistent-cloud-browser-computer-use-20260926
+          EXPECTED_TARGET_SHA: 81138bdaddc6b685e4589c6b6f14cc33a1c24797
+        run: |
+          set -euo pipefail
+          cp package.json /tmp/hardened-package.json
+          cp package-lock.json /tmp/hardened-package-lock.json
+          ACTUAL_TARGET_SHA="$(git ls-remote origin "refs/heads/$TARGET_BRANCH" | awk '{print $1}')"
+          if [ "$ACTUAL_TARGET_SHA" != "$EXPECTED_TARGET_SHA" ]; then
+            echo "Target branch moved: expected $EXPECTED_TARGET_SHA, got $ACTUAL_TARGET_SHA"
+            exit 1
+          fi
+          git fetch origin "$TARGET_BRANCH"
+          git checkout -B "$TARGET_BRANCH" "origin/$TARGET_BRANCH"
+          cp /tmp/hardened-package.json package.json
+          cp /tmp/hardened-package-lock.json package-lock.json
+          git add package.json package-lock.json
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No dependency candidate changes to publish"
+            exit 0
+          fi
+          git config user.name "Strategic Minds Dependency Validator"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "fix(deps): eliminate high and critical npm audit findings"
+          git push origin "HEAD:$TARGET_BRANCH"
