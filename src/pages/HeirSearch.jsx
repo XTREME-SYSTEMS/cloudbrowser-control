@@ -14,6 +14,7 @@ import {
   Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap, ExternalLink,
 } from "lucide-react";
 import TemplateSelector from "@/components/heir-search/TemplateSelector";
+import { downloadHeirPDF } from "@/lib/heirPDF";
 
 export default function HeirSearch() {
   const [form, setForm] = useState({
@@ -306,9 +307,15 @@ export default function HeirSearch() {
                         {" — "}{result.living_heir_count} living heirs found — Confidence: {result.confidence_score}%
                       </CardDescription>
                     </div>
-                    <Badge variant={result.status === "found" ? "default" : "secondary"}>
-                      {result.status.toUpperCase()}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={result.status === "found" ? "default" : "secondary"}>
+                        {result.status.toUpperCase()}
+                      </Badge>
+                      <Button variant="outline" size="sm" onClick={() => downloadHeirPDF(result)}>
+                        <FileText className="w-4 h-4 mr-1" />
+                        PDF
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>

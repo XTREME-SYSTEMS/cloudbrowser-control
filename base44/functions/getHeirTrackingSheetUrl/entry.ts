@@ -11,7 +11,9 @@ export default async function (req: Request): Promise<Response> {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const url = secrets.get('HEIR_TRACKING_SHEET_URL') || '';
+    const rawUrl = secrets.get('HEIR_TRACKING_SHEET_URL') || '';
+    // The secret may contain just the sheet ID or a full URL — normalize to a full URL
+    const url = rawUrl.startsWith('http') ? rawUrl : (rawUrl ? `https://docs.google.com/spreadsheets/d/${rawUrl}` : '');
     return Response.json({ url });
   } catch (error: any) {
     return Response.json({ error: error.message }, { status: 500 });

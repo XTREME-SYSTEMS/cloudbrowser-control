@@ -9,6 +9,9 @@ import {
   Users, Search, Loader2, CheckCircle, AlertCircle, Clock,
   TrendingUp, FileText, Mail, ExternalLink, Filter,
 } from "lucide-react";
+import { downloadHeirPDF } from "@/lib/heirPDF";
+import BrandIngestion from "@/components/brand/BrandIngestion";
+import VisualValidationPanel from "@/components/brand/VisualValidationPanel";
 
 const STATUS_CONFIG = {
   pending: { label: "Pending", color: "secondary", icon: Clock },
@@ -195,9 +198,14 @@ export default function HeirSearchDashboard() {
                           {c.created_date ? new Date(c.created_date).toLocaleDateString() : "—"}
                         </td>
                         <td className="py-3">
-                          <Button size="sm" variant="outline" onClick={() => navigate("/heir-search")}>
-                            View
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" onClick={() => navigate("/heir-search")}>
+                              View
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => downloadHeirPDF(c)}>
+                              PDF
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -208,6 +216,12 @@ export default function HeirSearchDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Visual Validation & Brand Ingestion */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BrandIngestion />
+        <VisualValidationPanel />
+      </div>
     </div>
   );
 }
