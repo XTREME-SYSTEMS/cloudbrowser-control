@@ -30,6 +30,10 @@
       "type": "string",
       "description": "Account or case reference for this heir search"
     },
+    "client_email": {
+      "type": "string",
+      "description": "Client email to assign this case to a client portal user"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -325,7 +329,14 @@
       "created_by_id": "{{user.id}}"
     },
     "read": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.client_email": "{{user.email}}"
+        }
+      ]
     },
     "update": {
       "created_by_id": "{{user.id}}"

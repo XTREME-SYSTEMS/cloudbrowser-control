@@ -40,7 +40,7 @@ export default async function (req: Request): Promise<Response> {
     const body = await req.json();
     const {
       deceased_name, deceased_dob, deceased_dod, deceased_last_address,
-      deceased_ssn, death_location, case_reference, deep_search,
+      deceased_ssn, death_location, case_reference, client_email, deep_search,
       extreme_deep, spreadsheet_url, sheet_name,
     } = body;
 
@@ -59,6 +59,7 @@ export default async function (req: Request): Promise<Response> {
       deceased_ssn: deceased_ssn || "",
       death_location: death_location || "",
       case_reference: case_reference || "",
+      client_email: client_email || "",
       status: "searching",
       identified_heirs: [],
       sources_checked: [],

@@ -65,6 +65,8 @@ import DigitalDominance from '@/pages/DigitalDominance';
 import ClientPortal from '@/pages/ClientPortal';
 import SocialPresence from '@/pages/SocialPresence';
 import HeirSearch from '@/pages/HeirSearch';
+import HeirSearchDashboard from '@/pages/HeirSearchDashboard';
+import HeirSearchPortal from '@/pages/HeirSearchPortal';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -143,6 +145,8 @@ const AuthenticatedApp = () => {
           <Route path="/client-portal" element={<ClientPortal />} />
           <Route path="/social-presence" element={<SocialPresence />} />
           <Route path="/heir-search" element={<HeirSearch />} />
+          <Route path="/heir-search-dashboard" element={<HeirSearchDashboard />} />
+          <Route path="/heir-portal" element={<HeirSearchPortal />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />

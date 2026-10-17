@@ -24,6 +24,7 @@ export default function HeirSearch() {
     deceased_ssn: "",
     death_location: "",
     case_reference: "",
+    client_email: "",
   });
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [deepSearch, setDeepSearch] = useState(true);
@@ -109,14 +110,22 @@ export default function HeirSearch() {
             heirs by inheritance priority, and skip traces each living heir for contact information.
           </p>
         </div>
-        {trackingSheetUrl && (
-          <a href={trackingSheetUrl} target="_blank" rel="noopener noreferrer">
+        <div className="flex gap-2">
+          <a href="/heir-search-dashboard">
             <Button variant="outline">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open Tracking Sheet
+              <Database className="w-4 h-4 mr-2" />
+              Dashboard
             </Button>
           </a>
-        )}
+          {trackingSheetUrl && (
+            <a href={trackingSheetUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open Tracking Sheet
+              </Button>
+            </a>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="search">
@@ -181,6 +190,12 @@ export default function HeirSearch() {
                   <Label><FileText className="w-4 h-4 inline mr-1" />Case / Account Reference</Label>
                   <Input placeholder="ACT-2026-001" value={form.case_reference}
                     onChange={e => setForm({ ...form, case_reference: e.target.value })} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label><Mail className="w-4 h-4 inline mr-1" />Client Email (assign to client portal)</Label>
+                  <Input type="email" placeholder="client@example.com — leave blank to keep internal" value={form.client_email}
+                    onChange={e => setForm({ ...form, client_email: e.target.value })} />
+                  <p className="text-xs text-muted-foreground">Assign this case to a client so they can view results from the Heir Search Portal.</p>
                 </div>
               </div>
 
