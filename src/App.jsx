@@ -68,6 +68,7 @@ import HeirSearch from '@/pages/HeirSearch';
 import HeirSearchDashboard from '@/pages/HeirSearchDashboard';
 import HeirSearchPortal from '@/pages/HeirSearchPortal';
 import ImageReplicator from '@/pages/ImageReplicator';
+import IntelligenceCommandCenter from '@/pages/IntelligenceCommandCenter';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -149,6 +150,7 @@ const AuthenticatedApp = () => {
           <Route path="/heir-search-dashboard" element={<HeirSearchDashboard />} />
           <Route path="/heir-portal" element={<HeirSearchPortal />} />
           <Route path="/image-replicator" element={<ImageReplicator />} />
+          <Route path="/intelligence-command-center" element={<IntelligenceCommandCenter />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />

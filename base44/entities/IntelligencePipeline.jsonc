@@ -1,0 +1,145 @@
+{
+  "name": "IntelligencePipeline",
+  "type": "object",
+  "properties": {
+    "industry": {
+      "type": "string",
+      "description": "Selected industry vertical"
+    },
+    "target_market": {
+      "type": "string",
+      "description": "Target market description"
+    },
+    "goals": {
+      "type": "string",
+      "description": "Pipeline goals and objectives"
+    },
+    "budget_range": {
+      "type": "string"
+    },
+    "timeline": {
+      "type": "string"
+    },
+    "geo_focus": {
+      "type": "string",
+      "description": "Geographic focus (national, regional, specific states)"
+    },
+    "current_step": {
+      "type": "number",
+      "default": 0
+    },
+    "total_steps": {
+      "type": "number",
+      "default": 12
+    },
+    "step_results": {
+      "type": "object",
+      "description": "Results from each step, keyed by step number",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    },
+    "national_demand_map": {
+      "type": "object",
+      "description": "State-level demand concentration data"
+    },
+    "domain_opportunities": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "economic_intel": {
+      "type": "object",
+      "description": "Economic, debt, spending, growth intelligence"
+    },
+    "social_signals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "buyer_profiles": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "competitor_intel": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "skip_trace_results": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "simulation_results": {
+      "type": "object"
+    },
+    "brand_options": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "sales_assets": {
+      "type": "object"
+    },
+    "builders_docs": {
+      "type": "object"
+    },
+    "google_sync_status": {
+      "type": "object"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "complete",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "background_scraping": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "industry",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
