@@ -38,6 +38,7 @@ export default function HeirSearch() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [trackingSheetUrl, setTrackingSheetUrl] = useState("");
   const [expandedHeir, setExpandedHeir] = useState(null);
+  const [tracingHeir, setTracingHeir] = useState(null);
 
   useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
 
@@ -97,6 +98,37 @@ export default function HeirSearch() {
 
   const priorityColor = (p) =>
     p === "primary" ? "text-blue-600" : p === "secondary" ? "text-purple-600" : "text-gray-500";
+
+  const traceHeir = async (heirIndex) => {
+    const heir = result.identified_heirs[heirIndex];
+    if (!heir || !heir.name) return;
+    setTracingHeir(heirIndex);
+    try {
+      const response = await base44.functions.invoke("runSkipTraceFallback", {
+        owner_name: heir.name,
+        deep_search: true,
+      });
+      const data = response.data || response;
+      if (data && !data.error) {
+        const updatedHeirs = [...result.identified_heirs];
+        updatedHeirs[heirIndex] = {
+          ...heir,
+          phone_numbers: data.phone_numbers || heir.phone_numbers || [],
+          emails: data.emails || heir.emails || [],
+          address: data.addresses?.[0]?.address || heir.address || "",
+          social_profiles: data.social_profiles || heir.social_profiles || [],
+          confidence: Math.max(heir.confidence || 0, data.confidence_score || 0),
+          notes: data.found_owner_name ? `Traced: ${data.found_owner_name}` : heir.notes,
+        };
+        setResult({ ...result, identified_heirs: updatedHeirs });
+        setExpandedHeir(heirIndex);
+      }
+    } catch (e) {
+      console.error("Heir trace failed:", e);
+    } finally {
+      setTracingHeir(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -755,7 +787,19 @@ export default function HeirSearch() {
                               {heir.inheritance_priority} heir
                             </Badge>
                           </div>
-                          <ConfidenceBar score={heir.confidence || 0} />
+                          <div className="flex items-center gap-2">
+                            <ConfidenceBar score={heir.confidence || 0} />
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => { e.stopPropagation(); traceHeir(i); }}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/60 transition-all cursor-pointer"
+                              title={`Run full skip trace on ${heir.name}`}
+                            >
+                              {tracingHeir === i ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                              {tracingHeir === i ? "Tracing..." : "Trace"}
+                            </span>
+                          </div>
                         </button>
                         {!heir.is_living && (
                           <p className="text-xs text-red-500">Likely deceased — descendants may inherit by representation</p>
@@ -782,6 +826,9 @@ export default function HeirSearch() {
                         )}
                         {heir.address && (
                           <p className="text-xs text-muted-foreground"><MapPin className="w-3 h-3 inline mr-1" />{heir.address}</p>
+                        )}
+                        {!heir.phone_numbers?.length && !heir.emails?.length && !heir.address && (
+                          <p className="text-xs text-muted-foreground italic">No contact info found yet — click "Trace" to run a full skip trace on this heir.</p>
                         )}
                         {isOpen && (
                           <div className="pt-2 mt-1 border-t space-y-2">
