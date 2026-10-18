@@ -14,7 +14,7 @@ export default function ClickableEntity({ children, type = "name", className = "
     <>
       <span
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-        className={`cursor-pointer text-blue-600 hover:text-blue-800 hover:underline underline-offset-2 transition-colors ${className}`}
+        className={`cursor-pointer text-[#0a1f3c] hover:text-[#1a3a5c] hover:underline underline-offset-2 transition-colors ${className}`}
         title={`Deep search for ${children}`}
       >
         {children}

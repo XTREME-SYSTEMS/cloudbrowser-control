@@ -72,8 +72,12 @@ export default function HeirSearchDashboard() {
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-heading font-semibold flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a961]" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c9a961]">Case Management</span>
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-[#0a1f3c] flex items-center gap-2">
+            <Users className="w-6 h-6 text-[#0a1f3c]" />
             Heir Search Dashboard
           </h1>
           <p className="text-muted-foreground mt-1 max-w-3xl">
@@ -102,11 +106,11 @@ export default function HeirSearchDashboard() {
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatCard icon={FileText} label="Total Cases" value={stats.total} color="text-primary" />
-        <StatCard icon={Clock} label="Active" value={stats.searching} color="text-blue-500" />
+        <StatCard icon={Clock} label="Active" value={stats.searching} color="text-[#c9a961]" />
         <StatCard icon={CheckCircle} label="Found" value={stats.found} color="text-green-500" />
         <StatCard icon={AlertCircle} label="Partial" value={stats.partial} color="text-yellow-500" />
         <StatCard icon={AlertCircle} label="Failed" value={stats.failed} color="text-red-500" />
-        <StatCard icon={Users} label="Total Heirs" value={stats.totalHeirs} color="text-purple-500" />
+        <StatCard icon={Users} label="Total Heirs" value={stats.totalHeirs} color="text-[#0a1f3c]" />
       </div>
 
       {/* Filters */}

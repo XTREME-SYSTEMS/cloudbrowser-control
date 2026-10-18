@@ -140,7 +140,11 @@ export default function HeirSearch() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Heir Search</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a961]" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c9a961]">Forensic Genealogy</span>
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-[#0a1f3c]">Heir Search</h1>
           <p className="text-sm text-slate-500 mt-0.5">Search for a deceased person to find and locate their heirs</p>
         </div>
         <div className="flex items-center gap-2">
@@ -169,12 +173,12 @@ export default function HeirSearch() {
             value={form.deceased_name}
             onChange={e => setForm({ ...form, deceased_name: e.target.value })}
             onKeyDown={e => { if (e.key === "Enter") handleSearch(); }}
-            className="pl-12 h-12 text-base rounded-full border-slate-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="pl-12 h-12 text-base rounded-full border-slate-300 bg-white shadow-sm focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20"
           />
         </div>
         <div className="flex items-center justify-center gap-3 mt-4">
           <Button onClick={handleSearch} disabled={searching}
-            className="rounded-full px-6 bg-blue-600 hover:bg-blue-700 text-white border-0">
+            className="rounded-full px-6 bg-[#0a1f3c] hover:bg-[#1a3a5c] text-white border-0">
             {searching
               ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching...</>
               : <><Search className="w-4 h-4 mr-2" />Search</>}
@@ -239,7 +243,7 @@ export default function HeirSearch() {
             </div>
             <div className="space-y-1.5 p-3 rounded-lg border border-slate-200 bg-white">
               <Label className="flex items-center gap-1 text-slate-700 text-xs font-medium">
-                <Database className="w-3.5 h-3.5 text-blue-600" />Google Sheet — Auto-Export
+                <Database className="w-3.5 h-3.5 text-[#0a1f3c]" />Google Sheet — Auto-Export
               </Label>
               <Input placeholder="Paste Google Sheets URL" value={spreadsheetUrl}
                 onChange={e => setSpreadsheetUrl(e.target.value)} className="bg-white border-slate-300" />
@@ -280,7 +284,7 @@ export default function HeirSearch() {
               <History className="w-4 h-4 text-slate-400" />Recent Cases
             </h2>
             {history.length > 5 && (
-              <button onClick={() => setShowAllCases(true)} className="text-xs text-blue-600 hover:underline">View all ({history.length})</button>
+              <button onClick={() => setShowAllCases(true)} className="text-xs text-[#0a1f3c] hover:underline font-medium">View all ({history.length})</button>
             )}
           </div>
           {loadingHistory ? (

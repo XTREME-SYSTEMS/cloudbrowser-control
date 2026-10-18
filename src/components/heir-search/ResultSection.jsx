@@ -34,13 +34,13 @@ export default function ResultSection({
       >
         <div className="flex items-center gap-2 min-w-0">
           {open ? <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />}
-          {Icon && <Icon className="w-4 h-4 text-blue-600 shrink-0" />}
+          {Icon && <Icon className="w-4 h-4 text-[#0a1f3c] shrink-0" />}
           <span className="text-sm font-medium text-slate-900 truncate">{title}</span>
           {description && !open && <span className="text-xs text-slate-400 truncate hidden md:inline">— {description}</span>}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Button variant="outline" size="sm" onClick={handleDeepSearch} disabled={isSearching}
-            className="h-7 px-2.5 text-xs bg-white border-slate-300 text-blue-600 hover:bg-blue-50 hover:border-blue-300">
+            className="h-7 px-2.5 text-xs bg-white border-slate-300 text-[#0a1f3c] hover:bg-[#0a1f3c]/5 hover:border-[#c9a961]/40">
             {isSearching ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Search className="w-3 h-3 mr-1" />}
             {isSearching ? "Searching..." : "Deep Search"}
           </Button>

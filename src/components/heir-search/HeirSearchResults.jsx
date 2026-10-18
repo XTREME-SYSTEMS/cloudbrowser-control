@@ -26,14 +26,14 @@ export default function HeirSearchResults({
   const ConfidenceBar = ({ score }) => (
     <div className="flex items-center gap-2 w-28">
       <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${score}%` }} />
+        <div className="h-full bg-[#c9a961] rounded-full" style={{ width: `${score}%` }} />
       </div>
       <span className="text-xs font-medium text-slate-500 w-7 text-right">{score}%</span>
     </div>
   );
 
   const priorityColor = (p) =>
-    p === "primary" ? "text-blue-600" : p === "secondary" ? "text-purple-600" : "text-gray-500";
+    p === "primary" ? "text-[#0a1f3c]" : p === "secondary" ? "text-[#c9a961]" : "text-gray-500";
 
   const traceHeir = async (heirIndex) => {
     const heir = result.identified_heirs[heirIndex];
@@ -73,7 +73,7 @@ export default function HeirSearchResults({
       {/* Summary */}
       <div className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+          <h2 className="font-serif text-lg font-bold text-[#0a1f3c] flex items-center gap-2">
             {result.status === "found" ? <CheckCircle className="w-5 h-5 text-green-500" />
              : result.status === "partial" ? <AlertCircle className="w-5 h-5 text-amber-500" />
              : <AlertCircle className="w-5 h-5 text-red-500" />}
@@ -97,8 +97,8 @@ export default function HeirSearchResults({
 
       {/* Google Sheets Export Status */}
       {result.sheet_export && (
-        <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl border border-[#c9a961]/30 bg-[#c9a961]/5 flex items-start gap-3">
+          <CheckCircle className="w-5 h-5 text-[#c9a961] shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-sm text-slate-900">Exported to Google Sheets</p>
             <p className="text-xs text-slate-600">
@@ -485,7 +485,7 @@ export default function HeirSearchResults({
       {result.identified_heirs?.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2"><Crown className="w-4 h-4 text-amber-500" />Identified Heirs ({result.identified_heirs.length})</h3>
+            <h3 className="font-serif text-base font-bold text-[#0a1f3c] flex items-center gap-2"><Crown className="w-4 h-4 text-[#c9a961]" />Identified Heirs ({result.identified_heirs.length})</h3>
             <p className="text-xs text-slate-400 mt-0.5">Click any name to search deeper — sorted by inheritance priority</p>
           </div>
           <div className="p-4 space-y-3">
@@ -517,7 +517,7 @@ export default function HeirSearchResults({
                       role="button"
                       tabIndex={0}
                       onClick={(e) => { e.stopPropagation(); traceHeir(i); }}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border border-[#0a1f3c]/20 text-[#0a1f3c] hover:bg-[#0a1f3c]/5 hover:border-[#c9a961]/40 transition-all cursor-pointer"
                       title={`Run full skip trace on ${heir.name}`}
                     >
                       {tracingHeir === i ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
