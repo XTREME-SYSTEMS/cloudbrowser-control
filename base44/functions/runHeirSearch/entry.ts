@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
 import { HEIR_SEARCH_CATALOG } from '../../shared/searchSourceCatalog.ts';
+import { deduplicateHeirs, calculateOverallConfidence, isDeceasedIdentityConfirmed, calculateInheritancePriority } from '../../shared/heirEvidenceEngine.ts';
 
 /**
  * Heir Search Engine — Deceased Person Heir Identification & Contact Discovery
@@ -657,13 +658,8 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       }
     }
 
-    const seen = new Set<string>();
-    const uniqueHeirs = allRelatives.filter(h => {
-      const k = h.name?.toLowerCase().trim();
-      if (!k || seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
+    // Use evidence engine for proper deduplication and validation
+    const uniqueHeirs = deduplicateHeirs(allRelatives);
 
     // === PHASE 4: Skip trace each living heir (parallel passes per heir) ===
     for (const heir of uniqueHeirs) {
@@ -839,15 +835,21 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
     if (deep) R.methods.push("deep_heir_contact_tracing");
     if (extreme) R.methods.push("extreme_heir_contact_tracing");
 
-    // === CONFIDENCE SCORING ===
-    const dConf = R.deceased_details?.confidence || 0;
-    const tConf = R.family_tree?.confidence || 0;
-    const pConf = R.probate_info?.confidence || 0;
-    const hConfs = R.identified_heirs.map((h: any) => h.confidence || 0);
-    const avgH = hConfs.length > 0 ? Math.round(hConfs.reduce((a: number, b: number) => a + b, 0) / hConfs.length) : 0;
-    const overall = Math.round(dConf * 0.3 + tConf * 0.3 + avgH * 0.3 + pConf * 0.1);
+    // === EVIDENCE-BASED CONFIDENCE SCORING ===
+    // Uses the evidence engine instead of averaging LLM guesses
+    const overall = calculateOverallConfidence(
+      R.deceased_details, R.family_tree, R.identified_heirs,
+      R.probate_info, [...new Set(R.sources)]
+    );
 
-    const livingHeirs = R.identified_heirs.filter((h: any) => h.is_living);
+    // Apply state-specific inheritance priority
+    const deathState = (death_location || "").split(",").pop()?.trim() || "";
+    R.identified_heirs = R.identified_heirs.map((h: any) => ({
+      ...h,
+      inheritance_priority: calculateInheritancePriority(h, deathState),
+    }));
+
+    const livingHeirs = R.identified_heirs.filter((h: any) => h.is_living !== false);
     const status = overall >= 70 && livingHeirs.length > 0 ? "found" : overall >= 40 || livingHeirs.length > 0 ? "partial" : "failed";
     const duration = Date.now() - startTime;
 

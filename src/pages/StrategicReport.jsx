@@ -8,6 +8,7 @@ import {
   Award, Building2, Scale, Gauge,
 } from "lucide-react";
 import { downloadStrategicReportPDF } from "@/lib/strategicReportPDF";
+import { downloadCourtReadyPDF } from "@/lib/courtReadyPDF";
 
 const BENCHMARK_COMPANIES = [
   { name: "HeirSearch.com", since: "1967", model: "Non-percentage flat fees, 5-pillar forensic genealogy, $2M E&O insured, court-ready reports + family trees", sources: "15-20 (in-house + commercial + public + worldwide archival)", turnaround: "Days-weeks (human researchers)", verification: "1 layer (human review)", deliverable: "Static PDF + family tree" },
@@ -42,6 +43,8 @@ export default function StrategicReport() {
   const [comparison, setComparison] = useState(null);
   const [runningQA, setRunningQA] = useState(false);
   const [runningComparison, setRunningComparison] = useState(false);
+  const [runningRecursiveQA, setRunningRecursiveQA] = useState(false);
+  const [recursiveResults, setRecursiveResults] = useState(null);
 
   useEffect(() => { loadTraces(); }, []);
 
@@ -124,7 +127,6 @@ export default function StrategicReport() {
   const runComparison = async () => {
     setRunningComparison(true);
     try {
-      // Use the first heir search case for comparison, or create a synthetic one
       const hsRes = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 1 });
       const hsItems = hsRes.items || hsRes;
       if (hsItems[0]) {
@@ -135,6 +137,45 @@ export default function StrategicReport() {
       }
     } catch (err) { setError(err.message); }
     finally { setRunningComparison(false); }
+  };
+
+  const runRecursiveQA = async () => {
+    setRunningRecursiveQA(true);
+    setError(null);
+    try {
+      const hsRes = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 1 });
+      const hsItems = hsRes.items || hsRes;
+      if (hsItems[0]) {
+        const res = await base44.functions.invoke("runRecursiveQA", {
+          heir_search_id: hsItems[0].id,
+          target_score: 85,
+          max_iterations: 3,
+          run_validator: true,
+        });
+        setRecursiveResults(res.data || res);
+        // Reload traces to reflect updated scores
+        await loadTraces();
+      }
+    } catch (err) { setError(err.message); }
+    finally { setRunningRecursiveQA(false); }
+  };
+
+  const handleDownloadCourtReady = () => {
+    // Find the first heir search case for the court-ready PDF
+    const hs = subjects.find(s => s.heir_search_id);
+    downloadCourtReadyPDF({
+      deceased_name: hs?.target || subjects[0]?.target || "Unknown",
+      deceased_details: hs?.deceased_details || {},
+      family_tree: hs?.family_tree || {},
+      identified_heirs: hs?.identified_heirs || subjects,
+      probate_info: hs?.probate_info || {},
+      sources_checked: hs?.sources_checked || [],
+      methods_used: hs?.methods_used || [],
+      confidence_score: hs?.confidence || 0,
+      case_reference: hs?.case_reference || "",
+      death_location: hs?.death_location || "",
+      qa_certification: qaResults[hs?.id] || {},
+    });
   };
 
   return (
@@ -159,8 +200,12 @@ export default function StrategicReport() {
             {tracing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Tracing...</> : <><Search className="w-4 h-4 mr-2" />Run Deep Traces</>}
           </Button>
           <Button onClick={handleDownload} disabled={!reportReady || loading}
+            className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20">
+            <Download className="w-4 h-4 mr-2" />Marketing PDF
+          </Button>
+          <Button onClick={handleDownloadCourtReady} disabled={!reportReady || loading}
             className="bg-[#00a8ff] text-white border-0 hover:bg-[#0090e0]">
-            <Download className="w-4 h-4 mr-2" />Download PDF Report
+            <Scale className="w-4 h-4 mr-2" />Court-Ready PDF
           </Button>
         </div>
       </div>
@@ -241,10 +286,14 @@ export default function StrategicReport() {
                 <p className="text-xs text-[#788291]">3-layer verification: AI correlation → QA Agent → Validator Agent</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button onClick={runQAValidation} disabled={runningQA || subjects.length === 0}
                 className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20 text-xs">
                 {runningQA ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Validating...</> : <><Shield className="w-3 h-3 mr-1" />Run QA</>}
+              </Button>
+              <Button onClick={runRecursiveQA} disabled={runningRecursiveQA || subjects.length === 0}
+                className="bg-green-500/10 text-green-400 border border-green-500/40 hover:bg-green-500/20 text-xs">
+                {runningRecursiveQA ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Recursive QA...</> : <><Sparkles className="w-3 h-3 mr-1" />Recursive QA (Auto-Fix)</>}
               </Button>
               <Button onClick={runComparison} disabled={runningComparison}
                 className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20 text-xs">
@@ -272,6 +321,52 @@ export default function StrategicReport() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Recursive QA Results */}
+          {recursiveResults && (
+            <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-5 h-5 text-green-400" />
+                <h3 className="text-sm font-bold text-white">Recursive QA Auto-Fix Results</h3>
+                <Badge className={recursiveResults.target_reached ? "bg-green-500/10 text-green-400 border border-green-500/30" : "bg-amber-500/10 text-amber-400 border border-amber-500/30"}>
+                  {recursiveResults.target_reached ? "TARGET REACHED" : "IMPROVED"}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{recursiveResults.final_score}</div>
+                  <p className="text-[10px] text-[#788291] uppercase">Final Score</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#00a8ff]">{recursiveResults.iterations}</div>
+                  <p className="text-[10px] text-[#788291] uppercase">Iterations</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white">{recursiveResults.living_heir_count}</div>
+                  <p className="text-[10px] text-[#788291] uppercase">Living Heirs</p>
+                </div>
+              </div>
+              {recursiveResults.iteration_details?.map((it, i) => (
+                <div key={i} className="text-xs text-[#a0aab8] mb-2 pb-2 border-b border-[#00a8ff]/10 last:border-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-[#00a8ff]">Iteration {it.iteration}</span>
+                    <span className={it.result === "TARGET_REACHED" ? "text-green-400" : "text-amber-400"}>
+                      {it.qa_score} → {it.post_fix_score || it.qa_score} ({it.result})
+                    </span>
+                  </div>
+                  {it.fixes_applied?.length > 0 && (
+                    <ul className="ml-4">
+                      {it.fixes_applied.map((f, j) => (
+                        <li key={j} className="flex items-start gap-1">
+                          <CheckCircle className="w-3 h-3 text-green-400 mt-0.5 shrink-0" />{f}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
