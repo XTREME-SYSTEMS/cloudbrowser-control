@@ -33,7 +33,27 @@ export default async function (req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const heirSearchId = body.heir_search_id;
-    const folderId = body.folder_id || null;
+    let folderId = body.folder_id || null;
+
+    // If a target_doc_id is provided, resolve its parent folder and save there
+    const targetDocId = body.target_doc_id;
+    if (targetDocId && !folderId) {
+      try {
+        const { accessToken: driveToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
+        const fileRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${targetDocId}?fields=parents`,
+          { headers: { "Authorization": `Bearer ${driveToken}` } }
+        );
+        if (fileRes.ok) {
+          const fileData = await fileRes.json();
+          if (fileData.parents && fileData.parents.length > 0) {
+            folderId = fileData.parents[0];
+          }
+        }
+      } catch (err) {
+        console.error("Failed to resolve target doc folder:", err);
+      }
+    }
 
     // ===== LOAD CASE DATA =====
     let heirSearch;

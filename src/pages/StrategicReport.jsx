@@ -174,6 +174,7 @@ export default function StrategicReport() {
       }
       const res = await base44.functions.invoke("generateFindingsReport", {
         heir_search_id: hsItems[0].id,
+        target_doc_id: "1LLcMlgo7eElet6edoc5BQRdE6jlIEa6Zpha7NC-uT6Y",
       });
       const data = res.data || res;
       if (data.doc_url) {
