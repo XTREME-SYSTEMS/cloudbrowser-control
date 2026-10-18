@@ -135,7 +135,13 @@ const NON_HEIR_PATTERNS = [
   "family_plot", "cemetery", "funeral",
 ];
 
-export function isLikelyHeir(heir: any): boolean {
+// Relationships that are NOT legal heirs and should be filtered
+const NON_HEIR_RELATIONSHIPS = [
+  "network_central_figure", "business_entity", "association_member",
+  "political_donor", "deed_co_owner",
+];
+
+export function isLikelyHeir(heir: any, deceasedName?: string): boolean {
   const name = (heir.name || "").toLowerCase().trim();
   if (!name || name.length < 3) return false;
   
@@ -149,6 +155,13 @@ export function isLikelyHeir(heir: any): boolean {
   
   // Filter entries that are clearly not people
   if (!/[a-z]+\s+[a-z]+/i.test(name)) return false;
+  
+  // Filter non-heir relationships
+  const rel = (heir.relationship || "").toLowerCase().trim();
+  if (NON_HEIR_RELATIONSHIPS.includes(rel)) return false;
+  
+  // Filter the decedent themselves from the heir list
+  if (deceasedName && name === deceasedName.toLowerCase().trim()) return false;
   
   return true;
 }
@@ -169,11 +182,11 @@ export function getRelationshipPriority(rel: string): number {
   return 10;
 }
 
-export function deduplicateHeirs(heirs: any[]): any[] {
+export function deduplicateHeirs(heirs: any[], deceasedName?: string): any[] {
   const map = new Map<string, any>();
   
   for (const heir of heirs || []) {
-    if (!isLikelyHeir(heir)) continue;
+    if (!isLikelyHeir(heir, deceasedName)) continue;
     
     // Normalize name for dedup key
     const nameKey = (heir.name || "").toLowerCase().trim()

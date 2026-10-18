@@ -180,8 +180,8 @@ async function attemptFixes(base44: any, data: any): Promise<any> {
 
   // Fix 1: Deduplicate and clean heir list
   if (deficiencies.some(d => d.toLowerCase().includes("duplicate") || d.toLowerCase().includes("non-heir") || d.toLowerCase().includes("inconsistenc"))) {
-    cleaned_heirs = deduplicateHeirs(data.heirs);
-    applied.push("Deduplicated and cleaned heir list (removed non-heir entries, merged duplicates)");
+    cleaned_heirs = deduplicateHeirs(data.heirs, data.deceased_name);
+    applied.push("Deduplicated and cleaned heir list (removed non-heir entries, decedent, and merged duplicates)");
   }
 
   // Fix 2: Try to confirm deceased identity if not confirmed
