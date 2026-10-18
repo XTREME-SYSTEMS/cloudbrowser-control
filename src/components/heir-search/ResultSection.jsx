@@ -1,26 +1,14 @@
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, X, Search, Loader2 } from "lucide-react";
 
 /**
  * Collapsible result section with delete (x) and deep search buttons.
- * - Click the header to expand/collapse
- * - X button removes this section's data from the record
- * - Deep Search button runs a targeted search for this section
+ * White-background, clean styling.
  */
 export default function ResultSection({
-  title,
-  icon: Icon,
-  description,
-  sectionKey,
-  result,
-  setResult,
-  onDelete,
-  onDeepSearch,
-  searchingSection,
-  defaultOpen = false,
-  children,
+  title, icon: Icon, description, sectionKey,
+  onDelete, onDeepSearch, searchingSection, defaultOpen = false, children,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [deleting, setDeleting] = useState(false);
@@ -30,11 +18,7 @@ export default function ResultSection({
     e.stopPropagation();
     if (deleting) return;
     setDeleting(true);
-    try {
-      await onDelete(sectionKey);
-    } finally {
-      setDeleting(false);
-    }
+    try { await onDelete(sectionKey); } finally { setDeleting(false); }
   };
 
   const handleDeepSearch = (e) => {
@@ -43,44 +27,34 @@ export default function ResultSection({
   };
 
   return (
-    <Card>
-      <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors -mb-0" onClick={() => setOpen(!open)}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {open ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-            {Icon && <Icon className="w-4 h-4 shrink-0" />}
-            <CardTitle className="text-base">{title}</CardTitle>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeepSearch}
-              disabled={isSearching}
-              className="h-7 px-2 text-xs"
-            >
-              {isSearching ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Search className="w-3 h-3 mr-1" />}
-              {isSearching ? "Searching..." : "Deep Search"}
-            </Button>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              title="Delete this section"
-              className="flex items-center justify-center w-7 h-7 rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/60 transition-all disabled:opacity-40"
-            >
-              {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div
+        className="flex items-center justify-between gap-2 px-4 py-3 cursor-pointer select-none hover:bg-slate-50 transition-colors"
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          {open ? <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />}
+          {Icon && <Icon className="w-4 h-4 text-blue-600 shrink-0" />}
+          <span className="text-sm font-medium text-slate-900 truncate">{title}</span>
+          {description && !open && <span className="text-xs text-slate-400 truncate hidden md:inline">— {description}</span>}
         </div>
-        {description && !open && (
-          <CardDescription className="mt-1 ml-6">{description}</CardDescription>
-        )}
-      </CardHeader>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button variant="outline" size="sm" onClick={handleDeepSearch} disabled={isSearching}
+            className="h-7 px-2.5 text-xs bg-white border-slate-300 text-blue-600 hover:bg-blue-50 hover:border-blue-300">
+            {isSearching ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Search className="w-3 h-3 mr-1" />}
+            {isSearching ? "Searching..." : "Deep Search"}
+          </Button>
+          <button onClick={handleDelete} disabled={deleting} title="Delete this section"
+            className="flex items-center justify-center w-7 h-7 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40">
+            {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      </div>
       {open && (
-        <CardContent className="space-y-2 text-sm pt-0">
+        <div className="px-4 pb-4 pt-1 space-y-2 text-sm text-slate-700 border-t border-slate-100">
           {children}
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
