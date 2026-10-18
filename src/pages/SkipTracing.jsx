@@ -34,8 +34,9 @@ export default function SkipTracing() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!form.property_address && !form.owner_name && !form.phone && !form.email) {
+  const handleSearch = async (overrideForm) => {
+    const searchForm = overrideForm || form;
+    if (!searchForm.property_address && !searchForm.owner_name && !searchForm.phone && !searchForm.email) {
       setError("Enter at least one search field to begin tracing");
       return;
     }
@@ -43,7 +44,7 @@ export default function SkipTracing() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runSkipTraceFallback", { ...form, deep_search: deepSearch, spreadsheet_url: form.spreadsheet_url });
+      const response = await base44.functions.invoke("runSkipTraceFallback", { ...searchForm, deep_search: deepSearch, spreadsheet_url: searchForm.spreadsheet_url });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -56,6 +57,12 @@ export default function SkipTracing() {
     } finally {
       setSearching(false);
     }
+  };
+
+  const traceRelative = (relative) => {
+    const newForm = { ...form, owner_name: relative.name || "", phone: relative.phone || "", property_address: "", email: "" };
+    setForm(newForm);
+    handleSearch(newForm);
   };
 
   const ConfidenceBar = ({ score }) => (
@@ -299,12 +306,20 @@ export default function SkipTracing() {
                 {result.relatives?.length > 0 && (
                   <div>
                     <h3 className="font-medium mb-2 flex items-center gap-2"><Users className="w-4 h-4" />Relatives & Associates ({result.relatives.length})</h3>
+                    <p className="text-xs text-muted-foreground mb-2">Click any individual to run a full skip trace on them</p>
                     <div className="flex flex-wrap gap-2">
                       {result.relatives.map((r, i) => (
-                        <Badge key={i} variant="secondary">
+                        <button
+                          key={i}
+                          onClick={() => traceRelative(r)}
+                          disabled={searching}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-secondary/80 text-secondary-foreground border border-border hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={`Trace ${r.name}`}
+                        >
+                          <Search className="w-3 h-3" />
                           {r.name}{r.relationship ? ` (${r.relationship})` : ""}
                           {r.phone && ` — ${r.phone}`}
-                        </Badge>
+                        </button>
                       ))}
                     </div>
                   </div>
