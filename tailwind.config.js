@@ -65,7 +65,8 @@ module.exports = {
   			heading: ['var(--font-heading)'],
   			body: ['var(--font-body)'],
   			display: ['var(--font-display)'],
-  			mono: ['var(--font-mono)']
+  			mono: ['var(--font-mono)'],
+  			serif: ['"Playfair Display"', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif']
   		},
   		keyframes: {
   			'accordion-down': {

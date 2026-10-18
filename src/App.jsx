@@ -72,6 +72,7 @@ import IntelligenceCommandCenter from '@/pages/IntelligenceCommandCenter';
 import ClientOnboarding from '@/pages/ClientOnboarding';
 import ClientDelivery from '@/pages/ClientDelivery';
 import StrategicMindsLanding from '@/pages/StrategicMindsLanding';
+import StrategicCloudBrowserLanding from '@/pages/StrategicCloudBrowserLanding';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -110,7 +111,7 @@ const AuthenticatedApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
       <Route path="/share/:token" element={<ShareView />} />
-      <Route path="/" element={<StrategicMindsLanding />} />
+      <Route path="/" element={<StrategicCloudBrowserLanding />} />
       <Route path="/landing" element={<Landing />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ThankYou" element={<ThankYou />} />
