@@ -50,6 +50,7 @@ const navGroups = [
     label: "Core",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/skip-tracing", label: "Skip Tracing", icon: Target },
       { to: "/heir-search", label: "Heir Search", icon: Users },
       { to: "/heir-search-dashboard", label: "Case Dashboard", icon: FileText },
       { to: "/heir-portal", label: "Client Portal", icon: Crown },
