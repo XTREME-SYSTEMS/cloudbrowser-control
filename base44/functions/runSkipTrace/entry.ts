@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
-import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
 import { SKIP_TRACE_DEEP_CATALOG } from '../../shared/searchSourceCatalog.ts';
 
 /**
@@ -33,6 +33,7 @@ const SEARCH_MODEL = "gemini_3_flash";
 export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
+    setGatewayFallback(base44); // enable Base44 Core InvokeLLM fallback when Vercel gateway is exhausted
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
