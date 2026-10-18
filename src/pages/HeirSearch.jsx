@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, AlertCircle, Database, Loader2, FileText, MapPin, Mail,
-  ChevronDown, ChevronRight, ExternalLink, X, SlidersHorizontal, History,
+  ChevronDown, ChevronRight, ExternalLink, X, SlidersHorizontal, History, Radar, CheckCircle,
 } from "lucide-react";
 import TemplateSelector from "@/components/heir-search/TemplateSelector";
 import HeirSearchResults from "@/components/heir-search/HeirSearchResults";
+import PasteIntake from "@/components/heir-search/PasteIntake";
 
 export default function HeirSearch() {
   const [searchParams] = useSearchParams();
@@ -35,6 +36,8 @@ export default function HeirSearch() {
   const [searchingSection, setSearchingSection] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [showAllCases, setShowAllCases] = useState(false);
+  const [autoTracing, setAutoTracing] = useState(false);
+  const [traceSummary, setTraceSummary] = useState(null);
 
   useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
 
@@ -72,6 +75,46 @@ export default function HeirSearch() {
     }
   };
 
+  const handleParsed = (parsed) => {
+    setForm(f => ({
+      ...f,
+      deceased_name: parsed.deceased_name || f.deceased_name,
+      deceased_dob: parsed.deceased_dob || f.deceased_dob,
+      deceased_dod: parsed.deceased_dod || f.deceased_dod,
+      deceased_last_address: parsed.deceased_last_address || f.deceased_last_address,
+      death_location: parsed.death_location || f.death_location,
+      deceased_ssn: parsed.deceased_ssn || f.deceased_ssn,
+      case_reference: parsed.case_reference || f.case_reference,
+      client_email: parsed.client_email || f.client_email,
+    }));
+    if (!showAdvanced && parsed.deceased_dob) setShowAdvanced(true);
+  };
+
+  const handleAutoTrace = async (searchId) => {
+    if (!searchId) return;
+    setAutoTracing(true);
+    setTraceSummary(null);
+    try {
+      const response = await base44.functions.invoke("autoTraceHeirs", {
+        heir_search_id: searchId,
+        spreadsheet_url: spreadsheetUrl || undefined,
+      });
+      const data = response.data || response;
+      if (data.ok) {
+        setTraceSummary(data);
+        // Reload the enriched result
+        const updated = await base44.entities.HeirSearch.get(searchId);
+        if (updated) setResult(updated);
+      } else if (data.error) {
+        setError(data.error);
+      }
+    } catch (e) {
+      console.error("Auto-trace failed:", e);
+    } finally {
+      setAutoTracing(false);
+    }
+  };
+
   const handleSearch = async () => {
     if (!form.deceased_name) {
       setError("Enter a name to begin searching");
@@ -80,14 +123,21 @@ export default function HeirSearch() {
     setSearching(true);
     setError(null);
     setResult(null);
+    setTraceSummary(null);
     try {
       const response = await base44.functions.invoke("runHeirSearch", {
         ...form, deep_search: true, extreme_deep: true,
         spreadsheet_url: spreadsheetUrl || undefined,
       });
       const data = response.data || response;
-      if (data.error) setError(data.error);
-      else { setResult(data); loadHistory(); }
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setResult(data);
+        loadHistory();
+        // Auto-trace every heir + everyone they know
+        if (data.id) handleAutoTrace(data.id);
+      }
     } catch (e) {
       setError(e.response?.data?.error || e.message);
     } finally {
@@ -163,8 +213,13 @@ export default function HeirSearch() {
         </div>
       </div>
 
+      {/* Paste & Organize */}
+      <div className="max-w-2xl mx-auto pt-2 pb-4">
+        <PasteIntake onParsed={handleParsed} />
+      </div>
+
       {/* Search Bar */}
-      <div className="max-w-2xl mx-auto py-6">
+      <div className="max-w-2xl mx-auto py-2">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <Input
@@ -259,6 +314,36 @@ export default function HeirSearch() {
             <p className="font-medium text-sm">Search Error</p>
             <p className="text-xs">{error}</p>
           </div>
+        </div>
+      )}
+
+      {/* Auto-Trace Banner */}
+      {autoTracing && (
+        <div className="max-w-2xl mx-auto mt-4 p-4 rounded-xl border border-[#c9a961]/30 bg-[#c9a961]/5 flex items-center gap-3">
+          <Radar className="w-5 h-5 text-[#c9a961] animate-pulse shrink-0" />
+          <div>
+            <p className="font-medium text-sm text-[#0a1f3c]">Skip-tracing heirs &amp; everyone they know...</p>
+            <p className="text-xs text-slate-500">Running deep skip traces on every heir, family member, and associate — collecting phones, emails, addresses, and social profiles.</p>
+          </div>
+          <Loader2 className="w-4 h-4 animate-spin text-[#c9a961] ml-auto shrink-0" />
+        </div>
+      )}
+      {traceSummary && !autoTracing && (
+        <div className="max-w-2xl mx-auto mt-4 p-4 rounded-xl border border-green-200 bg-green-50 flex items-start gap-3">
+          <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-green-800">Auto-trace complete</p>
+            <p className="text-xs text-green-700 mt-0.5">
+              Traced {traceSummary.traced} heirs/family members + {traceSummary.associates_traced} associates — {traceSummary.total_heirs} people with contact info now.
+              {traceSummary.sheet_export?.exported ? ` Synced ${traceSummary.sheet_export.exported} rows to Google Sheets.` : ""}
+            </p>
+          </div>
+          <button
+            onClick={() => handleAutoTrace(result?.id)}
+            className="ml-auto text-xs font-medium text-[#0a1f3c] hover:underline shrink-0"
+          >
+            Re-trace
+          </button>
         </div>
       )}
 
