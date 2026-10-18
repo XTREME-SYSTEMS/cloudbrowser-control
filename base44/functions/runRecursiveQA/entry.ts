@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
-import { isLikelyHeir, deduplicateHeirs, calculateOverallConfidence } from '../../shared/heirEvidenceEngine.ts';
+import { isLikelyHeir, deduplicateHeirs, calculateOverallConfidence, calculateInheritancePriority } from '../../shared/heirEvidenceEngine.ts';
 
 /**
  * Recursive QA Re-Run Engine
@@ -233,6 +233,47 @@ async function attemptFixes(base44: any, data: any): Promise<any> {
       updated_tree = { ...data.tree, ...treeRes };
       applied.push("Extended family tree with additional relatives");
     } catch (e) { /* ignore */ }
+  }
+
+  // Fix 4: Re-calculate inheritance priorities and normalize relationship labels
+  const priorityDeficiencies = deficiencies.some(d =>
+    d.toLowerCase().includes("priority") ||
+    d.toLowerCase().includes("inheritance") ||
+    d.toLowerCase().includes("relationship label") ||
+    d.toLowerCase().includes("inconsistent") ||
+    d.toLowerCase().includes("non-legalized")
+  );
+
+  if (priorityDeficiencies || cleaned_heirs) {
+    const state = data.death_location || data.state || "";
+    const heirSource = cleaned_heirs || data.heirs || [];
+    const normalized = heirSource.map((h: any) => {
+      const rel = (h.relationship || "").toLowerCase().trim();
+      // Normalize common non-standard labels
+      let normalizedRel = rel;
+      if (rel === "relative" || rel === "next_of_kin" || rel === "network_central_figure") {
+        // Try to infer from family tree
+        const tree = data.tree || {};
+        if (tree.spouse && tree.spouse.toLowerCase().includes((h.name || "").toLowerCase().split(" ")[0])) {
+          normalizedRel = "spouse";
+        } else if (tree.children?.some((c: string) => c.toLowerCase().includes((h.name || "").toLowerCase().split(" ")[0]))) {
+          normalizedRel = "child";
+        } else if (tree.parents?.some((p: string) => p.toLowerCase().includes((h.name || "").toLowerCase().split(" ")[0]))) {
+          normalizedRel = "parent";
+        } else if (tree.siblings?.some((s: string) => s.toLowerCase().includes((h.name || "").toLowerCase().split(" ")[0]))) {
+          normalizedRel = "sibling";
+        }
+      }
+      const priority = calculateInheritancePriority({ ...h, relationship: normalizedRel }, state);
+      // Boost confidence if heir has multiple contact methods (corroboration)
+      let boostedConf = h.confidence || 0;
+      const contactCount = (h.phone_numbers?.length || 0) + (h.emails?.length || 0) + (h.address ? 1 : 0);
+      if (contactCount >= 2 && boostedConf < 0.5) boostedConf = 0.5;
+      if (contactCount >= 3 && boostedConf < 0.7) boostedConf = 0.7;
+      return { ...h, relationship: normalizedRel, inheritance_priority: priority, confidence: boostedConf };
+    });
+    cleaned_heirs = normalized;
+    applied.push("Re-calculated inheritance priorities using state intestacy rules and normalized relationship labels");
   }
 
   return { cleaned_heirs, updated_deceased, updated_tree, applied };
