@@ -11,7 +11,7 @@ import { HEIR_SEARCH_CATALOG } from "@/lib/searchSourceCatalog";
 import {
   Users, Phone, Mail, MapPin, Search, AlertCircle, CheckCircle, Clock,
   Database, Loader2, FileText, GitBranch, Gavel, UserX, UserCheck, Crown,
-  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap, ExternalLink,
+  Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap, ExternalLink, Calendar,
 } from "lucide-react";
 import TemplateSelector from "@/components/heir-search/TemplateSelector";
 import { downloadHeirPDF } from "@/lib/heirPDF";
@@ -37,6 +37,7 @@ export default function HeirSearch() {
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [trackingSheetUrl, setTrackingSheetUrl] = useState("");
+  const [expandedHeir, setExpandedHeir] = useState(null);
 
   useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
 
@@ -734,10 +735,17 @@ export default function HeirSearch() {
                   <CardContent className="space-y-3">
                     {[...result.identified_heirs]
                       .sort((a, b) => a.relationship_degree - b.relationship_degree)
-                      .map((heir, i) => (
+                      .map((heir, i) => {
+                      const isOpen = expandedHeir === i;
+                      return (
                       <div key={i} className="p-3 rounded-lg border space-y-2">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedHeir(isOpen ? null : i)}
+                          className="flex items-center justify-between flex-wrap gap-2 w-full text-left hover:bg-muted/30 -m-1 p-1 rounded-md transition-colors"
+                        >
                           <div className="flex items-center gap-2">
+                            {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                             {heir.is_living ? <UserCheck className="w-4 h-4 text-green-500" /> : <UserX className="w-4 h-4 text-red-500" />}
                             <span className="font-medium">{heir.name}</span>
                             <Badge variant="outline" className={priorityColor(heir.inheritance_priority)}>
@@ -748,7 +756,7 @@ export default function HeirSearch() {
                             </Badge>
                           </div>
                           <ConfidenceBar score={heir.confidence || 0} />
-                        </div>
+                        </button>
                         {!heir.is_living && (
                           <p className="text-xs text-red-500">Likely deceased — descendants may inherit by representation</p>
                         )}
@@ -775,11 +783,55 @@ export default function HeirSearch() {
                         {heir.address && (
                           <p className="text-xs text-muted-foreground"><MapPin className="w-3 h-3 inline mr-1" />{heir.address}</p>
                         )}
-                        {heir.notes && (
-                          <p className="text-xs text-muted-foreground italic">{heir.notes}</p>
+                        {isOpen && (
+                          <div className="pt-2 mt-1 border-t space-y-2">
+                            {heir.age_or_dob && (
+                              <p className="text-xs"><Calendar className="w-3 h-3 inline mr-1 text-muted-foreground" /><span className="text-muted-foreground">Age / DOB:</span> {heir.age_or_dob}</p>
+                            )}
+                            {heir.relationship_degree != null && (
+                              <p className="text-xs"><span className="text-muted-foreground">Kinship degree:</span> {heir.relationship_degree}</p>
+                            )}
+                            {heir.phone_numbers?.some(p => p.source) && (
+                              <div className="text-xs">
+                                <p className="text-muted-foreground mb-1">Phone sources:</p>
+                                <ul className="list-disc list-inside space-y-0.5">
+                                  {heir.phone_numbers.filter(p => p.source).map((p, j) => (
+                                    <li key={j}>{p.number} — via {p.source}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {heir.emails?.some(e => e.source) && (
+                              <div className="text-xs">
+                                <p className="text-muted-foreground mb-1">Email sources:</p>
+                                <ul className="list-disc list-inside space-y-0.5">
+                                  {heir.emails.filter(e => e.source).map((e, j) => (
+                                    <li key={j}>{e.email} — via {e.source}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {heir.social_profiles?.length > 0 && (
+                              <div className="text-xs">
+                                <p className="text-muted-foreground mb-1">Social profiles:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {heir.social_profiles.map((s, j) => (
+                                    <a key={j} href={s.url} target="_blank" rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border hover:border-primary/40 hover:text-primary transition-colors">
+                                      <Globe2 className="w-3 h-3" />{s.platform}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {heir.notes && (
+                              <p className="text-xs text-muted-foreground italic">{heir.notes}</p>
+                            )}
+                          </div>
                         )}
                       </div>
-                    ))}
+                      );
+                      })}
                   </CardContent>
                 </Card>
               )}
