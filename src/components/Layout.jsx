@@ -54,6 +54,7 @@ const navGroups = [
       { to: "/skip-tracing", label: "Skip Tracing", icon: Target },
       { to: "/heir-search", label: "Heir Search", icon: Users },
       { to: "/heir-search-dashboard", label: "Case Dashboard", icon: FileText },
+      { to: "/strategic-report", label: "Strategic Report", icon: FileText },
       { to: "/heir-portal", label: "Client Portal", icon: Crown },
       { to: "/sessions", label: "Sessions", icon: Monitor },
       { to: "/jobs", label: "Jobs", icon: Briefcase },
