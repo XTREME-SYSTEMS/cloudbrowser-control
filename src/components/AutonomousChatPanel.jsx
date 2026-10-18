@@ -142,14 +142,14 @@ export default function AutonomousChatPanel() {
         style={{ boxShadow: open ? "-8px 0 32px rgba(0,0,0,0.4)" : "none" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 shrink-0" style={{ background: "rgba(0,163,255,0.04)" }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0" style={{ background: "rgba(0,163,255,0.04)" }}>
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
               <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 12px rgba(0,163,255,0.3)" }} />
               <Bot className="w-4 h-4 text-primary relative z-10" />
             </div>
             <div className="min-w-0">
-              <div className="font-heading font-bold text-sm text-white tracking-wide truncate">AUTONOMOUS AGENT</div>
+              <div className="font-heading font-bold text-sm text-foreground tracking-wide truncate">AUTONOMOUS AGENT</div>
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-[10px] text-primary/70 font-display tracking-widest uppercase">Full Access · Memory Active</span>
@@ -163,7 +163,7 @@ export default function AutonomousChatPanel() {
             <button onClick={clearConversation} title="New conversation" className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all">
               <Trash2 className="w-4 h-4" />
             </button>
-            <button onClick={() => setOpen(false)} title="Close panel" className="p-1.5 rounded-md text-muted-foreground hover:text-white hover:bg-white/10 transition-all">
+            <button onClick={() => setOpen(false)} title="Close panel" className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
               <ChevronLeft className="w-4 h-4" />
             </button>
           </div>
@@ -183,7 +183,7 @@ export default function AutonomousChatPanel() {
                 <Bot className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="font-heading font-semibold text-sm text-white">Autonomous Agent Ready</p>
+                <p className="font-heading font-semibold text-sm text-foreground">Autonomous Agent Ready</p>
                 <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
                   Full autonomy. Zero limitations. Persistent memory across sessions. Can run deep skip traces, heir searches, and all intelligence operations.
                 </p>
@@ -196,7 +196,7 @@ export default function AutonomousChatPanel() {
                     className="flex flex-col items-start gap-1 p-2.5 rounded-lg border border-white/8 bg-white/2 hover:border-primary/40 hover:bg-primary/8 transition-all text-left group"
                   >
                     <Icon className="w-4 h-4 text-primary/70 group-hover:text-primary" />
-                    <span className="text-xs font-display font-semibold text-neutral-300 group-hover:text-white">{label}</span>
+                    <span className="text-xs font-display font-semibold text-muted-foreground group-hover:text-foreground">{label}</span>
                   </button>
                 ))}
               </div>
@@ -214,7 +214,7 @@ export default function AutonomousChatPanel() {
         </div>
 
         {/* Input */}
-        <div className="shrink-0 border-t border-white/5 p-3" style={{ background: "rgba(5,8,13,0.6)" }}>
+        <div className="shrink-0 border-t border-border p-3 bg-background/80">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -229,7 +229,7 @@ export default function AutonomousChatPanel() {
                 }}
                 placeholder="Command the agent... (Shift+Enter for new line)"
                 rows={1}
-                className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm resize-none max-h-32 xa-scroll bg-white/3 border border-white/8 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/50 transition-all"
+                className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm resize-none max-h-32 xa-scroll bg-card border border-border focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/20 text-foreground font-medium placeholder:text-muted-foreground/60 transition-all"
                 style={{ minHeight: "42px" }}
               />
             </div>

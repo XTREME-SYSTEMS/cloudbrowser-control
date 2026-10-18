@@ -919,6 +919,22 @@ ${deceased_dob ? `Born: ${deceased_dob}\n` : ""}${deceased_dod ? `Died: ${deceas
       }
     }
 
+    // === FULL SHEET SYNC (rewrites the tracking sheet, removes failed searches) ===
+    try {
+      const syncRes: any = await base44.functions.invoke("syncHeirSheet", {
+        spreadsheet_url: spreadsheet_url || '',
+        sheet_name: sheet_name || 'Heirs',
+      });
+      const syncData = syncRes?.data || syncRes;
+      if (syncData?.ok) {
+        sheet_export = { ...(sheet_export || {}), full_sync: syncData };
+      } else if (syncData?.error) {
+        R.errors.push({ step: "sheet_sync", error: syncData.error });
+      }
+    } catch (syncErr: any) {
+      R.errors.push({ step: "sheet_sync", error: syncErr.message });
+    }
+
     return Response.json({
       ok: true, heir_search_id: heirSearch.id, status, confidence_score: overall,
       deceased_confirmed: R.deceased_details?.confirmed || false,

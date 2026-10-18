@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,43 +6,43 @@
 
 @layer base {
   :root {
-    --background: 210 50% 4%;
-    --foreground: 210 20% 90%;
-    --card: 210 40% 6%;
-    --card-foreground: 210 20% 90%;
-    --popover: 210 40% 6%;
-    --popover-foreground: 210 20% 90%;
-    --primary: 200 100% 50%;
+    --background: 210 20% 99%;
+    --foreground: 210 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 25% 12%;
+    --primary: 205 100% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 30% 12%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 210 30% 10%;
-    --muted-foreground: 210 15% 55%;
-    --accent: 190 100% 50%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 210 25% 15%;
+    --muted: 210 20% 95%;
+    --muted-foreground: 210 10% 42%;
+    --accent: 190 100% 42%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 200 80% 20%;
-    --input: 200 80% 20%;
-    --ring: 200 100% 50%;
-    --chart-1: 200 100% 50%;
-    --chart-2: 190 100% 50%;
-    --chart-3: 210 100% 60%;
-    --chart-4: 180 100% 50%;
-    --chart-5: 220 100% 60%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 205 100% 45%;
+    --chart-1: 205 100% 45%;
+    --chart-2: 190 100% 42%;
+    --chart-3: 210 80% 55%;
+    --chart-4: 180 70% 45%;
+    --chart-5: 220 80% 55%;
     --radius: 0.5rem;
-    --font-heading: 'Orbitron', sans-serif;
+    --font-heading: 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
-    --font-display: 'Rajdhani', sans-serif;
+    --font-display: 'Inter', sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --sidebar-background: 210 50% 4%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 200 100% 50%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 210 25% 15%;
+    --sidebar-primary: 205 100% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 8%;
-    --sidebar-accent-foreground: 200 100% 60%;
-    --sidebar-border: 200 80% 15%;
-    --sidebar-ring: 200 100% 50%;
+    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent-foreground: 205 100% 40%;
+    --sidebar-border: 210 15% 88%;
+    --sidebar-ring: 205 100% 45%;
   }
 
   .dark {

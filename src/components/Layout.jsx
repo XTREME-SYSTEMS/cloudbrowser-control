@@ -23,7 +23,7 @@ function BrandMark() {
         <span className="font-heading font-black text-lg chrome-text relative z-10">S</span>
       </div>
       <div className="min-w-0">
-        <div className="font-heading font-bold text-sm text-white tracking-wide leading-tight truncate">STRATEGIC CLOUD</div>
+        <div className="font-heading font-bold text-sm text-foreground tracking-wide leading-tight truncate">STRATEGIC CLOUD</div>
         <div className="font-display text-[10px] text-primary/70 tracking-[0.2em] uppercase leading-tight">Browser</div>
       </div>
     </div>
@@ -93,7 +93,7 @@ function NavLinks({ onNavigate }) {
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
               location.pathname === "/"
                 ? "bg-primary/10 text-primary border border-primary/30"
-                : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
             }`}
             style={location.pathname === "/" ? { boxShadow: "0 0 12px rgba(0,163,255,0.15)" } : {}}
           >
@@ -105,8 +105,8 @@ function NavLinks({ onNavigate }) {
       {navGroups.map((group) => (
         <div key={group.label} className="mb-4">
           <div className="flex items-center gap-2 px-3 mb-1.5">
-            <span className="text-[10px] font-display font-semibold text-neutral-600 uppercase tracking-[0.15em]">{group.label}</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-neutral-800 to-transparent" />
+            <span className="text-[10px] font-display font-semibold text-muted-foreground/60 uppercase tracking-[0.15em]">{group.label}</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
           </div>
           {group.items.map(({ to, label, icon: Icon }) => {
             const active = location.pathname.startsWith(to);
@@ -118,11 +118,11 @@ function NavLinks({ onNavigate }) {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all group ${
                   active
                     ? "bg-primary/10 text-primary border border-primary/25"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
                 }`}
                 style={active ? { boxShadow: "0 0 12px rgba(0,163,255,0.12)" } : {}}
               >
-                <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-neutral-500 group-hover:text-neutral-300"}`} />
+                <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"}`} />
                 <span className="font-display tracking-wide">{label}</span>
                 {active && <div className="ml-auto w-1 h-4 rounded-full bg-primary" style={{ boxShadow: "0 0 8px rgba(0,163,255,0.5)" }} />}
               </Link>
@@ -136,20 +136,20 @@ function NavLinks({ onNavigate }) {
 
 function SidebarContent({ onLogout }) {
   return (
-    <div className="flex flex-col h-full" style={{ background: "rgba(5, 8, 13, 0.95)", backdropFilter: "blur(16px)" }}>
-      <div className="px-5 py-5 border-b border-white/5">
+    <div className="flex flex-col h-full bg-sidebar backdrop-blur-xl">
+      <div className="px-5 py-5 border-b border-border">
         <BrandMark />
-        <p className="text-[9px] text-neutral-600 tracking-[0.25em] uppercase mt-2 font-display">Intelligence in Motion</p>
+        <p className="text-[9px] text-muted-foreground/60 tracking-[0.25em] uppercase mt-2 font-display">Intelligence in Motion</p>
       </div>
       <div className="px-3 pt-3">
         <StartHereHandoff />
       </div>
       <NavLinks />
-      <div className="p-3 border-t border-white/5 space-y-1">
+      <div className="p-3 border-t border-border space-y-1">
         <ThemeToggle />
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:text-red-400 hover:bg-red-500/5 transition-all w-full"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all w-full"
         >
           <LogOut className="w-4 h-4" />
           <span className="font-display tracking-wide">Sign out</span>
@@ -169,19 +169,19 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-background">
-      <aside className="hidden md:flex w-64 border-r border-white/5 flex-col shrink-0">
+      <aside className="hidden md:flex w-64 border-r border-border flex-col shrink-0">
         <SidebarContent onLogout={handleLogout} />
       </aside>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 p-0 border-white/5">
+        <SheetContent side="left" className="w-72 p-0 border-border">
           <SidebarContent onLogout={handleLogout} />
         </SheetContent>
       </Sheet>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="md:hidden flex items-center gap-3 p-4 border-b border-white/5 bg-sidebar shrink-0">
-          <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1 text-neutral-400 hover:text-white">
+        <header className="md:hidden flex items-center gap-3 p-4 border-b border-border bg-sidebar shrink-0">
+          <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1 text-muted-foreground hover:text-foreground">
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2 flex-1">
