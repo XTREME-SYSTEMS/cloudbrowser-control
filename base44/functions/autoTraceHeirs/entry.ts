@@ -1,21 +1,24 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
 
 /**
- * Auto-Trace Heirs & Everyone They Know
+ * Auto-Trace Heirs & Everyone They Know — MAX MODE
  *
  * After an heir search completes, this function:
  *  1. Collects every identified heir + every family-tree member + deceased-details relatives
- *  2. Skip-traces each person (runSkipTraceFallback — deep) in batches of 6
- *  3. Enriches each heir's contact info (phones, emails, address, social)
+ *  2. MAX skip-traces each person (runMaxSkipTrace — all 30 source categories) in batches of 5
+ *  3. Enriches each heir's contact info (normalized phones, emails, address, social)
  *  4. "Everyone they know" — collects relatives/associates found in each trace,
- *     dedupes, and traces those new people too (one expansion level)
+ *     dedupes, and traces those new people too (TWO expansion levels for deeper network)
  *  5. Adds contacted associates as distant-priority heirs
- *  6. Updates the HeirSearch record
+ *  6. Updates the HeirSearch record with enriched, normalized data
  *  7. Optionally syncs the enriched results to Google Sheets
- *
- * Uses the same strategy as professional skip-tracing systems: name → relatives →
- * addresses → phones → emails → social → associates, then expand outward.
  */
+const TRACE_FUNCTION = "runMaxSkipTrace";
+const BATCH_SIZE = 5;
+const PRIMARY_CAP = 30;
+const ASSOCIATE_CAP = 15;
+const EXPANSION_LEVELS = 2;
+
 export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
@@ -62,15 +65,14 @@ export default async function (req: Request): Promise<Response> {
       return Response.json({ ok: true, message: "No people found to trace.", traced: 0, associates_traced: 0, total_heirs: hs.identified_heirs?.length || 0 });
     }
 
-    // Cap primary traces to stay within the 5-min worker limit
-    const toTrace = people.slice(0, 30);
+    const toTrace = people.slice(0, PRIMARY_CAP);
 
-    // --- 2. Skip-trace each person in batches of 6 ---
+    // --- 2. MAX skip-trace each person in batches ---
     const traceOne = async (p: { name: string; relationship?: string }) => {
       try {
-        const res = await base44.functions.invoke("runSkipTraceFallback", {
+        const res = await base44.functions.invoke(TRACE_FUNCTION, {
           owner_name: p.name,
-          deep_search: true,
+          generate_report: false, // skip per-person report for speed; aggregate later
         });
         const data = res?.data ?? res;
         return { name: p.name, relationship: p.relationship, data: data && !data.error ? data : null };
@@ -79,12 +81,17 @@ export default async function (req: Request): Promise<Response> {
       }
     };
 
-    const traceResults: { name: string; relationship?: string; data: any }[] = [];
-    for (let i = 0; i < toTrace.length; i += 6) {
-      const batch = toTrace.slice(i, i + 6);
-      const settled = await Promise.allSettled(batch.map(traceOne));
-      for (const s of settled) if (s.status === "fulfilled") traceResults.push(s.value);
-    }
+    const runBatched = async (list: { name: string; relationship?: string }[]) => {
+      const results: { name: string; relationship?: string; data: any }[] = [];
+      for (let i = 0; i < list.length; i += BATCH_SIZE) {
+        const batch = list.slice(i, i + BATCH_SIZE);
+        const settled = await Promise.allSettled(batch.map(traceOne));
+        for (const s of settled) if (s.status === "fulfilled") results.push(s.value);
+      }
+      return results;
+    };
+
+    const traceResults = await runBatched(toTrace);
 
     // --- 3. Enrich identified heirs with trace data ---
     const enrichedHeirs = [...(hs.identified_heirs || [])];
@@ -100,13 +107,19 @@ export default async function (req: Request): Promise<Response> {
           address: tr.data.addresses?.[0]?.address || heir.address,
           social_profiles: tr.data.social_profiles?.length ? tr.data.social_profiles : heir.social_profiles,
           confidence: Math.max(heir.confidence || 0, tr.data.confidence_score || 0),
+          notes: (heir.notes || "") + (tr.data.enrichment?.network_summary ? ` | Network: ${tr.data.enrichment.network_summary}` : ""),
         };
       }
     }
 
-    // --- 4. "Everyone they know" — collect relatives found in traces, dedupe, trace new ones ---
+    // --- 4. "Everyone they know" — multi-level expansion ---
     const knownNames = new Set(toTrace.map((p) => p.name.toLowerCase()));
-    const newAssociates: { name: string; relationship: string }[] = [];
+    let currentAssociates: { name: string; relationship: string }[] = [];
+    const allAssociateResults: { name: string; relationship?: string; data: any }[] = [];
+    let level = 0;
+    let totalAssociatesTraced = 0;
+
+    // Collect initial associates from primary traces
     for (const tr of traceResults) {
       if (!tr.data) continue;
       const relatives = tr.data.relatives || tr.data.found_relatives || [];
@@ -117,21 +130,38 @@ export default async function (req: Request): Promise<Response> {
         if (!key || knownNames.has(key)) continue;
         knownNames.add(key);
         const relType = typeof rel === "object" ? (rel.relationship || "associate") : "associate";
-        newAssociates.push({ name: rName.trim(), relationship: relType });
+        currentAssociates.push({ name: rName.trim(), relationship: relType });
       }
     }
 
-    // --- 5. Trace new associates (one expansion level, capped at 12) ---
-    const assocToTrace = newAssociates.slice(0, 12);
-    const associateResults: { name: string; relationship?: string; data: any }[] = [];
-    for (let i = 0; i < assocToTrace.length; i += 6) {
-      const batch = assocToTrace.slice(i, i + 6);
-      const settled = await Promise.allSettled(batch.map(traceOne));
-      for (const s of settled) if (s.status === "fulfilled") associateResults.push(s.value);
+    // Expand through levels
+    while (level < EXPANSION_LEVELS && currentAssociates.length > 0) {
+      const assocToTrace = currentAssociates.slice(0, ASSOCIATE_CAP);
+      const associateResults = await runBatched(assocToTrace);
+      allAssociateResults.push(...associateResults);
+      totalAssociatesTraced += assocToTrace.length;
+
+      // Collect next-level associates
+      const nextAssociates: { name: string; relationship: string }[] = [];
+      for (const ar of associateResults) {
+        if (!ar.data) continue;
+        const relatives = ar.data.relatives || ar.data.found_relatives || [];
+        for (const rel of relatives) {
+          const rName = typeof rel === "string" ? rel : (rel.name || rel.relative_name);
+          if (!rName) continue;
+          const key = rName.toLowerCase().trim();
+          if (!key || knownNames.has(key)) continue;
+          knownNames.add(key);
+          const relType = typeof rel === "object" ? (rel.relationship || "associate") : "associate";
+          nextAssociates.push({ name: rName.trim(), relationship: `${relType}_L${level + 1}` });
+        }
+      }
+      currentAssociates = nextAssociates;
+      level++;
     }
 
-    // Add contacted associates as distant-priority heirs
-    for (const ar of associateResults) {
+    // Add all contacted associates with contact info as distant-priority heirs
+    for (const ar of allAssociateResults) {
       if (!ar.data) continue;
       const hasContact =
         (ar.data.phone_numbers?.length || 0) > 0 ||
@@ -148,15 +178,15 @@ export default async function (req: Request): Promise<Response> {
         social_profiles: ar.data.social_profiles || [],
         confidence: ar.data.confidence_score || 30,
         inheritance_priority: "distant",
-        notes: "Found as associate/relative of a known heir during auto-trace",
+        notes: `Found as associate/relative during auto-trace (expansion level). Sources: ${(ar.data.sources || []).slice(0, 5).join(", ")}`,
       });
     }
 
-    // --- 6. Update the record ---
-    const methodsUsed = [...(hs.methods_used || []), "auto_trace_heirs", "auto_trace_associates"];
+    // --- 5. Update the record ---
+    const methodsUsed = [...new Set([...(hs.methods_used || []), "max_skip_trace", "auto_trace_heirs", `auto_trace_expansion_L${EXPANSION_LEVELS}`])];
     const sourcesChecked = Array.from(new Set([
       ...(hs.sources_checked || []),
-      "skip_trace_fallback",
+      "max_skip_trace_30_categories",
     ]));
     await base44.entities.HeirSearch.update(heir_search_id, {
       identified_heirs: enrichedHeirs,
@@ -165,7 +195,7 @@ export default async function (req: Request): Promise<Response> {
       status: enrichedHeirs.length > 0 ? "found" : hs.status,
     });
 
-    // --- 7. Sync to Google Sheets if requested ---
+    // --- 6. Sync to Google Sheets if requested ---
     let sheetResult: any = null;
     if (spreadsheet_url) {
       try {
@@ -182,9 +212,10 @@ export default async function (req: Request): Promise<Response> {
     return Response.json({
       ok: true,
       traced: toTrace.length,
-      associates_traced: assocToTrace.length,
+      associates_traced: totalAssociatesTraced,
+      expansion_levels: EXPANSION_LEVELS,
       total_heirs: enrichedHeirs.length,
-      contacts_found: traceResults.filter((t) => t.data).length + associateResults.filter((a) => a.data).length,
+      contacts_found: traceResults.filter((t) => t.data).length + allAssociateResults.filter((a) => a.data).length,
       sheet_export: sheetResult,
     });
   } catch (err: any) {
