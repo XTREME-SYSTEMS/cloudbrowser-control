@@ -45,6 +45,8 @@ export default function StrategicReport() {
   const [runningComparison, setRunningComparison] = useState(false);
   const [runningRecursiveQA, setRunningRecursiveQA] = useState(false);
   const [recursiveResults, setRecursiveResults] = useState(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportUrl, setReportUrl] = useState(null);
 
   useEffect(() => { loadTraces(); }, []);
 
@@ -160,6 +162,28 @@ export default function StrategicReport() {
     finally { setRunningRecursiveQA(false); }
   };
 
+  const generateDriveReport = async () => {
+    setGeneratingReport(true);
+    setError(null);
+    try {
+      const hsRes = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 1 });
+      const hsItems = hsRes.items || hsRes;
+      if (!hsItems[0]) {
+        setError("No heir search case found. Run an heir search first.");
+        return;
+      }
+      const res = await base44.functions.invoke("generateFindingsReport", {
+        heir_search_id: hsItems[0].id,
+      });
+      const data = res.data || res;
+      if (data.doc_url) {
+        setReportUrl(data.doc_url);
+        window.open(data.doc_url, "_blank");
+      }
+    } catch (err) { setError(err.message); }
+    finally { setGeneratingReport(false); }
+  };
+
   const handleDownloadCourtReady = () => {
     // Find the first heir search case for the court-ready PDF
     const hs = subjects.find(s => s.heir_search_id);
@@ -207,8 +231,24 @@ export default function StrategicReport() {
             className="bg-[#00a8ff] text-white border-0 hover:bg-[#0090e0]">
             <Scale className="w-4 h-4 mr-2" />Court-Ready PDF
           </Button>
+          <Button onClick={generateDriveReport} disabled={generatingReport || subjects.length === 0}
+            className="bg-green-500/10 text-green-400 border border-green-500/40 hover:bg-green-500/20">
+            {generatingReport ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</> : <><FileText className="w-4 h-4 mr-2" />Save to Drive</>}
+          </Button>
         </div>
       </div>
+
+      {reportUrl && (
+        <div className="max-w-2xl mx-auto p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-center gap-3 text-green-400 mb-6">
+          <CheckCircle className="w-5 h-5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium text-sm">Official Findings Report saved to Google Drive</p>
+            <a href={reportUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-green-300 underline">
+              Open in Google Docs →
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Title */}
       <div className="text-center mb-10">
