@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import TemplateSelector from "@/components/heir-search/TemplateSelector";
 import { downloadHeirPDF } from "@/lib/heirPDF";
 
 export default function HeirSearch() {
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     deceased_name: "",
     deceased_dob: "",
@@ -41,6 +43,19 @@ export default function HeirSearch() {
   const [tracingHeir, setTracingHeir] = useState(null);
 
   useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
+
+  useEffect(() => {
+    const caseId = searchParams.get("case");
+    if (!caseId) return;
+    (async () => {
+      try {
+        const hs = await base44.entities.HeirSearch.get(caseId);
+        if (hs) setResult(hs);
+      } catch (err) {
+        console.error("Failed to load case:", err);
+      }
+    })();
+  }, [searchParams]);
 
   const loadTrackingSheet = async () => {
     try {

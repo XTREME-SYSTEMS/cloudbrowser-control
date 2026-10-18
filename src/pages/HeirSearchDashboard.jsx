@@ -199,7 +199,7 @@ export default function HeirSearchDashboard() {
                         </td>
                         <td className="py-3">
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline" onClick={() => navigate("/heir-search")}>
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/heir-search?case=${c.id}`)}>
                               View
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => downloadHeirPDF(c)}>
