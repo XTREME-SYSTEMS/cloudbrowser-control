@@ -13,7 +13,7 @@ import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard
 
 export default function SkipTracing() {
   const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0" });
-  const [deepSearch, setDeepSearch] = useState(false);
+  const [deepSearch, setDeepSearch] = useState(true);
   const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
