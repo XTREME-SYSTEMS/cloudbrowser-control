@@ -11,6 +11,7 @@ import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
+import AutonomousChatPanel from "@/components/AutonomousChatPanel";
 import { useAuth } from "@/lib/AuthContext";
 
 function BrandMark() {
@@ -203,6 +204,7 @@ export default function Layout() {
       </div>
 
       <CommandPalette />
+      <AutonomousChatPanel />
     </div>
   );
 }
