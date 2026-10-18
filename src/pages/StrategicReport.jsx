@@ -176,7 +176,7 @@ export default function StrategicReport() {
       }
       const res = await base44.functions.invoke("generateFindingsReport", {
         heir_search_id: hsItems[0].id,
-        target_doc_id: "1LLcMlgo7eElet6edoc5BQRdE6jlIEa6Zpha7NC-uT6Y",
+        folder_id: "1VyAeFWxWA9nQIw1OcbHjp6-fWkE5WDM8",
       });
       const data = res.data || res;
       if (data.doc_url) {
@@ -218,7 +218,7 @@ export default function StrategicReport() {
       const res = await base44.functions.invoke("uploadCourtReadyPDF", {
         file_data: base64,
         filename: fileName,
-        folder_id: "19e5TrJCit-uHez8k5vzM-CAtccvmEed8",
+        folder_id: "1VyAeFWxWA9nQIw1OcbHjp6-fWkE5WDM8",
       });
       const data = res.data || res;
       if (data.file_url) {
