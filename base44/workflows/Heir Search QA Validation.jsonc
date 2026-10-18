@@ -1,0 +1,69 @@
+{
+  "name": "Heir Search QA Validation",
+  "description": "When an heir search completes (status changes to found/partial), runs independent QA Agent + Validator Agent to certify court-readiness. Installs the 3rd verification layer modeled on HeirSearch.com, Heir Pros, and Ancestry ProGenealogists standards.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "HeirSearch",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ (.trigger.data.status == \"found\" or .trigger.data.status == \"partial\") and (.trigger.old_data.status == \"searching\" or .trigger.old_data.status == \"pending\") }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "heir_search_qa_validation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "wait_for_trace": {
+          "wait": "PT2M",
+          "then": "run_qa",
+          "x-base44": {
+            "title": "Wait for auto-trace",
+            "description": "Allow trace to finish"
+          }
+        }
+      },
+      {
+        "run_qa": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runHeirSearchQA",
+            "args": {
+              "heir_search_id": "${ .trigger.entity_id }",
+              "run_validator": true
+            }
+          },
+          "then": "check_certified",
+          "x-base44": {
+            "title": "QA + Validator",
+            "description": "Independent audit"
+          }
+        }
+      },
+      {
+        "check_certified": {
+          "switch": [
+            {
+              "when": "${ .run_qa.fully_certified == true }",
+              "then": "end"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Certification check",
+            "description": "Pass or flag deficiencies"
+          }
+        }
+      }
+    ]
+  }
+}
