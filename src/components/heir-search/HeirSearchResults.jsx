@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ResultSection from "@/components/heir-search/ResultSection";
+import ClickableEntity from "@/components/heir-search/ClickableEntity";
 import {
   Users, Phone, Mail, MapPin, Search, AlertCircle, CheckCircle, Clock,
   Database, Loader2, FileText, GitBranch, Gavel, UserX, UserCheck, Crown,
@@ -127,10 +128,10 @@ export default function HeirSearchResults({
           searchingSection={searchingSection}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div><span className="text-muted-foreground">Full Name:</span> {result.deceased_details.full_name || "—"}</div>
+            <div><span className="text-muted-foreground">Full Name:</span> <ClickableEntity>{result.deceased_details.full_name}</ClickableEntity></div>
             <div><span className="text-muted-foreground">Born:</span> {result.deceased_details.birth_date || "—"}</div>
             <div><span className="text-muted-foreground">Died:</span> {result.deceased_details.death_date || "—"}</div>
-            <div><span className="text-muted-foreground">Last Residence:</span> {result.deceased_details.last_residence || "—"}</div>
+            <div><span className="text-muted-foreground">Last Residence:</span> <ClickableEntity type="address">{result.deceased_details.last_residence}</ClickableEntity></div>
             <div><span className="text-muted-foreground">Funeral Home:</span> {result.deceased_details.funeral_home || "—"}</div>
             <div><span className="text-muted-foreground">SSN Issued:</span> {result.deceased_details.ssn_state_issued || "—"}</div>
           </div>
@@ -159,49 +160,49 @@ export default function HeirSearchResults({
             {result.family_tree.spouse && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Spouse</p>
-                <p className="text-sm">{result.family_tree.spouse}</p>
+                <p className="text-sm"><ClickableEntity>{result.family_tree.spouse}</ClickableEntity></p>
               </div>
             )}
             {result.family_tree.ex_spouses?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Ex-Spouse(s)</p>
-                <p className="text-sm">{result.family_tree.ex_spouses.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.ex_spouses.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.ex_spouses.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
             {result.family_tree.children?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Children</p>
-                <p className="text-sm">{result.family_tree.children.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.children.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.children.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
             {result.family_tree.parents?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Parents</p>
-                <p className="text-sm">{result.family_tree.parents.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.parents.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.parents.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
             {result.family_tree.siblings?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Siblings</p>
-                <p className="text-sm">{result.family_tree.siblings.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.siblings.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.siblings.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
             {result.family_tree.grandchildren?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Grandchildren</p>
-                <p className="text-sm">{result.family_tree.grandchildren.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.grandchildren.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.grandchildren.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
             {result.family_tree.nieces_nephews?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Nieces & Nephews</p>
-                <p className="text-sm">{result.family_tree.nieces_nephews.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.nieces_nephews.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.nieces_nephews.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
             {result.family_tree.cousins?.length > 0 && (
               <div className="p-2 rounded-md bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Cousins</p>
-                <p className="text-sm">{result.family_tree.cousins.join(", ")}</p>
+                <p className="text-sm">{result.family_tree.cousins.map((n, i) => <span key={i}><ClickableEntity>{n}</ClickableEntity>{i < result.family_tree.cousins.length - 1 ? ", " : ""}</span>)}</p>
               </div>
             )}
           </div>
@@ -223,8 +224,8 @@ export default function HeirSearchResults({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div><span className="text-muted-foreground">Court County:</span> {result.probate_info.court_county || "—"}</div>
             <div><span className="text-muted-foreground">Case Number:</span> {result.probate_info.case_number || "Not found"}</div>
-            <div><span className="text-muted-foreground">Executor:</span> {result.probate_info.executor_name || "—"}</div>
-            <div><span className="text-muted-foreground">Attorney:</span> {result.probate_info.attorney_name || "—"}</div>
+            <div><span className="text-muted-foreground">Executor:</span> <ClickableEntity>{result.probate_info.executor_name}</ClickableEntity></div>
+            <div><span className="text-muted-foreground">Attorney:</span> <ClickableEntity>{result.probate_info.attorney_name}</ClickableEntity></div>
             <div><span className="text-muted-foreground">Filing Date:</span> {result.probate_info.filing_date || "—"}</div>
             <div><span className="text-muted-foreground">Estate Value:</span> {result.probate_info.estate_value || "—"}</div>
             <div><span className="text-muted-foreground">Will Found:</span> {result.probate_info.will_found ? "Yes" : "No / Unknown"}</div>
@@ -327,7 +328,7 @@ export default function HeirSearchResults({
           searchingSection={searchingSection}
         >
           {result.property_financial.properties_owned?.length > 0 && (
-            <div><span className="text-muted-foreground">Properties:</span> {result.property_financial.properties_owned.map(p => `${p.address} (${p.value})`).join("; ")}</div>
+            <div><span className="text-muted-foreground">Properties:</span> {result.property_financial.properties_owned.map((p, i) => <span key={i}><ClickableEntity type="address">{p.address}</ClickableEntity> ({p.value}){i < result.property_financial.properties_owned.length - 1 ? "; " : ""}</span>)}</div>
           )}
           {result.property_financial.business_ownership?.length > 0 && (
             <div><span className="text-muted-foreground">Businesses:</span> {result.property_financial.business_ownership.map(b => `${b.business_name} (${b.role})`).join("; ")}</div>
@@ -508,7 +509,7 @@ export default function HeirSearchResults({
                   <div className="flex items-center gap-2">
                     {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                     {heir.is_living ? <UserCheck className="w-4 h-4 text-green-500" /> : <UserX className="w-4 h-4 text-red-500" />}
-                    <span className="font-medium">{heir.name}</span>
+                    <span className="font-medium"><ClickableEntity>{heir.name}</ClickableEntity></span>
                     <Badge variant="outline" className={priorityColor(heir.inheritance_priority)}>
                       {heir.relationship}
                     </Badge>
@@ -554,7 +555,7 @@ export default function HeirSearchResults({
                   </div>
                 )}
                 {heir.address && (
-                  <p className="text-xs text-muted-foreground"><MapPin className="w-3 h-3 inline mr-1" />{heir.address}</p>
+                  <p className="text-xs text-muted-foreground"><MapPin className="w-3 h-3 inline mr-1" /><ClickableEntity type="address">{heir.address}</ClickableEntity></p>
                 )}
                 {!heir.phone_numbers?.length && !heir.emails?.length && !heir.address && (
                   <p className="text-xs text-muted-foreground italic">No contact info found yet — click "Trace" to run a full skip trace on this heir.</p>
