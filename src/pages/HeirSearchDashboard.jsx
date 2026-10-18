@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Users, Search, Loader2, CheckCircle, AlertCircle, Clock,
-  TrendingUp, FileText, Mail, ExternalLink, Filter,
+  TrendingUp, FileText, Mail, ExternalLink, Filter, Phone, MapPin, UserCheck, Target,
 } from "lucide-react";
 import { downloadHeirPDF } from "@/lib/heirPDF";
 import BrandIngestion from "@/components/brand/BrandIngestion";
@@ -168,7 +168,14 @@ export default function HeirSearchDashboard() {
                     return (
                       <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="py-3 pr-4 font-mono text-xs">{c.case_reference || "—"}</td>
-                        <td className="py-3 pr-4 font-medium">{c.deceased_name}</td>
+                        <td className="py-3 pr-4">
+                          <button
+                            onClick={() => navigate(`/heir-search?case=${c.id}`)}
+                            className="font-medium text-left hover:text-primary transition-colors"
+                          >
+                            {c.deceased_name}
+                          </button>
+                        </td>
                         <td className="py-3 pr-4">
                           <Badge variant={sc.color === "destructive" ? "destructive" : sc.color === "default" ? "default" : "secondary"}>
                             <sc.icon className={`w-3 h-3 mr-1 ${c.status === "searching" ? "animate-spin" : ""}`} />
@@ -217,12 +224,150 @@ export default function HeirSearchDashboard() {
         </CardContent>
       </Card>
 
+      {/* People Being Searched — identified heirs across all cases */}
+      <PeopleBeingSearched cases={cases} onTrace={navigate} />
+
       {/* Visual Validation & Brand Ingestion */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BrandIngestion />
         <VisualValidationPanel />
       </div>
     </div>
+  );
+}
+
+function PeopleBeingSearched({ cases, onTrace }) {
+  const [expandedCase, setExpandedCase] = useState(null);
+
+  const allHeirs = cases
+    .filter(c => c.identified_heirs && c.identified_heirs.length > 0)
+    .flatMap(c => c.identified_heirs.map((h, i) => ({
+      ...h,
+      caseId: c.id,
+      caseRef: c.case_reference || "—",
+      deceasedName: c.deceased_name,
+      heirIndex: i,
+    })));
+
+  const livingHeirs = allHeirs.filter(h => h.is_living !== false);
+  const contactableHeirs = livingHeirs.filter(h =>
+    (h.phone_numbers && h.phone_numbers.length > 0) ||
+    (h.emails && h.emails.length > 0) ||
+    h.address
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserCheck className="w-4 h-4 text-primary" />
+          People Being Searched
+        </CardTitle>
+        <CardDescription>
+          {livingHeirs.length} living heirs identified across {cases.filter(c => c.identified_heirs?.length).length} cases
+          {contactableHeirs.length > 0 && ` — ${contactableHeirs.length} with contact info`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {allHeirs.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No heirs identified yet. Run a search to discover potential heirs.</p>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-[500px] overflow-y-auto xa-scroll">
+            {cases.filter(c => c.identified_heirs && c.identified_heirs.length > 0).map(c => {
+              const isExpanded = expandedCase === c.id;
+              const heirs = c.identified_heirs || [];
+              const livingCount = heirs.filter(h => h.is_living !== false).length;
+              return (
+                <div key={c.id} className="rounded-lg border border-white/5 overflow-hidden">
+                  <button
+                    onClick={() => setExpandedCase(isExpanded ? null : c.id)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Users className="w-4 h-4 text-primary/70 shrink-0" />
+                      <span className="font-medium text-sm truncate">{c.deceased_name}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">{heirs.length} heirs</Badge>
+                      <span className="text-xs text-muted-foreground shrink-0">({livingCount} living)</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground">{c.case_reference || ""}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onTrace(`/heir-search?case=${c.id}`); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Open
+                      </button>
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="border-t border-white/5 divide-y divide-white/5">
+                      {heirs.map((h, i) => {
+                        const hasContact = (h.phone_numbers?.length > 0) || (h.emails?.length > 0) || h.address;
+                        return (
+                          <div key={i} className="px-3 py-2.5 flex items-start gap-3 hover:bg-muted/20 transition-colors">
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-primary/10 border border-primary/20">
+                              {h.is_living !== false ? <UserCheck className="w-3.5 h-3.5 text-green-500" /> : <AlertCircle className="w-3.5 h-3.5 text-red-500" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-sm">{h.name}</span>
+                                <Badge variant="outline" className="text-xs">{h.relationship}</Badge>
+                                {h.inheritance_priority && (
+                                  <Badge variant={h.inheritance_priority === "primary" ? "default" : "secondary"} className="text-xs">
+                                    {h.inheritance_priority}
+                                  </Badge>
+                                )}
+                                {h.confidence > 0 && (
+                                  <span className="text-xs text-muted-foreground">{h.confidence}%</span>
+                                )}
+                              </div>
+                              {hasContact ? (
+                                <div className="mt-1 space-y-0.5">
+                                  {h.phone_numbers?.length > 0 && (
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Phone className="w-3 h-3" />
+                                      {h.phone_numbers.map(p => p.number || p).join(", ")}
+                                    </p>
+                                  )}
+                                  {h.emails?.length > 0 && (
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Mail className="w-3 h-3" />
+                                      {h.emails.map(e => e.email || e).join(", ")}
+                                    </p>
+                                  )}
+                                  {h.address && (
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      {h.address}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground italic mt-0.5">No contact info — open case to trace</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onTrace(`/heir-search?case=${c.id}`); }}
+                              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/60 transition-all shrink-0"
+                            >
+                              <Target className="w-3 h-3" />
+                              Trace
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
