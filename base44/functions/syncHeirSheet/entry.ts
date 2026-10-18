@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { secrets } from 'base44:runtime';
 
 /**
  * Syncs the heir tracking Google Sheet with the current database state.
@@ -35,14 +36,6 @@ export default async function (req: Request): Promise<Response> {
     const body = await req.json().catch(() => ({}));
     const spreadsheetUrl = body.spreadsheet_url || '';
     const sheetName = body.sheet_name || 'Heirs';
-
-    const secrets = new Map<string, string>();
-    try {
-      const s = base44.secrets || {};
-      for (const [k, v] of Object.entries(s)) {
-        if (typeof v === 'string') secrets.set(k, v);
-      }
-    } catch {}
 
     const trackingUrl = spreadsheetUrl || secrets.get('HEIR_TRACKING_SHEET_URL') || '';
     const spreadsheetId = extractSpreadsheetId(trackingUrl);

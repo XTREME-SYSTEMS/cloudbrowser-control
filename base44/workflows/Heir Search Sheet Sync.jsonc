@@ -1,0 +1,39 @@
+{
+  "name": "Heir Search Sheet Sync",
+  "description": "Automatically pushes all heir search findings \u2014 names, contact details, relationships, addresses \u2014 to the Google tracking Sheet in real-time whenever a search completes or heirs are updated.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "HeirSearch",
+      "events": [
+        "create",
+        "update"
+      ]
+    },
+    "condition": "${ .trigger.data.status | IN(\"found\", \"partial\") }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "heir_search_sheet_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sync_sheet": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncHeirSheet",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sync findings to Google Sheets",
+            "description": "Rewrites sheet with all found heirs and contact details"
+          }
+        }
+      }
+    ]
+  }
+}
