@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 
-import { getGatewayKey } from '../../shared/vercelGateway.ts';
 import { runAutonomousGatewayAgent } from '../../shared/autonomousGatewayAgent.ts';
 
 export default async function(req: any) {
@@ -12,7 +11,6 @@ export default async function(req: any) {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
-  getGatewayKey();
   if (!message) return Response.json({ error: 'message required' }, { status: 400 });
 
   const sr = base44.asServiceRole.entities;
