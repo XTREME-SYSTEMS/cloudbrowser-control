@@ -73,6 +73,7 @@ import ClientOnboarding from '@/pages/ClientOnboarding';
 import ClientDelivery from '@/pages/ClientDelivery';
 import StrategicMindsLanding from '@/pages/StrategicMindsLanding';
 import StrategicCloudBrowserLanding from '@/pages/StrategicCloudBrowserLanding';
+import StrategicReport from '@/pages/StrategicReport';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -158,6 +159,7 @@ const AuthenticatedApp = () => {
           <Route path="/intelligence-command-center" element={<IntelligenceCommandCenter />} />
           <Route path="/client-onboarding" element={<ClientOnboarding />} />
           <Route path="/client-delivery" element={<ClientDelivery />} />
+          <Route path="/strategic-report" element={<StrategicReport />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
