@@ -12,6 +12,7 @@ import {
 import { downloadHeirPDF } from "@/lib/heirPDF";
 import BrandIngestion from "@/components/brand/BrandIngestion";
 import VisualValidationPanel from "@/components/brand/VisualValidationPanel";
+import BulkImport from "@/components/heir-search/BulkImport";
 
 const STATUS_CONFIG = {
   pending: { label: "Pending", color: "secondary", icon: Clock },
@@ -94,6 +95,9 @@ export default function HeirSearchDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Bulk Import — paste, normalize, and input into the system */}
+      <BulkImport onDone={load} />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
