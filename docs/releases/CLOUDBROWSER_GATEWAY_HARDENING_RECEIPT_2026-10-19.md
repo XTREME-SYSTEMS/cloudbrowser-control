@@ -6,8 +6,10 @@
 ## Source of truth
 - Base44 app: `6a837c8e995cc4824aabf594` (CloudBrowser)
 - Branch: `main` (only active branch returned by Base44)
-- Prior source checkpoint: `6ad6905bf31afc33103ed00c`
-- Checkpoint commit: `82b3dd2e8dfc9a0d07151ee0dcab23c901bcd80b`
+- Post-change checkpoint: `6ad6905bf31afc33103ed00c`
+- Post-change checkpoint commit: `82b3dd2e8dfc9a0d07151ee0dcab23c901bcd80b`
+- Verified pre-change source commit: `8f13e4bfbe161720f4825820ebc292093528094a`
+- Gateway source commits in this patch: `aa61ad8`, `f2ac68a`, `8db0fe4`, `82b3dd2`
 - Editor/preview: https://app.base44.com/apps/6a837c8e995cc4824aabf594/editor/preview
 - Related apps were discovered (CloudBrowser Fortress Staging, CloudBrowser copies, cloudbrowser-control); none was silently substituted for the target.
 
@@ -43,7 +45,7 @@
 - **CB-INT-01 / P2 / HIGH confidence:** Base44 reports Gmail connector status as expired. No reconnection was attempted.
 
 ## Rollback
-Restore Base44 checkpoint `6ad6905bf31afc33103ed00c` (pre-change checkpoint) for a complete source rollback. Do not deploy this checkpoint or the modified code to production without explicit release approval.
+The checkpoint `6ad6905bf31afc33103ed00c` is post-change and is NOT a rollback target. To reverse only this patch while preserving receipt files, restore `base44/functions/cloudBrowserGatewayV6/entry.ts` and `base44/functions/cloudBrowserGatewayStaging/entry.ts` from verified pre-change commit `8f13e4bfbe161720f4825820ebc292093528094a`, then create a new checkpoint. Do not reset the whole repository or deploy without explicit release approval.
 
 ## Next actions
 1. Retrieve runtime logs for a failing request and capture its request ID, route, timestamp, gateway identity, and redacted status/body.
