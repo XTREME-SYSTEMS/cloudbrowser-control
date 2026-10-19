@@ -1,0 +1,35 @@
+{
+  "receipt_version": "1.0",
+  "mission": "CLOUDBROWSER_MAXIMUM_AUDIT_REPAIR",
+  "created_at": "2026-10-19",
+  "result": "IN_PROGRESS",
+  "release_certified": false,
+  "target": {"app_name": "CloudBrowser", "app_id": "6a837c8e995cc4824aabf594", "branch": "main"},
+  "checkpoint": {"id": "6ad6905bf31afc33103ed00c", "commit": "82b3dd2e8dfc9a0d07151ee0dcab23c901bcd80b", "purpose": "Gateway malformed-request and error-redaction hardening"},
+  "changes": [
+    {"file": "base44/functions/cloudBrowserGatewayV6/entry.ts", "details": ["malformed JSON -> 400", "validate body/path/method/data shape", "sanitize unexpected 500 response", "log request id and error class only"]},
+    {"file": "base44/functions/cloudBrowserGatewayStaging/entry.ts", "details": ["malformed JSON -> 400", "validate body/path/method/data shape", "sanitize unexpected 500 response", "preserve fail-closed staging guard"]}
+  ],
+  "tests": {
+    "npm run build": {"status": "PASS", "exit_code": 0},
+    "npm run lint": {"status": "PASS", "exit_code": 0},
+    "npm run typecheck": {"status": "PASS", "exit_code": 0},
+    "npm --prefix browser-engine test": {"status": "PASS", "passed": 13, "failed": 0, "exit_code": 0},
+    "git diff --check": {"status": "PASS", "exit_code": 0},
+    "deno check gateway entrypoints": {"status": "BLOCKED", "reason": "npm:@base44/sdk@0.8.40 not available in sandbox node_modules; dependency install not attempted"},
+    "live_500_reproduction": {"status": "UNKNOWN", "reason": "No matching runtime request id/logs available"},
+    "browser_e2e": {"status": "NOT_RUN"},
+    "independent_validation": {"status": "NOT_RUN"},
+    "production_deployment": {"status": "NOT_PERFORMED"}
+  },
+  "findings": [
+    {"id": "CB-GW-01", "severity": "P2", "confidence": "HIGH", "status": "PATCHED_SOURCE_NOT_LIVE_VERIFIED", "summary": "Malformed request bodies could fall into generic exception handling; now return 400."},
+    {"id": "CB-GW-02", "severity": "P2", "confidence": "HIGH", "status": "PATCHED_SOURCE_NOT_LIVE_VERIFIED", "summary": "Unexpected gateway exceptions exposed error.message; now return generic 500."},
+    {"id": "CB-GW-03", "severity": "P1", "confidence": "MEDIUM", "status": "UNKNOWN", "summary": "Reported live 500 root cause remains unconfirmed."},
+    {"id": "CB-GW-04", "severity": "P2", "confidence": "HIGH", "status": "OPEN", "summary": "Shared gateway dispatch still returns raw engine/provider messages in several operation-specific error paths."},
+    {"id": "CB-INT-01", "severity": "P2", "confidence": "HIGH", "status": "OPEN", "summary": "Gmail connector reports expired status."}
+  ],
+  "approval_gates": {"production_deploy": "NOT_APPROVED", "secret_changes": "NOT_PERFORMED", "permission_changes": "NOT_PERFORMED", "schema_or_rls_changes": "NOT_PERFORMED", "billing_changes": "NOT_PERFORMED"},
+  "rollback": "Restore Base44 checkpoint 6ad6905bf31afc33103ed00c",
+  "next_action": "Obtain failing request ID and live runtime logs, reproduce in verified staging, then test and fix the confirmed root cause."
+}
