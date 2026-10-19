@@ -56,7 +56,7 @@ export default function HeirSearch() {
   const loadHistory = async () => {
     try {
       const res = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 50 });
-      setHistory(res.items || res);
+      setHistory(Array.isArray(res) ? res : res.items || []);
     } catch (err) { console.error(err); }
     finally { setLoadingHistory(false); }
   };

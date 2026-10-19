@@ -36,7 +36,7 @@ export default function HeirSearchPortal() {
         { client_email: email },
         { sort: "-created_date", limit: 50 }
       );
-      setCases(res.items || res);
+      setCases(Array.isArray(res) ? res : res.items || []);
     } catch (err) {
       setError(err.message);
     } finally {

@@ -15,9 +15,9 @@ export default function HeirSearchResults({
   result,
   setResult,
   deepSearch,
-  searchingSection,
-  onDeleteSection,
-  onDeepSearchSection,
+  searchingSection = null,
+  onDeleteSection = undefined,
+  onDeepSearchSection = undefined,
 }) {
   const [expandedHeir, setExpandedHeir] = useState(null);
   const [tracingHeir, setTracingHeir] = useState(null);

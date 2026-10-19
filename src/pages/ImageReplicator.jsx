@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { uploadPublicFile } from "@/lib/fileUpload";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,14 +28,14 @@ export default function ImageReplicator() {
   const loadHistory = async () => {
     try {
       const res = await base44.entities.ImageReplication.filter({}, { sort: "-created_date", limit: 20 });
-      setHistory(res.items || res);
+      setHistory(Array.isArray(res) ? res : res.items || []);
     } catch (e) { console.error(e); }
   };
 
   const handleFileUpload = async (file) => {
     try {
-      const uploadRes = await base44.integrations.Core.UploadPublicFile({ file });
-      setImageUrl(uploadRes.file_url);
+      const uploadRes = await uploadPublicFile(file);
+      setImageUrl(uploadRes.file_url || "");
     } catch (e) {
       setError("Upload failed: " + e.message);
     }

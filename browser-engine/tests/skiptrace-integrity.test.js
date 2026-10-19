@@ -60,3 +60,12 @@ test("heir-search actions require a case ID linked to the displayed subject", as
   assert.doesNotMatch(source, /subjects\[0\]\?\.target/);
   assert.ok(source.includes('typeof result === "string"'));
 });
+
+test("investigative PDF does not claim sources were queried or cross-verified without evidence", async () => {
+  const source = await read("src/lib/strategicReportPDF.js");
+  assert.ok(source.includes("not a checklist of sources searched"));
+  assert.ok(source.includes("No source references supplied"));
+  assert.ok(source.includes("not a legal opinion, court certification"));
+  assert.doesNotMatch(source, /241\+|30\+ source category methodology|Each category was queried|cross-verified contact data/i);
+  assert.doesNotMatch(source, /drawStrategicPillarsPage|STRATEGIC PILLARS/);
+});

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { uploadPublicFile } from "@/lib/fileUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,7 @@ export default function BrandIngestion() {
   const loadAssets = async () => {
     try {
       const res = await base44.entities.BrandAsset.filter({ active: true }, { sort: "-created_date", limit: 20 });
-      setAssets(res.items || res);
+      setAssets(Array.isArray(res) ? res : res.items || []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -30,8 +31,7 @@ export default function BrandIngestion() {
     setUploading(true);
     setError(null);
     try {
-      const res = await base44.integrations.Core.UploadPublicFile({ file });
-      const data = res.data || res;
+      const data = await uploadPublicFile(file);
       setImageUrl(data.file_url || data.url || "");
     } catch (err) {
       setError(err.message);

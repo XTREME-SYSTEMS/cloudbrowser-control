@@ -215,7 +215,7 @@ export function generateHeirPDF(caseData) {
   doc.text("Intelligence in Motion — Production-grade heir search & forensic genealogy", margin, footerY + 44);
 
   // Page numbers
-  const pageCount = doc.internal.getNumberOfPages();
+  const pageCount = doc.getNumberOfPages();
   for (let p = 1; p <= pageCount; p++) {
     doc.setPage(p);
     doc.setTextColor(150, 160, 175);
