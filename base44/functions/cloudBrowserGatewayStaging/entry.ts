@@ -109,3 +109,4 @@ export default async function (req) {
     });
     return errorResponse(500, "Internal gateway error", requestId);
   }
+}
