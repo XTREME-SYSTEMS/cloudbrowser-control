@@ -3,7 +3,7 @@
     "document": {
       "dsl": "1.0.0",
       "name": "fortress_engineer_cycle",
-      "version": "1.0",
+      "version": "1.1",
       "namespace": "base44"
     },
     "do": [
@@ -11,7 +11,7 @@
         "run_cycle": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runAutoCompleteContinuousCycle",
+            "function_name": "runAutoCompleteGovernedCycle",
             "args": {
               "trigger": "fortress_engineer_2h",
               "force_deep": true,
@@ -20,8 +20,8 @@
           },
           "then": "end",
           "x-base44": {
-            "title": "Run bounded AutoComplete engineering cycle",
-            "description": "Deep validate, process bounded healing, rescore, and preserve independent evidence gates"
+            "title": "Run governed bounded AutoComplete engineering cycle",
+            "description": "Deep validate, request bounded healing, rescore, then enforce independent repair closure integrity"
           }
         }
       }
@@ -44,6 +44,6 @@
       "ends_after_count": null
     }
   },
-  "description": "Every 2 hours, requests a bounded healing/deep-validation pass through the canonical AutoComplete orchestrator. The legacy enhancement loop no longer owns an independent clock.",
+  "description": "Every 2 hours, requests bounded healing through the canonical governed AutoComplete wrapper. The legacy enhancement loop does not own an independent mutation clock.",
   "name": "Fortress Engineer Cycle"
 }

@@ -1,6 +1,6 @@
 {
   "name": "Governance Heartbeat",
-  "description": "Canonical 5-minute AutoComplete heartbeat. All system-hardening clocks converge on the leased orchestrator so overlapping schedulers cannot independently repair or score the platform.",
+  "description": "Canonical 5-minute AutoComplete heartbeat. All system-hardening clocks converge on one leased orchestrator and mandatory repair-integrity postcondition.",
   "trigger": {
     "condition": null,
     "config": {
@@ -22,23 +22,21 @@
     "document": {
       "dsl": "1.0.0",
       "name": "governance_heartbeat",
-      "version": "1.0",
+      "version": "1.1",
       "namespace": "base44"
     },
     "do": [
       {
-        "run_autocomplete_continuous": {
+        "run_autocomplete_governed": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runAutoCompleteContinuousCycle",
-            "args": {
-              "trigger": "governance_5m"
-            }
+            "function_name": "runAutoCompleteGovernedCycle",
+            "args": { "trigger": "governance_5m" }
           },
           "then": "end",
           "x-base44": {
-            "title": "Run canonical AutoComplete cycle",
-            "description": "Single leased 5-minute audit, validation, repair-queue, scoring and bounded-healing orchestrator"
+            "title": "Run governed AutoComplete cycle",
+            "description": "Leased audit, validation, repair queue, scoring, bounded healing and mandatory independent-repair integrity postcondition"
           }
         }
       }

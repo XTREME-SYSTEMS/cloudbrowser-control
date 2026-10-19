@@ -17,12 +17,12 @@
       "ends_after_count": null
     }
   },
-  "description": "Daily deep architecture pass through the canonical AutoComplete orchestrator. It may request bounded healing, but all scoring still requires independent fresh evidence and clean-cycle proof.",
+  "description": "Daily deep architecture pass through the governed AutoComplete wrapper. It may request bounded healing, but scoring requires independent fresh evidence and repair-integrity postconditions.",
   "definition": {
     "document": {
       "dsl": "1.0.0",
       "name": "architecture_health_monitor",
-      "version": "1.0",
+      "version": "1.1",
       "namespace": "base44"
     },
     "do": [
@@ -30,7 +30,7 @@
         "run_healing_loop": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runAutoCompleteContinuousCycle",
+            "function_name": "runAutoCompleteGovernedCycle",
             "args": {
               "trigger": "architecture_daily",
               "force_deep": true,
@@ -39,8 +39,8 @@
           },
           "then": "end",
           "x-base44": {
-            "title": "Run daily AutoComplete architecture pass",
-            "description": "Deep audit, bounded healing request, independent validation, rescore and receipt through one leased orchestrator"
+            "title": "Run governed daily AutoComplete architecture pass",
+            "description": "Deep audit, bounded healing request, rescore and mandatory independent-repair integrity enforcement"
           }
         }
       }

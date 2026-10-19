@@ -20,7 +20,7 @@
     "document": {
       "dsl": "1.0.0",
       "name": "railway_auto_heal",
-      "version": "1.0",
+      "version": "1.1",
       "namespace": "base44"
     },
     "do": [
@@ -28,20 +28,18 @@
         "run_autocomplete_runtime_fallback": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runAutoCompleteContinuousCycle",
-            "args": {
-              "trigger": "railway_runtime_fallback_hourly"
-            }
+            "function_name": "runAutoCompleteGovernedCycle",
+            "args": { "trigger": "railway_runtime_fallback_hourly" }
           },
           "then": "end",
           "x-base44": {
-            "title": "Run AutoComplete runtime fallback",
-            "description": "Hourly fallback through the canonical leased orchestrator; production Railway redeploys are no longer independently triggered by this clock"
+            "title": "Run governed AutoComplete runtime fallback",
+            "description": "Hourly fallback through the canonical wrapper; production Railway redeploys are not independently triggered by this clock"
           }
         }
       }
     ]
   },
   "name": "Railway Auto-Heal",
-  "description": "Hourly runtime fallback into the canonical AutoComplete orchestrator. It audits and queues repair evidence without independently redeploying Railway production services."
+  "description": "Hourly runtime fallback into governed AutoComplete. It audits and queues repair evidence without independently redeploying Railway production services."
 }

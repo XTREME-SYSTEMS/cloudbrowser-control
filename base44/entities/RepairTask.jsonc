@@ -10,14 +10,17 @@
       "type": "string",
       "description": "Stable gap identifier (e.g. G-001)"
     },
+    "failure_fingerprint": {
+      "type": "string",
+      "description": "Stable system + category + gap + normalized-root-cause fingerprint used to bind independent closure evidence"
+    },
+    "opened_source_sha": {
+      "type": "string",
+      "description": "Canonical source SHA at which this repair was opened or normalized"
+    },
     "priority": {
       "type": "string",
-      "enum": [
-        "P0",
-        "P1",
-        "P2",
-        "P3"
-      ],
+      "enum": ["P0", "P1", "P2", "P3"],
       "default": "P2"
     },
     "category": {
@@ -28,9 +31,7 @@
       "type": "string",
       "description": "The defect / failure observed"
     },
-    "root_cause": {
-      "type": "string"
-    },
+    "root_cause": { "type": "string" },
     "exact_repair": {
       "type": "string",
       "description": "Smallest reversible repair plan"
@@ -50,15 +51,7 @@
     },
     "status": {
       "type": "string",
-      "enum": [
-        "open",
-        "planning",
-        "in_progress",
-        "validating",
-        "resolved",
-        "blocked",
-        "rejected"
-      ],
+      "enum": ["open", "planning", "in_progress", "validating", "resolved", "blocked", "rejected"],
       "default": "open"
     },
     "assigned_lane": {
@@ -73,43 +66,34 @@
       "type": "string",
       "description": "Sandbox identifier for isolated execution"
     },
-    "rollback_pointer": {
-      "type": "string"
-    },
+    "rollback_pointer": { "type": "string" },
     "evidence": {
       "type": "string",
-      "description": "Source of the finding (live logs, advisors, etc.)"
+      "description": "Source of the finding or closure evidence"
+    },
+    "resolution_receipt_id": {
+      "type": "string",
+      "description": "Independent EvidenceReceipt that authoritatively closes this repair"
+    },
+    "resolved_source_sha": {
+      "type": "string",
+      "description": "Canonical source SHA independently validated when the repair was resolved"
     },
     "resolved_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "last_regressed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when later evidence invalidated a prior resolution"
     }
   },
-  "required": [
-    "system_manifest_id",
-    "priority",
-    "status"
-  ],
+  "required": ["system_manifest_id", "priority", "status"],
   "rls": {
-    "read": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "read": { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
   }
 }
