@@ -34,8 +34,21 @@ export default async function (req) {
   const requestId = req.headers.get("x-request-id") || "stg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
 
   try {
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (_parseError) {
+      return errorResponse(400, "Invalid JSON request body", requestId);
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return errorResponse(400, "Request body must be a JSON object", requestId);
+    }
     const { path: requestPath, method: requestMethod = "GET", data = {} } = body;
+    if (typeof requestPath !== "string" || !requestPath.trim() ||
+        typeof requestMethod !== "string" ||
+        !data || typeof data !== "object" || Array.isArray(data)) {
+      return errorResponse(400, "Request requires a path, a valid method, and an object data field", requestId);
+    }
 
     const authHeader = req.headers.get("authorization") || "";
     const headerKey = authHeader.replace(/^Bearer\s+/i, "");
@@ -89,6 +102,10 @@ export default async function (req) {
 
     return await dispatch(base44, matched.route, matched.params, data, keyRecord, requestId, GATEWAY_IDENTITY, stagingEnginePost, stagingEngineDelete, isStagingEngineConfigured);
   } catch (error) {
-    return errorResponse(500, error.message, requestId);
+    // Keep internal/provider exception details out of client responses.
+    console.error("[GATEWAY] request failed", {
+      request_id: requestId,
+      error_type: error instanceof Error ? error.name : "UnknownError",
+    });
+    return errorResponse(500, "Internal gateway error", requestId);
   }
-}
