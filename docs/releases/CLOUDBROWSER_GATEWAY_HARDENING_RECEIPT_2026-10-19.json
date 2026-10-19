@@ -5,7 +5,9 @@
   "result": "IN_PROGRESS",
   "release_certified": false,
   "target": {"app_name": "CloudBrowser", "app_id": "6a837c8e995cc4824aabf594", "branch": "main"},
-  "checkpoint": {"id": "6ad6905bf31afc33103ed00c", "commit": "82b3dd2e8dfc9a0d07151ee0dcab23c901bcd80b", "purpose": "Gateway malformed-request and error-redaction hardening"},
+  "checkpoint": {"id": "6ad6905bf31afc33103ed00c", "commit": "82b3dd2e8dfc9a0d07151ee0dcab23c901bcd80b", "purpose": "Post-change gateway hardening checkpoint"},
+  "pre_change_source_commit": "8f13e4bfbe161720f4825820ebc292093528094a",
+  "gateway_source_commits": ["aa61ad8", "f2ac68a", "8db0fe4", "82b3dd2" ],
   "changes": [
     {"file": "base44/functions/cloudBrowserGatewayV6/entry.ts", "details": ["malformed JSON -> 400", "validate body/path/method/data shape", "sanitize unexpected 500 response", "log request id and error class only"]},
     {"file": "base44/functions/cloudBrowserGatewayStaging/entry.ts", "details": ["malformed JSON -> 400", "validate body/path/method/data shape", "sanitize unexpected 500 response", "preserve fail-closed staging guard"]}
@@ -30,6 +32,6 @@
     {"id": "CB-INT-01", "severity": "P2", "confidence": "HIGH", "status": "OPEN", "summary": "Gmail connector reports expired status."}
   ],
   "approval_gates": {"production_deploy": "NOT_APPROVED", "secret_changes": "NOT_PERFORMED", "permission_changes": "NOT_PERFORMED", "schema_or_rls_changes": "NOT_PERFORMED", "billing_changes": "NOT_PERFORMED"},
-  "rollback": "Restore Base44 checkpoint 6ad6905bf31afc33103ed00c",
+  "rollback": "Restore only the two gateway files from pre-change commit 8f13e4bfbe161720f4825820ebc292093528094a, then checkpoint; 6ad6905bf31afc33103ed00c is post-change and is not the rollback target.",
   "next_action": "Obtain failing request ID and live runtime logs, reproduce in verified staging, then test and fix the confirmed root cause."
 }
