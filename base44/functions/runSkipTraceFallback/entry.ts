@@ -103,9 +103,16 @@ function hasCandidateData(result: any): boolean {
     result?.addresses, result?.found_addresses, result?.social_profiles, result?.found_social_profiles,
     result?.relatives, result?.found_relatives,
   ];
-  return arrays.some((items) => Array.isArray(items) && items.length > 0)
-    || Boolean(result?.found_owner_name && String(result.found_owner_name).trim())
-    || Boolean(result?.owner_name && String(result.owner_name).trim() && result.owner_name !== result.target_owner_name);
+  const targetName = String(result?.target_owner_name || "").trim().toLocaleLowerCase();
+  const foundName = String(result?.found_owner_name || result?.owner_name || "").trim();
+  const hasNewName = Boolean(foundName) && foundName.toLocaleLowerCase() !== targetName;
+  const property = result?.property_data && typeof result.property_data === "object" ? result.property_data : {};
+  const propertyFields = ["owner_name", "mailing_address", "co_owners", "purchase_date", "property_value", "lot_size"];
+  const hasPropertyCandidate = propertyFields.some((key) => {
+    const value = property[key];
+    return Array.isArray(value) ? value.length > 0 : typeof value === "string" ? value.trim().length > 0 : value !== null && value !== undefined;
+  });
+  return arrays.some((items) => Array.isArray(items) && items.length > 0) || hasNewName || hasPropertyCandidate;
 }
 
 function withUiAliases(result: any, tier: string, tiersAttempted: string[]): any {
