@@ -5,7 +5,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu,
   Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe, Users,
-  FileText, Crown, Zap, Network, Brain, Target,
+  FileText, Crown, Target,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";

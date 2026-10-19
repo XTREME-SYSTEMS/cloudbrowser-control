@@ -7,8 +7,10 @@ import { ChevronDown, ChevronRight, X, Search, Loader2 } from "lucide-react";
  * White-background, clean styling.
  */
 export default function ResultSection({
-  title, icon: Icon, description, sectionKey,
-  onDelete, onDeepSearch, searchingSection, defaultOpen = true, children,
+  title, icon: Icon, description = "", sectionKey,
+  onDelete, onDeepSearch, searchingSection = null,
+  result: _result = null, setResult: _setResult = null,
+  defaultOpen = true, children,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [deleting, setDeleting] = useState(false);

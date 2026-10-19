@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   Users, Loader2, CheckCircle, AlertCircle, Clock, Mail, Phone, MapPin,
-  Crown, UserCheck, UserX, FileText, Gavel, TrendingUp, Shield,
+  Crown, UserCheck, UserX, FileText, Gavel, Shield,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -36,7 +36,7 @@ export default function HeirSearchPortal() {
         { client_email: email },
         { sort: "-created_date", limit: 50 }
       );
-      setCases(res.items || res);
+      setCases(Array.isArray(res) ? res : res.items || []);
     } catch (err) {
       setError(err.message);
     } finally {

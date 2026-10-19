@@ -10,12 +10,10 @@ import {
 import HeirSearchResults from "@/components/heir-search/HeirSearchResults";
 
 /**
- * Simplified Heir Search — one smart input, everything else runs in the background.
- * Type a name OR paste case text (obituary, court filing, notes). The system:
- *  1. Organizes pasted text with AI (if detected)
- *  2. Runs an ultra-deep search across 30+ source categories
- *  3. Auto skip-traces every heir, family member, and associate
- *  4. Shows all findings — every name/address is clickable to search deeper
+ * Heir Search — submit a name or case text to start a research run.
+ * Coverage depends on available, permitted sources and successful source access.
+ * Treat observations as leads until they have traceable source evidence and
+ * a reviewed identity match; conflicting observations require human review.
  */
 export default function HeirSearch() {
   const [searchParams] = useSearchParams();
@@ -56,7 +54,7 @@ export default function HeirSearch() {
   const loadHistory = async () => {
     try {
       const res = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 50 });
-      setHistory(res.items || res);
+      setHistory(Array.isArray(res) ? res : res.items || []);
     } catch (err) { console.error(err); }
     finally { setLoadingHistory(false); }
   };
@@ -184,11 +182,11 @@ export default function HeirSearch() {
         <div className="flex items-center justify-center mt-4">
           <Button onClick={handleSearch} disabled={isBusy || !query.trim()}
             className="rounded-full px-8 h-11 bg-[#0a1f3c] hover:bg-[#1a3a5c] text-white border-0 text-base">
-            {isBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching...</> : <><Sparkles className="w-4 h-4 mr-2" />Ultra Deep Search</>}
+            {isBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching...</> : <><Sparkles className="w-4 h-4 mr-2" />Start Research</>}
           </Button>
         </div>
         <p className="text-xs text-slate-400 text-center mt-3">
-          Runs an extreme deep search across 30+ source categories, then auto-traces every heir and associate. Click any name or address in results to search deeper.
+          Coverage depends on the sources available to this workflow and whether access is permitted. Review source references, identity matches, and conflicts before relying on any finding.
         </p>
       </div>
 

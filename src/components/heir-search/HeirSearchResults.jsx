@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ResultSection from "@/components/heir-search/ResultSection";
@@ -16,9 +15,9 @@ export default function HeirSearchResults({
   result,
   setResult,
   deepSearch,
-  searchingSection,
-  onDeleteSection,
-  onDeepSearchSection,
+  searchingSection = null,
+  onDeleteSection = undefined,
+  onDeepSearchSection = undefined,
 }) {
   const [expandedHeir, setExpandedHeir] = useState(null);
   const [tracingHeir, setTracingHeir] = useState(null);

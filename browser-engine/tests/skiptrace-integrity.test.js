@@ -39,3 +39,62 @@ test("mock endpoint cannot persist generated investigative records", async () =>
   assert.doesNotMatch(source, /entities\.SkipTrace\.(create|update|filter)/);
   assert.doesNotMatch(source, /\+1\s*\(/);
 });
+
+test("strategic reports use existing cases and fail closed without source evidence", async () => {
+  const source = await read("src/pages/StrategicReport.jsx");
+  assert.doesNotMatch(source, /TARGET_SUBJECTS/);
+  assert.doesNotMatch(source, /Paul C\. Lingard|Donald Roy Yandell|Lucile C Wright/);
+  assert.ok(source.includes('base44.entities.SkipTrace.filter('));
+  assert.ok(source.includes('subject.evidence_verified'));
+  assert.ok(source.includes('evidenceRecords.some(isValidEvidenceRecord)'));
+  assert.ok(source.includes('!isTestFixture(t)'));
+  assert.doesNotMatch(source, /241\+|30\+ source categories queried per subject|legal-grade standards|Cross-verified contact data/i);
+});
+
+test("heir-search actions require a case ID linked to the displayed subject", async () => {
+  const source = await read("src/pages/StrategicReport.jsx");
+  assert.ok(source.includes('subjects.find(subject => subject.heir_search_id)'));
+  assert.ok(source.includes('QA was not run against an unrelated case'));
+  assert.ok(source.includes('Comparison was not run against an unrelated case'));
+  assert.ok(source.includes('No report was generated for an unrelated case'));
+  assert.ok(source.includes('!hs.deceased_name'));
+  assert.doesNotMatch(source, /subjects\[0\]\?\.target/);
+  assert.ok(source.includes('typeof result === "string"'));
+});
+
+test("investigative PDF does not claim sources were queried or cross-verified without evidence", async () => {
+  const source = await read("src/lib/strategicReportPDF.js");
+  assert.ok(source.includes("not a checklist of sources searched"));
+  assert.ok(source.includes("No source references supplied"));
+  assert.ok(source.includes("not a legal opinion, court certification"));
+  assert.doesNotMatch(source, /241\+|30\+ source category methodology|Each category was queried|cross-verified contact data/i);
+  assert.doesNotMatch(source, /drawStrategicPillarsPage|STRATEGIC PILLARS/);
+});
+
+test("court-ready PDF template never self-certifies findings or implies sources were queried", async () => {
+  const source = await read("src/lib/courtReadyPDF.js");
+  assert.ok(source.includes("STATUS: NOT A LEGAL CERTIFICATION"));
+  assert.ok(source.includes("Source References Supplied"));
+  assert.ok(source.includes("does not create attorney-client privilege"));
+  assert.ok(source.includes("No claim is made that sources were queried"));
+  assert.doesNotMatch(source, /Court-Ready Investigative Document|QA CERTIFICATION|30\+ source categories|STATUS: CERTIFIED|This certification confirms|Data Sources Queried/i);
+});
+
+test("skip-trace UI labels unproven identity/contact data as leads", async () => {
+  const source = await read("src/components/heir-search/EntitySearchDialog.jsx");
+  const heirSearch = await read("src/pages/HeirSearch.jsx");
+  const hero = await read("src/components/landing/Hero.jsx");
+  assert.ok(source.includes("Unverified leads — review required"));
+  assert.ok(source.includes("Source evidence attached — identity review required"));
+  assert.ok(source.includes("does not establish source provenance"));
+  assert.ok(source.includes("reported confidence (not verification)"));
+  assert.ok(source.includes("function isValidEvidenceRecord(record)"));
+  assert.ok(source.includes('results?.evidence_verified === true'));
+  assert.ok(source.includes('href={record.source_url}'));
+  assert.doesNotMatch(source, /Extreme Deep Search|extreme deep search across all sources/i);
+  assert.doesNotMatch(heirSearch, /30\+ source categories|extreme deep search across/i);
+  assert.ok(heirSearch.includes("Review source references, identity matches, and conflicts"));
+  assert.ok(hero.includes("Evidence-linked reports"));
+  assert.ok(hero.includes("Coverage varies by source"));
+  assert.doesNotMatch(hero, /Court-ready reports|65\+ countries/i);
+});

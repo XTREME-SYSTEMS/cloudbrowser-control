@@ -4,14 +4,32 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Search, Phone, Mail, MapPin, Globe2, AlertCircle, User } from "lucide-react";
 
+function isValidEvidenceRecord(record) {
+  if (!record || record.status !== "verified" || typeof record.finding_id !== "string" || !record.finding_id.trim()) return false;
+  if (typeof record.retrieved_at !== "string" || !Number.isFinite(Date.parse(record.retrieved_at))) return false;
+  if (typeof record.content_hash !== "string" || !/^[a-f0-9]{64}$/i.test(record.content_hash)) return false;
+  try {
+    const url = new URL(record.source_url);
+    return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Dialog that runs an extreme-deep skip trace on a name or address
- * and displays the results (phones, emails, addresses, social profiles).
+ * Dialog for a skip-trace lookup on a name or address.
+ * Results remain candidate leads unless valid, traceable source evidence is attached.
  */
 export default function EntitySearchDialog({ open, onOpenChange, query, type = "name" }) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const verifiedEvidenceRecords = Array.isArray(results?.evidence_records)
+    ? results.evidence_records.filter(isValidEvidenceRecord)
+    : [];
+  const evidenceVerified = results?.evidence_verified === true
+    && results?.verification_status === "verified"
+    && verifiedEvidenceRecords.length > 0;
 
   useEffect(() => {
     if (!open || !query) return;
@@ -44,7 +62,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Search className="w-5 h-5 text-primary" />
-            Extreme Deep Search
+            Skip-Trace Lookup
           </DialogTitle>
           <DialogDescription>
             Searching for <span className="font-medium text-foreground">{query}</span>
@@ -55,7 +73,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
         {loading && (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Running extreme deep search across all sources...</p>
+            <p className="text-sm text-muted-foreground">Checking available sources permitted for this workflow...</p>
           </div>
         )}
 
@@ -71,12 +89,30 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
 
         {results && !loading && !error && (
           <div className="space-y-4">
+            <div className={`rounded-md border p-3 text-sm ${evidenceVerified ? "border-sky-500/40 bg-sky-500/10 text-sky-900" : "border-amber-500/40 bg-amber-500/10 text-amber-900"}`}>
+              <p className="font-semibold">{evidenceVerified ? "Source evidence attached — identity review required" : "Unverified leads — review required"}</p>
+              <p className="text-xs mt-1">
+                {evidenceVerified
+                  ? "One or more records passed basic provenance checks. This does not prove identity, contact ownership, or property ownership; review each source and resolve conflicts."
+                  : "This result has no valid source evidence in this view. It does not establish source provenance or verify identity, contact ownership, or property ownership. Treat displayed values as leads until checked against traceable source records."}
+              </p>
+              {evidenceVerified && (
+                <div className="mt-2 text-xs">
+                  <span className="font-semibold">Source references: </span>
+                  {verifiedEvidenceRecords.map((record, index) => (
+                    <a key={record.finding_id} href={record.source_url} target="_blank" rel="noopener noreferrer" className="underline mr-2">
+                      {record.source_name || new URL(record.source_url).hostname}{index < verifiedEvidenceRecords.length - 1 ? ";" : ""}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
             {results.found_owner_name && (
               <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">
                 <User className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">{results.found_owner_name}</span>
+                <span className="text-sm font-medium">Possible owner match: {results.found_owner_name}</span>
                 {results.confidence_score != null && (
-                  <Badge variant="outline" className="ml-auto">{results.confidence_score}% confidence</Badge>
+                  <Badge variant="outline" className="ml-auto">{results.confidence_score}% reported confidence (not verification)</Badge>
                 )}
               </div>
             )}
@@ -84,7 +120,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.phone_numbers?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Phone className="w-3 h-3" /> Phone Numbers ({results.phone_numbers.length})
+                  <Phone className="w-3 h-3" /> Candidate Phone Numbers ({results.phone_numbers.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {results.phone_numbers.map((p, i) => (
@@ -100,7 +136,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.emails?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> Emails ({results.emails.length})
+                  <Mail className="w-3 h-3" /> Candidate Emails ({results.emails.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {results.emails.map((e, i) => (
@@ -116,7 +152,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.addresses?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> Addresses ({results.addresses.length})
+                  <MapPin className="w-3 h-3" /> Candidate Addresses ({results.addresses.length})
                 </p>
                 <div className="space-y-1">
                   {results.addresses.map((a, i) => (
@@ -131,7 +167,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.social_profiles?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Globe2 className="w-3 h-3" /> Social Profiles ({results.social_profiles.length})
+                  <Globe2 className="w-3 h-3" /> Candidate Social Profiles ({results.social_profiles.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {results.social_profiles.map((s, i) => (

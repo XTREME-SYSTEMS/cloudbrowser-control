@@ -41,9 +41,9 @@ export default function Hero() {
               </a>
             </div>
             <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-slate-500">
-              <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-[#c9a961]" /> Authorized searches</span>
-              <span className="flex items-center gap-2"><FileCheck2 className="w-4 h-4 text-[#c9a961]" /> Court-ready reports</span>
-              <span className="flex items-center gap-2"><Globe2 className="w-4 h-4 text-[#c9a961]" /> 65+ countries</span>
+              <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-[#c9a961]" /> Policy-aware research</span>
+              <span className="flex items-center gap-2"><FileCheck2 className="w-4 h-4 text-[#c9a961]" /> Evidence-linked reports</span>
+              <span className="flex items-center gap-2"><Globe2 className="w-4 h-4 text-[#c9a961]" /> Coverage varies by source</span>
             </div>
           </div>
 

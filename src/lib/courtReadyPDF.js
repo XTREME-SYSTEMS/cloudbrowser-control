@@ -1,14 +1,8 @@
 /**
- * Court-Ready PDF Generator
- * 
- * Generates a legal-grade heir search report with:
- * - Exhibit-numbered evidence chains
- * - Source citations with access dates
- * - QA certification page
- * - Notary block
- * - Family tree chart
- * 
- * This is NOT a marketing PDF — it's a court-filable document.
+ * Evidence Review PDF Generator
+ * Generates an investigative working report from supplied case data.
+ * This template does not independently validate findings, create legal privilege,
+ * certify court readiness, or establish that listed sources were queried.
  */
 
 import jsPDF from "jspdf";
@@ -33,7 +27,7 @@ export function generateCourtReadyPDF(data) {
   let y = margin;
 
   // === COVER PAGE ===
-  doc.setFillColor(...BRAND.dark);
+  doc.setFillColor(BRAND.dark[0], BRAND.dark[1], BRAND.dark[2]);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 
   doc.setTextColor(255, 255, 255);
@@ -51,7 +45,7 @@ export function generateCourtReadyPDF(data) {
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(200, 210, 220);
-  doc.text("Court-Ready Investigative Document", margin, 310);
+  doc.text("Investigative Working Document — Review Required", margin, 310);
 
   doc.setDrawColor(0, 134, 230);
   doc.setLineWidth(1);
@@ -69,9 +63,9 @@ export function generateCourtReadyPDF(data) {
     `Case Reference: ${data.case_reference || "N/A"}`,
     `Jurisdiction: ${data.death_location || "To be determined"}`,
     `Report Date: ${new Date().toLocaleDateString()}`,
-    `Confidence Score: ${data.confidence_score || 0}/100`,
-    `Sources Queried: ${data.sources_checked?.length || 0}`,
-    `Heirs Identified: ${data.identified_heirs?.length || 0}`,
+    `Recorded confidence (not verification): ${data.confidence_score ?? "N/A"}/100`,
+    `Source References Supplied: ${data.sources_checked?.length || 0}`,
+    `Heir Candidates Recorded: ${data.identified_heirs?.length || 0}`,
   ];
   infoLines.forEach(line => {
     doc.text(line, margin + 20, infoY);
@@ -80,75 +74,77 @@ export function generateCourtReadyPDF(data) {
 
   doc.setFontSize(8);
   doc.setTextColor(150, 160, 170);
-  doc.text("CONFIDENTIAL — FOR LEGAL USE ONLY", margin, pageHeight - 60);
-  doc.text("This document contains privileged investigative findings prepared for probate proceedings.", margin, pageHeight - 48);
+  doc.text("CONFIDENTIAL — HANDLE UNDER CASE POLICY", margin, pageHeight - 60);
+  doc.text("This working report does not create attorney-client privilege or certify findings.", margin, pageHeight - 48);
 
-  // === PAGE 2: CERTIFICATION ===
+  // === PAGE 2: EVIDENCE REVIEW STATUS ===
   doc.addPage();
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
   y = margin;
 
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("QA CERTIFICATION", margin, y);
+  doc.text("EVIDENCE REVIEW STATUS", margin, y);
   y += 30;
 
-  doc.setDrawColor(...BRAND.primary);
+  doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 100, y);
   y += 30;
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
 
   const qa = data.qa_certification || {};
   const certText = [
-    "This report has been independently validated through a three-layer verification process:",
+    "This page summarizes metadata supplied with the case; it is not an independent audit or legal certification.",
     "",
-    "1. AI CORRELATION ENGINE — Cross-references all findings across 30+ source categories",
-    "2. QA AGENT — Audits completeness, accuracy, and court-readiness",
-    "3. EVIDENCE VALIDATOR — Verifies source citations, corroboration, and legal sufficiency",
+    `Recorded QA score (not independently verified): ${qa.qa_score ?? data.confidence_score ?? "N/A"}/100`,
+    `Recorded completeness score: ${qa.completeness_score ?? "N/A"}/100`,
+    `Recorded accuracy score: ${qa.accuracy_score ?? "N/A"}/100`,
+    `Recorded court-readiness score: ${qa.court_readiness_score ?? "N/A"}/100`,
+    "STATUS: NOT A LEGAL CERTIFICATION",
     "",
-    `QA Score: ${qa.qa_score || data.confidence_score || 0}/100`,
-    `Completeness: ${qa.completeness_score || "N/A"}/100`,
-    `Accuracy: ${qa.accuracy_score || "N/A"}/100`,
-    `Court Readiness: ${qa.court_readiness_score || "N/A"}/100`,
-    qa.fully_certified ? "STATUS: CERTIFIED" : "STATUS: PENDING CERTIFICATION",
-    "",
-    "This certification confirms that the findings in this report have been verified through",
-    "automated cross-referencing and independent quality audit. All evidence chains are",
-    "traceable to their primary sources via exhibit numbers.",
+    "Human review is required. Source names and URLs are references, not proof of identity, ownership, or truth.",
+    "No claim is made that sources were queried or that evidence was independently validated unless a separate, traceable validation receipt is attached.",
   ];
   certText.forEach(line => {
     if (line.startsWith("STATUS:")) {
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(...(qa.fully_certified ? BRAND.green : BRAND.gold));
+      doc.setTextColor(BRAND.gold[0], BRAND.gold[1], BRAND.gold[2]);
     } else {
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(...BRAND.text);
+      doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
     }
-    doc.text(line, margin, y);
-    y += 16;
+    const wrappedLines = doc.splitTextToSize(line, contentWidth);
+    wrappedLines.forEach(wrappedLine => {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(wrappedLine, margin, y);
+      y += 16;
+    });
   });
 
   y += 30;
-  doc.setDrawColor(...BRAND.muted);
+  doc.setDrawColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
   doc.setLineWidth(0.5);
   doc.line(margin, y, pageWidth - margin, y);
   y += 20;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.setTextColor(...BRAND.text);
-  doc.text("NOTARY ACKNOWLEDGMENT", margin, y);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
+  doc.text("OPTIONAL NOTARY ACKNOWLEDGMENT TEMPLATE — NOT EXECUTED", margin, y);
   y += 25;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.setTextColor(...BRAND.muted);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
   const notaryText = [
     "State of _______________",
     "County of _______________",
@@ -171,12 +167,12 @@ export function generateCourtReadyPDF(data) {
   // === PAGE 3+: DECEASED IDENTITY ===
   doc.addPage();
   y = margin;
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("I. DECEASED IDENTITY CONFIRMATION", margin, y);
+  doc.text("I. DECEASED IDENTITY — CASE DATA", margin, y);
   y += 20;
-  doc.setDrawColor(...BRAND.primary);
+  doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 150, y);
   y += 25;
@@ -198,10 +194,10 @@ export function generateCourtReadyPDF(data) {
 
   deceasedFields.forEach(([label, value]) => {
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BRAND.muted);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
     doc.text(label + ":", margin, y);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...BRAND.text);
+    doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
     doc.text(String(value), margin + 180, y);
     y += 20;
   });
@@ -214,7 +210,7 @@ export function generateCourtReadyPDF(data) {
     y += 15;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.setTextColor(...BRAND.muted);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
     const obitLines = doc.splitTextToSize(dd.obituary_text, contentWidth);
     obitLines.forEach(line => {
       if (y > pageHeight - margin) { doc.addPage(); y = margin; }
@@ -228,10 +224,10 @@ export function generateCourtReadyPDF(data) {
   y += 30;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.text("II. FAMILY TREE", margin, y);
   y += 20;
-  doc.setDrawColor(...BRAND.primary);
+  doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 100, y);
   y += 25;
@@ -253,10 +249,10 @@ export function generateCourtReadyPDF(data) {
   treeSections.forEach(([label, items]) => {
     if (y > pageHeight - margin) { doc.addPage(); y = margin; }
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BRAND.muted);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
     doc.text(label + ":", margin, y);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...BRAND.text);
+    doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
     const text = items.length > 0 ? items.join(", ") : "None identified";
     const lines = doc.splitTextToSize(text, contentWidth - 120);
     lines.forEach((line, idx) => {
@@ -272,10 +268,10 @@ export function generateCourtReadyPDF(data) {
   y += 20;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.text("III. IDENTIFIED HEIRS", margin, y);
   y += 20;
-  doc.setDrawColor(...BRAND.primary);
+  doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 150, y);
   y += 25;
@@ -284,7 +280,7 @@ export function generateCourtReadyPDF(data) {
   doc.setFontSize(9);
 
   const drawHeirHeader = () => {
-    doc.setFillColor(...BRAND.dark);
+    doc.setFillColor(BRAND.dark[0], BRAND.dark[1], BRAND.dark[2]);
     doc.rect(margin, y - 12, contentWidth, 22, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
@@ -298,13 +294,13 @@ export function generateCourtReadyPDF(data) {
   drawHeirHeader();
 
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
 
   heirs.forEach((heir, idx) => {
-    if (y > pageHeight - 40) { doc.addPage(); y = margin; drawHeirHeader(); doc.setFont("helvetica", "normal"); doc.setTextColor(...BRAND.text); }
+    if (y > pageHeight - 40) { doc.addPage(); y = margin; drawHeirHeader(); doc.setFont("helvetica", "normal"); doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]); }
 
     if (idx % 2 === 0) {
-      doc.setFillColor(...BRAND.light);
+      doc.setFillColor(BRAND.light[0], BRAND.light[1], BRAND.light[2]);
       doc.rect(margin, y - 10, contentWidth, 20, "F");
     }
 
@@ -325,10 +321,10 @@ export function generateCourtReadyPDF(data) {
   y += 20;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.text("IV. PROBATE COURT INFORMATION", margin, y);
   y += 20;
-  doc.setDrawColor(...BRAND.primary);
+  doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 200, y);
   y += 25;
@@ -348,10 +344,10 @@ export function generateCourtReadyPDF(data) {
   ];
   probateFields.forEach(([label, value]) => {
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BRAND.muted);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
     doc.text(label + ":", margin, y);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...BRAND.text);
+    doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
     doc.text(String(value), margin + 150, y);
     y += 18;
   });
@@ -361,21 +357,21 @@ export function generateCourtReadyPDF(data) {
   y += 20;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.text("V. SOURCES & METHODOLOGY", margin, y);
   y += 20;
-  doc.setDrawColor(...BRAND.primary);
+  doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 200, y);
   y += 25;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(`Data Sources Queried (${data.sources_checked?.length || 0}):`, margin, y);
+  doc.text(`Source References Supplied (${data.sources_checked?.length || 0}):`, margin, y);
   y += 15;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...BRAND.muted);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
   const sources = (data.sources_checked || []).join(", ");
   const sourceLines = doc.splitTextToSize(sources, contentWidth);
   sourceLines.forEach(line => {
@@ -387,12 +383,12 @@ export function generateCourtReadyPDF(data) {
   y += 10;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...BRAND.text);
+  doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.text(`Methods Applied (${data.methods_used?.length || 0}):`, margin, y);
   y += 15;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...BRAND.muted);
+  doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
   const methods = (data.methods_used || []).join(", ");
   const methodLines = doc.splitTextToSize(methods, contentWidth);
   methodLines.forEach(line => {
@@ -406,9 +402,9 @@ export function generateCourtReadyPDF(data) {
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
     doc.setFontSize(7);
-    doc.setTextColor(...BRAND.muted);
+    doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
     doc.text(
-      `Strategic Minds AI | Forensic Heir Search Report | ${data.deceased_name} | Page ${p} of ${totalPages}`,
+      `Strategic Minds AI | Investigative Working Report | ${data.deceased_name} | Page ${p} of ${totalPages}`,
       margin,
       pageHeight - 20
     );

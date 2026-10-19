@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, Brain, Globe, Rocket, Search, Users,
-  Target, Zap, Shield, TrendingUp, Code2, Network, Sparkles,
-  BarChart3, Bot, Layers, CheckCircle2, Star,
+  ArrowRight, Brain, Globe, Rocket, Search,
+  Target, Zap, Shield, TrendingUp, Code2, Network, Sparkles, Bot, Layers, Star,
 } from "lucide-react";
 
 const EARTH_IMG = "https://www.strategicmindsai.com/v2-assets/connected-earth.jpg";

@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Users, Search, Loader2, CheckCircle, AlertCircle, Clock,
-  TrendingUp, FileText, Mail, ExternalLink, Filter, Phone, MapPin, UserCheck, Target,
+  Users, Search, Loader2, CheckCircle, AlertCircle, Clock, FileText, Mail, ExternalLink, Filter, Phone, MapPin, UserCheck, Target,
 } from "lucide-react";
 import { downloadHeirPDF } from "@/lib/heirPDF";
 import BrandIngestion from "@/components/brand/BrandIngestion";
@@ -34,7 +33,7 @@ export default function HeirSearchDashboard() {
     setLoading(true);
     try {
       const res = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 100 });
-      setCases(res.items || res);
+      setCases(Array.isArray(res) ? res : res.items || []);
     } catch (err) {
       console.error(err);
     } finally {

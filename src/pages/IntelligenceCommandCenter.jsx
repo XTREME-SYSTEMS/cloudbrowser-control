@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import OnboardingQuestionnaire from "@/components/intelligence/OnboardingQuestionnaire";
 import ThinkingScreenSaver from "@/components/intelligence/ThinkingScreenSaver";
 import {
@@ -40,7 +39,7 @@ export default function IntelligenceCommandCenter() {
   const loadHistory = async () => {
     try {
       const res = await base44.entities.IntelligencePipeline.filter({}, { sort: "-created_date", limit: 10 });
-      setHistory(res.items || res);
+      setHistory(Array.isArray(res) ? res : res.items || []);
     } catch (e) { console.error(e); }
   };
 
@@ -202,7 +201,7 @@ export default function IntelligenceCommandCenter() {
         {!pipeline ? (
           <OnboardingQuestionnaire onComplete={handleOnboardingComplete} />
         ) : (
-          <StepResultCard step={STEPS[0]} result={stepResults[1]} />
+          <StepResultCard step={STEPS[0]} result={stepResults[1]} onRun={() => runStep(STEPS[0].num)} />
         )}
 
         {/* Steps 2-12 — only show if previous step is complete */}
