@@ -1,0 +1,105 @@
+{
+  "name": "AgentTask",
+  "type": "object",
+  "properties": {
+    "agent_name": {
+      "type": "string",
+      "title": "Agent",
+      "description": "Which super-agent owns this task"
+    },
+    "domain": {
+      "type": "string",
+      "title": "Domain",
+      "description": "Related domain (if any)"
+    },
+    "task_type": {
+      "type": "string",
+      "title": "Task Type",
+      "description": "e.g. verify_ownership, submit_sitemap, competitor_scan, audit_seo"
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "needs_approval",
+        "completed",
+        "failed"
+      ],
+      "default": "pending",
+      "title": "Status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "title": "Priority"
+    },
+    "result": {
+      "type": "string",
+      "title": "Result / Receipt"
+    },
+    "autonomous": {
+      "type": "boolean",
+      "title": "Autonomous",
+      "description": "Can execute without approval",
+      "default": false
+    }
+  },
+  "required": [
+    "agent_name",
+    "title",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

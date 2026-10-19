@@ -1,0 +1,69 @@
+{
+  "name": "SwarmRun",
+  "type": "object",
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "description": "The user prompt that initiated this swarm run"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "completed",
+        "failed",
+        "synthesized"
+      ],
+      "default": "running"
+    },
+    "agent_config": {
+      "type": "object",
+      "description": "Snapshot of the agent roster and parameters used for this run"
+    },
+    "synthesis": {
+      "type": "string",
+      "description": "The synthesized output combining all agent responses"
+    },
+    "task_count": {
+      "type": "number",
+      "default": 0
+    },
+    "completed_count": {
+      "type": "number",
+      "default": 0
+    },
+    "failed_count": {
+      "type": "number",
+      "default": 0
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "prompt",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

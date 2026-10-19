@@ -1,4 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { engineFetch, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { secrets } from "base44:runtime";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
@@ -116,7 +118,7 @@ export default async function(req) {
 
       // Upload to Base44 file storage
       const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], "screenshot.png", { type: "image/png" });
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const uploadRes = await uploadFile({ file });
       const file_url = uploadRes.file_url;
 
       const screenshot = await base44.entities.Screenshot.create({
@@ -143,7 +145,7 @@ export default async function(req) {
       if (!engineRes.base64) return Response.json({ error: "No PDF returned" }, { status: 500 });
 
       const file = new File([Uint8Array.from(atob(engineRes.base64), (c) => c.charCodeAt(0))], "document.pdf", { type: "application/pdf" });
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const uploadRes = await uploadFile({ file });
       const file_url = uploadRes.file_url;
 
       const result = await base44.entities.Result.create({
@@ -177,7 +179,7 @@ export default async function(req) {
         body: JSON.stringify({ action_type: "ai_extract" }),
       });
 
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: `${prompt || "Extract the following data from this page content."}\n\nPage content:\n${engineRes.data}`,
         response_json_schema: schema,
       });

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { sendEmail } from '../../shared/emailGateway.ts';
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -24,7 +25,7 @@ export default async function (req) {
       try {
         const users = await base44.asServiceRole.entities.User.filter({ id: user_id });
         if (users[0]?.email) {
-          await base44.integrations.Core.SendEmail({
+          await sendEmail({
             to: users[0].email,
             subject: title,
             body: notifBody || "",

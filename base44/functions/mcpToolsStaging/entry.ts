@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { stagingEnginePost, stagingEngineDelete, isStagingEngineConfigured, requireIsolatedFortressTestEnvironment, STAGING_ENGINE_CONFIGURATION_REQUIRED } from "../../shared/stagingEngineClient.ts";
 import { encrypt, decrypt } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
@@ -154,7 +155,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       });
       if (res.base64) {
         const file = new File([Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0))], `stg_mcp_screenshot.png`, { type: "image/png" });
-        const uploadRes = await base44.integrations.Core.UploadFile({ file });
+        const uploadRes = await uploadFile({ file });
         return { screenshot_url: uploadRes.file_url, size: res.size, environment: "staging" };
       }
       return { error: "No screenshot captured", environment: "staging" };

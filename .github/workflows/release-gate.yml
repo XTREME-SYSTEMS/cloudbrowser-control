@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
 
 jobs:
   code-quality:
@@ -63,6 +63,13 @@ jobs:
         working-directory: browser-engine
         run: node --check server.js
 
+      - name: Check Railway operator syntax
+        run: node --check operator/index.js
+
+      - name: Run browser engine contract tests
+        working-directory: browser-engine
+        run: npm test
+
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -80,6 +87,22 @@ jobs:
           # password_encrypted/has_password, secret_encrypted/has_secret, etc.
           if grep -rnE '^[[:space:]]*"(password|secret|cookies|storage_state)"[[:space:]]*:' base44/entities/ --include='*.jsonc'; then
             echo "FAIL: Plaintext credential property key found in entity schema"
+          if grep -rE '^[[:space:]]*"password"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'; then
+            echo "FAIL: Plaintext password field found in entity schema"
+            grep -rE '^[[:space:]]*"password"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'password_encrypted' | grep -v 'has_password'
+            exit 1
+          fi
+          if grep -rE '^[[:space:]]*"secret"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'; then
+            echo "FAIL: Plaintext secret field found in entity schema"
+            grep -rE '^[[:space:]]*"secret"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'secret_encrypted' | grep -v 'has_secret'
+            exit 1
+          fi
+          if grep -rE '^[[:space:]]*"cookies"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'cookies_encrypted' | grep -v 'has_cookies'; then
+            echo "FAIL: Plaintext cookies field found in entity schema"
+            exit 1
+          fi
+          if grep -rE '^[[:space:]]*"storage_state"[[:space:]]*:' base44/entities/ --include='*.jsonc' | grep -v 'storage_state_encrypted' | grep -v 'has_storage_state'; then
+            echo "FAIL: Plaintext storage_state field found in entity schema"
             exit 1
           fi
           echo "PASS: No plaintext password/secret/cookies/storage_state property keys in entity schemas"

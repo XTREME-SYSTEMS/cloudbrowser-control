@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { uploadFile } from '../../shared/storageGateway.ts';
 import {
   deduceInfrastructureStack,
   findClosestFunctionalMatch,
@@ -162,7 +163,7 @@ export default async function (req) {
     };
 
     const archFile = new File([JSON.stringify(architecture, null, 2)], `architecture-${clone_project_id}.json`, { type: "application/json" });
-    const archUpload = await base44.integrations.Core.UploadFile({ file: archFile });
+    const archUpload = await uploadFile({ file: archFile });
     await base44.entities.CloneAsset.create({
       clone_project_id,
       asset_type: "inferred_architecture",
@@ -173,7 +174,7 @@ export default async function (req) {
 
     // Store the mock backend code as a separate asset
     const codeFile = new File([mockBackendCode], `mock-backend-${clone_project_id}.js`, { type: "text/javascript" });
-    const codeUpload = await base44.integrations.Core.UploadFile({ file: codeFile });
+    const codeUpload = await uploadFile({ file: codeFile });
     await base44.entities.CloneAsset.create({
       clone_project_id,
       asset_type: "mock_backend",

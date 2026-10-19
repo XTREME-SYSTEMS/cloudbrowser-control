@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, CreditCard, Phone, Key, Ticket, Eye, RefreshCw, ArrowLeft, Users } from "lucide-react";
+import { LayoutDashboard, CreditCard, Phone, Key, Ticket, Eye, RefreshCw, ArrowLeft, Users, Sparkles } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminSubscriptions from "@/components/admin/AdminSubscriptions";
 import AdminPhoneNumbers from "@/components/admin/AdminPhoneNumbers";
@@ -61,6 +61,9 @@ export default function AdminPortal() {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => setRefreshKey(k => k + 1)}>
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/command-center")}>
+              <Sparkles className="w-4 h-4 mr-1" /> Agent Command Center
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to App

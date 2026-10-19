@@ -1,0 +1,99 @@
+{
+  "name": "DomainInventory",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "type": "string",
+      "title": "Domain",
+      "description": "Full domain name e.g. smileco.com"
+    },
+    "tld": {
+      "type": "string",
+      "title": "TLD",
+      "description": "Top-level domain e.g. com, net, store"
+    },
+    "keyword": {
+      "type": "string",
+      "title": "Seed Keyword"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "discovered",
+        "available",
+        "unavailable",
+        "buying",
+        "bought",
+        "failed"
+      ],
+      "default": "discovered",
+      "title": "Status"
+    },
+    "price": {
+      "type": "string",
+      "title": "Price"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Registered At"
+    },
+    "godaddy_order_id": {
+      "type": "string",
+      "title": "GoDaddy Order ID"
+    },
+    "pipeline_id": {
+      "type": "string",
+      "title": "Pipeline ID"
+    },
+    "repo_url": {
+      "type": "string",
+      "title": "GitHub Repo URL"
+    },
+    "deploy_url": {
+      "type": "string",
+      "title": "Deploy URL"
+    }
+  },
+  "required": [
+    "domain"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "name": "WebsiteEnquiry",
+  "type": "object",
+  "properties": {
+    "build_id": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "site_title": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 150
+    },
+    "email": {
+      "type": "string",
+      "maxLength": 254
+    },
+    "phone": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "is_verification": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "build_id",
+    "owner_id",
+    "name",
+    "email",
+    "message"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

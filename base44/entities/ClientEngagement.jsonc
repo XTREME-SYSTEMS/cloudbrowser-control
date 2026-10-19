@@ -1,0 +1,252 @@
+{
+  "name": "ClientEngagement",
+  "type": "object",
+  "properties": {
+    "client_name": {
+      "type": "string",
+      "description": "Primary contact full name"
+    },
+    "client_company": {
+      "type": "string",
+      "description": "Company or brand name"
+    },
+    "client_email": {
+      "type": "string",
+      "description": "Primary contact email"
+    },
+    "client_phone": {
+      "type": "string"
+    },
+    "client_role": {
+      "type": "string",
+      "description": "Decision maker role (Owner, CMO, Founder, etc.)"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Selected industry vertical"
+    },
+    "target_market": {
+      "type": "string",
+      "description": "Target market / ideal customer description"
+    },
+    "geo_focus": {
+      "type": "string",
+      "description": "Geographic focus (national, regional, specific states/cities)"
+    },
+    "business_goals": {
+      "type": "string",
+      "description": "What the client wants to achieve"
+    },
+    "success_metrics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "How the client defines success (leads, revenue, ranking, etc.)"
+    },
+    "budget_range": {
+      "type": "string"
+    },
+    "timeline": {
+      "type": "string",
+      "description": "Expected delivery timeline"
+    },
+    "brand_preferences": {
+      "type": "object",
+      "description": "Brand voice, colors, style preferences",
+      "properties": {
+        "voice": {
+          "type": "string"
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style": {
+          "type": "string"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "competitor_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "current_website": {
+      "type": "string"
+    },
+    "differentiators": {
+      "type": "string",
+      "description": "What makes the client unique"
+    },
+    "pipeline_id": {
+      "type": "string",
+      "description": "Linked IntelligencePipeline record"
+    },
+    "build_spec": {
+      "type": "object",
+      "description": "Machine-readable build specification for the autonomous coding agent"
+    },
+    "build_spec_version": {
+      "type": "string"
+    },
+    "factory_status": {
+      "type": "string",
+      "enum": [
+        "intake",
+        "discovery",
+        "spec_ready",
+        "building",
+        "qa_validating",
+        "deploying",
+        "deployed",
+        "delivered",
+        "monitoring",
+        "paused",
+        "failed"
+      ],
+      "default": "intake"
+    },
+    "factory_progress": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 progress through the factory lifecycle"
+    },
+    "factory_stage_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "deployment_url": {
+      "type": "string",
+      "description": "Live deployed site URL"
+    },
+    "preview_url": {
+      "type": "string",
+      "description": "Staging preview URL for client review"
+    },
+    "supabase_ref": {
+      "type": "string"
+    },
+    "railway_id": {
+      "type": "string"
+    },
+    "vercel_id": {
+      "type": "string"
+    },
+    "github_repo": {
+      "type": "string"
+    },
+    "client_portal_token": {
+      "type": "string",
+      "description": "Token for white-label client portal access"
+    },
+    "review_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_review",
+        "approved",
+        "changes_requested"
+      ],
+      "default": "pending"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0,
+      "description": "Client satisfaction rating 1-5"
+    },
+    "testimonial": {
+      "type": "string"
+    },
+    "referral_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "handoff_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "monitoring_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_check_in": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "archived",
+        "cancelled"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "client_name",
+    "client_email",
+    "industry",
+    "factory_status",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.client_portal_token": "{{user.token}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

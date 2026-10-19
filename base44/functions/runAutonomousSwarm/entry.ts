@@ -88,6 +88,7 @@ export default async function (req: Request): Promise<Response> {
     // Step 2-3: Execute each pending task
     for (const task of pendingTasks) {
       tasksProcessed++;
+      if (!agentStats[task.agent_name]) agentStats[task.agent_name] = { processed: 0, succeeded: 0, failed: 0 };
       agentStats[task.agent_name].processed++;
 
       try {
@@ -107,17 +108,48 @@ export default async function (req: Request): Promise<Response> {
         });
         const traceResponse = traceRaw?.data ?? traceRaw;
 
-        await base44.asServiceRole.entities.SwarmTask.update(task.id, {
-          status: "completed",
-          result_data: traceResponse,
-          result_summary: `Agent ${task.agent_name} completed ${task.task_type} via ${traceResponse?.tier_used || "unknown"} tier`,
-          confidence_score: traceResponse?.confidence_score || 0,
-          completed_at: new Date().toISOString(),
-          duration_ms: Date.now() - cycleStart,
-        });
-
-        tasksSucceeded++;
-        agentStats[task.agent_name].succeeded++;
+        if (isVerifiedTraceResult(traceResponse)) {
+          await base44.asServiceRole.entities.SwarmTask.update(task.id, {
+            status: "completed",
+            result_data: traceResponse,
+            result_summary: `Agent ${task.agent_name} completed ${task.task_type} with verified source evidence`,
+            confidence_score: Number(traceResponse.confidence_score) || 0,
+            completed_at: new Date().toISOString(),
+            duration_ms: Date.now() - cycleStart,
+          });
+          tasksSucceeded++;
+          agentStats[task.agent_name].succeeded++;
+        } else {
+          const failureMessage = "Research returned no verifiable source evidence; candidate data requires review and the task cannot be marked completed.";
+          await base44.asServiceRole.entities.SwarmTask.update(task.id, {
+            status: "failed",
+            result_data: traceResponse,
+            result_summary: "Unverified candidate data; human review required",
+            confidence_score: 0,
+            error_message: failureMessage,
+            notes: failureMessage,
+            completed_at: new Date().toISOString(),
+            duration_ms: Date.now() - cycleStart,
+          });
+          try {
+            await base44.asServiceRole.entities.HealingFlag.create({
+              flag_type: "validation_failure",
+              source_entity: "SwarmTask",
+              source_id: task.id,
+              source_title: `${task.agent_name} / ${task.task_type}`,
+              error_message: failureMessage,
+              retry_count: 0,
+              max_retries: 3,
+              status: "flagged",
+              flagged_at: new Date().toISOString(),
+              cycle_id: cycleId,
+            });
+          } catch (_flagErr) {
+            // Preserve the task failure even if the optional flag cannot be written.
+          }
+          tasksFailed++;
+          agentStats[task.agent_name].failed++;
+        }
       } catch (err: any) {
         await base44.asServiceRole.entities.SwarmTask.update(task.id, {
           status: "failed",
@@ -164,4 +196,20 @@ export default async function (req: Request): Promise<Response> {
     console.error("runAutonomousSwarm error:", err);
     return Response.json({ error: err.message }, { status: 500 });
   }
+}
+
+function isVerifiedTraceResult(result: any): boolean {
+  if (result?.status !== "found" || result?.evidence_verified !== true || result?.verification_status !== "verified") return false;
+  if (!Array.isArray(result?.evidence_records)) return false;
+  return result.evidence_records.some((record: any) => {
+    if (!record || record.status !== "verified" || typeof record.finding_id !== "string" || !record.finding_id.trim()) return false;
+    if (typeof record.retrieved_at !== "string" || !Number.isFinite(Date.parse(record.retrieved_at))) return false;
+    if (typeof record.content_hash !== "string" || !/^[a-f0-9]{64}$/i.test(record.content_hash)) return false;
+    try {
+      const url = new URL(record.source_url);
+      return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+    } catch {
+      return false;
+    }
+  });
 }

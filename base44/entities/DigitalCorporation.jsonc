@@ -1,0 +1,170 @@
+{
+  "name": "DigitalCorporation",
+  "type": "object",
+  "properties": {
+    "corporation_name": {
+      "type": "string",
+      "default": "Xtreme Digital Corporation"
+    },
+    "org_chart": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "agent_name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "CEO, CTO, CMO, Researcher, Builder, Marketer, Sales, Support, etc."
+          },
+          "department": {
+            "type": "string",
+            "enum": [
+              "executive",
+              "research",
+              "engineering",
+              "marketing",
+              "sales",
+              "content",
+              "social_media",
+              "seo",
+              "analytics",
+              "support",
+              "operations",
+              "finance"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "model": {
+            "type": "string",
+            "description": "Which AI model powers this agent"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "idle",
+              "busy",
+              "error",
+              "offline"
+            ],
+            "default": "active"
+          },
+          "tasks_completed": {
+            "type": "number",
+            "default": 0
+          },
+          "reports_to": {
+            "type": "string",
+            "description": "Agent ID this reports to"
+          }
+        },
+        "required": [
+          "agent_name",
+          "role",
+          "department"
+        ]
+      },
+      "default": [],
+      "description": "The full org chart of AI agents that make up the digital corporation"
+    },
+    "total_agents": {
+      "type": "number",
+      "default": 0
+    },
+    "active_agents": {
+      "type": "number",
+      "default": 0
+    },
+    "departments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "head_count": {
+            "type": "number"
+          },
+          "active_tasks": {
+            "type": "number"
+          },
+          "completed_tasks": {
+            "type": "number"
+          }
+        }
+      },
+      "default": []
+    },
+    "corporation_mission": {
+      "type": "string",
+      "description": "The corporation's mission \u2014 identify what people want and deliver it"
+    },
+    "revenue_target": {
+      "type": "number",
+      "default": 0
+    },
+    "revenue_actual": {
+      "type": "number",
+      "default": 0
+    },
+    "autonomous_mode": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true, corporation operates without human input"
+    },
+    "last_board_meeting_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time agents coordinated strategy"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "forming",
+        "operational",
+        "scaling",
+        "paused",
+        "dissolved"
+      ],
+      "default": "forming"
+    }
+  },
+  "required": [
+    "corporation_name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

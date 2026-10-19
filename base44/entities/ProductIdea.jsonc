@@ -1,0 +1,199 @@
+{
+  "name": "ProductIdea",
+  "type": "object",
+  "properties": {
+    "idea_id": {
+      "type": "string",
+      "description": "Stable identifier (e.g. idea_<ts>)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Name of the product/app/system idea"
+    },
+    "problem_solved": {
+      "type": "string",
+      "description": "The specific problem people complain about that this solves"
+    },
+    "target_audience": {
+      "type": "string",
+      "description": "Who experiences this problem most acutely"
+    },
+    "solution_summary": {
+      "type": "string",
+      "description": "How the product solves the problem"
+    },
+    "product_type": {
+      "type": "string",
+      "enum": [
+        "web_app",
+        "mobile_app",
+        "saas",
+        "api",
+        "browser_extension",
+        "desktop_app",
+        "marketplace",
+        "content_site",
+        "ai_agent",
+        "automation_tool",
+        "dashboard",
+        "other"
+      ],
+      "description": "What type of product this is"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Industry/niche this serves"
+    },
+    "google_trend_score": {
+      "type": "number",
+      "default": 0,
+      "description": "Search interest score 0-100"
+    },
+    "trend_direction": {
+      "type": "string",
+      "enum": [
+        "rising",
+        "stable",
+        "declining"
+      ],
+      "default": "rising"
+    },
+    "competition_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "saturated"
+      ],
+      "default": "medium"
+    },
+    "market_size_estimate": {
+      "type": "string",
+      "description": "TAM/SAM estimate"
+    },
+    "monetization_model": {
+      "type": "string",
+      "enum": [
+        "subscription",
+        "one_time",
+        "freemium",
+        "marketplace",
+        "ad_revenue",
+        "lead_gen",
+        "usage_based",
+        "license",
+        "hybrid"
+      ],
+      "default": "subscription"
+    },
+    "price_point_estimate": {
+      "type": "string",
+      "description": "Suggested pricing"
+    },
+    "world_changing_potential": {
+      "type": "boolean",
+      "default": false,
+      "description": "Could this change lives / change the world?"
+    },
+    "complaint_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Real complaints found online that this idea addresses"
+    },
+    "search_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "competitor_analysis": {
+      "type": "string",
+      "description": "LLM-generated analysis of existing solutions and gaps"
+    },
+    "system_architecture": {
+      "type": "object",
+      "description": "Generated architecture spec for autonomous building"
+    },
+    "build_status": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "researching",
+        "architecting",
+        "building",
+        "validating",
+        "deployed",
+        "marketing",
+        "selling",
+        "archived"
+      ],
+      "default": "idea"
+    },
+    "validation_score": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 score from market validation"
+    },
+    "market_research_data": {
+      "type": "object",
+      "description": "Raw research data from Google trends and competitor analysis"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "architected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "built_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "idea_id",
+    "title",
+    "problem_solved",
+    "build_status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

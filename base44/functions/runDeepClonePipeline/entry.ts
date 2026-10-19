@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 
 /**
@@ -144,7 +145,7 @@ export default async function (req) {
       // ── VISUAL VALIDATION: Compare original screenshot to deployed clone ──
       try {
         if (project.desktop_screenshot_url) {
-          const visualResult = await base44.integrations.Core.InvokeLLM({
+          const visualResult = await invokeLLM({
             prompt: `Analyze this screenshot of a website. Score the visual completeness from 0 to 100 based on layout, content rendering, styling, and structure. Return a score, brief notes, and any visible issues. This is the ORIGINAL site that we need to clone with 100% parity.`,
             file_urls: [project.desktop_screenshot_url],
             response_json_schema: {

@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { gatewayConversations } from "@/lib/gatewayConversations";
+import { uploadFile } from "@/lib/fileUpload";
 import { Button } from "@/components/ui/button";
 import { Bot, Sparkles, Loader2, AlertCircle, PanelLeftClose } from "lucide-react";
 import MessageBubble from "@/components/ai-chat/MessageBubble";
@@ -16,11 +18,12 @@ export default function CopilotPanel({ onClose }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [copilotMsgs, setCopilotMsgs] = useState([]);
   const scrollRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
     try {
-      const list = await base44.agents.listConversations({ agent_name: AGENT_NAME });
+      const list = await gatewayConversations.listConversations({ agent_name: AGENT_NAME });
       setConversations(list || []);
       if (list && list.length > 0) setActiveId(list[0].id);
     } catch {
@@ -43,11 +46,10 @@ export default function CopilotPanel({ onClose }) {
     let unsub = () => {};
     (async () => {
       try {
-        const conv = await base44.agents.getConversation(activeId);
+        const conv = await gatewayConversations.getConversation(activeId);
         setMessages(conv.messages || []);
-        unsub = base44.agents.subscribeToConversation(activeId, (data) => {
+        unsub = gatewayConversations.subscribeToConversation(activeId, (data) => {
           setMessages(data.messages || []);
-          setSending(false);
         });
       } catch {
         setMessages([]);
@@ -55,6 +57,25 @@ export default function CopilotPanel({ onClose }) {
     })();
     return () => unsub();
   }, [activeId]);
+
+  // Poll for ChatGPT messages relayed via MCP
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const msgs = await base44.entities.CopilotMessage.list('-created_date', 20);
+        setCopilotMsgs(msgs || []);
+      } catch { setCopilotMsgs([]); }
+    };
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Merge agent messages with ChatGPT relay messages
+  const allMessages = [
+    ...messages.map(m => ({ ...m, source: m.source || 'agent' })),
+    ...copilotMsgs.map(m => ({ role: m.role, content: m.content, created_at: m.created_date, source: m.source || 'mcp' })),
+  ].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -67,7 +88,7 @@ export default function CopilotPanel({ onClose }) {
     try {
       let conv = activeId ? conversations.find((c) => c.id === activeId) : null;
       if (!conv) {
-        conv = await base44.agents.createConversation({
+        conv = await gatewayConversations.createConversation({
           agent_name: AGENT_NAME,
           metadata: { name: `Copilot ${conversations.length + 1}`, description: "Copilot session" },
         });
@@ -75,7 +96,8 @@ export default function CopilotPanel({ onClose }) {
         setActiveId(conv.id);
       }
       setSending(true);
-      await base44.agents.addMessage(conv, { role: "user", content: text });
+      await gatewayConversations.addMessage(conv, { role: "user", content: text });
+      setSending(false);
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -92,9 +114,10 @@ export default function CopilotPanel({ onClose }) {
     if (!activeId) return;
     setSending(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       const conv = conversations.find((c) => c.id === activeId);
-      await base44.agents.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
+      await gatewayConversations.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
+      setSending(false);
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -111,7 +134,7 @@ export default function CopilotPanel({ onClose }) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">Copilot</p>
-            <p className="text-xs text-muted-foreground truncate">Autonomous Agent · Live Edit</p>
+            <p className="text-xs text-muted-foreground truncate">ChatGPT · GPT-5 · MCP Relay</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7 shrink-0">
@@ -136,14 +159,19 @@ export default function CopilotPanel({ onClose }) {
               <Sparkles className="w-3 h-3" /> Start Chatting
             </Button>
           </div>
-        ) : messages.length === 0 ? (
+        ) : allMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <p className="text-xs text-muted-foreground">Send a message or pick a suggestion below. The agent can edit UI, run jobs, manage infrastructure, and more.</p>
           </div>
         ) : (
           <>
-            {messages.map((m, i) => (
-              <MessageBubble key={i} message={m} />
+            {allMessages.map((m, i) => (
+              <div key={i} className={m.source === 'mcp' ? 'border-l-2 border-primary pl-2' : ''}>
+                {m.source === 'mcp' && (
+                  <div className="text-[10px] text-primary font-semibold mb-0.5">via ChatGPT MCP</div>
+                )}
+                <MessageBubble message={m} />
+              </div>
             ))}
             {sending && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

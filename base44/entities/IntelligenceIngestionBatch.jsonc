@@ -1,0 +1,117 @@
+{
+  "name": "IntelligenceIngestionBatch",
+  "type": "object",
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "description": "Stable batch identifier (e.g. bulk_<ts>)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "failed",
+        "partial"
+      ],
+      "default": "processing",
+      "description": "Current state of the bulk ingestion run"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "feed_items",
+        "seed_batch",
+        "pending_seeds"
+      ],
+      "description": "Where the ingested items came from"
+    },
+    "source_ref": {
+      "type": "string",
+      "description": "Seed batch ID or feed label, if applicable"
+    },
+    "total_items": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of items queued for ingestion"
+    },
+    "processed": {
+      "type": "number",
+      "default": 0,
+      "description": "Items processed so far (succeeded + failed)"
+    },
+    "succeeded": {
+      "type": "number",
+      "default": 0
+    },
+    "failed": {
+      "type": "number",
+      "default": 0
+    },
+    "artifacts_created": {
+      "type": "number",
+      "default": 0,
+      "description": "New IntelligenceArtifact records created"
+    },
+    "duplicates_skipped": {
+      "type": "number",
+      "default": 0,
+      "description": "Items skipped because an artifact with the same title already existed"
+    },
+    "chunk_size": {
+      "type": "number",
+      "default": 10,
+      "description": "Items processed per LLM call"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Up to 20 chunk-level error messages"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Optional LLM-generated ingestion summary"
+    }
+  },
+  "required": [
+    "batch_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

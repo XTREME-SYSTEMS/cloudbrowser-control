@@ -1,0 +1,126 @@
+{
+  "name": "VariableRegistry",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Dotted variable key (e.g. system.archetype, autonomy.level, runtime.orchestrator)"
+    },
+    "group": {
+      "type": "string",
+      "description": "Variable group (identity, classification, business, localization, autonomy, runtime, security, etc.)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "string",
+        "integer",
+        "boolean",
+        "enum",
+        "array",
+        "object"
+      ],
+      "default": "string",
+      "description": "Value type for schema validation"
+    },
+    "default_value": {
+      "type": "string",
+      "description": "Default value (stringified for storage \u2014 JSON for complex types)"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this variable controls"
+    },
+    "allowed_values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Allowed values for enum/integer types (empty = unconstrained)"
+    },
+    "impact_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Domains affected when this variable changes (architecture, benchmarks, workers, ui, data, deployment, security, etc.)"
+    },
+    "recalibration_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Actions to execute when this variable changes (recompile blueprint, rerun tests, etc.)"
+    },
+    "requires_approval": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether changing this variable requires an Approval record"
+    },
+    "sensitivity": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "sensitive",
+        "secret"
+      ],
+      "default": "normal",
+      "description": "Sensitivity level \u2014 secret values are never returned to the client"
+    },
+    "current_value": {
+      "type": "string",
+      "description": "Currently resolved value (stringified)"
+    },
+    "value_source": {
+      "type": "string",
+      "enum": [
+        "explicit",
+        "manifest",
+        "runtime",
+        "template_default",
+        "inferred",
+        "unresolved"
+      ],
+      "default": "unresolved",
+      "description": "How the current value was resolved (priority chain source)"
+    },
+    "assumption_receipt_id": {
+      "type": "string",
+      "description": "EvidenceReceipt ID if value was inferred (AssumptionReceipt)"
+    },
+    "last_resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "key",
+    "group",
+    "type"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

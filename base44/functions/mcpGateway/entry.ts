@@ -1,4 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
@@ -25,7 +27,7 @@ const TOOL_SCOPES: Record<string, string> = {
   get_console: "sessions:read", get_network: "sessions:read", get_requests: "sessions:read", get_responses: "sessions:read", get_errors: "sessions:read",
   download_file: "sessions:write", artifact_get: "sessions:read",
   session_save: "sessions:write", session_restore: "sessions:write",
-  context_create: "sessions:write", context_save: "sessions:write", context_restore: "sessions:write", context_delete: "sessions:write",
+  context_create: "sessions:write", context_save: "sessions:write", context_restore: "sessions:read", context_attach: "sessions:write", context_delete: "sessions:write",
   run_script: "sessions:write", evaluate_dom: "sessions:read",
   compare_screenshots: "sessions:read", compare_visual_reference: "sessions:read",
   run_test: "sessions:write", run_test_suite: "sessions:write", run_playwright_matrix: "sessions:write",
@@ -148,8 +150,68 @@ async function exec(base44, s, action_type, payload = {}) {
 
 async function uploadScreenshot(base44, base64, name = "mcp_screenshot.png") {
   const file = new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name, { type: "image/png" });
-  const res = await base44.integrations.Core.UploadFile({ file });
+  const res = await uploadFile({ file });
   return res.file_url;
+}
+
+async function loadStoredContext(base44, keyRecord, contextId) {
+  const ctxs = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: contextId });
+  if (!ctxs.length) throw new Error("Durable browser context not found");
+  const ctx = ctxs[0];
+  if (ctx.revoked) throw new Error("Context revoked");
+  if (ctx.expires_at && new Date(ctx.expires_at) < new Date()) throw new Error("Context expired");
+  if (keyRecord.project_id && ctx.project_id && ctx.project_id !== keyRecord.project_id) throw new Error("Context not found (tenant)");
+
+  let cookies = null;
+  let storageState = null;
+  if (ctx.cookies_encrypted) {
+    const d = await decrypt(ctx.cookies_encrypted);
+    if (d) cookies = JSON.parse(d);
+  }
+  if (ctx.storage_state_encrypted) {
+    const d = await decrypt(ctx.storage_state_encrypted);
+    if (d) storageState = JSON.parse(d);
+  }
+  return { ctx, cookies, storageState };
+}
+
+async function restoreStoredContext(base44, keyRecord, contextId, sourceSessionId = null) {
+  if (!await isEngineConfigured()) throw new Error("Browser engine not configured");
+  const { ctx, cookies, storageState } = await loadStoredContext(base44, keyRecord, contextId);
+  const targetUrl = ctx.metadata?.target_url || null;
+  const res = await enginePost("/sessions", {
+    target_url: targetUrl,
+    cookies,
+    storageState,
+    resume: true,
+    usePool: false,
+  });
+  if (!res.sessionId) throw new Error("Engine returned no runtime session ID");
+
+  const session = await base44.asServiceRole.entities.Session.create({
+    session_id: res.sessionId,
+    status: "running",
+    project_id: keyRecord.project_id || ctx.project_id || null,
+    current_url: targetUrl,
+    target_url: targetUrl,
+    profile_id: ctx.profile_id || null,
+    started_at: new Date().toISOString(),
+    metadata: {
+      resumed_from: sourceSessionId || ctx.metadata?.source_session_id || null,
+      durable_context_id: ctx.context_id,
+      worker_id: res.workerId,
+      region: res.region,
+      engine_version: res.engineVersion,
+    },
+  });
+  await base44.asServiceRole.entities.BrowserContext.update(ctx.id, { last_used: new Date().toISOString() });
+  return {
+    restored: true,
+    session_id: session.id,
+    runtime_session_id: res.sessionId,
+    persistence: "durable",
+    auth_state: ctx.auth_state,
+  };
 }
 
 async function handleTool(base44, tool, p, keyRecord, requestId) {
@@ -158,7 +220,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "browser_start": {
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost("/sessions", {
-        viewport: p.viewport, userAgent: p.user_agent, usePool: p.use_pool !== false,
+        viewport: p.viewport, userAgent: p.user_agent, usePool: p.use_pool === true,
         proxy: p.proxy, locale: p.locale, timezone: p.timezone, headers: p.headers,
       });
       const session = await base44.asServiceRole.entities.Session.create({
@@ -225,7 +287,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "extract_structured": {
       const s = await getSession(base44, keyRecord, p.session_id);
       const pageRes = await exec(base44, s, "ai_extract");
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: (p.prompt || "Extract the requested data from this page content. Never fabricate absent data.") + "\n\nPage content:\n" + pageRes.data,
         response_json_schema: p.schema || { type: "object", properties: { data: { type: "string" } } },
       });
@@ -261,8 +323,52 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     }
 
     // ── Context / session state ──
-    case "session_save": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "save_state"); await base44.asServiceRole.entities.Session.update(p.session_id, { resume_token: r.data?.stateToken }); return { state_token: r.data?.stateToken }; }
-    case "session_restore": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "restore_state", { options: { stateToken: p.state_token } }); return { restored: r.data }; }
+    case "session_save": {
+      const s = await getSession(base44, keyRecord, p.session_id);
+      const r = await exec(base44, s, "save_state");
+      const snapshot = r.data?.snapshot;
+      if (!snapshot) throw new Error("Engine did not return a persistence snapshot; refusing non-durable save");
+
+      const stateToken = "persist_" + crypto.randomUUID();
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 30 * 86400000).toISOString();
+      const payload = {
+        context_id: stateToken,
+        name: "session:" + s.id,
+        project_id: keyRecord.project_id || s.project_id || null,
+        cookies_encrypted: snapshot.cookies ? await encrypt(JSON.stringify(snapshot.cookies)) : null,
+        storage_state_encrypted: snapshot.storageState ? await encrypt(JSON.stringify(snapshot.storageState)) : null,
+        auth_state: snapshot.cookies?.length ? "authenticated" : "anonymous",
+        last_used: now.toISOString(),
+        expires_at: expiresAt,
+        metadata: {
+          source_session_id: s.id,
+          runtime_session_id: s.session_id,
+          target_url: snapshot.url || s.current_url || null,
+          title: snapshot.title || s.current_title || null,
+          persistence_version: 1,
+        },
+      };
+      await base44.asServiceRole.entities.BrowserContext.create(payload);
+      await base44.asServiceRole.entities.Session.update(p.session_id, { resume_token: stateToken });
+      return { state_token: stateToken, persisted: true, expires_at: expiresAt };
+    }
+    case "session_restore": {
+      if (!p.state_token) throw new Error("state_token required");
+
+      // Backward-compatible fast path for an in-memory token while the original runtime still exists.
+      if (p.session_id && !String(p.state_token).startsWith("persist_")) {
+        try {
+          const s = await getSession(base44, keyRecord, p.session_id);
+          const r = await exec(base44, s, "restore_state", { options: { stateToken: p.state_token } });
+          return { restored: r.data, session_id: s.id, runtime_session_id: s.session_id, persistence: "runtime" };
+        } catch (_) {
+          // Fall through to durable restore if a matching stored context exists.
+        }
+      }
+
+      return restoreStoredContext(base44, keyRecord, p.state_token, p.session_id || null);
+    }
     case "context_create": {
       const ctxId = "ctx_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
       const cookiesEnc = p.cookies ? await encrypt(JSON.stringify(p.cookies)) : null;
@@ -285,13 +391,18 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       return { saved: true };
     }
     case "context_restore": {
-      const ctxs = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: p.context_id });
-      if (!ctxs.length) throw new Error("Context not found");
-      const ctx = ctxs[0]; if (ctx.revoked) throw new Error("Context revoked");
-      let cookies = null, storage = null;
-      if (ctx.cookies_encrypted) { const d = await decrypt(ctx.cookies_encrypted); if (d) cookies = JSON.parse(d); }
-      if (ctx.storage_state_encrypted) { const d = await decrypt(ctx.storage_state_encrypted); if (d) storage = JSON.parse(d); }
-      return { cookies, storage_state: storage, auth_state: ctx.auth_state };
+      const { ctx, cookies, storageState } = await loadStoredContext(base44, keyRecord, p.context_id);
+      return {
+        context_id: ctx.context_id,
+        auth_state: ctx.auth_state,
+        resumable: Boolean(cookies || storageState),
+        last_used: ctx.last_used || null,
+        expires_at: ctx.expires_at || null,
+      };
+    }
+    case "context_attach": {
+      if (!p.context_id) throw new Error("context_id required");
+      return restoreStoredContext(base44, keyRecord, p.context_id, null);
     }
     case "context_delete": { const ctxs = await base44.asServiceRole.entities.BrowserContext.filter({ context_id: p.context_id }); if (!ctxs.length) throw new Error("Context not found"); await base44.asServiceRole.entities.BrowserContext.delete(ctxs[0].id); return { success: true }; }
 
@@ -306,7 +417,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       const sr = await exec(base44, s, "screenshot", { options: { fullPage: p.full_page !== false } });
       if (!sr.base64) throw new Error("Screenshot failed");
       const actualUrl = await uploadScreenshot(base44, sr.base64, "compare_actual.png");
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: "Compare the ACTUAL screenshot to the APPROVED reference image. Identify every material visual mismatch (layout, spacing, color, typography, copy, component order, missing/extra elements). Return structured JSON with mismatches array. Do not fabricate mismatches. If no material mismatch, return empty array.\n\nReference image URL: " + p.reference_url + "\nActual screenshot URL: " + actualUrl,
         file_urls: [p.reference_url, actualUrl],
         response_json_schema: { type: "object", properties: { mismatches: { type: "array", items: { type: "object", properties: { section: { type: "string" }, component: { type: "string" }, observed: { type: "string" }, expected: { type: "string" }, severity: { type: "string" }, action: { type: "string" } } } }, material_variance: { type: "boolean" } } },
@@ -323,7 +434,7 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "agent_execute": {
       const s = await getSession(base44, keyRecord, p.session_id);
       const obs = await exec(base44, s, "evaluate", { options: { fn: OBSERVE_SCRIPT } });
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt: "You are a browser agent. GOAL: " + (p.goal || "") + "\nCurrent page: " + (obs.data?.url || "") + "\nVisible interactive elements (semantic): " + JSON.stringify((obs.data?.elements || []).slice(0, 40)) + "\nPropose ONE deterministic browser action to progress toward the goal. Return JSON with action_type (goto|click|type|fill|press|scroll|screenshot|extract|done), selector, value, and reasoning. If goal achieved, action_type=done.",
         response_json_schema: { type: "object", properties: { action_type: { type: "string" }, selector: { type: "string" }, value: { type: "string" }, reasoning: { type: "string" }, done: { type: "boolean" } } },
       });

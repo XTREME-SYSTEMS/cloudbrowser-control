@@ -1,0 +1,117 @@
+{
+  "name": "DiscoveryResult",
+  "type": "object",
+  "properties": {
+    "discovery_type": {
+      "type": "string",
+      "enum": [
+        "trend",
+        "problem",
+        "niche",
+        "keyword",
+        "opportunity",
+        "audience",
+        "competitor"
+      ],
+      "description": "What type of discovery this is"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title / name of this discovery"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the trend, problem, niche, etc."
+    },
+    "score": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 relevance / opportunity score"
+    },
+    "data": {
+      "type": "object",
+      "description": "Structured discovery data (keywords, sources, metrics, demographics, etc.)"
+    },
+    "source_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "URLs where this discovery was found"
+    },
+    "search_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Related search keywords / terms"
+    },
+    "trend_direction": {
+      "type": "string",
+      "enum": [
+        "rising",
+        "stable",
+        "declining"
+      ],
+      "default": "rising"
+    },
+    "market_size": {
+      "type": "string",
+      "description": "Estimated market size (TAM/SAM)"
+    },
+    "monetization_potential": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "very_high"
+      ],
+      "default": "medium"
+    },
+    "competition_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "saturated"
+      ],
+      "default": "medium"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "discovery_type",
+    "title",
+    "score"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

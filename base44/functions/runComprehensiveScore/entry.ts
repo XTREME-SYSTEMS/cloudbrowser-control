@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Comprehensive capability scoring system — tests and scores the platform
 // across 9 dimensions, identifies gaps, and generates a perfection report.
@@ -320,7 +321,7 @@ Generate a JSON response with:
 4. critical_failures: any dimension below 50 and why
 5. benchmark_comparison: how this compares to enterprise alternatives (Browserbase, Bright Data)`;
 
-      const llmRes = await base44.integrations.Core.InvokeLLM({
+      const llmRes = await invokeLLM({
         prompt,
         response_json_schema: {
           type: 'object',

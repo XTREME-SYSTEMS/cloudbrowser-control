@@ -1,0 +1,75 @@
+{
+  "name": "CopilotMessage",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "description": "Optional conversation grouping ID"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant",
+        "system"
+      ],
+      "description": "Message role"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message text content"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "ui",
+        "mcp",
+        "system"
+      ],
+      "default": "ui",
+      "description": "Where the message originated \u2014 ui (Copilot panel) or mcp (ChatGPT via MCP)"
+    },
+    "model_used": {
+      "type": "string",
+      "description": "Which LLM model generated the assistant response"
+    },
+    "file_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata (tool calls, actions, etc.)"
+    }
+  },
+  "required": [
+    "role",
+    "content",
+    "source"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

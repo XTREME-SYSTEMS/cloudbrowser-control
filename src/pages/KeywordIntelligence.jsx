@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, Search, RefreshCw, AlertCircle, ChevronDown, ChevronRight, Clock, Mail } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BulkIngestionPanel from "@/components/keyword-intelligence/BulkIngestionPanel";
 
 const trendIcon = { rising: TrendingUp, declining: TrendingDown, stable: Minus };
 const trendColor = { rising: "text-emerald-600", declining: "text-red-600", stable: "text-muted-foreground" };
@@ -164,57 +166,70 @@ export default function KeywordIntelligence() {
       <div>
         <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
           <Search className="w-6 h-6 text-primary" />
-          Keyword Intelligence
+          Intelligence Center
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Researches the top Google searched words, categories, and phrases. Runs daily at 9am ET automatically — or run on demand below. Leave the topic blank for a broad all-niche trend sweep.
+          Research trending keywords and ingest large quantities of intelligence feeds. Keyword research runs daily at 9am ET automatically.
         </p>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Input
-              placeholder="Optional topic (e.g. polished concrete, web scraping, AI agents)…"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && runNow()}
-              className="flex-1"
-            />
-            <Button onClick={runNow} disabled={running} className="sm:w-auto">
-              {running ? <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Researching…</> : <><Search className="w-4 h-4 mr-1" /> Run Now</>}
-            </Button>
-          </div>
-          {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600 mt-3">
-              <AlertCircle className="w-4 h-4" /> {error}
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground mt-3">
-            Uses live web search. Each run stores a report and alerts all admins via in-app notification + email.
-          </p>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="keywords">
+        <TabsList>
+          <TabsTrigger value="keywords">Keyword Research</TabsTrigger>
+          <TabsTrigger value="bulk">Bulk Ingestion</TabsTrigger>
+        </TabsList>
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-heading font-semibold">Recent Reports</h2>
-          <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </Button>
-        </div>
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
+        <TabsContent value="keywords" className="space-y-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="Optional topic (e.g. polished concrete, web scraping, AI agents)…"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && runNow()}
+                  className="flex-1"
+                />
+                <Button onClick={runNow} disabled={running} className="sm:w-auto">
+                  {running ? <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Researching…</> : <><Search className="w-4 h-4 mr-1" /> Run Now</>}
+                </Button>
+              </div>
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-red-600 mt-3">
+                  <AlertCircle className="w-4 h-4" /> {error}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-3">
+                Uses live web search. Each run stores a report and alerts all admins via in-app notification + email.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-heading font-semibold">Recent Reports</h2>
+              <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
+              </Button>
+            </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
+              </div>
+            ) : reports.length === 0 ? (
+              <Card><CardContent className="pt-6 text-center text-muted-foreground py-12">No reports yet. Run your first intelligence sweep above.</CardContent></Card>
+            ) : (
+              <div className="space-y-3">
+                {reports.map((r) => <ReportCard key={r.id} report={r} />)}
+              </div>
+            )}
           </div>
-        ) : reports.length === 0 ? (
-          <Card><CardContent className="pt-6 text-center text-muted-foreground py-12">No reports yet. Run your first intelligence sweep above.</CardContent></Card>
-        ) : (
-          <div className="space-y-3">
-            {reports.map((r) => <ReportCard key={r.id} report={r} />)}
-          </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="bulk">
+          <BulkIngestionPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

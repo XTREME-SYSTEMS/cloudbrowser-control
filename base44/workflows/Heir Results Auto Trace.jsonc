@@ -1,0 +1,36 @@
+{
+  "name": "Heir Results Auto Trace",
+  "description": "When an heir search transitions to found or partial status, automatically skip traces each identified heir across all public sources and syncs the tracking sheet.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "HeirSearch",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ (.trigger.data.status == \"found\" or .trigger.data.status == \"partial\") and .trigger.old_data.status != \"found\" and .trigger.old_data.status != \"partial\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "heir_results_auto_trace",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "trace_heirs": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoSearchHeirResults",
+            "args": {
+              "heir_search_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

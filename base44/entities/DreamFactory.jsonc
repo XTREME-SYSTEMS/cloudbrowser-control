@@ -1,0 +1,207 @@
+{
+  "name": "DreamFactory",
+  "type": "object",
+  "properties": {
+    "factory_name": {
+      "type": "string",
+      "description": "Name of the Dream Factory instance",
+      "default": "Xtreme Dream Factory"
+    },
+    "vision_statement": {
+      "type": "string",
+      "description": "The overarching vision \u2014 what this factory exists to accomplish"
+    },
+    "operating_mode": {
+      "type": "string",
+      "enum": [
+        "dormant",
+        "discovering",
+        "generating",
+        "building",
+        "marketing",
+        "selling",
+        "full_cycle",
+        "sleeping"
+      ],
+      "default": "dormant",
+      "description": "Current autonomous operating mode \u2014 'sleeping' = running overnight without human input"
+    },
+    "autonomy_level": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "suggest",
+        "draft",
+        "execute_low_risk",
+        "self_operate",
+        "full_autonomy"
+      ],
+      "default": "self_operate",
+      "description": "How autonomously the factory operates"
+    },
+    "zero_question_mode": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true, factory discovers/defaults safely without asking the operator"
+    },
+    "target_niches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Industry niches the factory focuses on (empty = auto-discover from trends)"
+    },
+    "google_trend_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Google trend categories to scan for idea generation"
+    },
+    "ideas_generated": {
+      "type": "number",
+      "default": 0
+    },
+    "systems_built": {
+      "type": "number",
+      "default": 0
+    },
+    "content_created": {
+      "type": "number",
+      "default": 0
+    },
+    "campaigns_launched": {
+      "type": "number",
+      "default": 0
+    },
+    "followers_gained": {
+      "type": "number",
+      "default": 0
+    },
+    "revenue_generated": {
+      "type": "number",
+      "default": 0
+    },
+    "digital_presence_score": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 score of online visibility"
+    },
+    "corporation_agent_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Active AI agents in the digital corporation"
+    },
+    "social_platforms_connected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "stripe_connected": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_discovery_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_build_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_market_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_sleep_cycle_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sleep_cycle_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the overnight autonomous cycle is running"
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "P0",
+              "P1",
+              "P2",
+              "P3"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed",
+              "blocked"
+            ]
+          }
+        }
+      },
+      "default": []
+    },
+    "health_state": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "degraded",
+        "blocked",
+        "unbenchmarked"
+      ],
+      "default": "unbenchmarked"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "dormant",
+        "initializing",
+        "active",
+        "paused",
+        "error"
+      ],
+      "default": "dormant"
+    }
+  },
+  "required": [
+    "factory_name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

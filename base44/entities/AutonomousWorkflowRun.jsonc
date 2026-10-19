@@ -1,0 +1,130 @@
+{
+  "name": "AutonomousWorkflowRun",
+  "type": "object",
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Reference to the AutonomousWorkflow spec"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Stable run identifier (e.g. run_<ts>)"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Idempotency key for this run (project_id:workflow:N:event_id)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "ingesting",
+        "validating",
+        "scoring",
+        "acting",
+        "observing",
+        "receipt",
+        "completed",
+        "failed",
+        "dead_lettered",
+        "awaiting_approval"
+      ],
+      "default": "pending"
+    },
+    "current_step": {
+      "type": "string",
+      "description": "Current step in the pipeline"
+    },
+    "checkpoint_state": {
+      "type": "object",
+      "description": "Checkpointed state for replay/resume (step outputs, intermediate data)"
+    },
+    "input_data": {
+      "type": "object",
+      "description": "Input event payload"
+    },
+    "result_data": {
+      "type": "object",
+      "description": "Final result payload"
+    },
+    "score": {
+      "type": "number",
+      "default": 0,
+      "description": "Score assigned during the scoring step"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0
+    },
+    "max_retries": {
+      "type": "number",
+      "default": 3
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "error_history": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Up to 20 error messages from retries"
+    },
+    "dead_lettered": {
+      "type": "boolean",
+      "default": false
+    },
+    "approval_id": {
+      "type": "string",
+      "description": "Approval record if human gate was triggered"
+    },
+    "receipt_id": {
+      "type": "string",
+      "description": "EvidenceReceipt produced on completion"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "cost_estimate": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "workflow_id",
+    "run_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

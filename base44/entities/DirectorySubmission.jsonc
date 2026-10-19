@@ -1,0 +1,135 @@
+{
+  "name": "DirectorySubmission",
+  "type": "object",
+  "properties": {
+    "site_name": {
+      "type": "string",
+      "description": "Name of the directory or citation site"
+    },
+    "url": {
+      "type": "string",
+      "description": "Main site URL"
+    },
+    "signup_url": {
+      "type": "string",
+      "description": "Direct signup/submission URL if known"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "general_business",
+        "local_citation",
+        "industry_specific",
+        "niche_directory",
+        "review_site",
+        "social_profile",
+        "press_release",
+        "article_directory",
+        "forum",
+        "web_2_0",
+        "podcast_directory",
+        "app_directory",
+        "blog_directory",
+        "video_directory",
+        "classified_ads"
+      ],
+      "default": "general_business"
+    },
+    "submission_type": {
+      "type": "string",
+      "enum": [
+        "free",
+        "paid",
+        "freemium",
+        "reciprocal_link"
+      ],
+      "default": "free"
+    },
+    "domain_authority": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated domain authority 0-100"
+    },
+    "industry_relevance": {
+      "type": "string",
+      "description": "How relevant this directory is to the user's industry"
+    },
+    "submission_status": {
+      "type": "string",
+      "enum": [
+        "discovered",
+        "pending_submit",
+        "submitted",
+        "verified",
+        "failed",
+        "skip"
+      ],
+      "default": "discovered"
+    },
+    "submission_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "login_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string",
+      "description": "Submission notes, requirements, or outcome"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Industry this site was discovered for"
+    },
+    "location": {
+      "type": "string",
+      "description": "Geographic target for local citations"
+    },
+    "discovery_batch_id": {
+      "type": "string",
+      "description": "Groups sites discovered in the same run"
+    }
+  },
+  "required": [
+    "site_name",
+    "url",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

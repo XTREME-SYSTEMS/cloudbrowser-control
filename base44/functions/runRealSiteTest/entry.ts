@@ -6,6 +6,7 @@
 
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { enginePost, engineDelete, setEngineClient } from "../../shared/engineClient.ts";
+import { uploadFile } from '../../shared/storageGateway.ts';
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -54,7 +55,7 @@ export default async function (req) {
           `forensic-${site.name.replace(/\s/g, "-").toLowerCase()}.png`,
           { type: "image/png" }
         );
-        const upload = await base44.integrations.Core.UploadFile({ file });
+        const upload = await uploadFile({ file });
         r.screenshotUrl = upload.file_url;
       }
 

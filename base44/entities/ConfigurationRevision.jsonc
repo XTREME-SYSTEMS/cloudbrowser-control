@@ -1,0 +1,105 @@
+{
+  "name": "ConfigurationRevision",
+  "type": "object",
+  "properties": {
+    "revision_id": {
+      "type": "string",
+      "description": "Stable revision identifier (e.g. rev_<timestamp>)"
+    },
+    "system_id": {
+      "type": "string",
+      "description": "SystemManifest this revision belongs to"
+    },
+    "variable_key": {
+      "type": "string",
+      "description": "Which VariableRegistry key was changed"
+    },
+    "old_value": {
+      "type": "string",
+      "description": "Previous value (stringified)"
+    },
+    "new_value": {
+      "type": "string",
+      "description": "New value (stringified)"
+    },
+    "value_source": {
+      "type": "string",
+      "enum": [
+        "explicit",
+        "manifest",
+        "runtime",
+        "template_default",
+        "inferred"
+      ],
+      "default": "explicit",
+      "description": "How the new value was resolved"
+    },
+    "impact_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Domains impacted by this change (from VariableRegistry.impact_domains)"
+    },
+    "impacted_jobs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Job/test IDs that need re-running (populated by impact graph computation)"
+    },
+    "assumption_receipt_id": {
+      "type": "string",
+      "description": "EvidenceReceipt if the new value was inferred"
+    },
+    "rollback_revision_id": {
+      "type": "string",
+      "description": "Previous revision ID to roll back to"
+    },
+    "created_by_operator": {
+      "type": "string",
+      "description": "User ID of the operator who made the change"
+    },
+    "approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this revision has been approved (if requires_approval was true)"
+    },
+    "approval_id": {
+      "type": "string",
+      "description": "Approval record ID if approval was required"
+    },
+    "revision_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the resolved variable set for reproducibility"
+    }
+  },
+  "required": [
+    "revision_id",
+    "variable_key"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "name": "WorkerFleet",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Worker Name",
+      "description": "A label for this worker instance"
+    },
+    "poll_interval": {
+      "type": "number",
+      "default": 60000,
+      "title": "Poll Interval (ms)",
+      "description": "How often this worker polls the agent loop"
+    },
+    "max_cycles": {
+      "type": "number",
+      "default": 5,
+      "title": "Max Cycles"
+    },
+    "report_email": {
+      "type": "string",
+      "title": "Report Email"
+    },
+    "focus_area": {
+      "type": "string",
+      "enum": [
+        "all",
+        "growth",
+        "builds",
+        "social",
+        "sales",
+        "brand"
+      ],
+      "default": "all",
+      "title": "Focus Area"
+    },
+    "deploy_target": {
+      "type": "string",
+      "enum": [
+        "local",
+        "railway",
+        "both"
+      ],
+      "default": "local",
+      "title": "Deploy Target"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "title": "Active"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Seen"
+    },
+    "total_runs": {
+      "type": "number",
+      "default": 0,
+      "title": "Total Runs"
+    },
+    "total_actions": {
+      "type": "number",
+      "default": 0,
+      "title": "Total Actions"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

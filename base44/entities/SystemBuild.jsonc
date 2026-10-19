@@ -1,0 +1,265 @@
+{
+  "name": "SystemBuild",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "build_type": {
+      "type": "string",
+      "enum": [
+        "website",
+        "web_app",
+        "landing_page",
+        "api",
+        "automation",
+        "dashboard",
+        "tool",
+        "system"
+      ],
+      "default": "website"
+    },
+    "what_to_build": {
+      "type": "string"
+    },
+    "how_it_looks": {
+      "type": "string"
+    },
+    "how_it_functions": {
+      "type": "string"
+    },
+    "what_it_connects_to": {
+      "type": "string"
+    },
+    "what_it_says": {
+      "type": "string"
+    },
+    "how_it_operates": {
+      "type": "string"
+    },
+    "deliver_to": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "spec_submitted",
+        "planning",
+        "building",
+        "deploying",
+        "delivered",
+        "failed"
+      ],
+      "default": "spec_submitted"
+    },
+    "result": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "factory_version": {
+      "type": "number"
+    },
+    "build_stage": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "last_error": {
+      "type": "string",
+      "maxLength": 1500
+    },
+    "run_key": {
+      "type": "string"
+    },
+    "artifact_uri": {
+      "type": "string"
+    },
+    "deployment_id": {
+      "type": "string"
+    },
+    "deployment_url": {
+      "type": "string"
+    },
+    "project_name": {
+      "type": "string"
+    },
+    "contact_token_hash": {
+      "type": "string"
+    },
+    "contact_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ai_provider": {
+      "type": "string"
+    },
+    "ai_model": {
+      "type": "string"
+    },
+    "source_html": {
+      "type": "string",
+      "description": "Legacy source; new drafts use private file references."
+    },
+    "custom_domain": {
+      "type": "string"
+    },
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "string"
+    },
+    "target_keywords": {
+      "type": "string"
+    },
+    "competitors": {
+      "type": "string"
+    },
+    "seo_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "auditing",
+        "audited",
+        "issues"
+      ],
+      "default": "not_started"
+    },
+    "studio_draft_uri": {
+      "type": "string"
+    },
+    "draft_saved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pending_deployment_id": {
+      "type": "string"
+    },
+    "pending_source_uri": {
+      "type": "string"
+    },
+    "pending_contact_hash": {
+      "type": "string"
+    },
+    "canonical_url": {
+      "type": "string"
+    },
+    "indexable": {
+      "type": "boolean",
+      "default": true
+    },
+    "domain_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "connected",
+        "failed"
+      ]
+    },
+    "seo_report": {
+      "type": "object",
+      "properties": {
+        "checked_at": {
+          "type": "string"
+        },
+        "live_url": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "indexability": {
+          "type": "string"
+        },
+        "sitemap_url": {
+          "type": "string"
+        },
+        "checks": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "passed",
+              "detail"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "title",
+    "build_type",
+    "what_to_build"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.owner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Clock, Database, Loader2, Building, User, Globe, LayoutDashboard } from "lucide-react";
+import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Clock, Database, Loader2, Building, User, Globe, LayoutDashboard, ChevronDown, ChevronRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { SKIP_TRACE_DEEP_CATALOG } from "@/lib/searchSourceCatalog";
 import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
 
 export default function SkipTracing() {
-  const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "" });
+  const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0" });
+  const [deepSearch, setDeepSearch] = useState(true);
+  const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -30,8 +34,9 @@ export default function SkipTracing() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!form.property_address && !form.owner_name && !form.phone && !form.email) {
+  const handleSearch = async (overrideForm) => {
+    const searchForm = overrideForm || form;
+    if (!searchForm.property_address && !searchForm.owner_name && !searchForm.phone && !searchForm.email) {
       setError("Enter at least one search field to begin tracing");
       return;
     }
@@ -39,7 +44,7 @@ export default function SkipTracing() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runSkipTraceFallback", form);
+      const response = await base44.functions.invoke("runSkipTraceFallback", { ...searchForm, deep_search: deepSearch, spreadsheet_url: searchForm.spreadsheet_url });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -52,6 +57,12 @@ export default function SkipTracing() {
     } finally {
       setSearching(false);
     }
+  };
+
+  const traceRelative = (relative) => {
+    const newForm = { ...form, owner_name: relative.name || "", phone: relative.phone || "", property_address: "", email: "" };
+    setForm(newForm);
+    handleSearch(newForm);
   };
 
   const ConfidenceBar = ({ score }) => (
@@ -76,8 +87,9 @@ export default function SkipTracing() {
         </h1>
         <p className="text-muted-foreground mt-1 max-w-3xl">
           Identify property owners and find their contact info using every available source — property records,
-          people search, reverse phone, social media, email directories, relatives, and business records. The
-          engine runs 7 search methods in sequence, cross-references results, and confidence-scores every finding.
+          people search, reverse phone, social media, email directories, relatives, and business records. Standard
+          mode runs 7 methods; Deep mode adds 11 more (voter, court, licenses, DMV, military, government registries,
+          church, alumni, newspapers, and death confirmation) for a total of 18 search methods.
         </p>
       </div>
 
@@ -125,16 +137,55 @@ export default function SkipTracing() {
                   <Input placeholder="john@example.com" value={form.email}
                     onChange={e => setForm({ ...form, email: e.target.value })} />
                 </div>
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                   <Label><Building className="w-4 h-4 inline mr-1" />Company (if known)</Label>
                   <Input placeholder="ABC Construction LLC" value={form.company}
                     onChange={e => setForm({ ...form, company: e.target.value })} />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label><Database className="w-4 h-4 inline mr-1" />Google Sheet URL or ID (auto-export results)</Label>
+                  <Input placeholder="https://docs.google.com/spreadsheets/d/... or sheet ID" value={form.spreadsheet_url}
+                    onChange={e => setForm({ ...form, spreadsheet_url: e.target.value })} />
+                  <p className="text-xs text-muted-foreground">Results auto-export to the "Skip Traces" tab after each trace completes.</p>
+                </div>
               </div>
+              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                <div>
+                  <Label className="cursor-pointer font-medium">Deep Search Mode</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Adds 11 more methods: voter records, court records, professional licenses, DMV, military,
+                    tax/financial, government registries, church records, school/alumni, newspaper archives, and death confirmation.
+                  </p>
+                </div>
+                <Switch checked={deepSearch} onCheckedChange={setDeepSearch} />
+              </div>
+
+              <button
+                onClick={() => setShowSources(!showSources)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showSources ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                View all {SKIP_TRACE_DEEP_CATALOG.length} deep search categories
+              </button>
+
+              {showSources && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/20">
+                  {SKIP_TRACE_DEEP_CATALOG.map(cat => (
+                    <div key={cat.id} className="p-2 rounded-md border bg-background">
+                      <p className="text-xs font-semibold flex items-center gap-1">
+                        <Database className="w-3 h-3 text-primary" />
+                        {cat.name}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">{cat.sources.length} sources</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <Button onClick={handleSearch} disabled={searching} className="w-full">
                 {searching
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching all sources — 7 methods in progress...</>
-                  : <><Radar className="w-4 h-4 mr-2" />Run Full Skip Trace</>}
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching {deepSearch ? "all 18 methods" : "7 core methods"}...</>
+                  : <><Radar className="w-4 h-4 mr-2" />Run {deepSearch ? "Deep" : "Standard"} Skip Trace</>}
               </Button>
             </CardContent>
           </Card>
@@ -255,12 +306,20 @@ export default function SkipTracing() {
                 {result.relatives?.length > 0 && (
                   <div>
                     <h3 className="font-medium mb-2 flex items-center gap-2"><Users className="w-4 h-4" />Relatives & Associates ({result.relatives.length})</h3>
+                    <p className="text-xs text-muted-foreground mb-2">Click any individual to run a full skip trace on them</p>
                     <div className="flex flex-wrap gap-2">
                       {result.relatives.map((r, i) => (
-                        <Badge key={i} variant="secondary">
+                        <button
+                          key={i}
+                          onClick={() => traceRelative(r)}
+                          disabled={searching}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-secondary/80 text-secondary-foreground border border-border hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={`Trace ${r.name}`}
+                        >
+                          <Search className="w-3 h-3" />
                           {r.name}{r.relationship ? ` (${r.relationship})` : ""}
                           {r.phone && ` — ${r.phone}`}
-                        </Badge>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -271,6 +330,9 @@ export default function SkipTracing() {
                   <span className="flex items-center gap-1"><Database className="w-4 h-4" />{result.sources?.length || 0} sources checked</span>
                   <span className="flex items-center gap-1"><Search className="w-4 h-4" />{result.methods?.length || 0} methods used</span>
                   <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{(result.duration_ms / 1000).toFixed(1)}s</span>
+                  {result.sheet_export?.ok && (
+                    <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-4 h-4" />Exported to Sheet</span>
+                  )}
                 </div>
 
                 {/* Sources breakdown */}

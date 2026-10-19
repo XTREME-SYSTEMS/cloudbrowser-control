@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -17,7 +18,7 @@ export default async function (req) {
     if (!s1 || !s2) return Response.json({ error: "Screenshot(s) not found" }, { status: 404 });
 
     // Use LLM to compare the two screenshots
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = await invokeLLM({
       prompt: "Compare these two screenshots and return a diff score from 0 (identical) to 100 (completely different), plus a summary of what changed.",
       file_urls: [s1.file_url, s2.file_url],
       response_json_schema: {

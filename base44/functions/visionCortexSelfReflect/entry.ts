@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Vision Cortex Self-Reflection System
 // Vision Cortex reflects on:
@@ -66,7 +67,7 @@ export default async function(req) {
     // 1. System Operation Reflection
     if (reflectionTypes.includes('system_operation')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_REFLECTION_PROMPT}
 
 REFLECTION TYPE: System Operation
@@ -123,7 +124,7 @@ Generate 1-2 deep reflections as JSON:
     if (reflectionTypes.includes('playbook_learning')) {
       try {
         const playbooks = (recentArtifacts || []).filter(a => a.artifact_type === 'playbook' || a.artifact_type === 'strategy');
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_REFLECTION_PROMPT}
 
 REFLECTION TYPE: Playbook Learning
@@ -177,7 +178,7 @@ Generate 1-2 deep reflections as JSON:
     if (reflectionTypes.includes('elite_investigation')) {
       try {
         const eliteArtifacts = (recentArtifacts || []).filter(a => a.artifact_type === 'elite_motive');
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_REFLECTION_PROMPT}
 
 REFLECTION TYPE: Elite Investigation — Why the Elite Are Driving Hard for Data
@@ -234,7 +235,7 @@ Generate 2-3 deep reflections as JSON:
     // 4. Money Tracking Reflection
     if (reflectionTypes.includes('money_tracking')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_REFLECTION_PROMPT}
 
 REFLECTION TYPE: Following the Money
@@ -288,7 +289,7 @@ Generate 1-2 deep reflections as JSON:
     // 5. Strategy Refinement + Self-Improvement + Predictive Analysis (combined)
     if (reflectionTypes.includes('strategy_refinement') || reflectionTypes.includes('self_improvement') || reflectionTypes.includes('predictive_analysis')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `${VISION_CORTEX_REFLECTION_PROMPT}
 
 REFLECTION TYPE: Strategy Refinement + Self-Improvement + Predictive Analysis
@@ -360,7 +361,7 @@ Generate 3-4 deep reflections as JSON. Each reflection should have a "reflection
     // Generate cycle summary
     let cycleSummary = null;
     try {
-      const summaryRes = await base44.integrations.Core.InvokeLLM({
+      const summaryRes = await invokeLLM({
         prompt: `${VISION_CORTEX_REFLECTION_PROMPT}
 
 You just completed reflection cycle ${cycle}. You generated ${allReflections.length} reflections.

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { uploadFile } from '../../shared/storageGateway.ts';
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -40,7 +41,7 @@ export default async function (req) {
 
     // Upload as file
     const file = new File([output], filename, { type: contentType });
-    const uploadResult = await base44.integrations.Core.UploadFile({ file });
+    const uploadResult = await uploadFile({ file });
 
     return Response.json({ file_url: uploadResult.file_url, filename, format, count: results.length });
   } catch (error) {

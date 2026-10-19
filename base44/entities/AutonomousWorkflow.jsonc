@@ -1,0 +1,169 @@
+{
+  "name": "AutonomousWorkflow",
+  "type": "object",
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Stable spec identifier (e.g. WF-001)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable workflow name"
+    },
+    "objective": {
+      "type": "string",
+      "description": "What this workflow accomplishes"
+    },
+    "trigger": {
+      "type": "string",
+      "description": "Cron schedule or event-driven trigger description"
+    },
+    "state_machine": {
+      "type": "string",
+      "description": "Durable async stages + checkpoint state description"
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "JSON schema for the input event payload"
+    },
+    "steps": {
+      "type": "string",
+      "description": "Ordered pipeline (e.g. ingest -> validate -> score -> act/draft -> observe -> receipt)"
+    },
+    "agent": {
+      "type": "string",
+      "description": "Specialist agent used where judgment is required"
+    },
+    "deterministic_service": {
+      "type": "string",
+      "description": "Deterministic adapters for fetch/parse/store"
+    },
+    "connector": {
+      "type": "string",
+      "description": "Official API / authorized connector used"
+    },
+    "data_source": {
+      "type": "string",
+      "description": "Data source reference"
+    },
+    "database_entity": {
+      "type": "string",
+      "description": "Entity where run state is persisted"
+    },
+    "expected_latency": {
+      "type": "string",
+      "description": "Expected latency range"
+    },
+    "expected_cost": {
+      "type": "string",
+      "description": "Expected cost per run"
+    },
+    "retry_behavior": {
+      "type": "string",
+      "description": "Retry strategy (e.g. exponential backoff; max bounded retries)"
+    },
+    "max_retries": {
+      "type": "number",
+      "default": 3,
+      "description": "Maximum retry attempts before dead-lettering"
+    },
+    "idempotency_key_template": {
+      "type": "string",
+      "description": "Idempotency key format (e.g. project_id:workflow:N:event_id)"
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "default": 300,
+      "description": "Step-level timeout in seconds"
+    },
+    "dead_letter": {
+      "type": "string",
+      "description": "Dead-letter handling description"
+    },
+    "observability": {
+      "type": "string",
+      "description": "Trace, metrics, cost, source receipt"
+    },
+    "success_criteria": {
+      "type": "string",
+      "description": "What constitutes a successful run"
+    },
+    "failure_criteria": {
+      "type": "string",
+      "description": "What constitutes a failed run"
+    },
+    "recovery_strategy": {
+      "type": "string",
+      "description": "Recovery approach (e.g. replay from checkpoint)"
+    },
+    "human_gate": {
+      "type": "string",
+      "description": "When a human approval is required (e.g. policy gate only on exceptions)"
+    },
+    "receipt_description": {
+      "type": "string",
+      "description": "Receipt format (e.g. JSON receipt + evidence links)"
+    },
+    "rollback_strategy": {
+      "type": "string",
+      "description": "Rollback approach (e.g. reversible mutation or compensating action)"
+    },
+    "kpi": {
+      "type": "string",
+      "description": "Key performance indicator tracked"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "draft",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "run_count": {
+      "type": "number",
+      "default": 0
+    },
+    "success_count": {
+      "type": "number",
+      "default": 0
+    },
+    "failure_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_run_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "workflow_id",
+    "name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

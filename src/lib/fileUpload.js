@@ -1,0 +1,56 @@
+import { base44 } from '@/api/base44Client';
+
+// Frontend file upload helper — routes through the uploadFileGateway backend function
+// to Vercel Blob storage, bypassing Base44 integration credits.
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Expected FileReader data URL result'));
+        return;
+      }
+      resolve(result.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Upload a file to Vercel Blob storage via the uploadFileGateway backend.
+export async function uploadFile(file) {
+  const base64 = await fileToBase64(file);
+  const res = await base44.functions.invoke('uploadFileGateway', {
+    action: 'upload',
+    file_data: base64,
+    filename: file.name,
+    content_type: file.type,
+  });
+  return res.data;
+}
+
+// Upload a public file to Vercel Blob storage via the uploadFileGateway backend.
+export async function uploadPublicFile(file) {
+  const base64 = await fileToBase64(file);
+  const res = await base44.functions.invoke('uploadFileGateway', {
+    action: 'upload_public',
+    file_data: base64,
+    filename: file.name,
+    content_type: file.type,
+  });
+  return res.data;
+}
+
+// Upload a private file to Vercel Blob storage via the uploadFileGateway backend.
+export async function uploadPrivateFile(file) {
+  const base64 = await fileToBase64(file);
+  const res = await base44.functions.invoke('uploadFileGateway', {
+    action: 'upload_private',
+    file_data: base64,
+    filename: file.name,
+    content_type: file.type,
+  });
+  return res.data;
+}

@@ -80,6 +80,29 @@
     "active": {
       "type": "boolean",
       "default": true
+    },
+    "health_score": {
+      "type": "number",
+      "default": 50,
+      "minimum": 0,
+      "maximum": 100,
+      "description": "0-100 health score; auto-evicted below 10"
+    },
+    "last_tested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_exit_ip": {
+      "type": "string",
+      "description": "Last observed egress IP"
+    },
+    "consecutive_failures": {
+      "type": "number",
+      "default": 0
+    },
+    "last_latency_ms": {
+      "type": "number",
+      "description": "Last test latency in milliseconds"
     }
   },
   "required": [

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { uploadFile } from '../../shared/storageGateway.ts';
 import { enginePost, engineDelete, engineGet, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
 import { encrypt, decrypt, hashKey } from "../../shared/crypto.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
@@ -192,7 +193,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       // Upload and create artifact
       if (res.base64) {
         const file = new File([Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0))], `mcp_screenshot.png`, { type: "image/png" });
-        const uploadRes = await base44.integrations.Core.UploadFile({ file });
+        const uploadRes = await uploadFile({ file });
         return { screenshot_url: uploadRes.file_url, size: res.size };
       }
       return { error: "No screenshot captured" };

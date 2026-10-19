@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Seed & Source Intelligence System
 // Discovers and seeds the top intelligence sources for browser automation and data acquisition:
@@ -30,7 +31,7 @@ export default async function(req) {
     // 1. Top 10 AI tools for data ingestion & acquisition
     if (categories.includes('ai_tools') || categories.includes('data_acquisition')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `You are an intelligence researcher focused on browser automation and data acquisition. Search the web and identify the TOP 10 highest-rated AI tools and platforms specifically for data ingestion, data acquisition, and automated data extraction in 2025-2026.
 
 For each tool, provide:
@@ -88,7 +89,7 @@ Return as JSON array of 10 objects.`,
     // 2. Top 100 keywords, phrases, trending topics, researched topics
     if (categories.includes('keywords') || categories.includes('trending_topics')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `You are an SEO and market intelligence expert focused on the browser automation, web scraping, and data acquisition industry. Search the web for current 2025-2026 trends.
 
 Generate the TOP 100 most important keywords, phrases, trending topics, and top-researched topics in the web scraping and data acquisition space. Include:
@@ -148,7 +149,7 @@ Return as JSON array of 100 objects.`,
     // 3. Top scraping strategies and playbooks
     if (categories.includes('scraping_strategies') || categories.includes('playbooks')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `You are a master of web scraping and data acquisition strategy. Search the web for the latest 2025-2026 strategies.
 
 Identify the TOP 20 most effective scraping strategies and playbooks used by elite data acquisition teams. Include:
@@ -213,7 +214,7 @@ Return as JSON array of 20 objects.`,
     // 4. Top 100 scraped websites (most popular scraping targets)
     if (categories.includes('top_websites')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `You are a web scraping intelligence analyst. Search the web for the most commonly scraped websites in 2025-2026.
 
 Identify the TOP 100 most-scraped websites across categories:
@@ -282,7 +283,7 @@ Return as JSON array of 100 objects.`,
     // 5. Elite research — why data/data centers are critical
     if (categories.includes('elite_motives') || categories.includes('data_centers')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `You are a geopolitical and economic intelligence analyst. Search the web for the latest 2025-2026 information on why elite corporations, governments, and billionaires are driving so hard for data and data centers.
 
 Research and provide:
@@ -367,7 +368,7 @@ Return as JSON with reasons (array of 10), investments (array of 10), and motive
     // 6. Money flow sources
     if (categories.includes('money_flows')) {
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
+        const res = await invokeLLM({
           prompt: `You are a financial intelligence analyst tracking money flows in the AI, data, and data center space. Search the web for 2025-2026.
 
 Identify the TOP 20 most significant money flows related to data and AI:

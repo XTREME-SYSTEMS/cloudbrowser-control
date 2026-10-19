@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -19,7 +20,7 @@ Valid action_types: goto, click, type, fill, press, select_option, scroll, scree
 Return ONLY a JSON array, no explanation. Example:
 [{"action_type":"goto","value":"https://example.com","name":"Navigate to page"},{"action_type":"wait_for_selector","selector":".product-list","name":"Wait for products"},{"action_type":"extract_text","selector":".price","name":"Extract prices"}]`;
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = await invokeLLM({
       prompt: `${systemPrompt}\n\nUser request: ${prompt}`,
       response_json_schema: {
         type: "object",

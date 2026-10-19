@@ -1,0 +1,238 @@
+{
+  "name": "MarketingCampaign",
+  "type": "object",
+  "properties": {
+    "campaign_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "product_idea_id": {
+      "type": "string",
+      "description": "What product this campaign sells"
+    },
+    "campaign_type": {
+      "type": "string",
+      "enum": [
+        "awareness",
+        "lead_gen",
+        "conversion",
+        "retargeting",
+        "viral",
+        "seo_dominance",
+        "social_media_blitz",
+        "content_marketing",
+        "influencer",
+        "omnichannel"
+      ],
+      "default": "omnichannel"
+    },
+    "target_market": {
+      "type": "object",
+      "properties": {
+        "demographics": {
+          "type": "string"
+        },
+        "psychographics": {
+          "type": "string"
+        },
+        "pain_points": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "online_locations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Where they hang out online (subreddits, forums, groups)"
+        },
+        "geographic_locations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "search_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What they search for on Google"
+        }
+      },
+      "description": "Deep profile of the exact people to target"
+    },
+    "messaging_strategy": {
+      "type": "string",
+      "description": "How to speak to them in a way that resonates"
+    },
+    "content_assets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "ContentAsset IDs in this campaign"
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "google_ads",
+          "meta_ads",
+          "tiktok_ads",
+          "twitter_ads",
+          "linkedin_ads",
+          "youtube_ads",
+          "organic_seo",
+          "social_organic",
+          "email",
+          "content_marketing",
+          "directory_submission",
+          "form_automation",
+          "backlink_building",
+          "influencer_outreach",
+          "forum_engagement",
+          "quora_answers",
+          "reddit_posts",
+          "press_release"
+        ]
+      },
+      "default": [],
+      "description": "Every digital method to reach the audience"
+    },
+    "budget_estimate": {
+      "type": "number",
+      "default": 0
+    },
+    "budget_actual": {
+      "type": "number",
+      "default": 0
+    },
+    "projected_reach": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_reach": {
+      "type": "number",
+      "default": 0
+    },
+    "projected_conversions": {
+      "type": "number",
+      "default": 0
+    },
+    "actual_conversions": {
+      "type": "number",
+      "default": 0
+    },
+    "roas": {
+      "type": "number",
+      "default": 0,
+      "description": "Return on ad spend"
+    },
+    "follower_growth_target": {
+      "type": "number",
+      "default": 0
+    },
+    "follower_growth_actual": {
+      "type": "number",
+      "default": 0
+    },
+    "digital_presence_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Directory submission, backlink, form fill, profile creation, etc."
+          },
+          "target_url": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "failed"
+            ]
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": [],
+      "description": "Every URL/action to build digital presence"
+    },
+    "ab_test_variants": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "A/B test variants of ads/content"
+    },
+    "performance_data": {
+      "type": "object",
+      "description": "Analytics data from all channels"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "researching",
+        "creating_content",
+        "launching",
+        "active",
+        "optimizing",
+        "completed",
+        "paused",
+        "failed"
+      ],
+      "default": "planning"
+    }
+  },
+  "required": [
+    "campaign_id",
+    "name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

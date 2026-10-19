@@ -1,0 +1,56 @@
+{
+  "name": "Heir Search Auto Run",
+  "description": "Automatically runs a deep heir search when a new pending HeirSearch record is created, then skip traces each identified heir across all public sources.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "HeirSearch",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.status == \"pending\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "heir_search_auto_run",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_search": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runHeirSearch",
+            "args": {
+              "deceased_name": "${ .trigger.data.deceased_name }",
+              "deceased_dob": "${ .trigger.data.deceased_dob }",
+              "deceased_dod": "${ .trigger.data.deceased_dod }",
+              "deceased_last_address": "${ .trigger.data.deceased_last_address }",
+              "death_location": "${ .trigger.data.death_location }",
+              "deceased_ssn": "${ .trigger.data.deceased_ssn }",
+              "case_reference": "${ .trigger.data.case_reference }",
+              "deep_search": true,
+              "extreme_deep": false
+            }
+          },
+          "then": "auto_trace"
+        }
+      },
+      {
+        "auto_trace": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoSearchHeirResults",
+            "args": {
+              "heir_search_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

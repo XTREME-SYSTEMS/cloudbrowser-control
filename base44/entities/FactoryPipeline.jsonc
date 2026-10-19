@@ -1,0 +1,117 @@
+{
+  "name": "FactoryPipeline",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Pipeline Name"
+    },
+    "keywords": {
+      "type": "string",
+      "title": "Keywords",
+      "description": "Comma-separated seed keywords for domain discovery"
+    },
+    "tlds": {
+      "type": "string",
+      "title": "TLDs",
+      "description": "Comma-separated: com,net,store,online,site,blog,co,io,ai,tech"
+    },
+    "max_domains": {
+      "type": "number",
+      "default": 100,
+      "title": "Max Domains"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "discovering",
+        "buying",
+        "templating",
+        "generating",
+        "building",
+        "deploying",
+        "connecting",
+        "complete",
+        "failed"
+      ],
+      "default": "discovering",
+      "title": "Status"
+    },
+    "domains_discovered": {
+      "type": "number",
+      "default": 0,
+      "title": "Domains Discovered"
+    },
+    "domains_bought": {
+      "type": "number",
+      "default": 0,
+      "title": "Domains Bought"
+    },
+    "templates_generated": {
+      "type": "number",
+      "default": 0,
+      "title": "Templates Generated"
+    },
+    "repos_created": {
+      "type": "number",
+      "default": 0,
+      "title": "Repos Created"
+    },
+    "sites_deployed": {
+      "type": "number",
+      "default": 0,
+      "title": "Sites Deployed"
+    },
+    "config": {
+      "type": "string",
+      "title": "Config",
+      "description": "JSON: which integrations to use (vercel, supabase, drive, github, railway, godaddy)"
+    },
+    "task_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Tasks Dispatched"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

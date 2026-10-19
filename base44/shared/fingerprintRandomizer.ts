@@ -28,6 +28,16 @@ export interface FingerprintConfig {
   fonts: string[];
   battery: { level: number; charging: boolean };
   connection: { effectiveType: string; rtt: number; downlink: number };
+  stealth: {
+    webdriver: boolean;
+    webrtcLeakProtection: boolean;
+    http2HeaderOrder: string[];
+    canvasNoise: boolean;
+    audioNoise: boolean;
+    webglSpoof: boolean;
+    fontSpoof: boolean;
+    navigatorOverrides: Record<string, any>;
+  };
 }
 
 const PLATFORMS = [
@@ -96,8 +106,10 @@ export function generateFingerprint(): FingerprintConfig {
   const webgl = pick(WEBGL_CONFIGS);
   const lang = pick(LANGUAGES);
   const timezone = pick(TIMEZONES);
-
   const chromeVersion = 130 + Math.floor(Math.random() * 5);
+  const hardwareConcurrency = pick([4, 8, 12, 16]);
+  const deviceMemory = pick([4, 8, 16]);
+  const maxTouchPoints = pick([0, 0, 0, 1, 5, 10]);
 
   return {
     platform: platform.platform,
@@ -107,9 +119,9 @@ export function generateFingerprint(): FingerprintConfig {
     languages: lang.languages,
     timezone,
     screen,
-    hardwareConcurrency: pick([4, 8, 12, 16]),
-    deviceMemory: pick([4, 8, 16]),
-    maxTouchPoints: pick([0, 0, 0, 1, 5, 10]),
+    hardwareConcurrency,
+    deviceMemory,
+    maxTouchPoints,
     vendor: platform.vendor,
     product: 'Gecko',
     productSub: platform.productSub,
@@ -124,6 +136,56 @@ export function generateFingerprint(): FingerprintConfig {
       effectiveType: pick(['4g', '4g', '4g', '3g']),
       rtt: 50 + Math.floor(Math.random() * 100),
       downlink: 1 + Math.random() * 10,
+    },
+    stealth: {
+      webdriver: false,
+      webrtcLeakProtection: true,
+      http2HeaderOrder: [
+        ':method', ':authority', ':scheme', ':path',
+        'accept', 'accept-encoding', 'accept-language',
+        'cache-control', 'pragma', 'sec-ch-ua', 'sec-ch-ua-mobile',
+        'sec-ch-ua-platform', 'sec-fetch-dest', 'sec-fetch-mode',
+        'sec-fetch-site', 'upgrade-insecure-requests', 'user-agent',
+      ],
+      canvasNoise: true,
+      audioNoise: true,
+      webglSpoof: true,
+      fontSpoof: true,
+      navigatorOverrides: {
+        webdriver: false,
+        hardwareConcurrency,
+        deviceMemory,
+        platform: platform.platform,
+        languages: lang.languages,
+        maxTouchPoints,
+      },
+    },
+  };
+}
+
+// Build the engine session config with full stealth spoofing applied.
+// Consumed by runAutonomousBrowserTask for shadow/stealth sessions.
+export function buildStealthSessionConfig(fp: FingerprintConfig): Record<string, any> {
+  return {
+    viewport: { width: fp.screen.width, height: fp.screen.height },
+    userAgent: fp.userAgent,
+    locale: fp.language,
+    timezone: fp.timezone,
+    languages: fp.languages,
+    blockedResources: ['image', 'media', 'font'],
+    stealth: {
+      webdriver: fp.stealth.webdriver,
+      webrtcLeakProtection: fp.stealth.webrtcLeakProtection,
+      http2HeaderOrder: fp.stealth.http2HeaderOrder,
+      canvasNoise: fp.stealth.canvasNoise,
+      audioNoise: fp.stealth.audioNoise,
+      webglSpoof: fp.stealth.webglSpoof,
+      fontSpoof: fp.stealth.fontSpoof,
+      navigatorOverrides: fp.stealth.navigatorOverrides,
+      webgl: fp.webgl,
+      audio: fp.audio,
+      fonts: fp.fonts,
+      plugins: fp.plugins,
     },
   };
 }
@@ -144,5 +206,17 @@ export function validateFingerprint(fp: FingerprintConfig): { valid: boolean; is
   if (fp.fonts.length < 5) issues.push('Too few fonts');
   if (fp.canvas.noiseSeed < 0) issues.push('Invalid canvas noise seed');
 
+  return { valid: issues.length === 0, issues };
+}
+
+// Validate the stealth block of a fingerprint config
+export function validateStealth(fp: FingerprintConfig): { valid: boolean; issues: string[] } {
+  const issues: string[] = [];
+  if (!fp.stealth) { issues.push('Missing stealth block'); return { valid: false, issues }; }
+  if (fp.stealth.webdriver !== false) issues.push('webdriver must be false for stealth');
+  if (!fp.stealth.webrtcLeakProtection) issues.push('WebRTC leak protection disabled');
+  if (!fp.stealth.http2HeaderOrder || fp.stealth.http2HeaderOrder.length < 10) issues.push('HTTP/2 header order missing or too short');
+  if (!fp.stealth.canvasNoise) issues.push('Canvas noise disabled');
+  if (!fp.stealth.webglSpoof) issues.push('WebGL spoofing disabled');
   return { valid: issues.length === 0, issues };
 }

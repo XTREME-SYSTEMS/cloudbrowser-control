@@ -1,0 +1,44 @@
+{
+  "description": "Runs the comprehensive capability score daily, compares to the previous run, and creates a HealingFlag on any score drop or new gap \u2014 feeding the self-healing loop automatically.",
+  "name": "Daily Validation Regression",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_validation_regression",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_validation": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runValidationRegression"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run validation regression check",
+            "description": "Score + gap comparison with auto-flagging"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

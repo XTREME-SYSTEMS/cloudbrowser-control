@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Self-healing selectors: given a broken selector + page context, LLM generates a robust alternative.
 // Called by runJob when a wait_for_selector / click / extract step fails.
@@ -47,7 +48,7 @@ Return JSON with:
   "alternatives": ["fallback selector 1", "fallback selector 2"]
 }`;
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    const result = await invokeLLM({
       prompt,
       response_json_schema: {
         type: 'object',

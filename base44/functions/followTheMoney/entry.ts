@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { invokeLLM } from '../../shared/vercelAiGateway.ts';
 
 // Follow the Money — tracks money flows in the AI, data, and data center space
 // Uses web search to discover the latest investments, acquisitions, and spending
@@ -24,7 +25,7 @@ export default async function(req) {
 
     // Search for latest money flows
     try {
-      const res = await base44.integrations.Core.InvokeLLM({
+      const res = await invokeLLM({
         prompt: `You are a financial intelligence analyst tracking money flows in the AI, data, and data center space. Search the web for the latest 2025-2026 investments, acquisitions, and spending.
 
 Focus on these categories: ${categories.join(', ')}
@@ -102,7 +103,7 @@ Return as JSON: { "flows": [...], "total_market_size": "string", "biggest_spende
       // Now use Vision Cortex to interpret each money trail
       for (const trail of allTrails) {
         try {
-          const interpRes = await base44.integrations.Core.InvokeLLM({
+          const interpRes = await invokeLLM({
             prompt: `You are Vision Cortex, the intelligence core of Cloud Browser. Interpret this money flow:
 
 Entity: ${trail.entity_name}

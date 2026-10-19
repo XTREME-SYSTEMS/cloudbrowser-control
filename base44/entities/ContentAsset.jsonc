@@ -1,0 +1,185 @@
+{
+  "name": "ContentAsset",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Stable identifier"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "blog_post",
+        "seo_article",
+        "social_post",
+        "video_script",
+        "short_video",
+        "ad_copy",
+        "ad_creative",
+        "email_campaign",
+        "landing_page",
+        "press_release",
+        "infographic",
+        "podcast_script",
+        "tutorial",
+        "case_study",
+        "whitepaper"
+      ],
+      "description": "What type of content this is"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "website",
+        "blog",
+        "twitter",
+        "facebook",
+        "instagram",
+        "tiktok",
+        "youtube",
+        "linkedin",
+        "pinterest",
+        "reddit",
+        "threads",
+        "medium",
+        "quora",
+        "email",
+        "google_ads",
+        "meta_ads",
+        "other"
+      ],
+      "default": "website"
+    },
+    "body": {
+      "type": "string",
+      "description": "Full content text/markdown"
+    },
+    "html_body": {
+      "type": "string",
+      "description": "HTML version for blog posts/emails"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "Generated video URL if video content"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Generated image/thumbnail URL"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "Generated speech/audio URL"
+    },
+    "target_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "SEO keywords this content targets"
+    },
+    "seo_score": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 SEO optimization score"
+    },
+    "target_audience": {
+      "type": "string",
+      "description": "Who this content speaks to"
+    },
+    "emotional_trigger": {
+      "type": "string",
+      "description": "What emotion this content targets (pain, hope, fear, joy, curiosity, etc.)"
+    },
+    "product_idea_id": {
+      "type": "string",
+      "description": "Links to the ProductIdea this content promotes"
+    },
+    "marketing_campaign_id": {
+      "type": "string",
+      "description": "Links to the MarketingCampaign this content belongs to"
+    },
+    "google_optimized": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether content is optimized for Google's ranking factors"
+    },
+    "viral_potential_score": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 likelihood of going viral"
+    },
+    "published": {
+      "type": "boolean",
+      "default": false
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_url": {
+      "type": "string",
+      "description": "Where it was published"
+    },
+    "views": {
+      "type": "number",
+      "default": 0
+    },
+    "engagement_rate": {
+      "type": "number",
+      "default": 0
+    },
+    "conversions": {
+      "type": "number",
+      "default": 0
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "generating",
+        "review",
+        "approved",
+        "scheduled",
+        "published",
+        "archived"
+      ],
+      "default": "draft"
+    }
+  },
+  "required": [
+    "asset_id",
+    "title",
+    "content_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

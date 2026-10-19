@@ -48,6 +48,32 @@ import Connect from '@/pages/Connect';
 import KeywordIntelligence from '@/pages/KeywordIntelligence';
 import AutoComplete from '@/pages/AutoComplete';
 import OperatorConsole from '@/pages/OperatorConsole';
+import AutonomousWorkflows from '@/pages/AutonomousWorkflows';
+import DreamFactory from '@/pages/DreamFactory';
+import XtremeGPT from '@/pages/XtremeGPT';
+import WebsiteFactory from '@/pages/WebsiteFactory';
+import MissionControl from '@/pages/MissionControl';
+import AgentCommandCenter from '@/pages/AgentCommandCenter';
+import AgentChatPage from '@/pages/AgentChatPage';
+import MetaArchitect from '@/pages/MetaArchitect';
+import SystemFactory from '@/pages/SystemFactory';
+import BatchOperations from '@/pages/BatchOperations';
+import DomainRegistry from '@/pages/DomainRegistry';
+import AutonomousMission from '@/pages/AutonomousMission';
+import AgentCommandCenterPage from '@/pages/AgentCommandCenter';
+import DigitalDominance from '@/pages/DigitalDominance';
+import ClientPortal from '@/pages/ClientPortal';
+import SocialPresence from '@/pages/SocialPresence';
+import HeirSearch from '@/pages/HeirSearch';
+import HeirSearchDashboard from '@/pages/HeirSearchDashboard';
+import HeirSearchPortal from '@/pages/HeirSearchPortal';
+import ImageReplicator from '@/pages/ImageReplicator';
+import IntelligenceCommandCenter from '@/pages/IntelligenceCommandCenter';
+import ClientOnboarding from '@/pages/ClientOnboarding';
+import ClientDelivery from '@/pages/ClientDelivery';
+import StrategicMindsLanding from '@/pages/StrategicMindsLanding';
+import StrategicCloudBrowserLanding from '@/pages/StrategicCloudBrowserLanding';
+import StrategicReport from '@/pages/StrategicReport';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -86,12 +112,13 @@ const AuthenticatedApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth/consent" element={<OAuthConsent />} />
       <Route path="/share/:token" element={<ShareView />} />
+      <Route path="/" element={<StrategicCloudBrowserLanding />} />
       <Route path="/landing" element={<Landing />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ThankYou" element={<ThankYou />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<AdminPortal />} />
+          <Route path="/portal" element={<AdminPortal />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/welcome" element={<SaaSOnboarding />} />
           <Route path="/sessions" element={<Sessions />} />
@@ -110,6 +137,29 @@ const AuthenticatedApp = () => {
           <Route path="/architecture" element={<Architecture />} />
           <Route path="/autocomplete" element={<AutoComplete />} />
           <Route path="/operator-console" element={<OperatorConsole />} />
+          <Route path="/autonomous-workflows" element={<AutonomousWorkflows />} />
+          <Route path="/dream-factory" element={<DreamFactory />} />
+          <Route path="/xtreme-gpt" element={<XtremeGPT />} />
+          <Route path="/website-factory" element={<WebsiteFactory />} />
+          <Route path="/mission-control" element={<MissionControl />} />
+          <Route path="/agents/:agentName" element={<AgentChatPage />} />
+          <Route path="/architect" element={<MetaArchitect />} />
+          <Route path="/factory" element={<SystemFactory />} />
+          <Route path="/batch" element={<BatchOperations />} />
+          <Route path="/domains" element={<DomainRegistry />} />
+          <Route path="/mission" element={<AutonomousMission />} />
+          <Route path="/command-center" element={<AgentCommandCenterPage />} />
+          <Route path="/digital-dominance" element={<DigitalDominance />} />
+          <Route path="/client-portal" element={<ClientPortal />} />
+          <Route path="/social-presence" element={<SocialPresence />} />
+          <Route path="/heir-search" element={<HeirSearch />} />
+          <Route path="/heir-search-dashboard" element={<HeirSearchDashboard />} />
+          <Route path="/heir-portal" element={<HeirSearchPortal />} />
+          <Route path="/image-replicator" element={<ImageReplicator />} />
+          <Route path="/intelligence-command-center" element={<IntelligenceCommandCenter />} />
+          <Route path="/client-onboarding" element={<ClientOnboarding />} />
+          <Route path="/client-delivery" element={<ClientDelivery />} />
+          <Route path="/strategic-report" element={<StrategicReport />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
