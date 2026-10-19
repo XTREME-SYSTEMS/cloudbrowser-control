@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Users, Search, Loader2, CheckCircle, AlertCircle, Clock,
-  TrendingUp, FileText, Mail, ExternalLink, Filter, Phone, MapPin, UserCheck, Target,
+  Users, Search, Loader2, CheckCircle, AlertCircle, Clock, FileText, Mail, ExternalLink, Filter, Phone, MapPin, UserCheck, Target,
 } from "lucide-react";
 import { downloadHeirPDF } from "@/lib/heirPDF";
 import BrandIngestion from "@/components/brand/BrandIngestion";

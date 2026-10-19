@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import {
   ArrowRight, Brain, Code2, ShieldCheck, Bot, Globe2, Sparkles,
-  Search, GitBranch, Copy, Gauge, Repeat, Workflow,
-  Video, FileText, Image as ImageIcon, MessageSquare,
-  TrendingUp, MapPin, CheckCircle2, Zap, Network, Cpu,
-  ExternalLink, Play,
+  Search, GitBranch, Copy, Gauge, Workflow,
+  Video, FileText, MessageSquare,
+  TrendingUp, MapPin, CheckCircle2, Network, Cpu,
 } from "lucide-react";
 
 const EMBLEM_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/1433e0cca_generated_image.png";

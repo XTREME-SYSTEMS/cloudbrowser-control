@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Image as ImageIcon, Loader2, CheckCircle2, AlertCircle, RefreshCw,
-  Code2, Eye, Copy, Download, Target, Repeat, Sparkles, Zap,
+  Code2, Eye, Copy, Download, Target, Repeat, Sparkles,
 } from "lucide-react";
 
 export default function ImageReplicator() {

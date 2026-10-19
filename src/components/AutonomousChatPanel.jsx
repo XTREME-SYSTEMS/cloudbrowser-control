@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import {
-  Bot, X, Send, Loader2, Sparkles, Target, Trash2, ChevronLeft,
+  Bot, Send, Loader2, Sparkles, Target, Trash2, ChevronLeft,
   Zap, Brain, MessageSquare,
 } from "lucide-react";
 

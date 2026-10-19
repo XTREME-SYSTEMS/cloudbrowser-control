@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Brain, Radar, Search } from "lucide-react";
+import { Brain } from "lucide-react";
 
 const JOKES = [
   "Why do programmers prefer dark mode? Because light attracts bugs.",
