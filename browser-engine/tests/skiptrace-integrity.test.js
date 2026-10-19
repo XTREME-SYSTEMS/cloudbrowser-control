@@ -83,6 +83,7 @@ test("court-ready PDF template never self-certifies findings or implies sources 
 test("skip-trace UI labels unproven identity/contact data as leads", async () => {
   const source = await read("src/components/heir-search/EntitySearchDialog.jsx");
   const heirSearch = await read("src/pages/HeirSearch.jsx");
+  const hero = await read("src/components/landing/Hero.jsx");
   assert.ok(source.includes("Unverified leads — review required"));
   assert.ok(source.includes("Source evidence attached — identity review required"));
   assert.ok(source.includes("does not establish source provenance"));
@@ -93,4 +94,7 @@ test("skip-trace UI labels unproven identity/contact data as leads", async () =>
   assert.doesNotMatch(source, /Extreme Deep Search|extreme deep search across all sources/i);
   assert.doesNotMatch(heirSearch, /30\+ source categories|extreme deep search across/i);
   assert.ok(heirSearch.includes("Review source references, identity matches, and conflicts"));
+  assert.ok(hero.includes("Evidence-linked reports"));
+  assert.ok(hero.includes("Coverage varies by source"));
+  assert.doesNotMatch(hero, /Court-ready reports|65\+ countries/i);
 });
