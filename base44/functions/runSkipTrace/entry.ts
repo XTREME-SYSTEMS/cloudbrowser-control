@@ -78,6 +78,7 @@ export default async function (req: Request): Promise<Response> {
       sources: [] as string[],
       methods: [] as string[],
       errors: [] as any[],
+      evidence_records: [] as any[],
     };
 
     // === METHOD 1: Property Records Search ===
@@ -644,13 +645,18 @@ Find:
     );
 
     const allFailed = results.methods.length === 0 && results.errors.length > 0;
-    const status =
-      overallConfidence >= 70
-        ? "found"
-        : overallConfidence >= 40 || dedupPhones.length > 0 || dedupEmails.length > 0
-        ? "partial"
-        : "failed";
-    const finalStatus = allFailed ? "failed" : status;
+    const hasVerifiedEvidence = Array.isArray(results.evidence_records) && results.evidence_records.some(isVerifiedEvidenceRecord);
+    const propertyValues = results.property_data && typeof results.property_data === "object" ? Object.values(results.property_data) : [];
+    const hasCandidateData = dedupPhones.length > 0 || dedupEmails.length > 0 || dedupAddresses.length > 0
+      || dedupSocial.length > 0 || dedupRelatives.length > 0
+      || propertyValues.some((value: any) => value !== null && value !== undefined && String(value).trim() !== "");
+    const finalStatus = allFailed ? "failed"
+      : hasVerifiedEvidence && overallConfidence >= 70 ? "found"
+      : hasCandidateData ? "partial"
+      : "failed";
+    results.candidate_confidence_score = overallConfidence;
+    results.evidence_verified = hasVerifiedEvidence;
+    results.verification_status = hasVerifiedEvidence ? "verified" : hasCandidateData ? "needs_review" : "no_verified_results";
     const duration = Date.now() - startTime;
 
     await base44.entities.SkipTrace.update(skipTrace.id, {
@@ -664,14 +670,15 @@ Find:
       property_data: results.property_data || {},
       sources_checked: [...new Set(results.sources)],
       methods_used: [...new Set(results.methods)],
-      confidence_score: overallConfidence,
+      confidence_score: hasVerifiedEvidence ? overallConfidence : 0,
       search_results: results,
       search_duration_ms: duration,
+      notes: hasVerifiedEvidence ? "" : "Candidate results are unverified. Source evidence and independent review are required before treating them as findings.",
     });
 
     // === AUTO-EXPORT TO GOOGLE SHEETS ===
     let sheet_export: any = null;
-    if (spreadsheet_url) {
+    if (spreadsheet_url && hasVerifiedEvidence) {
       try {
         const exportRes: any = await base44.functions.invoke("exportSkipTraceToSheet", {
           spreadsheet_url,
@@ -705,8 +712,11 @@ Find:
     if (allFailed) {
       return Response.json(
         {
-          error: "All search methods failed. This may be due to exhausted integration credits. Credits reset on 2026-09-12.",
+          error: "All search methods failed or no usable research result was returned.",
           skip_trace_id: skipTrace.id,
+          status: "failed",
+          evidence_verified: false,
+          verification_status: "no_verified_results",
           errors: results.errors,
         },
         { status: 503 }
@@ -717,7 +727,11 @@ Find:
       ok: true,
       skip_trace_id: skipTrace.id,
       status: finalStatus,
-      confidence_score: overallConfidence,
+      confidence_score: hasVerifiedEvidence ? overallConfidence : 0,
+      candidate_confidence_score: overallConfidence,
+      evidence_verified: hasVerifiedEvidence,
+      verification_status: hasVerifiedEvidence ? "verified" : hasCandidateData ? "needs_review" : "no_verified_results",
+      evidence_records: results.evidence_records,
       found_owner_name: results.owner_name,
       phone_numbers: dedupPhones,
       emails: dedupEmails,
@@ -751,4 +765,16 @@ function dedupByKey(arr: any[], keyFn: (item: any) => string, confField: string)
     }
   }
   return Array.from(map.values());
+}
+
+function isVerifiedEvidenceRecord(record: any): boolean {
+  if (!record || record.status !== "verified" || typeof record.finding_id !== "string" || !record.finding_id.trim()) return false;
+  if (typeof record.retrieved_at !== "string" || !Number.isFinite(Date.parse(record.retrieved_at))) return false;
+  if (typeof record.content_hash !== "string" || !/^[a-f0-9]{64}$/i.test(record.content_hash)) return false;
+  try {
+    const url = new URL(record.source_url);
+    return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
 }
