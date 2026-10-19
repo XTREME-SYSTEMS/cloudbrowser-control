@@ -15,6 +15,7 @@ test("production skip-trace fallback has no synthetic or ad-hoc scraping success
   assert.ok(source.includes("hasVerifiableEvidence"));
   assert.ok(source.includes("evidence_verified"));
   assert.ok(source.includes("No synthetic fallback was used"));
+  assert.ok(source.includes("target_owner_name || \"\""));
 });
 
 test("autonomous swarm requires verified evidence before completing a task", async () => {
