@@ -646,10 +646,16 @@ Find:
 
     const allFailed = results.methods.length === 0 && results.errors.length > 0;
     const hasVerifiedEvidence = Array.isArray(results.evidence_records) && results.evidence_records.some(isVerifiedEvidenceRecord);
-    const propertyValues = results.property_data && typeof results.property_data === "object" ? Object.values(results.property_data) : [];
+    const propertyData = results.property_data && typeof results.property_data === "object" ? results.property_data : {};
+    const propertyCandidateKeys = ["owner_name", "mailing_address", "co_owners", "purchase_date", "property_value", "lot_size"];
+    const hasPropertyCandidate = propertyCandidateKeys.some((key) => {
+      const value = propertyData[key];
+      return Array.isArray(value) ? value.length > 0 : typeof value === "string" ? value.trim().length > 0 : value !== null && value !== undefined;
+    });
+    const hasNewOwnerName = Boolean(results.owner_name && String(results.owner_name).trim()
+      && String(results.owner_name).trim().toLocaleLowerCase() !== String(owner_name || "").trim().toLocaleLowerCase());
     const hasCandidateData = dedupPhones.length > 0 || dedupEmails.length > 0 || dedupAddresses.length > 0
-      || dedupSocial.length > 0 || dedupRelatives.length > 0
-      || propertyValues.some((value: any) => value !== null && value !== undefined && String(value).trim() !== "");
+      || dedupSocial.length > 0 || dedupRelatives.length > 0 || hasPropertyCandidate || hasNewOwnerName;
     const finalStatus = allFailed ? "failed"
       : hasVerifiedEvidence && overallConfidence >= 70 ? "found"
       : hasCandidateData ? "partial"
@@ -727,6 +733,7 @@ Find:
       ok: true,
       skip_trace_id: skipTrace.id,
       status: finalStatus,
+      target_owner_name: owner_name || "",
       confidence_score: hasVerifiedEvidence ? overallConfidence : 0,
       candidate_confidence_score: overallConfidence,
       evidence_verified: hasVerifiedEvidence,
