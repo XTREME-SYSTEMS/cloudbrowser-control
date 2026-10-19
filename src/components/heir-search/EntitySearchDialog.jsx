@@ -4,14 +4,32 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Search, Phone, Mail, MapPin, Globe2, AlertCircle, User } from "lucide-react";
 
+function isValidEvidenceRecord(record) {
+  if (!record || record.status !== "verified" || typeof record.finding_id !== "string" || !record.finding_id.trim()) return false;
+  if (typeof record.retrieved_at !== "string" || !Number.isFinite(Date.parse(record.retrieved_at))) return false;
+  if (typeof record.content_hash !== "string" || !/^[a-f0-9]{64}$/i.test(record.content_hash)) return false;
+  try {
+    const url = new URL(record.source_url);
+    return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Dialog for a skip-trace lookup on a name or address.
- * Results are candidate leads unless this view displays traceable source evidence.
+ * Results remain candidate leads unless valid, traceable source evidence is attached.
  */
 export default function EntitySearchDialog({ open, onOpenChange, query, type = "name" }) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const verifiedEvidenceRecords = Array.isArray(results?.evidence_records)
+    ? results.evidence_records.filter(isValidEvidenceRecord)
+    : [];
+  const evidenceVerified = results?.evidence_verified === true
+    && results?.verification_status === "verified"
+    && verifiedEvidenceRecords.length > 0;
 
   useEffect(() => {
     if (!open || !query) return;
@@ -71,9 +89,23 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
 
         {results && !loading && !error && (
           <div className="space-y-4">
-            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900">
-              <p className="font-semibold">Unverified leads — review required</p>
-              <p className="text-xs mt-1">This view does not establish source provenance or verify identity, contact ownership, or property ownership. Treat displayed values as leads until checked against traceable source records.</p>
+            <div className={`rounded-md border p-3 text-sm ${evidenceVerified ? "border-sky-500/40 bg-sky-500/10 text-sky-900" : "border-amber-500/40 bg-amber-500/10 text-amber-900"}`}>
+              <p className="font-semibold">{evidenceVerified ? "Source evidence attached — identity review required" : "Unverified leads — review required"}</p>
+              <p className="text-xs mt-1">
+                {evidenceVerified
+                  ? "One or more records passed basic provenance checks. This does not prove identity, contact ownership, or property ownership; review each source and resolve conflicts."
+                  : "This result has no valid source evidence in this view. It does not establish source provenance or verify identity, contact ownership, or property ownership. Treat displayed values as leads until checked against traceable source records."}
+              </p>
+              {evidenceVerified && (
+                <div className="mt-2 text-xs">
+                  <span className="font-semibold">Source references: </span>
+                  {verifiedEvidenceRecords.map((record, index) => (
+                    <a key={record.finding_id} href={record.source_url} target="_blank" rel="noopener noreferrer" className="underline mr-2">
+                      {record.source_name || new URL(record.source_url).hostname}{index < verifiedEvidenceRecords.length - 1 ? ";" : ""}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
             {results.found_owner_name && (
               <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">

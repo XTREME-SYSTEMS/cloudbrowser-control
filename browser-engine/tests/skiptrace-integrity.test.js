@@ -84,8 +84,12 @@ test("skip-trace UI labels unproven identity/contact data as leads", async () =>
   const source = await read("src/components/heir-search/EntitySearchDialog.jsx");
   const heirSearch = await read("src/pages/HeirSearch.jsx");
   assert.ok(source.includes("Unverified leads — review required"));
+  assert.ok(source.includes("Source evidence attached — identity review required"));
   assert.ok(source.includes("does not establish source provenance"));
   assert.ok(source.includes("reported confidence (not verification)"));
+  assert.ok(source.includes("function isValidEvidenceRecord(record)"));
+  assert.ok(source.includes('results?.evidence_verified === true'));
+  assert.ok(source.includes('href={record.source_url}'));
   assert.doesNotMatch(source, /Extreme Deep Search|extreme deep search across all sources/i);
   assert.doesNotMatch(heirSearch, /30\+ source categories|extreme deep search across/i);
   assert.ok(heirSearch.includes("Review source references, identity matches, and conflicts"));
