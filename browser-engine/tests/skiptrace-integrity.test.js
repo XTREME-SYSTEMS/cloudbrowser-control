@@ -39,3 +39,24 @@ test("mock endpoint cannot persist generated investigative records", async () =>
   assert.doesNotMatch(source, /entities\.SkipTrace\.(create|update|filter)/);
   assert.doesNotMatch(source, /\+1\s*\(/);
 });
+
+test("strategic reports use existing cases and fail closed without source evidence", async () => {
+  const source = await read("src/pages/StrategicReport.jsx");
+  assert.doesNotMatch(source, /TARGET_SUBJECTS/);
+  assert.doesNotMatch(source, /Paul C\. Lingard|Donald Roy Yandell|Lucile C Wright/);
+  assert.ok(source.includes('base44.entities.SkipTrace.filter('));
+  assert.ok(source.includes('subject.evidence_verified'));
+  assert.ok(source.includes('evidenceRecords.some(isValidEvidenceRecord)'));
+  assert.ok(source.includes('!isTestFixture(t)'));
+});
+
+test("heir-search actions require a case ID linked to the displayed subject", async () => {
+  const source = await read("src/pages/StrategicReport.jsx");
+  assert.ok(source.includes('subjects.find(subject => subject.heir_search_id)'));
+  assert.ok(source.includes('QA was not run against an unrelated case'));
+  assert.ok(source.includes('Comparison was not run against an unrelated case'));
+  assert.ok(source.includes('No report was generated for an unrelated case'));
+  assert.ok(source.includes('!hs.deceased_name'));
+  assert.doesNotMatch(source, /subjects\[0\]\?\.target/);
+  assert.ok(source.includes('typeof result === "string"'));
+});

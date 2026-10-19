@@ -27,11 +27,9 @@ const OUR_ADVANTAGES = [
   { metric: "Success Rate Target", industry: "98%", ours: "≥99% (QA validated)", improvement: "1%+" },
 ];
 
-const TARGET_SUBJECTS = [
-  { name: "Paul C. Lingard", address: "19681 Summerlin Rd # 41, Fort Myers, FL 33908" },
-  { name: "Donald Roy Yandell", address: "4511 Rusk Ave, Dallas, TX 75204" },
-  { name: "Lucile C Wright", address: "6 Pueblo Dr, Pensacola, FL 32507" },
-];
+// Report cases are loaded from the authenticated user's existing records.
+// Never embed real people or addresses as default investigative targets.
+const MAX_REPORT_CASES = 50;
 
 export default function StrategicReport() {
   const [subjects, setSubjects] = useState([]);
@@ -54,57 +52,89 @@ export default function StrategicReport() {
 
   const loadTraces = async () => {
     setLoading(true);
+    setError(null);
+    setReportReady(false);
     try {
-      const results = [];
-      for (const target of TARGET_SUBJECTS) {
-        const res = await base44.entities.SkipTrace.filter(
-          { target_owner_name: target.name },
-          { sort: "-created_date", limit: 1 }
-        );
-        const items = res.items || res;
-        if (items[0]) {
-          const t = items[0];
-          results.push({
+      const response = await base44.entities.SkipTrace.filter(
+        { status: "found" },
+        { sort: "-created_date", limit: MAX_REPORT_CASES }
+      );
+      const items = Array.isArray(response?.items)
+        ? response.items
+        : Array.isArray(response) ? response : [];
+      const results = items
+        .filter(t => t?.id && !isTestFixture(t))
+        .map(t => {
+          const evidenceRecords = Array.isArray(t.search_results?.evidence_records)
+            ? t.search_results.evidence_records
+            : [];
+          const evidenceVerified = t.status === "found"
+            && t.search_results?.evidence_verified === true
+            && t.search_results?.verification_status === "verified"
+            && evidenceRecords.some(isValidEvidenceRecord);
+          return {
             id: t.id,
-            target: t.target_owner_name,
-            address: t.target_property_address,
-            status: t.status,
-            confidence: t.confidence_score,
+            heir_search_id: t.heir_search_id || t.search_results?.heir_search_id || null,
+            target: t.target_owner_name || "",
+            address: t.target_property_address || "",
+            deceased_name: t.deceased_name || t.search_results?.deceased_name || "",
+            deceased_details: t.deceased_details || t.search_results?.deceased_details || {},
+            family_tree: t.family_tree || t.search_results?.family_tree || {},
+            identified_heirs: t.identified_heirs || t.search_results?.identified_heirs || [],
+            probate_info: t.probate_info || t.search_results?.probate_info || {},
+            case_reference: t.case_reference || t.search_results?.case_reference || "",
+            death_location: t.death_location || t.search_results?.death_location || "",
+            status: t.status || "unknown",
+            confidence: evidenceVerified ? Number(t.confidence_score) || 0 : 0,
+            evidence_verified: evidenceVerified,
+            verification_status: evidenceVerified ? "verified" : "needs_review",
+            evidence_records: evidenceRecords,
             phones: (t.found_phone_numbers || []).map(p => p.display || p.number),
             emails: (t.found_emails || []).map(e => e.email || e),
             addresses: (t.found_addresses || []).map(a => a.address),
             social: (t.found_social_profiles || []).map(s => `${s.platform}: ${s.url || s.username || ""}`),
             relatives: t.found_relatives || [],
-            sources_count: (t.sources_checked || []).length,
+            sources_checked: t.sources_checked || [],
+            methods_used: t.methods_used || [],
+            sources_count: evidenceRecords.length,
             methods_count: (t.methods_used || []).length,
             duration: t.search_duration_ms,
             exec_summary: t.search_results?.executive_summary,
             full_report: t.search_results?.full_report,
             enrichment: t.search_results?.enrichment,
-          });
-        }
-      }
+          };
+        });
       setSubjects(results);
-      if (results.length === TARGET_SUBJECTS.length) setReportReady(true);
+      // Reports stay disabled unless every included case has backend verification
+      // and at least one structurally valid source-evidence record.
+      setReportReady(results.length > 0 && results.every(subject => subject.evidence_verified));
     } catch (err) {
-      setError(err.message);
+      setSubjects([]);
+      setReportReady(false);
+      setError(err?.message || "Unable to load report cases.");
     } finally { setLoading(false); }
   };
 
   const runAllTraces = async () => {
     setTracing(true);
     setError(null);
+    setReportReady(false);
     try {
-      for (const target of TARGET_SUBJECTS) {
+      const targets = subjects.filter(subject => subject.id && (subject.target || subject.address));
+      if (targets.length === 0) {
+        setError("No existing research cases are available. Start a case from Skip Tracing, then return here to review its report.");
+        return;
+      }
+      for (const target of targets) {
         await base44.functions.invoke("runMaxSkipTrace", {
-          owner_name: target.name,
+          owner_name: target.target,
           property_address: target.address,
           deep_search: true,
         });
       }
       await loadTraces();
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || "Unable to run deep research for the existing cases.");
     } finally { setTracing(false); }
   };
 
@@ -114,32 +144,40 @@ export default function StrategicReport() {
 
   const runQAValidation = async () => {
     setRunningQA(true);
+    setError(null);
     try {
+      const linkedCases = subjects.filter(subject => subject.heir_search_id);
+      if (linkedCases.length === 0) {
+        setError("No report subject is linked to a HeirSearch case ID. QA was not run against an unrelated case.");
+        return;
+      }
       const results = {};
-      for (const s of subjects) {
+      for (const subject of linkedCases) {
         const res = await base44.functions.invoke("runHeirSearchQA", {
-          heir_search_id: s.heir_search_id,
+          heir_search_id: subject.heir_search_id,
           run_validator: true,
         });
-        results[s.id] = res.data || res;
+        results[subject.id] = res.data || res;
       }
       setQaResults(results);
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err?.message || "Heir-search QA failed."); }
     finally { setRunningQA(false); }
   };
 
   const runComparison = async () => {
     setRunningComparison(true);
+    setError(null);
     try {
-      const hsRes = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 1 });
-      const hsItems = hsRes.items || hsRes;
-      if (hsItems[0]) {
-        const res = await base44.functions.invoke("runHeirSearchComparison", {
-          heir_search_id: hsItems[0].id,
-        });
-        setComparison(res.data || res);
+      const linkedCase = subjects.find(subject => subject.heir_search_id);
+      if (!linkedCase) {
+        setError("No report subject is linked to a HeirSearch case ID. Comparison was not run against an unrelated case.");
+        return;
       }
-    } catch (err) { setError(err.message); }
+      const res = await base44.functions.invoke("runHeirSearchComparison", {
+        heir_search_id: linkedCase.heir_search_id,
+      });
+      setComparison(res.data || res);
+    } catch (err) { setError(err?.message || "Heir-search comparison failed."); }
     finally { setRunningComparison(false); }
   };
 
@@ -147,20 +185,20 @@ export default function StrategicReport() {
     setRunningRecursiveQA(true);
     setError(null);
     try {
-      const hsRes = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 1 });
-      const hsItems = hsRes.items || hsRes;
-      if (hsItems[0]) {
-        const res = await base44.functions.invoke("runRecursiveQA", {
-          heir_search_id: hsItems[0].id,
-          target_score: 85,
-          max_iterations: 3,
-          run_validator: true,
-        });
-        setRecursiveResults(res.data || res);
-        // Reload traces to reflect updated scores
-        await loadTraces();
+      const linkedCase = subjects.find(subject => subject.heir_search_id);
+      if (!linkedCase) {
+        setError("No report subject is linked to a HeirSearch case ID. Recursive QA was not run against an unrelated case.");
+        return;
       }
-    } catch (err) { setError(err.message); }
+      const res = await base44.functions.invoke("runRecursiveQA", {
+        heir_search_id: linkedCase.heir_search_id,
+        target_score: 85,
+        max_iterations: 3,
+        run_validator: true,
+      });
+      setRecursiveResults(res.data || res);
+      await loadTraces();
+    } catch (err) { setError(err?.message || "Recursive QA failed."); }
     finally { setRunningRecursiveQA(false); }
   };
 
@@ -168,14 +206,13 @@ export default function StrategicReport() {
     setGeneratingReport(true);
     setError(null);
     try {
-      const hsRes = await base44.entities.HeirSearch.filter({}, { sort: "-created_date", limit: 1 });
-      const hsItems = hsRes.items || hsRes;
-      if (!hsItems[0]) {
-        setError("No heir search case found. Run an heir search first.");
+      const linkedCase = subjects.find(subject => subject.heir_search_id);
+      if (!linkedCase) {
+        setError("No report subject is linked to a HeirSearch case ID. No report was generated for an unrelated case.");
         return;
       }
       const res = await base44.functions.invoke("generateFindingsReport", {
-        heir_search_id: hsItems[0].id,
+        heir_search_id: linkedCase.heir_search_id,
         folder_id: "1VyAeFWxWA9nQIw1OcbHjp6-fWkE5WDM8",
       });
       const data = res.data || res;
@@ -188,20 +225,24 @@ export default function StrategicReport() {
   };
 
   const handleDownloadCourtReady = async () => {
-    // Find the first heir search case for the court-ready PDF
-    const hs = subjects.find(s => s.heir_search_id);
+    // Never create a court-ready report from a skip-trace row lacking a linked heir case.
+    const hs = subjects.find(subject => subject.heir_search_id);
+    if (!hs || !reportReady || !hs.evidence_verified || !hs.deceased_name) {
+      setError("A verified case linked to a HeirSearch ID and an explicit deceased-person identity is required for a court-ready PDF.");
+      return;
+    }
     const pdfData = {
-      deceased_name: hs?.target || subjects[0]?.target || "Unknown",
-      deceased_details: hs?.deceased_details || {},
-      family_tree: hs?.family_tree || {},
-      identified_heirs: hs?.identified_heirs || subjects,
-      probate_info: hs?.probate_info || {},
-      sources_checked: hs?.sources_checked || [],
-      methods_used: hs?.methods_used || [],
-      confidence_score: hs?.confidence || 0,
-      case_reference: hs?.case_reference || "",
-      death_location: hs?.death_location || "",
-      qa_certification: qaResults[hs?.id] || {},
+      deceased_name: hs.deceased_name,
+      deceased_details: hs.deceased_details || {},
+      family_tree: hs.family_tree || {},
+      identified_heirs: hs.identified_heirs || [],
+      probate_info: hs.probate_info || {},
+      sources_checked: hs.evidence_records.map(record => record.source_url).filter(Boolean),
+      methods_used: hs.methods_used || [],
+      confidence_score: hs.confidence || 0,
+      case_reference: hs.case_reference || "",
+      death_location: hs.death_location || "",
+      qa_certification: qaResults[hs.id] || {},
     };
 
     setGeneratingCourtPDF(true);
@@ -211,7 +252,10 @@ export default function StrategicReport() {
       const blob = doc.output("blob");
       const base64 = await new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(",")[1]);
+        reader.onloadend = () => {
+          const result = reader.result;
+          resolve(typeof result === "string" ? result.split(",")[1] || "" : "");
+        };
         reader.readAsDataURL(blob);
       });
       const fileName = `HeirSearch_${(pdfData.deceased_name || "Report").replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`;
@@ -592,6 +636,29 @@ export default function StrategicReport() {
       )}
     </div>
   );
+}
+
+function isTestFixture(trace) {
+  const result = trace?.search_results || {};
+  return trace?.test_fixture === true
+    || trace?._mock === true
+    || result.test_fixture === true
+    || result._mock === true
+    || result.verification_status === "test_fixture"
+    || String(trace?.found_owner_name || "").trim() === "TEST_FIXTURE_ONLY";
+}
+
+function isValidEvidenceRecord(record) {
+  if (!record || record.status !== "verified") return false;
+  if (typeof record.finding_id !== "string" || !record.finding_id.trim()) return false;
+  if (typeof record.retrieved_at !== "string" || !Number.isFinite(Date.parse(record.retrieved_at))) return false;
+  if (typeof record.content_hash !== "string" || !/^[a-f0-9]{64}$/i.test(record.content_hash)) return false;
+  try {
+    const url = new URL(record.source_url);
+    return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 function Stat({ icon: Icon, label, value }) {
