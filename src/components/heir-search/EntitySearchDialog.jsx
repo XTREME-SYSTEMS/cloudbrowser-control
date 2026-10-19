@@ -5,8 +5,8 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, Search, Phone, Mail, MapPin, Globe2, AlertCircle, User } from "lucide-react";
 
 /**
- * Dialog that runs an extreme-deep skip trace on a name or address
- * and displays the results (phones, emails, addresses, social profiles).
+ * Dialog for a skip-trace lookup on a name or address.
+ * Results are candidate leads unless this view displays traceable source evidence.
  */
 export default function EntitySearchDialog({ open, onOpenChange, query, type = "name" }) {
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Search className="w-5 h-5 text-primary" />
-            Extreme Deep Search
+            Skip-Trace Lookup
           </DialogTitle>
           <DialogDescription>
             Searching for <span className="font-medium text-foreground">{query}</span>
@@ -55,7 +55,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
         {loading && (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Running extreme deep search across all sources...</p>
+            <p className="text-sm text-muted-foreground">Checking available sources permitted for this workflow...</p>
           </div>
         )}
 
@@ -71,12 +71,16 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
 
         {results && !loading && !error && (
           <div className="space-y-4">
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900">
+              <p className="font-semibold">Unverified leads — review required</p>
+              <p className="text-xs mt-1">This view does not establish source provenance or verify identity, contact ownership, or property ownership. Treat displayed values as leads until checked against traceable source records.</p>
+            </div>
             {results.found_owner_name && (
               <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">
                 <User className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">{results.found_owner_name}</span>
+                <span className="text-sm font-medium">Possible owner match: {results.found_owner_name}</span>
                 {results.confidence_score != null && (
-                  <Badge variant="outline" className="ml-auto">{results.confidence_score}% confidence</Badge>
+                  <Badge variant="outline" className="ml-auto">{results.confidence_score}% reported confidence (not verification)</Badge>
                 )}
               </div>
             )}
@@ -84,7 +88,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.phone_numbers?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Phone className="w-3 h-3" /> Phone Numbers ({results.phone_numbers.length})
+                  <Phone className="w-3 h-3" /> Candidate Phone Numbers ({results.phone_numbers.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {results.phone_numbers.map((p, i) => (
@@ -100,7 +104,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.emails?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> Emails ({results.emails.length})
+                  <Mail className="w-3 h-3" /> Candidate Emails ({results.emails.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {results.emails.map((e, i) => (
@@ -116,7 +120,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.addresses?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> Addresses ({results.addresses.length})
+                  <MapPin className="w-3 h-3" /> Candidate Addresses ({results.addresses.length})
                 </p>
                 <div className="space-y-1">
                   {results.addresses.map((a, i) => (
@@ -131,7 +135,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
             {results.social_profiles?.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Globe2 className="w-3 h-3" /> Social Profiles ({results.social_profiles.length})
+                  <Globe2 className="w-3 h-3" /> Candidate Social Profiles ({results.social_profiles.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {results.social_profiles.map((s, i) => (

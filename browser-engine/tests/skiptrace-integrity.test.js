@@ -48,6 +48,7 @@ test("strategic reports use existing cases and fail closed without source eviden
   assert.ok(source.includes('subject.evidence_verified'));
   assert.ok(source.includes('evidenceRecords.some(isValidEvidenceRecord)'));
   assert.ok(source.includes('!isTestFixture(t)'));
+  assert.doesNotMatch(source, /241\+|30\+ source categories queried per subject|legal-grade standards|Cross-verified contact data/i);
 });
 
 test("heir-search actions require a case ID linked to the displayed subject", async () => {
@@ -68,4 +69,24 @@ test("investigative PDF does not claim sources were queried or cross-verified wi
   assert.ok(source.includes("not a legal opinion, court certification"));
   assert.doesNotMatch(source, /241\+|30\+ source category methodology|Each category was queried|cross-verified contact data/i);
   assert.doesNotMatch(source, /drawStrategicPillarsPage|STRATEGIC PILLARS/);
+});
+
+test("court-ready PDF template never self-certifies findings or implies sources were queried", async () => {
+  const source = await read("src/lib/courtReadyPDF.js");
+  assert.ok(source.includes("STATUS: NOT A LEGAL CERTIFICATION"));
+  assert.ok(source.includes("Source References Supplied"));
+  assert.ok(source.includes("does not create attorney-client privilege"));
+  assert.ok(source.includes("No claim is made that sources were queried"));
+  assert.doesNotMatch(source, /Court-Ready Investigative Document|QA CERTIFICATION|30\+ source categories|STATUS: CERTIFIED|This certification confirms|Data Sources Queried/i);
+});
+
+test("skip-trace UI labels unproven identity/contact data as leads", async () => {
+  const source = await read("src/components/heir-search/EntitySearchDialog.jsx");
+  const heirSearch = await read("src/pages/HeirSearch.jsx");
+  assert.ok(source.includes("Unverified leads — review required"));
+  assert.ok(source.includes("does not establish source provenance"));
+  assert.ok(source.includes("reported confidence (not verification)"));
+  assert.doesNotMatch(source, /Extreme Deep Search|extreme deep search across all sources/i);
+  assert.doesNotMatch(heirSearch, /30\+ source categories|extreme deep search across/i);
+  assert.ok(heirSearch.includes("Review source references, identity matches, and conflicts"));
 });

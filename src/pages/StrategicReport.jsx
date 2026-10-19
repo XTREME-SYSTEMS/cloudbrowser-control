@@ -228,7 +228,7 @@ export default function StrategicReport() {
     // Never create a court-ready report from a skip-trace row lacking a linked heir case.
     const hs = subjects.find(subject => subject.heir_search_id);
     if (!hs || !reportReady || !hs.evidence_verified || !hs.deceased_name) {
-      setError("A verified case linked to a HeirSearch ID and an explicit deceased-person identity is required for a court-ready PDF.");
+      setError("A verified case linked to a HeirSearch ID and an explicit deceased-person identity is required for this investigative working PDF.");
       return;
     }
     const pdfData = {
@@ -328,7 +328,7 @@ export default function StrategicReport() {
         <div className="max-w-2xl mx-auto p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-center gap-3 text-green-400 mb-6">
           <CheckCircle className="w-5 h-5 shrink-0" />
           <div className="flex-1">
-            <p className="font-medium text-sm">Court-Ready PDF saved to Google Drive</p>
+            <p className="font-medium text-sm">Investigative working PDF saved to Google Drive</p>
             <a href={courtPdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-green-300 underline">
               Open in Google Drive →
             </a>
@@ -343,8 +343,7 @@ export default function StrategicReport() {
           <span className="text-[#00f2ff]">Report</span>
         </h2>
         <p className="text-sm text-[#788291] max-w-2xl mx-auto">
-          Professional investigative document compiled from 241+ public-record sources across 30+ data categories.
-          All findings are cross-verified, confidence-scored, and presented to legal-grade standards.
+          This report summarizes case-linked research records and attached evidence. Coverage varies by case; only source references recorded in the evidence register are represented. Unverified or conflicting observations require review. This is not a legal opinion or certification.
         </p>
       </div>
 
@@ -603,10 +602,10 @@ export default function StrategicReport() {
       {!loading && (
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
           {[
-            { icon: TrendingUp, title: "Higher Visibility", desc: "30+ source categories queried per subject" },
-            { icon: Users, title: "More Qualified Traffic", desc: "Cross-verified contact data with confidence scoring" },
-            { icon: Target, title: "Stronger Brand Authority", desc: "Evidence chains and data quality assessments" },
-            { icon: Zap, title: "Real Business Growth", desc: "Actionable intelligence for legal administration" },
+            { icon: TrendingUp, title: "Case-linked records", desc: "Research observations are tied to the selected case" },
+            { icon: Users, title: "Source references", desc: "Only references attached to the case are listed" },
+            { icon: Target, title: "Evidence status", desc: "Unsupported observations remain unverified" },
+            { icon: Zap, title: "Human review", desc: "Conflicts and identity ambiguity require review" },
           ].map((p, i) => (
             <div key={i} className="rounded-xl border border-[#00a8ff]/15 bg-[#0c1016] p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full border border-[#00a8ff]/40 flex items-center justify-center shrink-0">

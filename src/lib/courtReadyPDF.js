@@ -1,14 +1,8 @@
 /**
- * Court-Ready PDF Generator
- * 
- * Generates a legal-grade heir search report with:
- * - Exhibit-numbered evidence chains
- * - Source citations with access dates
- * - QA certification page
- * - Notary block
- * - Family tree chart
- * 
- * This is NOT a marketing PDF — it's a court-filable document.
+ * Evidence Review PDF Generator
+ * Generates an investigative working report from supplied case data.
+ * This template does not independently validate findings, create legal privilege,
+ * certify court readiness, or establish that listed sources were queried.
  */
 
 import jsPDF from "jspdf";
@@ -51,7 +45,7 @@ export function generateCourtReadyPDF(data) {
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(200, 210, 220);
-  doc.text("Court-Ready Investigative Document", margin, 310);
+  doc.text("Investigative Working Document — Review Required", margin, 310);
 
   doc.setDrawColor(0, 134, 230);
   doc.setLineWidth(1);
@@ -69,9 +63,9 @@ export function generateCourtReadyPDF(data) {
     `Case Reference: ${data.case_reference || "N/A"}`,
     `Jurisdiction: ${data.death_location || "To be determined"}`,
     `Report Date: ${new Date().toLocaleDateString()}`,
-    `Confidence Score: ${data.confidence_score || 0}/100`,
-    `Sources Queried: ${data.sources_checked?.length || 0}`,
-    `Heirs Identified: ${data.identified_heirs?.length || 0}`,
+    `Recorded confidence (not verification): ${data.confidence_score ?? "N/A"}/100`,
+    `Source References Supplied: ${data.sources_checked?.length || 0}`,
+    `Heir Candidates Recorded: ${data.identified_heirs?.length || 0}`,
   ];
   infoLines.forEach(line => {
     doc.text(line, margin + 20, infoY);
@@ -80,10 +74,10 @@ export function generateCourtReadyPDF(data) {
 
   doc.setFontSize(8);
   doc.setTextColor(150, 160, 170);
-  doc.text("CONFIDENTIAL — FOR LEGAL USE ONLY", margin, pageHeight - 60);
-  doc.text("This document contains privileged investigative findings prepared for probate proceedings.", margin, pageHeight - 48);
+  doc.text("CONFIDENTIAL — HANDLE UNDER CASE POLICY", margin, pageHeight - 60);
+  doc.text("This working report does not create attorney-client privilege or certify findings.", margin, pageHeight - 48);
 
-  // === PAGE 2: CERTIFICATION ===
+  // === PAGE 2: EVIDENCE REVIEW STATUS ===
   doc.addPage();
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
@@ -92,7 +86,7 @@ export function generateCourtReadyPDF(data) {
   doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("QA CERTIFICATION", margin, y);
+  doc.text("EVIDENCE REVIEW STATUS", margin, y);
   y += 30;
 
   doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
@@ -106,32 +100,34 @@ export function generateCourtReadyPDF(data) {
 
   const qa = data.qa_certification || {};
   const certText = [
-    "This report has been independently validated through a three-layer verification process:",
+    "This page summarizes metadata supplied with the case; it is not an independent audit or legal certification.",
     "",
-    "1. AI CORRELATION ENGINE — Cross-references all findings across 30+ source categories",
-    "2. QA AGENT — Audits completeness, accuracy, and court-readiness",
-    "3. EVIDENCE VALIDATOR — Verifies source citations, corroboration, and legal sufficiency",
+    `Recorded QA score (not independently verified): ${qa.qa_score ?? data.confidence_score ?? "N/A"}/100`,
+    `Recorded completeness score: ${qa.completeness_score ?? "N/A"}/100`,
+    `Recorded accuracy score: ${qa.accuracy_score ?? "N/A"}/100`,
+    `Recorded court-readiness score: ${qa.court_readiness_score ?? "N/A"}/100`,
+    "STATUS: NOT A LEGAL CERTIFICATION",
     "",
-    `QA Score: ${qa.qa_score || data.confidence_score || 0}/100`,
-    `Completeness: ${qa.completeness_score || "N/A"}/100`,
-    `Accuracy: ${qa.accuracy_score || "N/A"}/100`,
-    `Court Readiness: ${qa.court_readiness_score || "N/A"}/100`,
-    qa.fully_certified ? "STATUS: CERTIFIED" : "STATUS: PENDING CERTIFICATION",
-    "",
-    "This certification confirms that the findings in this report have been verified through",
-    "automated cross-referencing and independent quality audit. All evidence chains are",
-    "traceable to their primary sources via exhibit numbers.",
+    "Human review is required. Source names and URLs are references, not proof of identity, ownership, or truth.",
+    "No claim is made that sources were queried or that evidence was independently validated unless a separate, traceable validation receipt is attached.",
   ];
   certText.forEach(line => {
     if (line.startsWith("STATUS:")) {
       doc.setFont("helvetica", "bold");
-      doc.setTextColor((qa.fully_certified ? BRAND.green : BRAND.gold)[0], (qa.fully_certified ? BRAND.green : BRAND.gold)[1], (qa.fully_certified ? BRAND.green : BRAND.gold)[2]);
+      doc.setTextColor(BRAND.gold[0], BRAND.gold[1], BRAND.gold[2]);
     } else {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
     }
-    doc.text(line, margin, y);
-    y += 16;
+    const wrappedLines = doc.splitTextToSize(line, contentWidth);
+    wrappedLines.forEach(wrappedLine => {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(wrappedLine, margin, y);
+      y += 16;
+    });
   });
 
   y += 30;
@@ -143,7 +139,7 @@ export function generateCourtReadyPDF(data) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
-  doc.text("NOTARY ACKNOWLEDGMENT", margin, y);
+  doc.text("OPTIONAL NOTARY ACKNOWLEDGMENT TEMPLATE — NOT EXECUTED", margin, y);
   y += 25;
 
   doc.setFont("helvetica", "normal");
@@ -174,7 +170,7 @@ export function generateCourtReadyPDF(data) {
   doc.setTextColor(BRAND.text[0], BRAND.text[1], BRAND.text[2]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("I. DECEASED IDENTITY CONFIRMATION", margin, y);
+  doc.text("I. DECEASED IDENTITY — CASE DATA", margin, y);
   y += 20;
   doc.setDrawColor(BRAND.primary[0], BRAND.primary[1], BRAND.primary[2]);
   doc.setLineWidth(2);
@@ -371,7 +367,7 @@ export function generateCourtReadyPDF(data) {
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(`Data Sources Queried (${data.sources_checked?.length || 0}):`, margin, y);
+  doc.text(`Source References Supplied (${data.sources_checked?.length || 0}):`, margin, y);
   y += 15;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -408,7 +404,7 @@ export function generateCourtReadyPDF(data) {
     doc.setFontSize(7);
     doc.setTextColor(BRAND.muted[0], BRAND.muted[1], BRAND.muted[2]);
     doc.text(
-      `Strategic Minds AI | Forensic Heir Search Report | ${data.deceased_name} | Page ${p} of ${totalPages}`,
+      `Strategic Minds AI | Investigative Working Report | ${data.deceased_name} | Page ${p} of ${totalPages}`,
       margin,
       pageHeight - 20
     );
