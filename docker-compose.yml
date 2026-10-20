@@ -1,0 +1,100 @@
+# CloudBrowser Control — local / staging stack.
+#
+#   cp .env.example .env && docker compose up --build
+#
+# Services: postgres (schema auto-applied), engine, api, worker.
+# The Vite frontend is NOT a compose service while it still runs on the
+# Base44 runtime — run `npm run dev` on the host for the UI until the
+# frontend port (Phase 4) lands.
+#
+# Production equivalents: see docs/portable/DEPLOYMENT.md
+name: cloudbrowser-control
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cloudbrowser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cloudbrowser}
+      POSTGRES_DB: ${POSTGRES_DB:-cloudbrowser}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Migrations run in filename order on first boot of an empty volume.
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cloudbrowser} -d ${POSTGRES_DB:-cloudbrowser}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  engine:
+    build:
+      context: ./browser-engine
+    restart: unless-stopped
+    environment:
+      ENGINE_API_KEY: ${ENGINE_API_KEY:?ENGINE_API_KEY must be set}
+      CORS_ALLOWLIST: ${CORS_ALLOWLIST:-}
+      PORT: 8080
+      MAX_SESSIONS: ${MAX_SESSIONS:-10}
+      POOL_SIZE: ${POOL_SIZE:-3}
+      DEFAULT_TIMEOUT: ${DEFAULT_TIMEOUT:-30000}
+      SESSION_TTL_MS: ${SESSION_TTL_MS:-300000}
+      VIDEO_DIR: /tmp/videos
+      CONFIG_VERSION: ${CONFIG_VERSION:-dev}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-}
+    ports:
+      - "${ENGINE_PORT:-8080}:8080"
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      engine:
+        condition: service_started
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER:-cloudbrowser}:${POSTGRES_PASSWORD:-cloudbrowser}@postgres:5432/${POSTGRES_DB:-cloudbrowser}
+      API_KEY_PEPPER: ${API_KEY_PEPPER:?API_KEY_PEPPER must be set}
+      ENGINE_URL: http://engine:8080
+      ENGINE_API_KEY: ${ENGINE_API_KEY:?ENGINE_API_KEY must be set}
+      CORS_ALLOWLIST: ${CORS_ALLOWLIST:-}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+      API_BODY_LIMIT: ${API_BODY_LIMIT:-1mb}
+    ports:
+      - "${API_PORT:-4000}:4000"
+
+  worker:
+    build:
+      context: ./worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgres://${POSTGRES_USER:-cloudbrowser}:${POSTGRES_PASSWORD:-cloudbrowser}@postgres:5432/${POSTGRES_DB:-cloudbrowser}
+      ENGINE_URL: http://engine:8080
+      ENGINE_API_KEY: ${ENGINE_API_KEY:?ENGINE_API_KEY must be set}
+      POLL_INTERVAL_MS: ${POLL_INTERVAL_MS:-2000}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+      LEASE_MS: ${LEASE_MS:-120000}
+      BACKOFF_BASE_MS: ${BACKOFF_BASE_MS:-1000}
+      BACKOFF_MAX_MS: ${BACKOFF_MAX_MS:-300000}
+      REAP_INTERVAL_MS: ${REAP_INTERVAL_MS:-30000}
+
+volumes:
+  pgdata:

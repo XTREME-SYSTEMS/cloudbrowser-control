@@ -1,0 +1,280 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CloudBrowser Control API",
+    "version": "1.0.0",
+    "description": "Portable API gateway for CloudBrowser Control. Tenant isolation is enforced by API key plus Row-Level Security; every response carries a request ID. No Base44 runtime dependency."
+  },
+  "servers": [
+    { "url": "http://localhost:4000", "description": "Local docker compose" }
+  ],
+  "security": [{ "ApiKeyAuth": [] }],
+  "tags": [
+    { "name": "system", "description": "Liveness and contract discovery" },
+    { "name": "jobs", "description": "Durable job queue" },
+    { "name": "sessions", "description": "Browser session lifecycle" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Format: cb_<live|test>_<8-char prefix>_<secret>. Only the HMAC of the secret is stored."
+      }
+    },
+    "parameters": {
+      "TenantHeader": {
+        "name": "x-tenant-id",
+        "in": "header",
+        "required": false,
+        "schema": { "type": "string", "format": "uuid" },
+        "description": "Optional assertion. If present it must match the tenant the key belongs to."
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": ["error", "request_id", "status"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message", "retryable"],
+            "properties": {
+              "code": { "type": "string", "examples": ["invalid_request", "unauthorized", "forbidden", "not_found", "conflict", "rate_limited", "internal_error"] },
+              "message": { "type": "string" },
+              "retryable": { "type": "boolean" }
+            }
+          },
+          "request_id": { "type": "string" },
+          "status": { "type": "integer" }
+        }
+      },
+      "Job": {
+        "type": "object",
+        "required": ["id", "tenant_id", "type", "status", "attempts", "max_attempts"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "tenant_id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["engine.health", "artifact.prune"] },
+          "status": { "type": "string", "enum": ["queued", "leased", "succeeded", "failed", "dead_letter", "cancelled"] },
+          "priority": { "type": "integer", "minimum": 1, "maximum": 9 },
+          "payload": { "type": "object" },
+          "result": { "type": ["object", "null"] },
+          "error": { "type": ["string", "null"] },
+          "attempts": { "type": "integer" },
+          "max_attempts": { "type": "integer", "minimum": 1, "maximum": 20 },
+          "idempotency_key": { "type": ["string", "null"] },
+          "lease_owner": { "type": ["string", "null"] },
+          "lease_expires_at": { "type": ["string", "null"], "format": "date-time" },
+          "available_at": { "type": "string", "format": "date-time" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "completed_at": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "JobAttempt": {
+        "type": "object",
+        "properties": {
+          "job_id": { "type": "string", "format": "uuid" },
+          "attempt": { "type": "integer" },
+          "worker_id": { "type": "string" },
+          "outcome": { "type": "string", "enum": ["succeeded", "failed", "retrying", "dead_letter", "lease_expired"] },
+          "failure_kind": { "type": ["string", "null"], "enum": ["timeout", "network", "validation", "auth", "unknown", null] },
+          "error": { "type": ["string", "null"] },
+          "duration_ms": { "type": "integer" }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "tenant_id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "url": { "type": ["string", "null"] },
+          "created_at": { "type": ["string", "null"], "format": "date-time" }
+        }
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "Normalized error envelope",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Problem" } } }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["system"],
+        "summary": "Liveness probe",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "service": { "type": "string" },
+                    "version": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "tags": ["system"],
+        "summary": "This document",
+        "security": [],
+        "responses": { "200": { "description": "OpenAPI 3.1 description" } }
+      }
+    },
+    "/v1/jobs": {
+      "get": {
+        "tags": ["jobs"],
+        "summary": "List jobs (newest first, keyset paginated)",
+        "parameters": [
+          { "$ref": "#/components/parameters/TenantHeader" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 } },
+          { "name": "status", "in": "query", "description": "Comma-separated status filter", "schema": { "type": "string" } },
+          { "name": "before", "in": "query", "description": "Keyset cursor: return jobs created before this ISO-8601 instant", "schema": { "type": "string", "format": "date-time" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": { "type": "array", "items": { "$ref": "#/components/schemas/Job" } },
+                    "next_cursor": { "type": ["string", "null"], "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "429": { "$ref": "#/components/responses/Problem" }
+        }
+      },
+      "post": {
+        "tags": ["jobs"],
+        "summary": "Enqueue a durable job",
+        "parameters": [{ "$ref": "#/components/parameters/TenantHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["engine.health", "artifact.prune"] },
+                  "payload": { "type": "object" },
+                  "idempotency_key": { "type": "string", "minLength": 8 },
+                  "priority": { "type": "integer", "minimum": 1, "maximum": 9, "default": 5 },
+                  "max_attempts": { "type": "integer", "minimum": 1, "maximum": 20, "default": 5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Job accepted (or the existing job when the idempotency key repeats)",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "job": { "$ref": "#/components/schemas/Job" } } } } }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "403": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/jobs/{id}": {
+      "get": {
+        "tags": ["jobs"],
+        "summary": "Fetch one job",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "The job", "content": { "application/json": { "schema": { "type": "object", "properties": { "job": { "$ref": "#/components/schemas/Job" } } } } } },
+          "404": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/jobs/{id}/attempts": {
+      "get": {
+        "tags": ["jobs"],
+        "summary": "Per-attempt audit trail",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Attempts in order", "content": { "application/json": { "schema": { "type": "object", "properties": { "attempts": { "type": "array", "items": { "$ref": "#/components/schemas/JobAttempt" } } } } } } }
+        }
+      }
+    },
+    "/v1/jobs/{id}/cancel": {
+      "post": {
+        "tags": ["jobs"],
+        "summary": "Cancel a queued or leased job",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "The cancelled job", "content": { "application/json": { "schema": { "type": "object", "properties": { "job": { "$ref": "#/components/schemas/Job" } } } } } },
+          "404": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/sessions": {
+      "get": {
+        "tags": ["sessions"],
+        "summary": "List this tenant's browser sessions",
+        "responses": {
+          "200": { "description": "Sessions owned by the calling tenant", "content": { "application/json": { "schema": { "type": "object", "properties": { "sessions": { "type": "array", "items": { "$ref": "#/components/schemas/Session" } } } } } } },
+          "502": { "$ref": "#/components/responses/Problem" }
+        }
+      },
+      "post": {
+        "tags": ["sessions"],
+        "summary": "Create a browser session",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "url": { "type": "string" }, "metadata": { "type": "object" } } } } }
+        },
+        "responses": {
+          "201": { "description": "The created session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Session" } } } },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "502": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/v1/sessions/{id}": {
+      "get": {
+        "tags": ["sessions"],
+        "summary": "Fetch a session owned by this tenant",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "The session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Session" } } } },
+          "403": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" }
+        }
+      },
+      "delete": {
+        "tags": ["sessions"],
+        "summary": "Close a session owned by this tenant",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "204": { "description": "Closed" },
+          "403": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    }
+  }
+}

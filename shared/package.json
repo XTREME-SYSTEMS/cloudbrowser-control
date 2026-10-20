@@ -1,0 +1,7 @@
+{
+  "name": "cloudbrowser-shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared portable modules imported by the api and worker services",
+  "type": "module"
+}
