@@ -16,11 +16,86 @@
     },
     "target_email": {
       "type": "string",
-      "description": "Starting email if known"
+      "description": "Starting email address if known"
     },
     "target_company": {
       "type": "string",
       "description": "Company name if known"
+    },
+    "authorization": {
+      "type": "object",
+      "description": "The authority this search was conducted under, recorded before any source was contacted",
+      "properties": {
+        "permissible_purpose": {
+          "type": "string",
+          "description": "Enumerated permissible purpose (FCRA \u00a7604). Must be one of the values defined in searchValidation.ts"
+        },
+        "legal_matter": {
+          "type": "string",
+          "description": "The specific legal matter this search serves"
+        },
+        "case_reference": {
+          "type": "string",
+          "description": "Court docket, case or matter reference"
+        },
+        "data_categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Regulated data categories this search touches (credit_header, driver_record, financial, medical)"
+        },
+        "requested_by_id": {
+          "type": "string",
+          "description": "Accountable operator who asserted the purpose"
+        },
+        "requested_by_email": {
+          "type": "string"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Verdict from the strict search validation gate",
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "verified_at": {
+          "type": "string"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "blocking",
+                  "major",
+                  "minor"
+                ]
+              },
+              "field": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "authority": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     },
     "status": {
       "type": "string",

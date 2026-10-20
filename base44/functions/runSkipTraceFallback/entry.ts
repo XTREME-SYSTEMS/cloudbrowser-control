@@ -6,12 +6,14 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
  * A provider response or a plausible-looking candidate is not verified evidence.
  * This adapter deliberately has no synthetic-data or unapproved scraping fallback.
  */
+import { authorizeSearch } from "../../shared/searchValidation.ts";
+
 export default async function (req: Request): Promise<Response> {
   const tiersAttempted = ["llm"];
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url } = body as any;
+    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url, authorization } = body as any;
 
     if (![property_address, owner_name, phone, email, company].some((value) => typeof value === "string" && value.trim())) {
       return Response.json({
@@ -20,6 +22,33 @@ export default async function (req: Request): Promise<Response> {
         evidence_verified: false,
         error: "At least one search input is required.",
       }, { status: 400 });
+    }
+
+    // ===== AUTHORIZATION GATE =====
+    // The permissible purpose is what authorises the access, so it is checked
+    // before any source is contacted — never reconstructed afterwards.
+    const operator = await base44.auth.me().catch(() => null);
+    const auth = authorization || {};
+    const verdict = authorizeSearch({
+      permissible_purpose: auth.permissible_purpose,
+      legal_matter: auth.legal_matter,
+      case_reference: auth.case_reference,
+      data_categories: Array.isArray(auth.data_categories) ? auth.data_categories : [],
+      subject_name: owner_name || property_address,
+      requested_by_id: operator?.id,
+      requested_by_email: operator?.email,
+    });
+
+    if (!verdict.ok) {
+      console.warn("runSkipTraceFallback refused by authorization gate:", verdict.summary);
+      return Response.json({
+        status: "rejected",
+        verification_status: "unauthorized",
+        evidence_verified: false,
+        error:
+          "Search refused by the authorization gate. A permissible purpose, the specific legal matter and a case reference must all be recorded before any source is contacted.",
+        authorization_verdict: verdict,
+      }, { status: 403 });
     }
 
     try {

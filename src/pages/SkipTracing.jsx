@@ -12,7 +12,19 @@ import { SKIP_TRACE_DEEP_CATALOG } from "@/lib/searchSourceCatalog";
 import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
 
 export default function SkipTracing() {
-  const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0" });
+  const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0", permissible_purpose: "", legal_matter: "", case_reference: "" });
+  // Mirrors base44/shared/searchValidation.ts PERMISSIBLE_PURPOSES. The server
+  // validates against its own table; this list only populates the picker.
+  const PURPOSE_OPTIONS = [
+    ["fiduciary_duty", "Fiduciary duty — estate, probate or trust administration"],
+    ["litigation", "Litigation — locating a party or witness, or asset recovery"],
+    ["court_order", "Court order or federal grand jury subpoena"],
+    ["consumer_written_instruction", "Written instruction of the consumer"],
+    ["account_review_collection", "Review or collection of an account"],
+    ["business_transaction", "Business transaction initiated by the consumer"],
+    ["legal_compliance", "Compliance with federal, state or local law"],
+    ["government_authorized", "Authorized government or law-enforcement function"],
+  ];
   const [deepSearch, setDeepSearch] = useState(true);
   const [showSources, setShowSources] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -35,7 +47,15 @@ export default function SkipTracing() {
   };
 
   const handleSearch = async (overrideForm) => {
-    const searchForm = overrideForm || form;
+    // Authorization always comes from the form itself, so a caller-supplied
+    // override form can never silently drop the permissible purpose.
+    const base = overrideForm || form;
+    const searchForm = {
+      ...base,
+      permissible_purpose: base.permissible_purpose ?? form.permissible_purpose,
+      legal_matter: base.legal_matter ?? form.legal_matter,
+      case_reference: base.case_reference ?? form.case_reference,
+    };
     if (!searchForm.property_address && !searchForm.owner_name && !searchForm.phone && !searchForm.email) {
       setError("Enter at least one search field to begin tracing");
       return;
@@ -44,7 +64,16 @@ export default function SkipTracing() {
     setError(null);
     setResult(null);
     try {
-      const response = await base44.functions.invoke("runSkipTraceFallback", { ...searchForm, deep_search: deepSearch, spreadsheet_url: searchForm.spreadsheet_url });
+      const response = await base44.functions.invoke("runSkipTraceFallback", {
+        ...searchForm,
+        deep_search: deepSearch,
+        spreadsheet_url: searchForm.spreadsheet_url,
+        authorization: {
+          permissible_purpose: searchForm.permissible_purpose,
+          legal_matter: searchForm.legal_matter,
+          case_reference: searchForm.case_reference,
+        },
+      });
       const data = response.data || response;
       if (data.error) {
         setError(data.error);
@@ -181,6 +210,36 @@ export default function SkipTracing() {
                   ))}
                 </div>
               )}
+
+              <div className="rounded-lg border border-border p-3 space-y-2">
+                <p className="text-xs font-semibold">Search authorization</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Required on every search. A permissible purpose, the specific legal matter and a case reference
+                  are recorded before any source is contacted.
+                </p>
+                <select
+                  value={form.permissible_purpose}
+                  onChange={(e) => setForm({ ...form, permissible_purpose: e.target.value })}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Select permissible purpose…</option>
+                  {PURPOSE_OPTIONS.map(([id, label]) => (
+                    <option key={id} value={id}>{label}</option>
+                  ))}
+                </select>
+                <input
+                  value={form.legal_matter}
+                  onChange={(e) => setForm({ ...form, legal_matter: e.target.value })}
+                  placeholder="Legal matter (e.g. Estate of J. Doe, probate administration)"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+                <input
+                  value={form.case_reference}
+                  onChange={(e) => setForm({ ...form, case_reference: e.target.value })}
+                  placeholder="Case / docket reference"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
 
               <Button onClick={handleSearch} disabled={searching} className="w-full">
                 {searching
