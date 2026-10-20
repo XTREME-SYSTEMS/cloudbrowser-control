@@ -538,8 +538,8 @@ Produce:
           addresses_found: normalized.addresses.length,
           social_found: normalized.social_profiles.length,
           relatives_found: normalized.relatives.length,
-          sources_checked: normalized.sources.length,
-          methods_used: normalized.methods.length,
+          sources_attempted_count: normalized.sources.length,
+          methods_attempted_count: normalized.methods.length,
           top_phones: normalized.phone_numbers.slice(0, 5),
           top_emails: normalized.emails.slice(0, 5),
           top_addresses: normalized.addresses.slice(0, 5),
@@ -547,16 +547,23 @@ Produce:
         };
         const reportRes: any = await invokeLLM({
           model: SUMMARY_MODEL, add_context_from_internet: false,
-          prompt: `You are a professional skip-trace investigator. Write a comprehensive skip-trace report based on these findings:
+          prompt: `You are a careful research assistant. The supplied data consists of unverified candidate leads generated from search prompts; it does not prove that any listed website or database was actually queried.
 
 ${JSON.stringify(summaryInput, null, 2)}
 
+Rules:
+- Never claim a source was searched, queried, or confirmed unless the input includes a source URL and verifiable evidence record for that specific finding.
+- Do not invent citations, source URLs, identity matches, contact verification, or legal conclusions.
+- Describe all supplied contact and identity data as unverified candidate leads requiring human review.
+- Do not imply cross-source verification merely because multiple candidate fields exist.
+- If no verifiable evidence is supplied, state that no source-backed finding has been established.
+
 Produce:
-1. executive_summary: 2-3 paragraph plain-English summary of who this person is, what was found, and confidence level
-2. key_findings: bullet list of the most important discoveries (best phone, best email, best address, key relatives)
-3. evidence_chain: how the identity was built (which sources confirmed which data points)
-4. recommended_actions: next steps for making contact (ranked by likelihood of success)
-5. data_quality_assessment: completeness of the trace, gaps, and what could improve confidence`,
+1. executive_summary: concise summary of candidate leads and explicit verification limitations
+2. key_findings: candidate leads only, clearly labeled unverified
+3. evidence_chain: list only evidence actually supplied; otherwise state that no verifiable evidence records were supplied
+4. recommended_actions: lawful, consent-respecting next steps to verify relevant public-record facts
+5. data_quality_assessment: missing evidence, conflicts, and verification gaps`,
           response_json_schema: {
             type: "object",
             properties: {
@@ -575,19 +582,32 @@ Produce:
       }
     }
 
-    // ============ CONFIDENCE SCORING ============
+    // ============ EVIDENCE-GATED STATUS ============
+    // Prompted source categories are attempts, not proof that a source was queried.
+    // Keep model-derived scores as candidate-ranking metadata only until a source
+    // adapter supplies verifiable evidence records for specific findings.
     const phoneConf = normalized.phone_numbers.length > 0 ? Math.max(...normalized.phone_numbers.map((p: any) => p.confidence || 0)) : 0;
     const emailConf = normalized.emails.length > 0 ? Math.max(...normalized.emails.map((e: any) => e.confidence || 0)) : 0;
     const addrConf = normalized.addresses.length > 0 ? Math.max(...normalized.addresses.map((a: any) => a.confidence || 0)) : 0;
     const socialConf = normalized.social_profiles.length > 0 ? Math.max(...normalized.social_profiles.map((s: any) => s.confidence || 0)) : 0;
-    const sourceDiversity = Math.min(20, normalized.sources.length * 0.5);
-
-    const overallConfidence = Math.round(
+    const candidateConfidence = Math.round(
       phoneConf * 0.30 + emailConf * 0.20 + addrConf * 0.20 + socialConf * 0.10 +
-      (normalized.owner_name ? 10 : 0) + sourceDiversity
+      (normalized.owner_name ? 10 : 0)
     );
-
-    const status = overallConfidence >= 70 ? "found" : overallConfidence >= 40 ? "partial" : "failed";
+    const hasCandidateData = Boolean(normalized.owner_name) || normalized.phone_numbers.length > 0 ||
+      normalized.emails.length > 0 || normalized.addresses.length > 0 ||
+      normalized.social_profiles.length > 0 || normalized.relatives.length > 0;
+    const evidenceRecords = (Array.isArray(raw.evidence_records) ? raw.evidence_records : []).filter((record: any) =>
+      record?.status === "verified" &&
+      typeof record?.source_url === "string" &&
+      /^https?:\/\//i.test(record.source_url) &&
+      typeof record?.finding_id === "string" && record.finding_id.trim() &&
+      typeof record?.retrieved_at === "string" && Number.isFinite(Date.parse(record.retrieved_at)) &&
+      typeof record?.content_hash === "string" && /^[a-f0-9]{64}$/i.test(record.content_hash)
+    );
+    const hasVerifiedEvidence = evidenceRecords.length > 0;
+    const status = hasVerifiedEvidence && candidateConfidence >= 70 ? "found" : hasCandidateData ? "partial" : "failed";
+    const verificationStatus = hasVerifiedEvidence ? "verified" : hasCandidateData ? "needs_review" : "no_verified_results";
     const duration = Date.now() - startTime;
 
     // ============ PERSIST ============
@@ -599,18 +619,25 @@ Produce:
       found_addresses: normalized.addresses,
       found_social_profiles: normalized.social_profiles,
       found_relatives: normalized.relatives,
-      sources_checked: normalized.sources,
+      // Do not populate sources_checked from prompted categories; those are only attempts.
+      sources_checked: [],
       methods_used: normalized.methods,
-      confidence_score: Math.min(99, overallConfidence),
+      confidence_score: hasVerifiedEvidence ? Math.min(99, candidateConfidence) : 0,
       search_results: {
         raw_findings: raw.raw_findings,
+        sources_attempted: normalized.sources,
+        sources_checked: [],
+        evidence_records: evidenceRecords,
+        evidence_verified: hasVerifiedEvidence,
+        verification_status: verificationStatus,
+        candidate_confidence_score: candidateConfidence,
         enrichment,
         executive_summary: executiveSummary,
         full_report: fullReport,
         errors: raw.errors,
         stats: {
-          sources_count: normalized.sources.length,
-          methods_count: normalized.methods.length,
+          sources_attempted_count: normalized.sources.length,
+          methods_attempted_count: normalized.methods.length,
           phones_found: normalized.phone_numbers.length,
           emails_found: normalized.emails.length,
           addresses_found: normalized.addresses.length,
@@ -623,18 +650,19 @@ Produce:
 
     // ============ OPTIONAL SHEET EXPORT ============
     let sheetExport: any = null;
-    if (spreadsheet_url) {
+    if (spreadsheet_url && hasVerifiedEvidence) {
       try {
         const exportRes: any = await base44.functions.invoke("exportSkipTraceToSheet", {
           spreadsheet_url,
           target_property_address: property_address || "",
           target_owner_name: owner_name || "",
           status, found_owner_name: normalized.owner_name,
-          confidence_score: overallConfidence,
+          confidence_score: candidateConfidence,
           phone_numbers: normalized.phone_numbers, emails: normalized.emails,
           addresses: normalized.addresses, social_profiles: normalized.social_profiles,
           relatives: normalized.relatives,
-          sources_checked: normalized.sources, methods_used: normalized.methods,
+          sources_checked: [],
+          methods_used: normalized.methods,
           search_duration_ms: duration,
         });
         sheetExport = exportRes?.data || exportRes;
@@ -645,14 +673,19 @@ Produce:
       ok: true,
       skip_trace_id: skipTrace.id,
       status,
-      confidence_score: Math.min(99, overallConfidence),
+      confidence_score: hasVerifiedEvidence ? Math.min(99, candidateConfidence) : 0,
+      candidate_confidence_score: candidateConfidence,
+      evidence_verified: hasVerifiedEvidence,
+      verification_status: verificationStatus,
+      candidate_data_unverified: !hasVerifiedEvidence && hasCandidateData,
       found_owner_name: normalized.owner_name,
       phone_numbers: normalized.phone_numbers,
       emails: normalized.emails,
       addresses: normalized.addresses,
       social_profiles: normalized.social_profiles,
       relatives: normalized.relatives,
-      sources: normalized.sources,
+      sources: [],
+      sources_attempted: normalized.sources,
       methods: normalized.methods,
       enrichment,
       executive_summary: executiveSummary,
