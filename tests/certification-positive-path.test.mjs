@@ -249,14 +249,22 @@ test("THE POSITIVE PATH: a certified, approved, current case is authorised for d
   assert.equal(row.assigned_to_email, "investigator@firm.example");
   assert.equal(row.relationship_counts.established, 1);
 
-  // a fully authorised case carries no open gaps
+  // A deliverable case raises no delivery gap: certification, evidence and
+  // approval all hold, and the identity is confirmed.
   const gaps = buildResearchGaps({
     verification,
     kinship,
     blockedSources: null,
     deceased_confirmed: true,
   });
-  assert.deepEqual(gaps, [], "a delivered case must not still be advertising gaps");
+  assert.deepEqual(gaps.filter((g) => g.area === "gate"), [], "the gate is satisfied");
+  assert.ok(!gaps.some((g) => g.code === "ID-01"), "identity is confirmed");
+
+  // But it is NOT gapless, and that is the point. The fixture deliberately
+  // carries one surname-only claim, which stays a reviewable gap. Certifying a
+  // case must not silently promote an unsupported lead into a finding, so the
+  // gate passing and the relationship gap persisting are both correct at once.
+  assert.deepEqual(gaps.map((g) => g.code), ["KIN-03"]);
 });
 
 /* ------------------------------------------------------------------ */
