@@ -645,6 +645,68 @@ export const SERVICE_CATALOG: Service[] = [
   },
 ];
 
+/**
+ * THE CATEGORY BOARD
+ * ==========================================================================
+ * The fixed display order of the card board. Categories are never alphabetical
+ * and never rearranged per surface: this list is the order, and every card sits
+ * in exactly one of them.
+ *
+ * Kept in this file, beside the services themselves, so the board, the console
+ * and the marketing page cannot disagree about which service is in which
+ * category. A service missing from the map is reported by uncategorisedSlugs()
+ * rather than silently landing in the first category.
+ */
+export const SERVICE_CATEGORIES = [
+  "Intelligence & Data",
+  "Growth & Revenue",
+  "Evidence & Compliance",
+  "Research & Investigation",
+  "Platform & QA",
+] as const;
+
+export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+export const CATEGORY_FOR_SLUG: Record<string, ServiceCategory> = {
+  // Intelligence & Data — collecting, monitoring and packaging data
+  "web-scraping-data-extraction": "Intelligence & Data",
+  "ai-agent-browser-access": "Intelligence & Data",
+  "price-competitor-monitoring": "Intelligence & Data",
+  "change-monitoring-alerts": "Intelligence & Data",
+  "bulk-enrichment": "Intelligence & Data",
+  "dataset-licensing": "Intelligence & Data",
+  // Growth & Revenue — work that ends in pipeline or ranking
+  "lead-generation-prospecting": "Growth & Revenue",
+  "seo-serp-measurement": "Growth & Revenue",
+  // Evidence & Compliance — work whose output has to survive scrutiny
+  "screenshots-pdf-evidence": "Evidence & Compliance",
+  "compliance-evidence-capture": "Evidence & Compliance",
+  // Research & Investigation — matters, markets and specific subjects
+  "property-owner-intelligence": "Research & Investigation",
+  "market-portfolio-research": "Research & Investigation",
+  "skip-trace-heir-research": "Research & Investigation",
+  // Platform & QA — operating other systems and gating releases
+  "authenticated-portal-automation": "Platform & QA",
+  "qa-visual-regression": "Platform & QA",
+};
+
+export function categoryForService(slug: string): ServiceCategory {
+  return CATEGORY_FOR_SLUG[slug] || "Intelligence & Data";
+}
+
+/** Slugs with no category. Empty is the only healthy value; it is reported, not hidden. */
+export function uncategorisedSlugs(): string[] {
+  return SERVICE_CATALOG.filter((s) => !CATEGORY_FOR_SLUG[s.slug]).map((s) => s.slug);
+}
+
+/** Services in board order, category by category. */
+export function servicesByCategory(): { category: ServiceCategory; services: Service[] }[] {
+  return SERVICE_CATEGORIES.map((category) => ({
+    category,
+    services: SERVICE_CATALOG.filter((s) => categoryForService(s.slug) === category),
+  }));
+}
+
 export const SERVICE_BY_SLUG: Record<string, Service> = Object.fromEntries(
   SERVICE_CATALOG.map((s) => [s.slug, s]),
 );

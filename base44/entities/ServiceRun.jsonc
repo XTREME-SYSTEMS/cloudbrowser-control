@@ -1,7 +1,7 @@
 {
   "name": "ServiceRun",
   "type": "object",
-  "description": "One production run of a catalogue service: the prompt that drove it, every numbered step and its result, the three independent assurance reviews, and the monitoring signals. Written by runServiceWorkflow.",
+  "description": "One production run of a catalogue service. Every run executes the same nine frozen stages in the same order \u2014 Plan, Discovery, Strategy, Implementation, Validation, QA, Auto-Recommendation, Iteration, Final Results. The run records each stage's one-line result, the brief of record, every piece of evidence with its source and retrieval time, what was iterated and why it stopped, and the three independent assurance verdicts. Written by runServiceWorkflow.",
   "properties": {
     "service_slug": {
       "type": "string",
@@ -16,27 +16,193 @@
         "queued",
         "running",
         "assurance",
+        "conditional",
         "delivered",
         "blocked",
         "failed"
       ],
       "default": "queued"
     },
+    "current_stage": {
+      "type": "string",
+      "description": "The stage running right now, so the workspace can show progress without a log wall"
+    },
+    "current_stage_n": {
+      "type": "number",
+      "default": 0
+    },
     "input_sentence": {
       "type": "string",
-      "description": "The plain-language instruction the operator gave"
+      "description": "The operator's own words \u2014 the intent of record"
     },
     "enhanced_prompt": {
       "type": "string",
-      "description": "The prompt the run was actually driven by, after enhancement against industry standards"
+      "description": "The brief the run was actually driven by, after enhancement"
     },
     "prompt_standard": {
       "type": "string",
-      "description": "Which standard the enhancement was built against"
+      "description": "Which standard the enhancement was built against, or that it fell back unenhanced"
+    },
+    "enhancement": {
+      "type": "object",
+      "description": "The enhanced brief on the five optimization axes, kept on the run so the result screen can show what the work was measured against",
+      "properties": {
+        "objective": {
+          "type": "string"
+        },
+        "service_fit": {
+          "type": "string"
+        },
+        "industry_standard": {
+          "type": "string"
+        },
+        "stage_plan": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "string"
+              },
+              "does": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "quality_definition": {
+          "type": "string"
+        },
+        "would_be_wrong": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "automation_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authority_check": {
+          "type": "string"
+        },
+        "refusal_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "output_format": {
+          "type": "string"
+        },
+        "done_definition": {
+          "type": "string"
+        },
+        "standards_applied": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "open_questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "description": "The nine frozen stages, always all present, each with exactly one written result",
+      "items": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "skipped",
+              "failed",
+              "blocked"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "description": "The one published result this stage produced"
+          },
+          "skipped_reason": {
+            "type": "string",
+            "description": "A stage can only be skipped with a stated reason"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "finished_at": {
+            "type": "string"
+          },
+          "sub_steps": {
+            "type": "array",
+            "description": "The service's own numbered steps that land inside this stage, with what each returned",
+            "items": {
+              "type": "object",
+              "properties": {
+                "n": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "desc": {
+                  "type": "string"
+                },
+                "expected_result": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "default": []
     },
     "steps": {
       "type": "array",
-      "description": "Every numbered step with its own status and result",
+      "description": "The service's own numbered steps as executed, kept for the service pages",
       "items": {
         "type": "object",
         "properties": {
@@ -76,6 +242,141 @@
     "producer_summary": {
       "type": "string",
       "description": "What the producing agent actually produced"
+    },
+    "evidence": {
+      "type": "array",
+      "description": "Every finding with its source and the time it was retrieved. An entry marked claimed_unverified was asserted by the producing agent and has not been mechanically re-fetched \u2014 it is never counted as verified.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_n": {
+            "type": "number"
+          },
+          "step_name": {
+            "type": "string"
+          },
+          "finding": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "retrieved_at": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "string",
+            "enum": [
+              "claimed_unverified",
+              "verified_live",
+              "failed_reverification"
+            ]
+          }
+        }
+      },
+      "default": []
+    },
+    "evidence_status": {
+      "type": "string",
+      "enum": [
+        "verified_live",
+        "claimed_unverified",
+        "absent"
+      ],
+      "description": "Only verified_live means the evidence was mechanically re-fetched and still matched"
+    },
+    "unavailable_sources": {
+      "type": "array",
+      "description": "Every source the run could not reach, with the exact credential, licence or authority that was missing. A blocked source is disclosed, never silently skipped.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_n": {
+            "type": "number"
+          },
+          "step_name": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "iterations": {
+      "type": "array",
+      "description": "Each pass through Validation to Auto-Recommendation, what changed, and the score either side of it",
+      "items": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "entered_because": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "qa_before": {
+            "type": "number"
+          },
+          "qa_after": {
+            "type": "number"
+          },
+          "guardian_allowed": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "iteration_stop_reason": {
+      "type": "string",
+      "description": "Why the loop stopped: QA cleared, or the cap was reached with the score still below the gate"
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "What to change next time, derived from this run",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "risks_to_watch": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "decision_questions": {
+      "type": "array",
+      "description": "Decisions only the operator can make, raised by a stage rather than guessed at",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "block_reason": {
+      "type": "string",
+      "description": "The one readable line explaining why delivery was refused"
     },
     "assurance": {
       "type": "object",
@@ -168,6 +469,12 @@
         "model_separation_ok": {
           "type": "boolean",
           "description": "True only when producer, QA, guardian and validator used distinct model families"
+        },
+        "model_families": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -178,7 +485,7 @@
     "verdict": {
       "type": "string",
       "enum": [
-        "pass",
+        "delivered",
         "conditional",
         "blocked",
         "failed"
@@ -188,7 +495,7 @@
     "delivery_allowed": {
       "type": "boolean",
       "default": false,
-      "description": "False whenever the guardian blocked the run or the score is below threshold"
+      "description": "True only for a delivered run: reviews passed, guardian permitted it, and the evidence was mechanically re-verified"
     },
     "monitoring": {
       "type": "object",

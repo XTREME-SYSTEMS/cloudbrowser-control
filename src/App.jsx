@@ -78,6 +78,7 @@ import StandardsPlaybook from '@/pages/StandardsPlaybook';
 import InvestigatorCommandCenter from '@/pages/InvestigatorCommandCenter';
 import DesignOptions from '@/pages/DesignOptions';
 import ServiceDetail from '@/pages/ServiceDetail';
+import WorkflowWorkspace from '@/pages/WorkflowWorkspace';
 import ExecutiveAssistant from '@/pages/ExecutiveAssistant';
 
 const AuthenticatedApp = () => {
@@ -162,6 +163,7 @@ const AuthenticatedApp = () => {
           <Route path="/investigator" element={<InvestigatorCommandCenter />} />
           <Route path="/design-options" element={<DesignOptions />} />
           <Route path="/services/:slug" element={<ServiceDetail />} />
+          <Route path="/workspace" element={<WorkflowWorkspace />} />
           <Route path="/executive-assistant" element={<ExecutiveAssistant />} />
           <Route path="/heir-portal" element={<HeirSearchPortal />} />
           <Route path="/image-replicator" element={<ImageReplicator />} />

@@ -35,6 +35,8 @@ const navGroups = [
   {
     label: "Core",
     items: [
+      { to: "/workspace", label: "Workspace", icon: Sparkles },
+      { to: "/executive-assistant", label: "Assistant", icon: Bot },
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/skip-tracing", label: "Skip Tracing", icon: Target },
       { to: "/heir-search", label: "Heir Search", icon: Users },

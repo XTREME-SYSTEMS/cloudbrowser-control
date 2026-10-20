@@ -1,5 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { SERVICE_CATALOG, REQUIRED_ASSURANCE_ROLES, missingAssuranceRoles } from '../../shared/serviceCatalog.ts';
+import {
+  SERVICE_CATALOG,
+  SERVICE_CATEGORIES,
+  REQUIRED_ASSURANCE_ROLES,
+  missingAssuranceRoles,
+  categoryForService,
+  uncategorisedSlugs,
+} from '../../shared/serviceCatalog.ts';
 
 /**
  * Serves the service catalogue to any surface that displays it — the admin
@@ -23,6 +30,7 @@ export default async function (req) {
       tagline: s.tagline,
       icon: s.icon,
       group: s.group,
+      category: categoryForService(s.slug),
       summary: s.summary,
       buyer: s.buyer,
       workflow: s.workflow,
@@ -44,8 +52,12 @@ export default async function (req) {
       success: true,
       count: services.length,
       required_assurance_roles: REQUIRED_ASSURANCE_ROLES,
+      // The fixed board order. Cards are grouped in exactly this order.
+      categories: SERVICE_CATEGORIES,
       // Empty means every service carries its QA, guardian and validator.
       integrity_gaps: integrity,
+      // Empty means every service sits in a category.
+      uncategorised: uncategorisedSlugs(),
       services,
     });
   } catch (error) {
