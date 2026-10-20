@@ -282,30 +282,30 @@ export default function StrategicReport() {
   return (
     <div className="bg-[#05070a] text-white rounded-2xl -m-4 md:-m-8 p-4 md:p-8 min-h-[calc(100vh-2rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 border-b border-[#00a8ff]/20 pb-6">
+      <div className="flex items-center justify-between mb-8 border-b border-[#c9a961]/20 pb-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full border-2 border-[#00a8ff] flex items-center justify-center bg-[#05070a]">
+          <div className="w-14 h-14 rounded-full border-2 border-[#c9a961] flex items-center justify-center bg-[#05070a]">
             <span className="text-2xl font-bold text-[#c8d2de]">S</span>
           </div>
           <div>
             <h1 className="text-xl font-bold">
               <span className="text-white">STRATEGIC MINDS</span>
-              <span className="text-[#00f2ff]"> AI</span>
+              <span className="text-[#e0cf9e]"> AI</span>
             </h1>
             <p className="text-[10px] text-[#788291] tracking-[0.2em] uppercase">Intelligence in Motion</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={runAllTraces} disabled={tracing}
-            className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20">
+            className="bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/40 hover:bg-[#c9a961]/20">
             {tracing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Tracing...</> : <><Search className="w-4 h-4 mr-2" />Run Deep Traces</>}
           </Button>
           <Button onClick={handleDownload} disabled={!reportReady || loading}
-            className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20">
+            className="bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/40 hover:bg-[#c9a961]/20">
             <Download className="w-4 h-4 mr-2" />Marketing PDF
           </Button>
           <Button onClick={handleDownloadCourtReady} disabled={!reportReady || loading || generatingCourtPDF}
-            className="bg-[#00a8ff] text-white border-0 hover:bg-[#0090e0]">
+            className="bg-[#c9a961] text-[#0a1f3c] border-0 hover:bg-[#d4b876]">
             {generatingCourtPDF ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</> : <><Scale className="w-4 h-4 mr-2" />Court-Ready PDF</>}
           </Button>
           <Button onClick={generateDriveReport} disabled={generatingReport || subjects.length === 0}
@@ -343,7 +343,7 @@ export default function StrategicReport() {
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold mb-2">
           <span className="text-white">Forensic Skip Trace </span>
-          <span className="text-[#00f2ff]">Report</span>
+          <span className="text-[#e0cf9e]">Report</span>
         </h2>
         <p className="text-sm text-[#788291] max-w-2xl mx-auto">
           This report summarizes case-linked research records and attached evidence. Coverage varies by case; only source references recorded in the evidence register are represented. Unverified or conflicting observations require review. This is not a legal opinion or certification.
@@ -353,7 +353,7 @@ export default function StrategicReport() {
       {/* Status */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#00a8ff]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#c9a961]" />
           <span className="ml-3 text-[#788291]">Loading trace data...</span>
         </div>
       )}
@@ -369,11 +369,11 @@ export default function StrategicReport() {
       {!loading && subjects.length > 0 && (
         <div className="space-y-4 max-w-4xl mx-auto mb-10">
           {subjects.map((s, i) => (
-            <div key={s.id} className="rounded-xl border border-[#00a8ff]/20 bg-[#0c1016] p-5 hover:border-[#00a8ff]/40 transition-colors">
+            <div key={s.id} className="rounded-xl border border-[#c9a961]/20 bg-[#0c1016] p-5 hover:border-[#c9a961]/40 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[#00a8ff] text-xs font-bold">SUBJECT {i + 1}</span>
+                    <span className="text-[#c9a961] text-xs font-bold">SUBJECT {i + 1}</span>
                     <Badge className={
                       s.status === "found" ? "bg-green-500/10 text-green-400 border border-green-500/30" :
                       s.status === "partial" ? "bg-amber-500/10 text-amber-400 border border-amber-500/30" :
@@ -384,7 +384,7 @@ export default function StrategicReport() {
                   <p className="text-xs text-[#788291]">{s.address}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-[#00f2ff]">{s.confidence}%</div>
+                  <div className="text-2xl font-bold text-[#e0cf9e]">{s.confidence}%</div>
                   <p className="text-[10px] text-[#788291] uppercase tracking-wider">Confidence</p>
                 </div>
               </div>
@@ -406,9 +406,9 @@ export default function StrategicReport() {
       {!loading && (
         <div className="max-w-4xl mx-auto mb-10 space-y-6">
           {/* QA + Comparison Controls */}
-          <div className="flex items-center justify-between rounded-xl border border-[#00a8ff]/20 bg-[#0c1016] p-4">
+          <div className="flex items-center justify-between rounded-xl border border-[#c9a961]/20 bg-[#0c1016] p-4">
             <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-[#00a8ff]" />
+              <Shield className="w-5 h-5 text-[#c9a961]" />
               <div>
                 <h3 className="text-sm font-bold text-white">Independent QA & Benchmark Validation</h3>
                 <p className="text-xs text-[#788291]">3-layer verification: AI correlation → QA Agent → Validator Agent</p>
@@ -416,7 +416,7 @@ export default function StrategicReport() {
             </div>
             <div className="flex gap-2 flex-wrap">
               <Button onClick={runQAValidation} disabled={runningQA || subjects.length === 0}
-                className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20 text-xs">
+                className="bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/40 hover:bg-[#c9a961]/20 text-xs">
                 {runningQA ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Validating...</> : <><Shield className="w-3 h-3 mr-1" />Run QA</>}
               </Button>
               <Button onClick={runRecursiveQA} disabled={runningRecursiveQA || subjects.length === 0}
@@ -424,7 +424,7 @@ export default function StrategicReport() {
                 {runningRecursiveQA ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Recursive QA...</> : <><Sparkles className="w-3 h-3 mr-1" />Recursive QA (Auto-Fix)</>}
               </Button>
               <Button onClick={runComparison} disabled={runningComparison}
-                className="bg-[#00a8ff]/10 text-[#00a8ff] border border-[#00a8ff]/40 hover:bg-[#00a8ff]/20 text-xs">
+                className="bg-[#c9a961]/10 text-[#c9a961] border border-[#c9a961]/40 hover:bg-[#c9a961]/20 text-xs">
                 {runningComparison ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Comparing...</> : <><Gauge className="w-3 h-3 mr-1" />Run Comparison</>}
               </Button>
             </div>
@@ -468,7 +468,7 @@ export default function StrategicReport() {
                   <p className="text-[10px] text-[#788291] uppercase">Final Score</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[#00a8ff]">{recursiveResults.iterations}</div>
+                  <div className="text-2xl font-bold text-[#c9a961]">{recursiveResults.iterations}</div>
                   <p className="text-[10px] text-[#788291] uppercase">Iterations</p>
                 </div>
                 <div className="text-center">
@@ -477,9 +477,9 @@ export default function StrategicReport() {
                 </div>
               </div>
               {recursiveResults.iteration_details?.map((it, i) => (
-                <div key={i} className="text-xs text-[#a0aab8] mb-2 pb-2 border-b border-[#00a8ff]/10 last:border-0">
+                <div key={i} className="text-xs text-[#a0aab8] mb-2 pb-2 border-b border-[#c9a961]/10 last:border-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-[#00a8ff]">Iteration {it.iteration}</span>
+                    <span className="font-bold text-[#c9a961]">Iteration {it.iteration}</span>
                     <span className={it.result === "TARGET_REACHED" ? "text-green-400" : "text-amber-400"}>
                       {it.qa_score} → {it.post_fix_score || it.qa_score} ({it.result})
                     </span>
@@ -500,13 +500,13 @@ export default function StrategicReport() {
 
           {/* Comparison Results */}
           {comparison && (
-            <div className="rounded-xl border border-[#00a8ff]/30 bg-[#0c1016] p-5">
+            <div className="rounded-xl border border-[#c9a961]/30 bg-[#0c1016] p-5">
               <div className="flex items-center gap-2 mb-4">
-                <Scale className="w-5 h-5 text-[#00a8ff]" />
+                <Scale className="w-5 h-5 text-[#c9a961]" />
                 <h3 className="text-sm font-bold text-white">Benchmark Comparison: Top 3 Companies vs CloudBrowser</h3>
               </div>
               {comparison.verdict && (
-                <div className="mb-4 p-3 rounded-lg bg-[#00a8ff]/5 border border-[#00a8ff]/20">
+                <div className="mb-4 p-3 rounded-lg bg-[#c9a961]/5 border border-[#c9a961]/20">
                   <p className="text-xs text-[#a0aab8]">{comparison.verdict}</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge className={comparison.meets_10pct_target ? "bg-green-500/10 text-green-400 border border-green-500/30" : "bg-amber-500/10 text-amber-400 border border-amber-500/30"}>
@@ -522,7 +522,7 @@ export default function StrategicReport() {
                   )}
                   {comparison.revised_report.section_3_difference_analysis && (
                     <div>
-                      <p className="font-bold text-[#00a8ff] mb-1">DIFFERENCE ANALYSIS</p>
+                      <p className="font-bold text-[#c9a961] mb-1">DIFFERENCE ANALYSIS</p>
                       <p className="whitespace-pre-wrap">{comparison.revised_report.section_3_difference_analysis}</p>
                     </div>
                   )}
@@ -530,7 +530,7 @@ export default function StrategicReport() {
               )}
               {comparison.our_advantages && (
                 <div className="mt-4">
-                  <p className="text-xs font-bold text-[#00a8ff] mb-2">OUR ADVANTAGES:</p>
+                  <p className="text-xs font-bold text-[#c9a961] mb-2">OUR ADVANTAGES:</p>
                   <ul className="space-y-1">
                     {comparison.our_advantages.map((a, i) => (
                       <li key={i} className="text-xs text-[#a0aab8] flex items-start gap-2">
@@ -556,14 +556,14 @@ export default function StrategicReport() {
           )}
 
           {/* Industry Benchmark Table */}
-          <div className="rounded-xl border border-[#00a8ff]/20 bg-[#0c1016] p-5">
+          <div className="rounded-xl border border-[#c9a961]/20 bg-[#0c1016] p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Building2 className="w-5 h-5 text-[#00a8ff]" />
+              <Building2 className="w-5 h-5 text-[#c9a961]" />
               <h3 className="text-sm font-bold text-white">Top 3 Industry Benchmarks</h3>
             </div>
             <div className="space-y-3">
               {BENCHMARK_COMPANIES.map((c) => (
-                <div key={c.name} className="rounded-lg border border-[#00a8ff]/10 bg-[#05070a] p-3">
+                <div key={c.name} className="rounded-lg border border-[#c9a961]/10 bg-[#05070a] p-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-bold text-white">{c.name}</span>
                     <span className="text-[10px] text-[#788291]">Est. {c.since}</span>
@@ -610,9 +610,9 @@ export default function StrategicReport() {
             { icon: Target, title: "Evidence status", desc: "Unsupported observations remain unverified" },
             { icon: Zap, title: "Human review", desc: "Conflicts and identity ambiguity require review" },
           ].map((p, i) => (
-            <div key={i} className="rounded-xl border border-[#00a8ff]/15 bg-[#0c1016] p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border border-[#00a8ff]/40 flex items-center justify-center shrink-0">
-                <p.icon className="w-5 h-5 text-[#00a8ff]" />
+            <div key={i} className="rounded-xl border border-[#c9a961]/15 bg-[#0c1016] p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border border-[#c9a961]/40 flex items-center justify-center shrink-0">
+                <p.icon className="w-5 h-5 text-[#c9a961]" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white">{p.title}</h4>
@@ -626,10 +626,10 @@ export default function StrategicReport() {
       {/* CTA */}
       {!loading && reportReady && (
         <div className="max-w-2xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-8 py-3 rounded-full border border-[#00a8ff]/40 bg-[#00a8ff]/5">
-            <Sparkles className="w-4 h-4 text-[#00a8ff]" />
+          <div className="inline-flex items-center gap-2 px-8 py-3 rounded-full border border-[#c9a961]/40 bg-[#c9a961]/5">
+            <Sparkles className="w-4 h-4 text-[#c9a961]" />
             <span className="text-sm font-bold text-white">BUILD SMARTER. GROW FASTER.</span>
-            <ArrowRight className="w-4 h-4 text-[#00a8ff]" />
+            <ArrowRight className="w-4 h-4 text-[#c9a961]" />
           </div>
           <p className="text-xs text-[#788291] mt-3">
             Click "Download PDF Report" to generate the full branded investigative document.
@@ -666,7 +666,7 @@ function isValidEvidenceRecord(record) {
 function Stat({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-2 rounded-lg bg-[#05070a] px-3 py-2">
-      <Icon className="w-3.5 h-3.5 text-[#00a8ff] shrink-0" />
+      <Icon className="w-3.5 h-3.5 text-[#c9a961] shrink-0" />
       <div>
         <div className="text-sm font-bold text-white">{value}</div>
         <div className="text-[9px] text-[#788291] uppercase tracking-wider">{label}</div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Scale, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import BrandMark from "@/components/Brand";
 
 export default function SiteFooter() {
   return (
@@ -8,18 +9,8 @@ export default function SiteFooter() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0a1f3c] to-[#1a3a5c] flex items-center justify-center">
-                <Scale className="w-5 h-5 text-[#c9a961]" />
-              </div>
-              <div className="leading-tight">
-                <div className="font-serif text-base font-bold text-white">
-                  Strategic Cloud Browser
-                </div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-[#c9a961] font-semibold">
-                  Heir Search · Probate Genealogy
-                </div>
-              </div>
+            <div className="mb-5">
+              <BrandMark size="md" tone="onDark" />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed mb-5">
               Forensic genealogy services for the legal and trust professions since 1967.

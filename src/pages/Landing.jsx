@@ -99,7 +99,7 @@ function OrbitalRings() {
             animation: `spin ${20 + i * 10}s linear infinite ${i % 2 ? "reverse" : ""}`,
           }}
         >
-          <div className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,163,255,0.8)]"
+          <div className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(201,169,97,0.8)]"
             style={{ top: "-3px", left: "50%", transform: "translateX(-50%)" }} />
         </div>
       ))}
@@ -161,13 +161,13 @@ export default function Landing() {
           <div className="relative mx-auto mb-8 w-40 h-40 md:w-48 md:h-48"
             style={{ animation: "float 6s ease-in-out infinite" }}>
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" style={{ animation: "pulse-glow 3s ease-in-out infinite" }} />
-            <Image src={EMBLEM_URL} alt="Strategic Minds AI Emblem" className="relative w-full h-full drop-shadow-[0_0_30px_rgba(0,163,255,0.3)]" fittingType="fit" />
+            <Image src={EMBLEM_URL} alt="Strategic Minds AI Emblem" className="relative w-full h-full drop-shadow-[0_0_30px_rgba(201,169,97,0.3)]" fittingType="fit" />
           </div>
 
           {/* Title */}
           <h1 className="font-heading font-black tracking-tight leading-none text-5xl md:text-7xl lg:text-8xl">
             <span className="chrome-text">STRATEGIC MINDS</span>
-            <span className="text-primary ml-2 md:ml-4" style={{ textShadow: "0 0 30px rgba(0,163,255,0.5)" }}>AI</span>
+            <span className="text-primary ml-2 md:ml-4" style={{ textShadow: "0 0 30px rgba(201,169,97,0.5)" }}>AI</span>
           </h1>
 
           {/* Subtitle */}
@@ -178,9 +178,9 @@ export default function Landing() {
           {/* Tagline line */}
           <div className="mt-8 flex items-center justify-center gap-3 text-xs md:text-sm font-display tracking-[0.25em] text-neutral-400 uppercase">
             <span>AI Strategy</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(0,163,255,0.8)]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(201,169,97,0.8)]" />
             <span>Automation</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(0,163,255,0.8)]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(201,169,97,0.8)]" />
             <span>Growth</span>
           </div>
 

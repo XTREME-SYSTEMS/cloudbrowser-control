@@ -13,22 +13,7 @@ import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
 import AutonomousChatPanel from "@/components/AutonomousChatPanel";
 import { useAuth } from "@/lib/AuthContext";
-
-function BrandMark() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
-        <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 12px rgba(0,163,255,0.3)" }} />
-        <div className="absolute inset-1 rounded-full border border-primary/20" />
-        <span className="font-heading font-black text-lg chrome-text relative z-10">S</span>
-      </div>
-      <div className="min-w-0">
-        <div className="font-heading font-bold text-sm text-foreground tracking-wide leading-tight truncate">STRATEGIC CLOUD</div>
-        <div className="font-display text-[10px] text-primary/70 tracking-[0.2em] uppercase leading-tight">Browser</div>
-      </div>
-    </div>
-  );
-}
+import BrandMark from "@/components/Brand";
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -38,7 +23,7 @@ function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:text-primary hover:bg-primary/5 transition-all w-full"
+      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all w-full"
     >
       {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
       <span className="font-display tracking-wide">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
@@ -97,7 +82,7 @@ function NavLinks({ onNavigate }) {
                 ? "bg-primary/10 text-primary border border-primary/30"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
             }`}
-            style={location.pathname === "/" ? { boxShadow: "0 0 12px rgba(0,163,255,0.15)" } : {}}
+            style={location.pathname === "/" ? { boxShadow: "0 0 12px rgba(201,169,97,0.22)" } : {}}
           >
             <ShieldCheck className="w-4 h-4" />
             <span className="font-display tracking-wide">Admin Portal</span>
@@ -122,11 +107,11 @@ function NavLinks({ onNavigate }) {
                     ? "bg-primary/10 text-primary border border-primary/25"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
                 }`}
-                style={active ? { boxShadow: "0 0 12px rgba(0,163,255,0.12)" } : {}}
+                style={active ? { boxShadow: "0 0 12px rgba(201,169,97,0.18)" } : {}}
               >
                 <Icon className={`w-4 h-4 transition-colors ${active ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"}`} />
                 <span className="font-display tracking-wide">{label}</span>
-                {active && <div className="ml-auto w-1 h-4 rounded-full bg-primary" style={{ boxShadow: "0 0 8px rgba(0,163,255,0.5)" }} />}
+                {active && <div className="ml-auto w-1 h-4 rounded-full bg-gold" style={{ boxShadow: "0 0 8px rgba(201,169,97,0.6)" }} />}
               </Link>
             );
           })}
@@ -140,8 +125,7 @@ function SidebarContent({ onLogout }) {
   return (
     <div className="flex flex-col h-full bg-sidebar backdrop-blur-xl">
       <div className="px-5 py-5 border-b border-border">
-        <BrandMark />
-        <p className="text-[9px] text-muted-foreground/60 tracking-[0.25em] uppercase mt-2 font-display">Intelligence in Motion</p>
+        <BrandMark size="sm" />
       </div>
       <div className="px-3 pt-3">
         <StartHereHandoff />
@@ -186,13 +170,13 @@ export default function Layout() {
           <button onClick={() => setMobileOpen(true)} className="p-1 -ml-1 text-muted-foreground hover:text-foreground">
             <Menu className="w-6 h-6" />
           </button>
-          <div className="flex items-center gap-2 flex-1">
-            <BrandMark />
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <BrandMark size="sm" />
           </div>
-          <Link to="/xtreme-gpt" className="p-1 text-neutral-400 hover:text-primary">
+          <Link to="/xtreme-gpt" className="p-1 text-muted-foreground hover:text-primary">
             <Bot className="w-5 h-5" />
           </Link>
-          <Link to="/settings" className="p-1 text-neutral-400 hover:text-primary">
+          <Link to="/settings" className="p-1 text-muted-foreground hover:text-primary">
             <SettingsIcon className="w-5 h-5" />
           </Link>
           <NotificationBell />

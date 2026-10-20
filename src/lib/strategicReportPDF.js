@@ -9,8 +9,8 @@ import { jsPDF } from "jspdf";
 const COLORS = {
   bg: [5, 7, 10],          // #05070a deep obsidian
   bgCard: [12, 16, 22],     // card surface
-  blue: [0, 168, 255],      // #00a8ff electric blue
-  blueBright: [0, 242, 255], // #00f2ff cyan
+  blue: [201, 169, 97],       // #c9a961 brand gold
+  blueBright: [224, 207, 158], // #e0cf9e light gold highlight
   white: [255, 255, 255],
   silver: [200, 210, 222],   // metallic silver
   grey: [120, 130, 145],     // muted

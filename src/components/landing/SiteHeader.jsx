@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Scale } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import BrandMark from "@/components/Brand";
 
 const navLinks = [
   { label: "Services", href: "#services" },
@@ -29,17 +30,7 @@ export default function SiteHeader() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0a1f3c] to-[#1a3a5c] flex items-center justify-center shadow-md">
-              <Scale className="w-5 h-5 text-[#c9a961]" />
-            </div>
-            <div className="leading-tight">
-              <div className="font-serif text-lg font-bold text-[#0a1f3c] tracking-tight">
-                Strategic Cloud Browser
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[#c9a961] font-semibold">
-                Heir Search · Probate Genealogy
-              </div>
-            </div>
+            <BrandMark size="md" tone="onLight" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">

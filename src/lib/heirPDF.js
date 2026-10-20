@@ -15,11 +15,11 @@ export function generateHeirPDF(caseData) {
   // === HEADER BAND ===
   doc.setFillColor(5, 8, 13);
   doc.rect(0, 0, W, 80, "F");
-  doc.setFillColor(0, 163, 255);
+  doc.setFillColor(10, 31, 60);
   doc.rect(0, 78, W, 2, "F");
 
   // Brand mark
-  doc.setDrawColor(0, 163, 255);
+  doc.setDrawColor(201, 169, 97);
   doc.setLineWidth(1.5);
   doc.circle(margin + 14, 40, 14, "S");
   doc.setTextColor(200, 210, 222);
@@ -30,7 +30,7 @@ export function generateHeirPDF(caseData) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
   doc.text("STRATEGIC CLOUD BROWSER", margin + 40, 34);
-  doc.setTextColor(0, 163, 255);
+  doc.setTextColor(10, 31, 60);
   doc.setFontSize(8);
   doc.text("INTELLIGENCE IN MOTION", margin + 40, 48);
   doc.setTextColor(150, 160, 175);
@@ -38,7 +38,7 @@ export function generateHeirPDF(caseData) {
   doc.text("AI STRATEGY  |  AUTOMATION  |  GROWTH", margin + 40, 60);
 
   // Report title
-  doc.setTextColor(0, 163, 255);
+  doc.setTextColor(10, 31, 60);
   doc.setFontSize(9);
   doc.text("HEIR SEARCH REPORT", W - margin, 34, { align: "right" });
   doc.setTextColor(150, 160, 175);
@@ -147,7 +147,7 @@ export function generateHeirPDF(caseData) {
       doc.setDrawColor(225, 230, 238);
       doc.setLineWidth(0.5);
       doc.roundedRect(margin, y - 12, W - margin * 2, 16, 3, 3, "FD");
-      doc.setTextColor(0, 163, 255);
+      doc.setTextColor(10, 31, 60);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.text(`${i + 1}. ${heir.name || "Unknown"}`, margin + 10, y);
@@ -202,10 +202,10 @@ export function generateHeirPDF(caseData) {
   const footerY = H - 60;
   doc.setFillColor(5, 8, 13);
   doc.rect(0, footerY, W, 60, "F");
-  doc.setFillColor(0, 163, 255);
+  doc.setFillColor(10, 31, 60);
   doc.rect(0, footerY, W, 1.5, "F");
 
-  doc.setTextColor(0, 163, 255);
+  doc.setTextColor(10, 31, 60);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.text("STRATEGIC CLOUD BROWSER", margin, footerY + 22);
@@ -236,7 +236,7 @@ export function downloadHeirPDF(caseData) {
 function sectionHeader(doc, title, x, y, W) {
   doc.setFillColor(240, 245, 250);
   doc.rect(x, y - 14, W - x * 2, 22, "F");
-  doc.setFillColor(0, 163, 255);
+  doc.setFillColor(10, 31, 60);
   doc.rect(x, y - 14, 3, 22, "F");
   doc.setTextColor(20, 25, 35);
   doc.setFontSize(9);

@@ -111,7 +111,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-              <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 16px rgba(0,163,255,0.3)" }} />
+              <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 16px rgba(201,169,97,0.3)" }} />
               <div className="absolute inset-1.5 rounded-full border border-primary/20" />
               <img src={LOGO_URL} alt="Strategic Cloud Browser" className="w-10 h-10 rounded-full object-cover relative z-10" />
             </div>

@@ -126,7 +126,7 @@ export default function AutonomousChatPanel() {
         <button
           onClick={() => setOpen(true)}
           className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-center gap-2 px-3 py-4 rounded-l-xl border border-r-0 border-primary/40 bg-card text-primary hover:bg-primary/10 transition-all group"
-          style={{ boxShadow: "-4px 0 16px rgba(0,163,255,0.15)", writingMode: "vertical-rl" }}
+          style={{ boxShadow: "-4px 0 16px rgba(201,169,97,0.15)", writingMode: "vertical-rl" }}
           title="Open Autonomous Agent"
         >
           <Bot className="w-5 h-5 group-hover:scale-110 transition-transform" style={{ writingMode: "horizontal-tb" }} />
@@ -142,10 +142,10 @@ export default function AutonomousChatPanel() {
         style={{ boxShadow: open ? "-8px 0 32px rgba(0,0,0,0.4)" : "none" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0" style={{ background: "rgba(0,163,255,0.04)" }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0" style={{ background: "rgba(201,169,97,0.04)" }}>
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
-              <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 12px rgba(0,163,255,0.3)" }} />
+              <div className="absolute inset-0 rounded-full border border-primary/40" style={{ boxShadow: "0 0 12px rgba(201,169,97,0.3)" }} />
               <Bot className="w-4 h-4 text-primary relative z-10" />
             </div>
             <div className="min-w-0">
@@ -179,7 +179,7 @@ export default function AutonomousChatPanel() {
           {!loadingHistory && messages.length === 0 && (
             <div className="text-center py-8 space-y-4">
               <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border border-primary/30 animate-pulse" style={{ boxShadow: "0 0 20px rgba(0,163,255,0.2)" }} />
+                <div className="absolute inset-0 rounded-full border border-primary/30 animate-pulse" style={{ boxShadow: "0 0 20px rgba(201,169,97,0.2)" }} />
                 <Bot className="w-7 h-7 text-primary" />
               </div>
               <div>
@@ -237,7 +237,7 @@ export default function AutonomousChatPanel() {
               onClick={() => send()}
               disabled={!input.trim() || sending}
               className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/15 border border-primary/40 text-primary hover:bg-primary/25 hover:border-primary/60 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-              style={{ boxShadow: "0 0 12px rgba(0,163,255,0.15)" }}
+              style={{ boxShadow: "0 0 12px rgba(201,169,97,0.15)" }}
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>

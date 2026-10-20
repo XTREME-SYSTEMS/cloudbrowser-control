@@ -4,80 +4,93 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Brand tokens — one identity for the whole product.
+ *
+ * The public site and the app previously ran two different brands: the marketing
+ * pages were navy + gold with serif headings, while the app chrome was electric
+ * blue. These tokens are the single source of truth, so a page picks up the brand
+ * by using the token classes rather than by hardcoding a hex value.
+ *
+ * Navy  #0a1f3c  = structure (primary actions, headings, text)
+ * Gold  #c9a961  = accent (highlights, focus, active states)
+ */
 @layer base {
   :root {
-    --background: 210 20% 99%;
-    --foreground: 210 25% 12%;
+    --background: 0 0% 100%;
+    --foreground: 215 71% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 210 25% 12%;
+    --card-foreground: 215 71% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 210 25% 12%;
-    --primary: 205 100% 45%;
+    --popover-foreground: 215 71% 14%;
+    --primary: 215 71% 14%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 210 25% 15%;
-    --muted: 210 20% 95%;
-    --muted-foreground: 210 10% 42%;
-    --accent: 190 100% 42%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 50%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 215 60% 18%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 210 20% 95%;
+    --accent-foreground: 215 71% 14%;
+    --gold: 42 49% 58%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 15% 88%;
-    --input: 210 15% 88%;
-    --ring: 205 100% 45%;
-    --chart-1: 205 100% 45%;
-    --chart-2: 190 100% 42%;
-    --chart-3: 210 80% 55%;
-    --chart-4: 180 70% 45%;
-    --chart-5: 220 80% 55%;
+    --border: 215 20% 89%;
+    --input: 215 20% 89%;
+    --ring: 42 49% 58%;
+    --chart-1: 215 71% 20%;
+    --chart-2: 42 49% 58%;
+    --chart-3: 211 56% 40%;
+    --chart-4: 42 40% 45%;
+    --chart-5: 199 60% 45%;
     --radius: 0.5rem;
-    --font-heading: 'Inter', sans-serif;
+    --font-heading: 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
     --font-body: 'Inter', sans-serif;
     --font-display: 'Inter', sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 210 25% 15%;
-    --sidebar-primary: 205 100% 45%;
+    --sidebar-foreground: 215 60% 18%;
+    --sidebar-primary: 215 71% 14%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 20% 93%;
-    --sidebar-accent-foreground: 205 100% 40%;
-    --sidebar-border: 210 15% 88%;
-    --sidebar-ring: 205 100% 45%;
+    --sidebar-accent-foreground: 215 71% 20%;
+    --sidebar-border: 215 20% 89%;
+    --sidebar-ring: 42 49% 58%;
   }
 
   .dark {
-    --background: 210 50% 4%;
-    --foreground: 210 20% 90%;
-    --card: 210 40% 6%;
-    --card-foreground: 210 20% 90%;
-    --popover: 210 40% 6%;
-    --popover-foreground: 210 20% 90%;
-    --primary: 200 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 30% 12%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 210 30% 10%;
-    --muted-foreground: 210 15% 55%;
-    --accent: 190 100% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 200 80% 20%;
-    --input: 200 80% 20%;
-    --ring: 200 100% 50%;
-    --chart-1: 200 100% 50%;
-    --chart-2: 190 100% 50%;
-    --chart-3: 210 100% 60%;
-    --chart-4: 180 100% 50%;
-    --chart-5: 220 100% 60%;
-    --sidebar-background: 210 50% 4%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 200 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 8%;
-    --sidebar-accent-foreground: 200 100% 60%;
-    --sidebar-border: 200 80% 15%;
-    --sidebar-ring: 200 100% 50%;
+    --background: 215 75% 9%;
+    --foreground: 210 25% 92%;
+    --card: 214 62% 12%;
+    --card-foreground: 210 25% 92%;
+    --popover: 214 62% 12%;
+    --popover-foreground: 210 25% 92%;
+    --primary: 42 55% 60%;
+    --primary-foreground: 215 75% 9%;
+    --secondary: 213 45% 16%;
+    --secondary-foreground: 210 25% 90%;
+    --muted: 213 45% 14%;
+    --muted-foreground: 213 20% 62%;
+    --accent: 213 45% 18%;
+    --accent-foreground: 42 55% 65%;
+    --gold: 42 55% 62%;
+    --destructive: 0 65% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 35% 20%;
+    --input: 213 35% 22%;
+    --ring: 42 55% 60%;
+    --chart-1: 42 55% 62%;
+    --chart-2: 211 56% 55%;
+    --chart-3: 215 45% 40%;
+    --chart-4: 42 40% 48%;
+    --chart-5: 199 60% 52%;
+    --sidebar-background: 215 75% 9%;
+    --sidebar-foreground: 210 25% 88%;
+    --sidebar-primary: 42 55% 60%;
+    --sidebar-primary-foreground: 215 75% 9%;
+    --sidebar-accent: 213 45% 15%;
+    --sidebar-accent-foreground: 42 55% 65%;
+    --sidebar-border: 213 35% 18%;
+    --sidebar-ring: 42 55% 60%;
   }
 }
 
@@ -86,70 +99,72 @@
     @apply border-border outline-ring/50;
   }
 
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+
   body {
     @apply bg-background text-foreground font-body;
-    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 163, 255, 0.04), transparent), hsl(var(--background));
     min-height: 100vh;
   }
 }
 
 @layer components {
   .xa-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-display font-semibold text-sm tracking-wide text-white transition-all;
-    background: linear-gradient(135deg, rgba(0, 163, 255, 0.15), rgba(0, 212, 255, 0.08));
-    border: 1px solid rgba(0, 163, 255, 0.4);
-    box-shadow: 0 0 12px rgba(0, 163, 255, 0.12), inset 0 0 0 1px rgba(0, 163, 255, 0.08);
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-display font-semibold text-sm tracking-wide transition-all;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border: 1px solid hsl(var(--primary));
   }
   .xa-btn-primary:hover {
-    background: linear-gradient(135deg, rgba(0, 163, 255, 0.25), rgba(0, 212, 255, 0.15));
-    border-color: rgba(0, 163, 255, 0.7);
-    box-shadow: 0 0 20px rgba(0, 163, 255, 0.3), inset 0 0 0 1px rgba(0, 163, 255, 0.2);
+    background: hsl(var(--primary) / 0.88);
+    border-color: hsl(var(--gold));
+    box-shadow: 0 4px 14px hsl(var(--gold) / 0.25);
   }
   .xa-btn-primary:active { transform: translateY(1px); }
   .xa-btn-primary:disabled { @apply opacity-40 cursor-not-allowed; box-shadow: none; }
 
   .xa-btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-display font-semibold text-sm tracking-wide text-neutral-300 transition-all;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-display font-semibold text-sm tracking-wide transition-all;
+    color: hsl(var(--foreground));
+    background: transparent;
+    border: 1px solid hsl(var(--border));
   }
   .xa-btn-outline:hover {
-    @apply text-white;
-    background: rgba(0, 163, 255, 0.08);
-    border-color: rgba(0, 163, 255, 0.5);
-    box-shadow: 0 0 16px rgba(0, 163, 255, 0.12);
+    background: hsl(var(--gold) / 0.08);
+    border-color: hsl(var(--gold) / 0.7);
+    box-shadow: 0 0 14px hsl(var(--gold) / 0.14);
   }
 
   .xa-card {
     @apply rounded-xl p-5 transition-all;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px rgba(10, 31, 60, 0.06);
   }
   .xa-card:hover {
-    border-color: rgba(0, 163, 255, 0.3);
-    box-shadow: 0 0 20px rgba(0, 163, 255, 0.1), 0 4px 24px rgba(0, 0, 0, 0.3);
+    border-color: hsl(var(--gold) / 0.5);
+    box-shadow: 0 6px 22px rgba(10, 31, 60, 0.1);
   }
 
   .xa-pill-badge {
     @apply inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-display font-bold tracking-widest uppercase;
-    background: linear-gradient(135deg, rgba(0, 163, 255, 0.2), rgba(0, 212, 255, 0.1));
-    color: #00d4ff;
-    border: 1px solid rgba(0, 163, 255, 0.3);
+    background: hsl(var(--gold) / 0.14);
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--gold) / 0.45);
   }
 
   .xa-input {
     @apply w-full px-4 py-3 rounded-lg text-sm transition-all;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--input));
     color: hsl(var(--foreground));
   }
-  .xa-input::placeholder { color: rgba(255, 255, 255, 0.25); }
+  .xa-input::placeholder { color: hsl(var(--muted-foreground)); }
   .xa-input:focus {
     @apply outline-none;
-    border-color: rgba(0, 163, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(0, 163, 255, 0.1);
+    border-color: hsl(var(--gold));
+    box-shadow: 0 0 0 3px hsl(var(--gold) / 0.15);
   }
   .xa-input:disabled { @apply opacity-40 cursor-not-allowed; }
 }
@@ -157,14 +172,14 @@
 @layer utilities {
   .xa-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
   .xa-scroll::-webkit-scrollbar-track { background: transparent; }
-  .xa-scroll::-webkit-scrollbar-thumb { @apply rounded-full; background: rgba(0, 163, 255, 0.2); }
-  .xa-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0, 163, 255, 0.4); }
+  .xa-scroll::-webkit-scrollbar-thumb { @apply rounded-full; background: hsl(var(--gold) / 0.3); }
+  .xa-scroll::-webkit-scrollbar-thumb:hover { background: hsl(var(--gold) / 0.55); }
 
   .bg-gold-gradient {
-    background: linear-gradient(135deg, #0080FF 0%, #00A2FF 50%, #00D4FF 100%);
+    background: linear-gradient(135deg, #0a1f3c 0%, #1a3a5c 45%, #c9a961 100%);
   }
   .text-gold-gradient {
-    background: linear-gradient(135deg, #0080FF 0%, #00A2FF 50%, #00D4FF 100%);
+    background: linear-gradient(135deg, #0a1f3c 0%, #1a3a5c 45%, #c9a961 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -172,7 +187,7 @@
   }
 
   .chrome-text {
-    background: linear-gradient(180deg, #ffffff 0%, #c0c4ce 40%, #8a8e98 60%, #d0d4de 100%);
+    background: linear-gradient(180deg, #f5ecd7 0%, #c9a961 45%, #8a6f3a 55%, #e0cf9e 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -180,45 +195,44 @@
   }
 
   .glass-panel {
-    background: rgba(255, 255, 255, 0.025);
+    background: hsl(var(--card) / 0.75);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+    border: 1px solid hsl(var(--border));
   }
 
   .neon-border {
-    border: 1px solid rgba(0, 163, 255, 0.3);
-    box-shadow: 0 0 12px rgba(0, 163, 255, 0.1), inset 0 0 12px rgba(0, 163, 255, 0.04);
+    border: 1px solid hsl(var(--gold) / 0.4);
+    box-shadow: 0 0 12px hsl(var(--gold) / 0.12);
   }
 
   .neon-glow {
-    box-shadow: 0 0 20px rgba(0, 163, 255, 0.3);
+    box-shadow: 0 0 20px hsl(var(--gold) / 0.28);
   }
 
   .electric-blue-hover {
     @apply transition-all duration-200;
   }
   .electric-blue-hover:hover {
-    border-color: rgba(0, 163, 255, 0.5);
-    box-shadow: 0 0 16px rgba(0, 163, 255, 0.2), inset 0 0 0 1px rgba(0, 163, 255, 0.3);
+    border-color: hsl(var(--gold) / 0.55);
+    box-shadow: 0 0 16px hsl(var(--gold) / 0.2);
   }
 
   .btn-neon-glow {
-    box-shadow: 0 0 12px rgba(0, 163, 255, 0.12);
+    box-shadow: 0 0 12px hsl(var(--gold) / 0.14);
   }
   .btn-neon-glow:hover {
-    box-shadow: 0 0 20px rgba(0, 163, 255, 0.3);
+    box-shadow: 0 0 20px hsl(var(--gold) / 0.3);
   }
 
   .glass-surface {
-    background: rgba(255, 255, 255, 0.025);
+    background: hsl(var(--card) / 0.75);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid hsl(var(--border));
   }
 
   .neon-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 163, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--gold) / 0.35), transparent);
   }
 }
