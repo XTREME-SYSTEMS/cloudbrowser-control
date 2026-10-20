@@ -79,6 +79,13 @@ export interface CertificationInput {
   reverification?: ReverificationRecord[];
   hallucination_flags?: unknown[];
   sources_actually_queried?: unknown[];
+  /**
+   * Fingerprint of the case content that was actually reviewed, computed by the
+   * caller with `caseFingerprint()`. Recorded at certification time so that a
+   * later change to the case is detectable, instead of a stale certificate
+   * quietly continuing to authorise delivery forever.
+   */
+  case_fingerprint?: string;
 }
 
 export interface CertificationVerdict {
@@ -94,6 +101,8 @@ export interface CertificationVerdict {
   reasons: string[];
   verified_finding_ids: string[];
   unverified_finding_ids: string[];
+  /** What the verdict was reached over. Empty when the caller supplied none. */
+  case_fingerprint: string;
   certifier_version: string;
   certified_at: string;
 }
@@ -230,6 +239,7 @@ export function evaluateCertification(input: CertificationInput): CertificationV
     reasons: certified ? [] : failed.map((c) => `${c.rule}: ${c.reason}`),
     verified_finding_ids: verifiedIds,
     unverified_finding_ids: unverifiedIds,
+    case_fingerprint: (input.case_fingerprint || "").trim(),
     certifier_version: CERTIFIER_VERSION,
     certified_at: new Date().toISOString(),
   };
@@ -247,4 +257,69 @@ export function refusalReason(verdict: CertificationVerdict): string {
 export function isCertified(certification: unknown): boolean {
   const c = certification as CertificationVerdict | null | undefined;
   return c?.certified === true && c?.model_separation_ok === true;
+}
+
+/**
+ * Deterministic, order-independent fingerprint of the case content a
+ * certification claims to have reviewed: the decedent's identity, the heir
+ * register, the reconstructed family tree, and the sources and methods
+ * recorded. A change to any of those changes the fingerprint, which is how a
+ * certificate that has been overtaken by later edits is caught rather than
+ * trusted indefinitely.
+ *
+ * This is a change detector, not a security primitive — nothing is being
+ * defended against an adversary — so a compact non-cryptographic digest is
+ * sufficient and avoids pulling a dependency into this deliberately pure module.
+ */
+export function caseFingerprint(record: unknown): string {
+  const rec = (record || {}) as Record<string, unknown>;
+  const reviewed = {
+    deceased_name: rec.deceased_name ?? null,
+    deceased_dob: rec.deceased_dob ?? null,
+    deceased_dod: rec.deceased_dod ?? null,
+    death_location: rec.death_location ?? null,
+    heirs: rec.identified_heirs ?? [],
+    family_tree: rec.family_tree ?? {},
+    sources: rec.sources_checked ?? [],
+    methods: rec.methods_used ?? [],
+  };
+  return `fp1-${digest(canonical(reviewed))}`;
+}
+
+/**
+ * A certification is stale when the case no longer matches what was reviewed.
+ * A certificate with no recorded fingerprint cannot be shown to be current, so
+ * it is treated as stale rather than assumed good.
+ */
+export function isCertificationStale(certification: unknown, currentFingerprint: string): boolean {
+  const c = certification as CertificationVerdict | null | undefined;
+  if (!c || c.certified !== true) return false; // Already not certified; staleness is moot.
+  const recorded = (c.case_fingerprint || "").trim();
+  if (recorded.length === 0) return true;
+  return recorded !== (currentFingerprint || "").trim();
+}
+
+/** Canonical form with sorted object keys, so key order never changes the digest. */
+function canonical(value: unknown): string {
+  if (value === null || value === undefined) return "null";
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    return `{${Object.keys(obj)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${canonical(obj[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function digest(input: string): string {
+  let a = 0x811c9dc5;
+  let b = 0x01000193;
+  for (let i = 0; i < input.length; i++) {
+    const code = input.charCodeAt(i);
+    a = Math.imul(a ^ code, 16777619) >>> 0;
+    b = Math.imul(b ^ (code + i), 2246822519) >>> 0;
+  }
+  return `${a.toString(16).padStart(8, "0")}${b.toString(16).padStart(8, "0")}`;
 }

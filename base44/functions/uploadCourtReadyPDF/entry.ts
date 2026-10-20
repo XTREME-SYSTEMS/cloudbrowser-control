@@ -1,4 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.54";
+import { decideDelivery } from "../../shared/deliveryGate.ts";
+import { caseFingerprint } from "../../shared/independentCertification.ts";
 
 export default async function (req) {
   try {
@@ -14,10 +16,12 @@ export default async function (req) {
     }
 
     // ===== DELIVERY GATE =====
-    // A court-ready PDF is the delivery of certified work. If the case holds no
-    // live independent certification this refuses. A warning badge printed on an
-    // already-generated document is not a gate, because the document exists by
-    // then and will be sent anyway.
+    // Routed through the same shared gate as every other report path, so there is
+    // one answer to "may this go out, and what may it claim?" rather than one
+    // answer per function. This previously inspected only the certificate
+    // itself: it had no staleness check and no investigator approval, so a
+    // certificate overtaken by later edits — or never signed off by anyone —
+    // could still deliver a court-ready PDF.
     if (!heir_search_id) {
       return Response.json(
         { error: "heir_search_id is required. A court-ready PDF delivers one specific certified case." },
@@ -30,17 +34,44 @@ export default async function (req) {
       return Response.json({ error: "Heir search case not found." }, { status: 404 });
     }
 
-    const certification = caseRecord.certification || null;
-    if (certification?.certified !== true || certification?.model_separation_ok !== true) {
-      console.warn("uploadCourtReadyPDF refused: case is not independently certified.", certification?.failed_rules);
+    let investigatorReview: any = null;
+    try {
+      const approvals = await base44.entities.Approval.filter(
+        { action_type: "heir_search_report_approval", target: heir_search_id },
+        { sort: "-created_date", limit: 1 }
+      );
+      const items = (approvals as any).items || approvals;
+      const latest = Array.isArray(items) ? items[0] : null;
+      if (latest) {
+        investigatorReview = {
+          approved: latest.status === "granted",
+          rejected: latest.status === "rejected",
+          rejection_reason: latest.reason,
+          approved_by_email: latest.approved_by,
+          approved_at: latest.approved_at,
+        };
+      }
+    } catch (err) {
+      console.error("Approval lookup failed:", err);
+    }
+
+    const delivery = decideDelivery({
+      mode: "certified",
+      certification: caseRecord.certification,
+      investigator_review: investigatorReview,
+      current_fingerprint: caseFingerprint(caseRecord),
+    });
+
+    if (!delivery.allowed) {
+      console.warn("uploadCourtReadyPDF refused:", delivery.failed_rules);
       return Response.json(
         {
-          error: `Delivery refused. This case holds no independent certification${
-            certification?.failed_rules?.length ? ` (failed rules: ${certification.failed_rules.join(", ")})` : ""
-          }. Correct the deficiencies and re-run independent QA before a court-ready PDF is produced.`,
+          error: `Delivery refused. ${delivery.reasons.join(" ")} Correct the deficiencies, re-run independent QA, and obtain investigator approval before a court-ready PDF is produced.`,
           blocked_from_delivery: true,
-          failed_rules: certification?.failed_rules || [],
-          reasons: certification?.reasons || [],
+          refused_certified_delivery: true,
+          failed_rules: delivery.failed_rules,
+          reasons: delivery.reasons,
+          gate_version: delivery.gate_version,
         },
         { status: 409 }
       );

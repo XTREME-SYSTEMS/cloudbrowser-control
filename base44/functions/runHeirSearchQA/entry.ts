@@ -8,6 +8,7 @@ import {
   CERTIFIER_VERSION,
   CERTIFICATION_THRESHOLDS,
   evaluateCertification,
+  caseFingerprint,
   refusalReason,
 } from "../../shared/independentCertification.ts";
 import { reverifyAll, collectEvidenceRecords } from "../../shared/sourceReverification.ts";
@@ -337,6 +338,9 @@ Do NOT return a certification flag. Certification is decided by deterministic ru
       })),
       hallucination_flags: hallucinationFlags,
       sources_actually_queried: hs.sources_checked,
+      // What was reviewed, recorded so a later edit to the case cannot leave a
+      // stale certificate authorising delivery indefinitely.
+      case_fingerprint: caseFingerprint(hs),
     });
 
     const stamp = verdict.certified
@@ -357,6 +361,7 @@ Do NOT return a certification flag. Certification is decided by deterministic ru
       verified_finding_ids: verdict.verified_finding_ids,
       unverified_finding_ids: verdict.unverified_finding_ids,
       stamp,
+      case_fingerprint: verdict.case_fingerprint,
       certifier_version: verdict.certifier_version,
       certified_at: verdict.certified_at,
     };

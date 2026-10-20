@@ -1,4 +1,12 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.54";
+import {
+  decideDelivery,
+  describeCertificationClaims,
+  resolveMode,
+  stripQuotedMaterial,
+  QUOTED_MATERIAL_ATTRIBUTE,
+} from "../../shared/deliveryGate.ts";
+import { caseFingerprint } from "../../shared/independentCertification.ts";
 
 /**
  * generateFindingsReport
@@ -72,6 +80,59 @@ export default async function (req: Request) {
       return Response.json({ error: "No heir search case found" }, { status: 404 });
     }
 
+    // ===== DELIVERY GATE =====
+    // This report previously called itself an "Official Findings Report" and
+    // printed "COURT-READY" whenever the producer's own self-reported confidence
+    // figure crossed 85 — a number the producer wrote about its own work,
+    // promoted into precisely the claim the certification contract exists to
+    // prevent. Nothing is certified here without the deterministic rules AND a
+    // named investigator's approval.
+    const requestedMode = resolveMode(body.mode);
+
+    let investigatorReview: any = null;
+    try {
+      const approvals = await base44.entities.Approval.filter(
+        { action_type: "heir_search_report_approval", target: heirSearch.id },
+        { sort: "-created_date", limit: 1 },
+      );
+      const items = (approvals as any).items || approvals;
+      const latest = Array.isArray(items) ? items[0] : null;
+      if (latest) {
+        investigatorReview = {
+          approved: latest.status === "granted",
+          rejected: latest.status === "rejected",
+          rejection_reason: latest.reason,
+          approved_by_email: latest.approved_by,
+          approved_at: latest.approved_at,
+        };
+      }
+    } catch (err) {
+      console.error("Approval lookup failed:", err);
+    }
+
+    const delivery = decideDelivery({
+      mode: requestedMode,
+      certification: heirSearch.certification,
+      investigator_review: investigatorReview,
+      current_fingerprint: caseFingerprint(heirSearch),
+    });
+    const certifiedMode = delivery.mode === "certified";
+
+    if (!delivery.allowed) {
+      console.warn("generateFindingsReport refused:", delivery.failed_rules);
+      return Response.json(
+        {
+          error: `Certified report delivery refused. ${delivery.reasons.join(" ")} A watermarked draft may still be produced by requesting mode "draft".`,
+          blocked_from_delivery: true,
+          refused_certified_delivery: true,
+          failed_rules: delivery.failed_rules,
+          reasons: delivery.reasons,
+          gate_version: delivery.gate_version,
+        },
+        { status: 409 },
+      );
+    }
+
     // Load related skip traces for contact enrichment
     const skipTraces: any[] = [];
     try {
@@ -116,13 +177,37 @@ export default async function (req: Request) {
       skipTraces,
       status: heirSearch.status,
       notes: heirSearch.notes,
+      delivery,
     });
+
+    // Defensive: a draft carrying certification language is a bug in the builder,
+    // and shipping it would be the exact misrepresentation this gate exists to
+    // prevent. Loud, and it stops.
+    if (!certifiedMode) {
+      // Scanned on what the report ASSERTS. Quoted source material — the
+      // investigator's notes, the obituary excerpt — is excluded, because a
+      // quoted "legal heirs" in an obituary is evidence about the decedent, not
+      // a claim by this document.
+      const claims = describeCertificationClaims(stripQuotedMaterial(html));
+      if (claims.length > 0) {
+        console.error("Draft report contained certification claims:", JSON.stringify(claims));
+        return Response.json(
+          {
+            error: `Report generation refused: the draft contained certification language (${claims
+              .map((c) => c.phrase)
+              .join(", ")}).`,
+            claims,
+          },
+          { status: 500 },
+        );
+      }
+    }
 
     // ===== UPLOAD TO GOOGLE DRIVE =====
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
 
     const boundary = "sma_boundary_" + Date.now();
-    const fileName = `Findings Report - ${heirSearch.deceased_name} - ${reportDate}`;
+    const fileName = `${certifiedMode ? "Findings Report" : "DRAFT (NOT CERTIFIED) Findings Report"} - ${heirSearch.deceased_name} - ${reportDate}`;
 
     // Build multipart body: metadata + media
     const metadata: any = {
@@ -169,15 +254,30 @@ export default async function (req: Request) {
     const docUrl = uploaded.webViewLink;
 
     // ===== UPDATE HEIR SEARCH WITH REPORT LINK =====
+    // The report link goes to the audit trail, NOT into the case notes. The
+    // notes field is the operator's own text, and appending a machine log line
+    // to it fed report-generated sentences back into the report on every
+    // subsequent run — which is how this case's notes came to contain an
+    // "Official Findings Report generated" line that a later draft then quoted.
     try {
-      await base44.entities.HeirSearch.update(heirSearch.id, {
-        notes: [
-          heirSearch.notes,
-          `[${reportDate}] Official Findings Report generated: ${docUrl}`,
-        ].filter(Boolean).join("\n"),
+      await base44.entities.AuditLog.create({
+        user_id: user.id,
+        user_email: user.email,
+        action: "export",
+        entity_type: "HeirSearch",
+        entity_id: heirSearch.id,
+        description: `${delivery.watermark.title} | findings report generated: ${docUrl}`,
+        metadata: {
+          mode: delivery.mode,
+          certified: certifiedMode,
+          failed_rules: delivery.failed_rules,
+          gate_version: delivery.gate_version,
+          doc_id: docId,
+        },
+        timestamp: new Date().toISOString(),
       });
-    } catch {
-      // Non-critical
+    } catch (err) {
+      console.error("Report audit log failed:", err);
     }
 
     return Response.json({
@@ -188,6 +288,10 @@ export default async function (req: Request) {
       case_reference: caseRef,
       confidence_score: confidence,
       heir_count: heirs.length,
+      mode: delivery.mode,
+      certified: certifiedMode,
+      watermark: delivery.watermark.title,
+      gate_version: delivery.gate_version,
     });
   } catch (error) {
     console.error("generateFindingsReport error:", error);
@@ -205,8 +309,21 @@ function buildReportHTML(data: any): string {
     reportDate, caseRef, confidence, deceasedName,
     deceasedDOB, deceasedDOD, deathLocation, lastAddress,
     deceasedDetails, familyTree, heirs, probate, sources, methods,
-    skipTraces, status, notes,
+    skipTraces, status, notes, delivery,
   } = data;
+
+  // A draft may not carry certification language at all. This is switched
+  // structurally, at each point the words would be emitted, rather than by
+  // scrubbing the finished text — by the time you are scrubbing, the document
+  // has already been built and the claim has already been made.
+  const certified: boolean = delivery?.mode === "certified";
+  const watermark = delivery?.watermark || { tone: "draft", title: "DRAFT — NOT CERTIFIED", lines: [] };
+  const reportTitle = certified ? "Official Findings Report" : "Draft Investigative Report";
+  const watermarkHtml = `
+<div style="border:3px solid ${certified ? "#16a34a" : "#dc2626"};background:${certified ? "#f0fdf4" : "#fef2f2"};padding:14px;margin:0 0 24px 0;">
+  <div style="font-size:15px;font-weight:800;color:${certified ? "#166534" : "#991b1b"};letter-spacing:1px;">${escapeHtml(watermark.title)}</div>
+  ${(watermark.lines || []).map((l: string) => `<div style="font-size:11px;color:${certified ? "#166534" : "#991b1b"};margin-top:6px;">${escapeHtml(l)}</div>`).join("")}
+</div>`;
 
   const confidenceColor = confidence >= 85 ? "#16a34a" : confidence >= 60 ? "#ca8a04" : "#dc2626";
   const confidenceLabel = confidence >= 85 ? "HIGH CONFIDENCE" : confidence >= 60 ? "MODERATE CONFIDENCE" : "LOW CONFIDENCE";
@@ -247,7 +364,7 @@ function buildReportHTML(data: any): string {
 <html>
 <head>
 <meta charset="utf-8">
-<title>Strategic Minds AI - Official Findings Report</title>
+<title>Strategic Minds AI - ${escapeHtml(reportTitle)}</title>
 <style>
   body { font-family: 'Inter', Arial, sans-serif; color: #0a1f3c; max-width: 800px; margin: 0 auto; padding: 40px; }
   h1 { font-size: 28px; color: #0086e6; margin-bottom: 4px; }
@@ -274,9 +391,11 @@ function buildReportHTML(data: any): string {
 <div class="header">
   <div class="brand">STRATEGIC MINDS <span class="brand-accent">AI</span></div>
   <div class="tagline">Intelligence in Motion</div>
-  <h1 style="margin-top:20px;">Official Findings Report</h1>
+  <h1 style="margin-top:20px;">${escapeHtml(reportTitle)}</h1>
   <p style="color:#64748b;font-size:13px;">Forensic Heir Search &amp; Probate Genealogy Investigation</p>
 </div>
+
+${watermarkHtml}
 
 <div class="case-header">
   <table style="width:100%;border:none;">
@@ -290,8 +409,8 @@ function buildReportHTML(data: any): string {
     </tr>
     <tr style="border:none;">
       <td style="border:none;" colspan="2">
-        <strong>Overall Confidence:</strong>
-        <span class="confidence-badge" style="background:${confidenceColor};">${confidence.toFixed(0)}% — ${confidenceLabel}</span>
+        <strong>${certified ? "Overall Confidence" : "Producer-reported confidence (self-assessed, not evidence)"}:</strong>
+        <span class="confidence-badge" style="background:${confidenceColor};">${confidence.toFixed(0)}% — ${certified ? confidenceLabel : "UNVERIFIED, SELF-REPORTED"}</span>
       </td>
     </tr>
   </table>
@@ -315,13 +434,15 @@ ${confidence < 85 ? `
   <tr><td><strong>Last Known Address</strong></td><td>${escapeHtml(lastAddress || "Not available")}</td></tr>
   <tr><td><strong>SSN State Issued</strong></td><td>${escapeHtml(deceasedDetails.ssn_state_issued || "Not confirmed")}</td></tr>
   <tr><td><strong>Death Location</strong></td><td>${escapeHtml(deathLocation || "Not confirmed")}</td></tr>
-  <tr><td><strong>Identity Confirmed</strong></td><td>${deceasedDetails.confidence ? `Yes (${deceasedDetails.confidence.toFixed(0)}% match)` : "Pending primary evidence"}</td></tr>
+  <tr><td><strong>Identity ${certified ? "Confirmed" : "Status"}</strong></td><td>${deceasedDetails.confidence ? `${certified ? "Yes" : "Producer-reported match, unverified"} (${deceasedDetails.confidence.toFixed(0)}% match)` : "Pending primary evidence"}</td></tr>
 </table>
 
 ${deceasedDetails.obituary_text ? `
+<div ${QUOTED_MATERIAL_ATTRIBUTE}="obituary-excerpt">
 <h3>Obituary Excerpt</h3>
 <p style="font-style:italic;background:#f8fafc;padding:12px;border-left:3px solid #0086e6;">${escapeHtml(deceasedDetails.obituary_text.substring(0, 1000))}</p>
 ${deceasedDetails.obituary_url ? `<p style="font-size:11px;">Source: <a href="${escapeHtml(deceasedDetails.obituary_url)}">${escapeHtml(deceasedDetails.obituary_url)}</a></p>` : ""}
+</div>
 ` : ""}
 
 ${deceasedDetails.funeral_home ? `<p><strong>Funeral Home:</strong> ${escapeHtml(deceasedDetails.funeral_home)}</p>` : ""}
@@ -343,7 +464,7 @@ ${deceasedDetails.cause_of_death ? `<p><strong>Cause of Death:</strong> ${escape
 
 <h2>3. Identified Heirs &amp; Contact Intelligence</h2>
 ${heirs.length > 0 ? `
-<p style="font-size:12px;color:#64748b;">${heirs.length} potential heir(s) identified. Inheritance priority assigned per state intestacy statutes.</p>
+<p style="font-size:12px;color:#64748b;">${heirs.length} potential heir(s) identified. ${certified ? "Inheritance priority assigned per state intestacy statutes." : "Relationship statements are research candidates, not legal determinations. No legal heir is declared here."}</p>
 <table>
   <tr>
     <th>#</th>
@@ -410,8 +531,8 @@ ${methods.length > 0 ? `
 <table>
   <tr><th style="width:40%;">Assessment Factor</th><th>Score</th></tr>
   <tr><td><strong>Overall Confidence Score</strong></td><td style="font-weight:bold;color:${confidenceColor};">${confidence.toFixed(0)} / 100</td></tr>
-  <tr><td><strong>Court-Ready Threshold</strong></td><td>85 / 100</td></tr>
-  <tr><td><strong>Status</strong></td><td>${confidence >= 85 ? "✓ COURT-READY" : "⚠ ADDITIONAL EVIDENCE REQUIRED"}</td></tr>
+  <tr><td><strong>${certified ? "Court-Ready Threshold" : "Self-reported threshold used by the producer"}</strong></td><td>85 / 100</td></tr>
+  <tr><td><strong>Status</strong></td><td>${certified ? "Independently certified" : "Not certified — additional evidence and independent review required"}</td></tr>
 </table>
 
 ${confidence < 85 ? `
@@ -425,14 +546,17 @@ ${confidence < 85 ? `
 ` : ""}
 
 ${notes ? `
+<div ${QUOTED_MATERIAL_ATTRIBUTE}="operator-notes">
 <h2>8. Investigator Notes</h2>
 <p style="font-size:12px;white-space:pre-wrap;">${escapeHtml(notes)}</p>
+</div>
 ` : ""}
 
 <div class="footer">
   <p><strong>STRATEGIC MINDS AI</strong> — Intelligence in Motion</p>
   <p>This report was generated autonomously by the Strategic Minds AI Forensic Genealogy Engine.</p>
   <p>Report ID: ${escapeHtml(caseRef)} | Generated: ${escapeHtml(reportDate)} | Confidence: ${confidence.toFixed(0)}%</p>
+  <p style="margin-top:8px;font-weight:bold;color:${certified ? "#166534" : "#991b1b"};">${escapeHtml(watermark.title)}</p>
   <p style="margin-top:8px;font-style:italic;">This document contains confidential investigative findings intended for legal professionals and authorized recipients only.</p>
 </div>
 
