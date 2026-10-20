@@ -100,12 +100,16 @@ export default async function (req: Request): Promise<Response> {
           const updated = await base44.asServiceRole.entities.SystemEnhancement.get(goal.id);
           if ((updated.audit_result?.score || 0) >= 100) {
             if (existing) {
+              // A score alone is not the exact independent acceptance re-test required to resolve a flag.
               await base44.asServiceRole.entities.HealingFlag.update(existing.id, {
-                status: "resolved",
-                validation_status: "passed",
-                resolved_at: new Date().toISOString(),
-                repair_result: "Goal reached 100/100",
+                status: "escalated",
+                validation_status: "blocked",
+                error_message: "Goal score reached 100, but exact independent acceptance re-test is unavailable; flag remains escalated.",
+                flagged_at: new Date().toISOString(),
+                cycle_id: cycleId,
+                repair_result: "Score-only result is not sufficient to resolve a HealingFlag.",
               });
+              flagsEscalated++;
             }
             goalsResolved++;
           } else {
