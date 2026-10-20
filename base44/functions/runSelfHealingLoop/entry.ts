@@ -197,11 +197,18 @@ export default async function (req: Request): Promise<Response> {
 
         const repairResult = await applyRepair(base44, flag, rootCause);
         await base44.asServiceRole.entities.HealingFlag.update(flag.id, {
-          status: "repaired",
+          status: repairResult.applied ? "repaired" : "escalated",
           repair_action: repairResult.action,
           repair_applied: repairResult.applied,
           repair_result: repairResult.result,
+          validation_status: repairResult.applied ? "pending" : "blocked",
         });
+
+        // Fail closed: no validator runs unless a real repair adapter confirms a durable mutation.
+        if (!repairResult.applied) {
+          flagsEscalated++;
+          continue;
+        }
         flagsRepaired++;
 
         // 3c: Validation Agent — validate after repair
@@ -323,16 +330,16 @@ async function applyRepair(base44: any, flag: any, rootCause: any): Promise<{ ac
 
   if (cause.includes("credit") || cause.includes("quota") || cause.includes("exhausted")) {
     return {
-      action: "Switched to fallback tier (direct scrape / mock) — no LLM credits needed",
-      applied: true,
-      result: "Fallback engine activated. Operations continue without LLM dependency.",
+      action: "No executable fallback adapter is registered; escalated for manual repair",
+      applied: false,
+      result: "No state change was performed. Fallback/mock behavior is not treated as a successful repair.",
     };
   }
   if (cause.includes("timeout")) {
     return {
-      action: "Increased timeout and added retry with backoff",
-      applied: true,
-      result: "Retry parameters adjusted.",
+      action: "No executable timeout/retry adapter is registered; escalated for manual repair",
+      applied: false,
+      result: "No timeout or retry configuration was changed. A real repair adapter is required.",
     };
   }
   if (cause.includes("auth") || cause.includes("credential")) {
@@ -344,16 +351,16 @@ async function applyRepair(base44: any, flag: any, rootCause: any): Promise<{ ac
   }
   if (cause.includes("rate limit")) {
     return {
-      action: "Reduced operation frequency to respect rate limits",
-      applied: true,
-      result: "Throttling applied.",
+      action: "No executable rate-limit adapter is registered; escalated for manual repair",
+      applied: false,
+      result: "No throttling configuration was changed. A real repair adapter is required.",
     };
   }
   if (cause.includes("circular") || cause.includes("serialization")) {
     return {
-      action: "Fixed response data extraction to use .data property",
-      applied: true,
-      result: "Response parsing corrected.",
+      action: "No executable serialization adapter is registered; escalated for manual repair",
+      applied: false,
+      result: "No code or runtime configuration was changed. A real repair adapter is required.",
     };
   }
 
@@ -367,15 +374,8 @@ async function applyRepair(base44: any, flag: any, rootCause: any): Promise<{ ac
 /**
  * Validation Agent — re-checks the source after repair.
  */
-async function validateRepair(base44: any, flag: any): Promise<{ passed: boolean; score: number }> {
-  try {
-    if (flag.source_entity === "SystemEnhancement" && flag.source_id) {
-      const goal = await base44.asServiceRole.entities.SystemEnhancement.get(flag.source_id);
-      const score = goal.audit_result?.score || 0;
-      return { passed: score >= 100, score };
-    }
-    return { passed: true, score: 100 };
-  } catch {
-    return { passed: false, score: 0 };
-  }
+async function validateRepair(_base44: any, _flag: any): Promise<{ passed: boolean; score: number }> {
+  // Fail closed until an executable independent validator reruns the exact failed acceptance test.
+  // Re-reading an existing score or defaulting unknown entity types to PASS is not validation.
+  return { passed: false, score: 0 };
 }
