@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CapabilityMap from "@/components/dashboard/CapabilityMap";
+import ServiceCategoryCards from "@/components/dashboard/ServiceCategoryCards";
 import { Button } from "@/components/ui/button";
 import {
   Server, Bot, Monitor, Clock, Copy, Plug, Box,
@@ -129,6 +130,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <ServiceCategoryCards />
 
       {/* Quick Actions — the first thing on the dashboard */}
       <section>
