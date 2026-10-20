@@ -8,9 +8,13 @@
     "canonical_local_root": "C:\\_Strategic_Minds_AI_OS\\33_CLOUD_BROWSER"
   },
   "working_tree": {
-    "committed": false,
-    "commit_sha": null,
-    "reason": "No commit was created. The owner must first confirm the Railway watch-path policy for browser-engine/railway.toml (3 replicas) so that a push cannot unintentionally deploy production.",
+    "committed": true,
+    "commit_sha": "9ca7be3",
+    "commit_subject": "Initialize portable core architecture and database schema",
+    "branch": "main",
+    "remote": "github.com/XTREME-SYSTEMS/cloudbrowser-control",
+    "sync_state": "local main reported 0 ahead / 0 behind origin/main when recorded",
+    "risk": "This landed on main. The six Railway services that still auto-deploy on main with no watch paths (engine-2, engine-3, railway-operator, auto-construction-leads, hidden-property-intel-scraper, mcp-prod-validator) will have rebuilt from it. cloudbrowser-engine and cloudbrowser-control-staging both have auto-deploy off. Check Railway deploy history before further commits.",
     "new_paths": [
       ".env.example",
       "docker-compose.yml",
@@ -79,6 +83,20 @@
       "root_cause": "root shared/ had no package.json, so ESM resolution depended on ambient detection",
       "repair": "added shared/package.json with type:module",
       "verified": true
+    },
+    {
+      "id": "D3",
+      "summary": "The environment template was silently excluded from the committed core",
+      "root_cause": ".gitignore carried '.env' and '.env.*' with no negation, so env.example was ignored and is absent from commit 9ca7be3",
+      "repair": "added a negation for env.example to .gitignore; the template is now committable",
+      "verified": true
+    },
+    {
+      "id": "D4",
+      "summary": "The engine's route prefix was recorded as unverified and is now confirmed correct",
+      "root_cause": "no evidence had been gathered for which prefix the engine serves",
+      "repair": "confirmed the engine mounts its router at '/' and '/engine' and serves no /v1 routes, so the gateway's unprefixed calls need no change",
+      "verified": true
     }
   ],
   "security_findings": [
@@ -103,20 +121,28 @@
     {
       "id": "S4",
       "severity": "medium",
-      "finding": "api/ and worker/ ship no committed lockfiles, so their container builds are not reproducible",
-      "status": "OPEN — requires an npm install against the registry"
+      "finding": "api/, worker/ and browser-engine/ ship no committed lockfiles. browser-engine is the worst case: it is deployed and depends on express, playwright, ws and @supabase/supabase-js, so its builds are not reproducible. shared/ declares no dependencies and needs none; python-sdk/ is not deployed",
+      "status": "OPEN — requires npm install --package-lock-only in each of the three directories"
+    },
+    {
+      "id": "S5",
+      "severity": "unknown",
+      "finding": "the environment template could not be inspected: the platform blocks reads of env-pattern paths from both bash and the file tools, so whether it lists variable NAMES only, or also carries values, is UNVERIFIED",
+      "status": "OPEN — a human or the external operator must confirm it holds names only before it is committed"
     }
   ],
   "blockers": [
-    "GitHub: no verified push performed; no commit SHA exists. The platform syncs the working tree, and browser-engine/railway.toml watches the repository, so pushing may deploy the engine service. Owner must set watch paths or confirm a safe branch before any push.",
+    "Railway blast radius: commit 9ca7be3 reached main, so every service that auto-deploys on main without watch paths was triggered by it. Only cloudbrowser-engine has a safe watch path identified so far (browser-engine/**). cloudbrowser-control-staging cannot be scoped until its Root Directory and Dockerfile path are known.",
     "Railway / Vercel / Supabase: no staging deployment attempted. No repository-connected staging target was verified, and modifying production services, secrets, schemas or DNS requires explicit approval.",
     "Lockfiles: cannot be generated in this environment (no registry install of express/pg/playwright performed).",
     "Independent validation (Guardian): NO independent validator executed. Marked BLOCKED rather than self-certified.",
     "Frontend port: 145 files still import the platform client. Not attempted in this batch.",
     "Data/function port: 108 of 113 entity schemas and 207 of 207 backend functions are unported.",
     "Operator plugin / skills package: not created; no ChatGPT plugin installation is possible from this environment.",
-    "Known unverified contract: the engine's single-session GET response shape was not inspected, so the gateway accepts either a bare session object or a { session } envelope. Verify and tighten.",
-    "No downloadable source archive: this environment exposes repository files, not a packaged zip."
+    "Partly closed: the engine mounts its router at both '/' and '/engine' (browser-engine/server.js:1408-1409) and serves no /v1 routes, so the gateway's unprefixed '/sessions' and '/health' calls are correct. Still unverified: the single-session GET response BODY shape, so the gateway accepts either a bare session object or a { session } envelope. Read browser-engine/server.js:1061 and tighten.",
+    "No downloadable source archive: this environment exposes repository files, not a packaged zip.",
+    "Unverified environment template: .gitignore has been changed to allow the env template through, but its contents could not be read with the available tools (env-pattern paths are blocked). Confirm it lists variable names only before it is committed. See security finding S5.",
+    "cloudbrowser-control-staging cannot be given a watch path until its Root Directory and Dockerfile path are known; scoping it incorrectly would silently stop its deploys."
   ],
   "next_action": "Confirm the Railway watch-path / branch policy for the repository, then commit the portable core and generate api/ and worker/ lockfiles. After that, port the first vertical slice of the frontend off @/api/base44Client."
 }
