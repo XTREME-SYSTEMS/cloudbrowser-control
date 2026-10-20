@@ -63,7 +63,7 @@ export default async function (req) {
     return Response.json({
       success: true,
       created: created.length,
-      already_recorded: existingTitles.size - created.length > 0 ? existingTitles.size : 0,
+      benchmarks_already_in_the_system: existingTitles.size,
       services_covered: SERVICE_CATALOG.length,
       note: 'Competitor entries are stored with their verification status so a vendor claim is never read as a measurement.',
     });
