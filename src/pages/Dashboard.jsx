@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CapabilityMap from "@/components/dashboard/CapabilityMap";
 import { Button } from "@/components/ui/button";
 import {
   Server, Bot, Monitor, Clock, Copy, Plug, Box,
@@ -129,6 +130,33 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Quick Actions — the first thing on the dashboard */}
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-5 h-5 text-primary" />
+          <h2 className="font-heading text-base font-semibold tracking-wide">Quick Actions</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {quickActions.map(a => {
+            const Icon = a.icon;
+            return (
+              <Link key={a.label} to={a.link}>
+                <div className="h-full flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-primary/10 border border-primary/20">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-display font-semibold text-sm tracking-wide">{a.label}</div>
+                    <div className="text-xs text-muted-foreground">{a.desc}</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Onboarding Banner */}
       {!onboarded && (
         <Card className="border-primary/20">
@@ -150,6 +178,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      <CapabilityMap />
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -194,39 +224,12 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Quick Actions + Recent Activity */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Recent Activity */}
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-heading tracking-wide">
-              <Zap className="w-5 h-5 text-primary" /> Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {quickActions.map(a => {
-              const Icon = a.icon;
-              return (
-                <Link key={a.label} to={a.link}>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-primary/10 border border-primary/20">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-display font-semibold text-sm tracking-wide">{a.label}</div>
-                      <div className="text-xs text-muted-foreground">{a.desc}</div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-heading tracking-wide">
-              <Activity className="w-5 h-5 text-primary" /> Recent Activity
+          <CardTitle className="flex items-center gap-2 text-base font-heading tracking-wide">
+            <Activity className="w-5 h-5 text-primary" /> Recent Activity
             </CardTitle>
           </CardHeader>
           <CardContent>
