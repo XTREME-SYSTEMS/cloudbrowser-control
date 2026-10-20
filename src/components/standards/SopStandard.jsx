@@ -7,7 +7,7 @@ export default function SopStandard() {
   return (
     <SectionCard
       id="sop"
-      eyebrow="Section 5"
+      eyebrow="Section 6"
       title="Standard operating procedures"
       subtitle="How the work must be carried out, phase by phase. These are the operating instructions behind the workflow checklist."
     >

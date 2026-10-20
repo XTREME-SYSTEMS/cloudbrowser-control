@@ -10,6 +10,7 @@
         "qa_validation_method",
         "compliance_requirement",
         "competitor_benchmark",
+        "ai_vendor_benchmark",
         "business_model"
       ],
       "description": "Which reference group this benchmark belongs to"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import SectionCard from "@/components/standards/SectionCard";
 import { Button } from "@/components/ui/button";
-import { WORKFLOW_STEPS, WORKFLOW_PHASES } from "@/data/standardsPlaybook";
+import { WORKFLOW_STEPS, WORKFLOW_PHASES, STEP_AUTONOMY, AUTONOMY_LABELS } from "@/data/standardsPlaybook";
 import { CheckCircle2, Circle, RotateCcw } from "lucide-react";
 
 const STORAGE_KEY = "cloudbrowser.workflow-checklist.v1";
@@ -28,14 +28,37 @@ export default function WorkflowChecklist() {
 
   const toggle = (n) => setDone((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
   const pct = Math.round((done.length / WORKFLOW_STEPS.length) * 100);
+  const counts = Object.values(STEP_AUTONOMY).reduce((acc, a) => {
+    acc[a.level] = (acc[a.level] || 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <SectionCard
       id="workflow"
-      eyebrow="Section 3"
+      eyebrow="Section 4"
       title="End-to-end workflow checklist"
       subtitle="The full pipeline, step by step, with the gate that must pass before the step can be considered done. Tick steps as you work a case — progress is saved on this device."
     >
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        {Object.entries(AUTONOMY_LABELS).map(([level, cfg]) => (
+          <div key={level} className={`rounded-lg border px-3 py-2 ${cfg.className}`}>
+            <div className="text-lg font-bold leading-none">{counts[level] || 0}</div>
+            <div className="text-[10px] font-display font-bold uppercase tracking-wider mt-1 opacity-80">
+              {cfg.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[11px] text-muted-foreground mb-5 leading-relaxed">
+        {counts.autonomous || 0} of {WORKFLOW_STEPS.length} steps run with no human involvement. The{" "}
+        {counts.gate || 0} machine gates block progress rather than warn. One step needs human judgement —
+        resolving a conflict between credible records. A person is required in exactly {counts.human || 0}{" "}
+        places: authorisation and licensing at intake, the signature on the report, and delivery to the
+        fiduciary. That is where the professional standards place the human, and nowhere else.
+      </p>
+
       <div className="flex items-center gap-4 mb-5">
         <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
           <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
@@ -62,6 +85,7 @@ export default function WorkflowChecklist() {
               <div className="space-y-2">
                 {steps.map((s) => {
                   const checked = done.includes(s.n);
+                  const autonomy = AUTONOMY_LABELS[STEP_AUTONOMY[s.n]?.level] ?? AUTONOMY_LABELS.human;
                   return (
                     <button
                       key={s.n}
@@ -84,6 +108,11 @@ export default function WorkflowChecklist() {
                               {String(s.n).padStart(2, "0")}
                             </span>
                             {s.action}
+                            <span
+                              className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full border align-middle text-[9px] font-display font-bold uppercase tracking-wider ${autonomy.className}`}
+                            >
+                              {autonomy.label}
+                            </span>
                           </p>
                           <div className="mt-2 flex flex-col sm:flex-row gap-1 sm:gap-4">
                             <p className="text-[11px] text-muted-foreground">
@@ -95,6 +124,11 @@ export default function WorkflowChecklist() {
                               {s.artifact}
                             </p>
                           </div>
+                          {STEP_AUTONOMY[s.n]?.note && (
+                            <p className="text-[11px] text-muted-foreground/80 mt-1.5 italic">
+                              {STEP_AUTONOMY[s.n].note}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </button>

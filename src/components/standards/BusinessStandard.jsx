@@ -29,7 +29,7 @@ export default function BusinessStandard() {
   return (
     <SectionCard
       id="business"
-      eyebrow="Section 8"
+      eyebrow="Section 9"
       title="Business model standard"
       subtitle="Who buys, what is delivered, and how the strongest objection against an automated heir search is answered — clause by clause, including the ones that are not yet answered."
     >

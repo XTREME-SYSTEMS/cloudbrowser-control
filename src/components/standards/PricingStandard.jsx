@@ -7,7 +7,7 @@ export default function PricingStandard() {
   return (
     <SectionCard
       id="pricing"
-      eyebrow="Section 7"
+      eyebrow="Section 8"
       title="Pricing standard"
       subtitle="The fee structure is both an ethical requirement and the commercial contrast against the contingency model."
     >

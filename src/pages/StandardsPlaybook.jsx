@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import OperationalStandard from "@/components/standards/OperationalStandard";
+import CompositeStandard from "@/components/standards/CompositeStandard";
 import ConfidenceGates from "@/components/standards/ConfidenceGates";
 import WorkflowChecklist from "@/components/standards/WorkflowChecklist";
 import SourceCoverage from "@/components/standards/SourceCoverage";
@@ -11,6 +12,7 @@ import TechnologyStandard from "@/components/standards/TechnologyStandard";
 
 const SECTIONS = [
   { id: "operational", label: "Operational" },
+  { id: "composite", label: "Chosen Standard" },
   { id: "gates", label: "Gates" },
   { id: "workflow", label: "Workflow" },
   { id: "sources", label: "Sources" },
@@ -66,6 +68,7 @@ export default function StandardsPlaybook() {
       </nav>
 
       <OperationalStandard />
+      <CompositeStandard />
       <ConfidenceGates />
       <WorkflowChecklist />
       <SourceCoverage />

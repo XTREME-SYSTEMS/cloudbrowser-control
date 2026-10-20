@@ -69,7 +69,7 @@ export default function SourceCoverage() {
   return (
     <SectionCard
       id="sources"
-      eyebrow="Section 4"
+      eyebrow="Section 5"
       title="Source coverage register"
       subtitle="Every source the sweep is required to consider, taken from the live source catalog rather than restated by hand. OS-01 requires each applicable category to end as searched, exhausted, or excluded with a reason."
     >

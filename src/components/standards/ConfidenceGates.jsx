@@ -7,7 +7,7 @@ export default function ConfidenceGates() {
   return (
     <SectionCard
       id="gates"
-      eyebrow="Section 2"
+      eyebrow="Section 3"
       title="Confidence gates and thresholds"
       subtitle="The actual thresholds in force. A gate blocks progress — it is not a score reported after the fact, which is the difference between a control and a warning."
     >

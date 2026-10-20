@@ -9,7 +9,7 @@ export default function AgentRoster() {
   return (
     <SectionCard
       id="agents"
-      eyebrow="Section 6"
+      eyebrow="Section 7"
       title={`Agent roster — ${TOTAL} registered agents`}
       subtitle="How many agents the system runs, grouped by function. The separation between research and verification is deliberate: an agent that produced a finding never validates its own work."
     >

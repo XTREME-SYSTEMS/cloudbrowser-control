@@ -7,7 +7,7 @@ export default function TechnologyStandard() {
   return (
     <SectionCard
       id="tech"
-      eyebrow="Section 9"
+      eyebrow="Section 10"
       title="Technology standard"
       subtitle="The technical stack the standard is enforced through, with an honest status on each layer — including the layers that are still gaps."
     >

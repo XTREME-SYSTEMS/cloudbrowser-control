@@ -195,6 +195,45 @@ export const WORKFLOW_STEPS = [
   { n: 24, phase: 5, action: "Deliver to the fiduciary and record retention limits", gate: "Personal data retained only as long as the matter justifies", artifact: "Delivery record and retention date" },
 ];
 
+// Autonomy classification for each workflow step. This is the answer to "how
+// much of this actually runs on its own": everything from the source sweep
+// through report assembly is machine-executed, and the human sits only where
+// the professional standards require a person — authorisation, signature, and
+// delivery.
+export const AUTONOMY_LABELS = {
+  autonomous: { label: "Autonomous", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
+  gate: { label: "Machine gate", className: "bg-primary/10 text-primary border-primary/30" },
+  assisted: { label: "Assisted", className: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
+  human: { label: "Human required", className: "bg-muted text-muted-foreground border-border" },
+};
+
+export const STEP_AUTONOMY = {
+  1: { level: "human", note: "A person owns the client relationship and the legal matter." },
+  2: { level: "human", note: "CAFG 07 requires a written agreement before work begins." },
+  3: { level: "human", note: "Licensing basis is a legal determination, not a machine one." },
+  4: { level: "autonomous", note: "Death records and obituaries are retrieved and parsed without intervention." },
+  5: { level: "gate", note: "Enforced by the identity-lock function." },
+  6: { level: "autonomous", note: "Coverage plan generated from the jurisdiction and era." },
+  7: { level: "autonomous", note: "The sweep itself is the core autonomous workload." },
+  8: { level: "autonomous", note: "Two-level associate recursion runs unattended." },
+  9: { level: "autonomous", note: "Contact discovery across the sweep output." },
+  10: { level: "autonomous", note: "SMTP and carrier verification are automated checks." },
+  11: { level: "autonomous", note: "Exhibit numbering and hashing happen at capture." },
+  12: { level: "autonomous", note: "Deterministic scoring function, no model in the path." },
+  13: { level: "autonomous", note: "Deterministic dedupe and kinship ranking." },
+  14: { level: "autonomous", note: "State intestacy framework applied by rule." },
+  15: { level: "assisted", note: "Detection is automatic; resolution is a judgement that needs a person." },
+  16: { level: "autonomous", note: "Completeness and citation checks are mechanical." },
+  17: { level: "autonomous", note: "Each conclusion is tested against the evidence cited for it." },
+  18: { level: "autonomous", note: "The re-run, repair and re-score loop runs unattended." },
+  19: { level: "autonomous", note: "Weighted scoring across the five evidence dimensions." },
+  20: { level: "gate", note: "Report outputs stay disabled until this passes." },
+  21: { level: "autonomous", note: "Assembly from the verified register." },
+  22: { level: "human", note: "OS-10 — a credentialed person signs and can be deposed." },
+  23: { level: "autonomous", note: "PDF generation and archive upload." },
+  24: { level: "human", note: "Delivery to the fiduciary is a professional act." },
+};
+
 // ── 4. STANDARD OPERATING PROCEDURES ───────────────────────────────────
 export const SOPS = [
   {
@@ -512,4 +551,160 @@ export const BUSINESS_INTEGRITY_RULES = [
   "No marketing claim the system cannot measure from its own records.",
   "No credentialed-sounding language on a machine-produced draft.",
   "No report described as a legal opinion or a certification of heirship.",
+];
+
+// ── 9. BENCHMARKED AI BROWSER-INFRASTRUCTURE COMPANIES ─────────────────
+// The competitive set for the automation platform itself. Ranking reflects
+// documented breadth, compliance depth and deployment flexibility across
+// published comparisons; it is not a performance measurement.
+
+export const BENCHMARKED_AI_VENDORS = [
+  {
+    name: "Browserbase",
+    rank: 1,
+    positioning:
+      "Managed browser infrastructure, framework-agnostic, with the strongest documented breadth across automation libraries, reusable contexts, proxies and session observability.",
+    strengths: [
+      "Zero-trust isolation: one browser per VM, and no browser reuse — the VM is destroyed and recreated from scratch after every session",
+      "No GPU access, eliminating the shared-GPU-memory attack surface",
+      "SOC 2 Type II certified",
+      "Documented zero-data-retention option — session logging and session replay can be disabled per session",
+      "City-level geo targeting; first-party MCP and Stagehand ecosystem",
+    ],
+    gaps: [
+      "SOC 2 only — no ISO 27001",
+      "No ZIP-code or ASN-level geo targeting documented",
+      "Documents 404 handling but not redirect handling",
+      "No self-hosted deployment path",
+    ],
+    source_url: "https://docs.browserbase.com/account/enterprise/security",
+  },
+  {
+    name: "Anchor Browser",
+    rank: 2,
+    positioning:
+      "Cloud Chromium for computer-use agents, built around authenticated identity. Its stated architectural stance is that AI plans a deterministic workflow which then executes reliably at scale.",
+    strengths: [
+      "ISO 27001 and SOC 2 both — the strongest compliance position of the three",
+      "Reusable browser profiles and persistent identities, so agents return to authenticated applications without repeating login",
+      "Isolated Chromium sessions over CDP, with proxy configuration, CAPTCHA solving, session recordings and live browser viewing",
+      "AI plans the deterministic workflow rather than deciding at execution time — the only architecture in this field that aligns with Rule 702(c)",
+      "Backed by Blumberg Capital and Gradient (Google's AI venture arm); publicly referenced as powering Groq's agent platform",
+    ],
+    gaps: [
+      "No self-hosted or private-deployment option documented",
+      "Geo-targeting depth not documented to ZIP or ASN level",
+      "Its determinism claim is architectural positioning, not a published measurement",
+    ],
+    source_url: "https://anchorbrowser.io/",
+  },
+  {
+    name: "Steel.dev",
+    rank: 3,
+    positioning:
+      "Open-source-first browser infrastructure with a genuine self-hosted path and the highest documented concurrency of the three.",
+    strengths: [
+      "Available self-hosted as well as managed — the only one of the three with a real on-premises path",
+      "1,000+ concurrent sessions, dedicated capacity, SSO and 2FA on enterprise plans",
+      "Isolated sessions, encrypted in transit, stated HIPAA-standard encryption",
+      "Profiles are the durable unit for cross-session state: cookies, auth, extensions, credentials and browser settings",
+      "Handles both 404 and redirect error paths explicitly",
+      "Runs millions of browser sessions weekly, started in under a second",
+    ],
+    gaps: [
+      "No SOC 2 or ISO 27001 certification documented — the compliance position rests on encryption and contractual terms rather than an audit",
+      "No city, ZIP or ASN geo targeting documented",
+    ],
+    source_url: "https://steel.dev/",
+  },
+];
+
+export const AI_BENCHMARK_FIELD_NOTE =
+  "Wider field considered: Hyperbrowser (hosted agent runtimes alongside sessions; profiles preserve cookies, local storage and optionally network cache; sessions survive client disconnection — no SOC 2 or ISO certification documented), Kernel (isolated compute pools plus managed authentication, so proxy credentials are never copied into each session request), Modal (gVisor-backed workload isolation, SOC 2 Type II), and Bright Data, BrowserAI and Airtop (ISO 27001, SOC 2 and ISO 27018 for personally identifiable information).";
+
+export const COMPOSITE_STANDARD = [
+  {
+    dimension: "Session isolation",
+    winner: "Browserbase",
+    basis: "Strictest",
+    rule: "One browser per virtual machine. The VM is destroyed and recreated from scratch after every session and browsers are never reused. No GPU access. Zero-trust means assuming any browser may already be compromised.",
+  },
+  {
+    dimension: "Compliance certification",
+    winner: "Anchor Browser",
+    basis: "Most professional",
+    rule: "Operate to ISO 27001 and SOC 2 together, not SOC 2 alone. For a court-facing product, certification is a floor rather than a differentiator.",
+  },
+  {
+    dimension: "Data retention",
+    winner: "Browserbase",
+    basis: "Strictest",
+    rule: "Session logging and session replay must be disableable per session, so a client's case data is never recorded where retention cannot be justified.",
+  },
+  {
+    dimension: "Deployment",
+    winner: "Steel.dev",
+    basis: "Most comprehensive",
+    rule: "Ship a genuine self-hosted path. A fiduciary or regulated client must be able to run the engine inside their own boundary.",
+  },
+  {
+    dimension: "Concurrency ceiling",
+    winner: "Steel.dev",
+    basis: "Most comprehensive",
+    rule: "Support 1,000+ concurrent sessions with dedicated capacity before claiming enterprise scale.",
+  },
+  {
+    dimension: "Identity and authentication",
+    winner: "Anchor Browser",
+    basis: "Most professional",
+    rule: "Authenticated identity is a first-class reusable object. Credentials are never re-entered per session and never copied into a request payload.",
+  },
+  {
+    dimension: "Observability",
+    winner: "Field consensus",
+    basis: "Most professional",
+    rule: "Trace agent behaviour, output quality and business outcome, not just uptime and error rate. Uptime demonstrates nothing about whether an agent behaved correctly.",
+  },
+  {
+    dimension: "Reproducibility",
+    winner: "Anchor Browser",
+    basis: "Strictest",
+    rule: "AI plans the workflow; the workflow then executes deterministically. This is the only architecture in the field that can satisfy Rule 702(c) — a model deciding at execution time cannot be replicated.",
+  },
+  {
+    dimension: "Benchmark integrity",
+    winner: "Own case ledger",
+    basis: "Strictest",
+    rule: "Adopt no vendor leaderboard. WebArena and GAIA were both driven to near-perfect scores without doing the work. Accuracy figures come only from our own recorded case outcomes.",
+  },
+  {
+    dimension: "Failure handling",
+    winner: "Steel.dev",
+    basis: "Strictest",
+    rule: "Handle documented error paths explicitly — a 404 and a redirect must be recorded as distinct outcomes. An unhandled failure that returns 'nothing found' becomes a false negative in the evidence register, which breaches exhaustive-search and sufficient-data requirements.",
+  },
+  {
+    dimension: "Provenance",
+    winner: "Our own layer",
+    basis: "Strictest",
+    rule: "No vendor in this field offers chain of custody for a legal evidentiary purpose. Content hash, retrieval timestamp and acquisition method are recorded per fact by our own evidence layer.",
+  },
+  {
+    dimension: "Access control",
+    winner: "Steel.dev",
+    basis: "Most professional",
+    rule: "SSO and two-factor authentication on every enterprise path, without exception.",
+  },
+  {
+    dimension: "Encryption",
+    winner: "Steel.dev",
+    basis: "Strictest",
+    rule: "Encrypted in transit, with HIPAA-standard encryption for stored case material.",
+  },
+  {
+    dimension: "Governance",
+    winner: "Field consensus",
+    basis: "Most professional",
+    rule: "The standard is not whether an agent can be launched, it is whether the operator can prove the agent behaved correctly at scale. Every autonomous step must be evidenced after the fact, not merely permitted in advance.",
+  },
 ];
