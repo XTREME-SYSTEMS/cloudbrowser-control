@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Loader2, AlertTriangle, RefreshCw, Inbox, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import CaseQueue from "@/components/investigator/CaseQueue";
@@ -134,14 +135,21 @@ export default function InvestigatorCommandCenter() {
             Case review, evidence status, certification and approval in one place.
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={refresh} disabled={queueLoading || briefLoading}>
-          {queueLoading || briefLoading ? (
-            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-          ) : (
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-          )}
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link to="/design-options">
+            <Button size="sm" variant="outline">
+              Compare 5 designs
+            </Button>
+          </Link>
+          <Button size="sm" variant="outline" onClick={refresh} disabled={queueLoading || briefLoading}>
+            {queueLoading || briefLoading ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (

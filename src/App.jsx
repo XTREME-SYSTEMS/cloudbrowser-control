@@ -76,6 +76,7 @@ import StrategicCloudBrowserLanding from '@/pages/StrategicCloudBrowserLanding';
 import StrategicReport from '@/pages/StrategicReport';
 import StandardsPlaybook from '@/pages/StandardsPlaybook';
 import InvestigatorCommandCenter from '@/pages/InvestigatorCommandCenter';
+import DesignOptions from '@/pages/DesignOptions';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -157,6 +158,7 @@ const AuthenticatedApp = () => {
           <Route path="/heir-search" element={<HeirSearch />} />
           <Route path="/heir-search-dashboard" element={<HeirSearchDashboard />} />
           <Route path="/investigator" element={<InvestigatorCommandCenter />} />
+          <Route path="/design-options" element={<DesignOptions />} />
           <Route path="/heir-portal" element={<HeirSearchPortal />} />
           <Route path="/image-replicator" element={<ImageReplicator />} />
           <Route path="/intelligence-command-center" element={<IntelligenceCommandCenter />} />
