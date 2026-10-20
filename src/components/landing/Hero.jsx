@@ -1,5 +1,6 @@
 import React from "react";
 import { ShieldCheck, Globe2, FileCheck2 } from "lucide-react";
+import { Image } from "@/components/ui/image";
 
 export default function Hero() {
   return (
@@ -49,10 +50,10 @@ export default function Hero() {
 
           <div className="relative">
             <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-[#0a1f3c]">
-              <img
-                src="https://images.unsplash.com/photo-1589994965851-a8f479c573a8?w=800&q=80"
-                alt="Genealogists reviewing estate research documents"
-                className="w-full h-full object-cover"
+              <Image
+                src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/538716eaa_generated_image.png"
+                alt="Archival estate research documents and a family tree chart on a desk"
+                className="w-full h-full"
               />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-5 border border-slate-100 max-w-[220px]">
