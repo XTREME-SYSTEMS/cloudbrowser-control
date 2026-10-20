@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.54";
 import { invokeLLM, setGatewayFallback } from "../../shared/vercelAiGateway.ts";
+import { caseToFamilyGraph, summariseForAudit } from "../../shared/kinshipAdapter.ts";
 import { BENCHMARK_METRICS, QA_VALIDATION_CRITERIA } from "../../shared/heirSearchBenchmark.ts";
 import {
   QA_MODEL,
@@ -131,6 +132,12 @@ export default async function (req: Request): Promise<Response> {
     // because a reviewer that starts from the producer's own assessment is not
     // reviewing anything.
     // ════════════════════════════════════════════════════════════════════════
+    // The relationship graph is built once, here, and both handed to the auditor
+    // and persisted below. One construction means the investigator reads the same
+    // graph the auditor reviewed, rather than a second interpretation of the same
+    // case that could quietly disagree with it.
+    const kinship = caseToFamilyGraph(hs);
+
     const qaInput = {
       case_id: hs.id,
       deceased_name: hs.deceased_name,
@@ -157,6 +164,9 @@ export default async function (req: Request): Promise<Response> {
       blocked_sources: readiness.blocked.map((b: any) => ({ label: b.label, missing_credentials: b.missing_credentials })),
       benchmark_metrics: BENCHMARK_METRICS,
       qa_criteria: QA_VALIDATION_CRITERIA,
+      // Audited as a basis, not as a count. A reviewer told "heirs: 9" cannot see
+      // that none of the nine relationships rests on a record.
+      relationship_basis: summariseForAudit(kinship),
     };
 
     const qaResult: any = await invokeLLM({
@@ -244,6 +254,7 @@ Do NOT return a certification flag. Certification is decided by deterministic ru
         })),
         sources_checked: hs.sources_checked,
         methods_used: hs.methods_used,
+        relationship_basis: summariseForAudit(kinship),
         // The real register, not a summary of counts.
         evidence_records: evidenceRecords,
         // What the machine actually found when it re-fetched. Authoritative on

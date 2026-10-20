@@ -1,4 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import {
+  EXPORT_VERIFICATION_COLUMNS,
+  columnLetter,
+  findColumnConflict,
+  resolveCaseVerificationForExport,
+} from '../../shared/exportVerification.ts';
 
 /**
  * Exports identified heirs from an heir search to a Google Sheet.
@@ -23,6 +29,7 @@ const COLUMNS = [
   "Case Ref", "Deceased Name", "Heir Name", "Relationship", "Inheritance Priority",
   "Is Living", "Phone Numbers", "Emails", "Address", "Age/DOB",
   "Social Profiles", "Confidence %", "Notes", "Export Date",
+  ...EXPORT_VERIFICATION_COLUMNS,
 ];
 
 export default async function (req: Request): Promise<Response> {
@@ -66,12 +73,34 @@ export default async function (req: Request): Promise<Response> {
       });
     }
 
-    // 2. Check if headers exist
-    const checkRes = await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(sheet)}!A1:N1`, { headers });
+    // 2. Check that the header row is present AND wide enough for every column we
+    // now export. A sheet exported before the verification columns existed has a
+    // shorter header row, and writing only when the row is entirely absent would
+    // leave the new values sitting under blank headers. Existing columns keep
+    // their positions — the new ones are appended — so anything reading A..N or
+    // matching on header names is unaffected.
+    const headerEnd = columnLetter(COLUMNS.length);
+    const checkRes = await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(sheet)}!A1:${headerEnd}1`, { headers });
     const checkData = checkRes.ok ? await checkRes.json().catch(() => ({})) : {};
-    const hasHeaders = checkData.values?.[0]?.length > 1;
+    const existingHeader: string[] = (checkData.values?.[0] || []).map((h: any) => String(h ?? ""));
+    const hasHeaders = existingHeader.length >= COLUMNS.length;
 
-    // 3. Write headers if missing
+    // A tab can already hold another writer's layout — the heir tracking sync
+    // writes a different column set to this same "Heirs" tab. Appending under its
+    // headers would put a person's name under "Status" and a phone number under
+    // "Confidence %", silently and permanently. Refuse rather than misalign, and
+    // name the column that disagrees so the caller can pick another tab.
+    const conflict = hasHeaders ? findColumnConflict(COLUMNS, existingHeader) : null;
+    if (conflict) {
+      return Response.json({
+        error: `The "${sheet}" tab holds a different column layout: position ${conflict.index + 1} is "${conflict.existing || "blank"}", but this export writes "${conflict.expected}". Rows cannot be aligned to it, so nothing was written. Export to a different tab name.`,
+        column_conflict: true,
+        conflicting_column: conflict.expected,
+        existing_column: conflict.existing,
+      }, { status: 409 });
+    }
+
+    // 3. Write headers if missing or narrower than the columns we write
     if (!hasHeaders) {
       await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(sheet)}!A1?valueInputOption=RAW`, {
         method: "PUT", headers,
@@ -79,7 +108,14 @@ export default async function (req: Request): Promise<Response> {
       });
     }
 
-    // 4. Build rows for each identified heir
+    // 4. Resolve verification from the case record itself, never from the
+    // payload, so an uncertified result cannot be exported as a verified one.
+    const verification = await resolveCaseVerificationForExport(base44, {
+      heir_search_id: body.heir_search_id,
+      case_reference,
+    });
+
+    // 5. Build rows for each identified heir
     const heirs = identified_heirs || [];
     if (heirs.length === 0) {
       return Response.json({ ok: true, exported: 0, message: "No heirs found to export" });
@@ -100,6 +136,7 @@ export default async function (req: Request): Promise<Response> {
       heir.confidence || 0,
       heir.notes || "",
       new Date().toISOString(),
+      ...verification.row,
     ]);
 
     // 5. Append rows
@@ -138,11 +175,13 @@ export default async function (req: Request): Promise<Response> {
         "Cemetery Family Plot", "Immigration Family", "Intl Relatives",
         "Missing Relatives", "Professional Members", "Breach Verified Emails",
         "Export Date",
+        ...EXPORT_VERIFICATION_COLUMNS,
       ];
 
-      const deepCheckRes = await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A1:AE1`, { headers });
+      const deepHeaderEnd = columnLetter(DEEP_COLUMNS.length);
+      const deepCheckRes = await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A1:${deepHeaderEnd}1`, { headers });
       const deepCheckData = deepCheckRes.ok ? await deepCheckRes.json().catch(() => ({})) : {};
-      const deepHasHeaders = deepCheckData.values?.[0]?.length > 1;
+      const deepHasHeaders = (deepCheckData.values?.[0]?.length || 0) >= DEEP_COLUMNS.length;
       if (!deepHasHeaders) {
         await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A1?valueInputOption=RAW`, {
           method: "PUT", headers,
@@ -183,6 +222,7 @@ export default async function (req: Request): Promise<Response> {
         f.professional_members || 0,
         f.breach_verified_emails || 0,
         new Date().toISOString(),
+        ...verification.row,
       ];
 
       const deepAppendUrl = `${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(deepSheet)}!A:A:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
@@ -201,6 +241,14 @@ export default async function (req: Request): Promise<Response> {
       sheet,
       updated_range: appendData.updates?.updatedRange,
       columns: COLUMNS.length,
+      // An uncertified case still exports — a working sheet of leads is
+      // legitimate — but it exports labelled as draft, not as findings.
+      export_mode: verification.exportable_as_certified ? "certified" : "draft",
+      certification_status: verification.certification_status,
+      evidence_status: verification.evidence_status,
+      investigator_approval: verification.investigator_approval,
+      case_found: verification.case_found,
+      failed_rules: verification.failed_rules,
     });
   } catch (error: any) {
     console.error("Export heir to sheet error:", error);

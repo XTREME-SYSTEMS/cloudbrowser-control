@@ -1,4 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import {
+  EXPORT_VERIFICATION_COLUMNS,
+  columnLetter,
+  resolveCaseVerificationForExport,
+} from '../../shared/exportVerification.ts';
 
 /**
  * Exports skip trace results to a Google Sheet.
@@ -24,6 +29,7 @@ const COLUMNS = [
   "Target Company", "Status", "Found Owner", "Confidence %",
   "Phone Numbers", "Emails", "Addresses", "Social Profiles", "Relatives",
   "Sources Checked", "Methods Used", "Duration (s)",
+  ...EXPORT_VERIFICATION_COLUMNS,
 ];
 
 export default async function (req: Request): Promise<Response> {
@@ -72,10 +78,15 @@ export default async function (req: Request): Promise<Response> {
 
     // 2. Check if headers exist
     const colCount = COLUMNS.length;
-    const endCol = String.fromCharCode(65 + colCount - 1); // A=65
+    // columnLetter() stays correct past column Z. The previous arithmetic
+    // produced "[" at 27 columns, which is not a column reference at all.
+    const endCol = columnLetter(colCount);
     const checkRes = await fetch(`${SHEETS_API}/${spreadsheetId}/values/${encodeURIComponent(sheet)}!A1:${endCol}1`, { headers });
     const checkData = checkRes.ok ? await checkRes.json().catch(() => ({})) : {};
-    const hasHeaders = checkData.values?.[0]?.length > 1;
+    // Wide enough, not merely present: a sheet created before the verification
+    // columns existed must have its header row extended, or the new values land
+    // under blank headers.
+    const hasHeaders = (checkData.values?.[0]?.length || 0) >= colCount;
 
     // 3. Write headers if missing
     if (!hasHeaders) {
@@ -85,7 +96,15 @@ export default async function (req: Request): Promise<Response> {
       });
     }
 
-    // 4. Build the row
+    // 4. Resolve verification from the case record server-side, never from the
+    // payload. A skip trace carries no certification pathway of its own, so
+    // unless it is linked to a case it exports as uncertified.
+    const verification = await resolveCaseVerificationForExport(base44, {
+      heir_search_id: body.heir_search_id,
+      case_reference: body.case_reference,
+    });
+
+    // 5. Build the row
     const fmtList = (arr: any[], formatter: (item: any) => string) =>
       (arr || []).map(formatter).join("; ");
 
@@ -107,6 +126,7 @@ export default async function (req: Request): Promise<Response> {
       (sources_checked || []).join(", "),
       (methods_used || []).join(", "),
       ((search_duration_ms || 0) / 1000).toFixed(1),
+      ...verification.row,
     ];
 
     // 5. Append row
@@ -130,6 +150,12 @@ export default async function (req: Request): Promise<Response> {
       sheet,
       updated_range: appendData.updates?.updatedRange,
       columns: COLUMNS.length,
+      export_mode: verification.exportable_as_certified ? "certified" : "draft",
+      certification_status: verification.certification_status,
+      evidence_status: verification.evidence_status,
+      investigator_approval: verification.investigator_approval,
+      case_found: verification.case_found,
+      failed_rules: verification.failed_rules,
     });
   } catch (error: any) {
     console.error("Export skip trace to sheet error:", error);

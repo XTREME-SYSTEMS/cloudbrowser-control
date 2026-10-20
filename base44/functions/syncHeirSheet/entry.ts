@@ -1,5 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
+import {
+  APPROVAL_ACTION_TYPE,
+  EXPORT_VERIFICATION_COLUMNS,
+  buildApprovalMap,
+  resolveExportVerification,
+} from '../../shared/exportVerification.ts';
+import { caseFingerprint } from '../../shared/independentCertification.ts';
 
 /**
  * Syncs the heir tracking Google Sheet with the current database state.
@@ -25,6 +32,7 @@ const COLUMNS = [
   "Heir Name", "Relationship", "Inheritance Priority",
   "Is Living", "Phone Numbers", "Emails", "Address", "Age/DOB",
   "Social Profiles", "Heir Confidence %", "Notes", "Sync Date",
+  ...EXPORT_VERIFICATION_COLUMNS,
 ];
 
 export default async function (req: Request): Promise<Response> {
@@ -70,14 +78,40 @@ export default async function (req: Request): Promise<Response> {
       { sort: "-created_date", limit: 500, fields: [
         "deceased_name", "case_reference", "status", "confidence_score",
         "identified_heirs",
+        // Every field caseFingerprint() hashes must be projected. Omitting one
+        // would make the recomputed fingerprint differ from the recorded one and
+        // a perfectly current certificate would read as stale.
+        "deceased_dob", "deceased_dod", "death_location",
+        "family_tree", "sources_checked", "methods_used",
+        "certification",
       ] }
     );
     const records = found.items || found || [];
 
-    // 3. Build all rows — one per identified heir
+    // 3. Resolve investigator approvals in ONE query rather than one lookup per
+    // case, so a 500-case sync does not become 500 round trips.
+    let approvalMap: Record<string, any> = {};
+    try {
+      const approvals = await base44.entities.Approval.filter(
+        { action_type: APPROVAL_ACTION_TYPE },
+        { sort: "-created_date", limit: 500 }
+      );
+      approvalMap = buildApprovalMap(approvals);
+    } catch (err) {
+      // An approval register we cannot read authorises nothing.
+      console.error("Approval map lookup failed:", err);
+      approvalMap = {};
+    }
+
+    // 4. Build all rows — one per identified heir
     const rows: any[][] = [];
     const syncDate = new Date().toISOString();
     for (const rec of records) {
+      const verification = resolveExportVerification({
+        certification: rec.certification || null,
+        investigator_review: approvalMap[rec.id] || null,
+        current_fingerprint: caseFingerprint(rec),
+      });
       const heirs = rec.identified_heirs || [];
       if (heirs.length === 0) {
         // Still write a row for the case even if no heirs found yet
@@ -87,6 +121,7 @@ export default async function (req: Request): Promise<Response> {
           rec.status || "",
           rec.confidence_score || 0,
           "", "", "", "", "", "", "", "", "", "", "", syncDate,
+          ...verification.row,
         ]);
       } else {
         for (const heir of heirs) {
@@ -107,6 +142,7 @@ export default async function (req: Request): Promise<Response> {
             heir.confidence || 0,
             heir.notes || "",
             syncDate,
+            ...verification.row,
           ]);
         }
       }
@@ -151,6 +187,17 @@ export default async function (req: Request): Promise<Response> {
       records_synced: records.length,
       rows_written: written,
       failed_excluded: true,
+      columns: COLUMNS.length,
+      // The sheet is a delivery surface, so the caller is told plainly how many
+      // of the rows it just wrote carry a live certification. An uncertified
+      // case still syncs — labelled, not hidden.
+      certified_cases: records.filter((r: any) =>
+        resolveExportVerification({
+          certification: r.certification || null,
+          investigator_review: approvalMap[r.id] || null,
+          current_fingerprint: caseFingerprint(r),
+        }).exportable_as_certified
+      ).length,
       spreadsheet_id: spreadsheetId,
       sheet: sheetName,
     });

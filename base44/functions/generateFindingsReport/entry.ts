@@ -7,6 +7,7 @@ import {
   QUOTED_MATERIAL_ATTRIBUTE,
 } from "../../shared/deliveryGate.ts";
 import { caseFingerprint } from "../../shared/independentCertification.ts";
+import { caseToFamilyGraph } from "../../shared/kinshipAdapter.ts";
 
 /**
  * generateFindingsReport
@@ -178,6 +179,10 @@ export default async function (req: Request) {
       status: heirSearch.status,
       notes: heirSearch.notes,
       delivery,
+      // Rebuilt from the record rather than read from a stored copy. The graph is
+      // a deterministic function of the case, so the report shows exactly what the
+      // auditors were shown, with no second copy that could drift away from it.
+      kinship: caseToFamilyGraph(heirSearch),
     });
 
     // Defensive: a draft carrying certification language is a bug in the builder,
@@ -304,12 +309,39 @@ export default async function (req: Request) {
 
 // ===== REPORT HTML BUILDER =====
 
+/**
+ * The basis behind each relationship claim, rendered immediately after the heir
+ * list. A reader who has just seen nine names needs to learn, in the same view,
+ * how many of those relationships rest on a record and how many are carrying no
+ * recorded basis at all — that is the difference between a lead and a finding.
+ */
+function relationshipBasisHtml(kinship: any): string {
+  if (!kinship || !kinship.counts || kinship.counts.persons <= 1) return "";
+
+  const rows = (kinship.graph?.edges || [])
+    .map((e: any) => `
+  <tr>
+    <td>${escapeHtml(e.relation || "unknown")}</td>
+    <td>${escapeHtml(e.status)}</td>
+    <td>${escapeHtml((e.evidence_classes || []).join(", ") || "none recorded")}</td>
+  </tr>`)
+    .join("");
+
+  return `
+<h3 style="font-size:14px;margin:22px 0 8px 0;">Relationship Basis</h3>
+<p style="font-size:12px;color:#64748b;margin:0 0 10px 0;">${escapeHtml(kinship.disclosure || "")}</p>
+<table>
+  <tr><th>Claimed Relationship</th><th>Status</th><th>Basis Recorded</th></tr>
+  ${rows}
+</table>`;
+}
+
 function buildReportHTML(data: any): string {
   const {
     reportDate, caseRef, confidence, deceasedName,
     deceasedDOB, deceasedDOD, deathLocation, lastAddress,
     deceasedDetails, familyTree, heirs, probate, sources, methods,
-    skipTraces, status, notes, delivery,
+    skipTraces, status, notes, delivery, kinship,
   } = data;
 
   // A draft may not carry certification language at all. This is switched
@@ -480,6 +512,8 @@ ${heirs.length > 0 ? `
   ${heirRows}
 </table>
 ` : `<p style="color:#dc2626;font-style:italic;">No heirs identified in this search.</p>`}
+
+${relationshipBasisHtml(kinship)}
 
 <h2>4. Probate Court Information</h2>
 <table>
