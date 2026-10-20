@@ -5,7 +5,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu,
   Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe, Users,
-  FileText, Crown, Target, ClipboardCheck,
+  FileText, Crown, Target, ClipboardCheck, Gavel,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
@@ -39,6 +39,7 @@ const navGroups = [
       { to: "/skip-tracing", label: "Skip Tracing", icon: Target },
       { to: "/heir-search", label: "Heir Search", icon: Users },
       { to: "/heir-search-dashboard", label: "Case Dashboard", icon: FileText },
+      { to: "/investigator", label: "Investigator Command", icon: Gavel },
       { to: "/strategic-report", label: "Strategic Report", icon: FileText },
       { to: "/standards", label: "Standards & SOP", icon: ClipboardCheck },
       { to: "/heir-portal", label: "Client Portal", icon: Crown },

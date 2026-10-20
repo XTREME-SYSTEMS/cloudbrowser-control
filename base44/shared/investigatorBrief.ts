@@ -93,11 +93,19 @@ const GATE_GAP_MESSAGES: Record<string, string> = {
   "DEL-02": "The certification is stale: the case changed after it was reviewed and must be re-reviewed.",
   "DEL-03": "Certification is current but no investigator has approved delivery.",
   "DEL-04": "An investigator rejected delivery of this case.",
+  // These follow the rule numbers in independentCertification.ts exactly. A gap
+  // row that names CERT-05 while describing CERT-02 sends a reviewer to fix the
+  // wrong thing, so the mapping is checked against the evaluator rather than
+  // written from memory.
   "CERT-01": "The producer, QA and Validator did not use three distinct models, so independence is unproven.",
-  "CERT-02": "Reviewed findings were not mechanically re-verified against their preserved sources.",
-  "CERT-03": "Findings lack independent corroboration from more than one source.",
-  "CERT-04": "One or more findings were flagged as unsupported by their own source.",
-  "CERT-05": "Recorded confidence is below the certification threshold.",
+  "CERT-02": "The QA or Validator score is missing or outside 0-100. A missing verdict is not a passing verdict.",
+  "CERT-03": "A blocking rule violation is unresolved. A blocking rule cannot be overridden by any score.",
+  "CERT-04": "A finding relied upon has fewer than two independent sources.",
+  "CERT-05": "Source evidence could not be mechanically re-verified. It is reported as unverified, never as diligence.",
+  "CERT-06": "Unresolved hallucination flag(s) remain against this case.",
+  "CERT-07": "The QA and the Validator did not both independently reach the 90/100 threshold.",
+  "CERT-08": "No record exists of which sources were actually queried.",
+  "CERT-09": "No recorded source evidence exists for this case, or none of it survived re-verification.",
 };
 
 /** Falls back to the raw rule code rather than silently dropping an unknown rule. */
