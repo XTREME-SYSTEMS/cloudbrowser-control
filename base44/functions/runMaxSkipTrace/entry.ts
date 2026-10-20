@@ -65,7 +65,7 @@ export default async function (req: Request): Promise<Response> {
       social_profiles: [], relatives: [],
       owner_name: owner_name || "",
       sources: [] as string[], methods: [] as string[],
-      errors: [] as any[], raw_findings: {} as any,
+      errors: [] as any[], raw_findings: {} as any, evidence_records: [] as any[],
     };
 
     // ============ PHASE 1: IDENTITY RESOLUTION ============
