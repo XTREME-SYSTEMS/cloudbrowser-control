@@ -1,0 +1,142 @@
+{
+  "name": "OpsTask",
+  "type": "object",
+  "description": "A unit of operating work for the AI executive assistant: an outreach, a follow-up, a message to send, a scheduling action or a monitoring watch, each owned by a named agent rather than by a person.",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "outreach",
+        "follow_up",
+        "message",
+        "schedule",
+        "monitor",
+        "research",
+        "delivery",
+        "internal"
+      ],
+      "default": "internal"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "voice",
+        "sms",
+        "mms",
+        "whatsapp",
+        "email",
+        "calendar",
+        "internal",
+        "browser"
+      ],
+      "default": "internal"
+    },
+    "owner_agent": {
+      "type": "string",
+      "description": "Which specialised agent owns this task end to end"
+    },
+    "service_slug": {
+      "type": "string",
+      "description": "Catalogue service this task serves, when it serves one"
+    },
+    "service_run_id": {
+      "type": "string",
+      "description": "The run this task came out of, when it came out of one"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "done",
+        "blocked",
+        "cancelled"
+      ],
+      "default": "open"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    },
+    "due_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "instruction": {
+      "type": "string",
+      "description": "What the agent is to do, in plain language"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Structured inputs the agent needs (recipient, subject, window, target record)"
+    },
+    "result": {
+      "type": "string",
+      "description": "What the agent produced or did"
+    },
+    "blocked_reason": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "executive_assistant",
+        "service_run",
+        "operator",
+        "monitor"
+      ],
+      "default": "executive_assistant"
+    }
+  },
+  "required": [
+    "title",
+    "kind",
+    "owner_agent",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
