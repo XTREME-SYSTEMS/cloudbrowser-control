@@ -34,6 +34,144 @@
       "type": "string",
       "description": "Client email to assign this case to a client portal user"
     },
+    "authorization": {
+      "type": "object",
+      "description": "The authority this case is researched under, recorded once at intake and inherited by every search that serves it. Never reconstructed after the fact.",
+      "properties": {
+        "permissible_purpose": {
+          "type": "string",
+          "description": "Enumerated permissible purpose (FCRA \u00a7604). Must be one of the values defined in searchValidation.ts"
+        },
+        "legal_matter": {
+          "type": "string",
+          "description": "The specific legal matter this research serves"
+        },
+        "case_reference": {
+          "type": "string",
+          "description": "Court docket, case or matter reference"
+        },
+        "data_categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Regulated data categories this case may touch (credit_header, driver_record, financial, medical)"
+        },
+        "subject_name": {
+          "type": "string"
+        },
+        "asserted_by_id": {
+          "type": "string",
+          "description": "Accountable operator who asserted the purpose"
+        },
+        "asserted_by_email": {
+          "type": "string"
+        },
+        "asserted_at": {
+          "type": "string",
+          "description": "When the purpose was asserted, before any source was contacted"
+        },
+        "verdict": {
+          "type": "object",
+          "description": "Verdict from the strict authorization gate at intake"
+        }
+      }
+    },
+    "certification": {
+      "type": "object",
+      "description": "Structured independent certification. Written only by runHeirSearchQA. Replaces the previous practice of appending certification text to notes.",
+      "properties": {
+        "certified": {
+          "type": "boolean",
+          "default": false
+        },
+        "qa_score": {
+          "type": "number"
+        },
+        "qa_model": {
+          "type": "string",
+          "description": "Which model produced the QA verdict. Recorded so independence is auditable."
+        },
+        "validator_score": {
+          "type": "number"
+        },
+        "validator_model": {
+          "type": "string"
+        },
+        "search_model": {
+          "type": "string"
+        },
+        "model_separation_ok": {
+          "type": "boolean",
+          "description": "True only when producer, QA and Validator are three distinct models"
+        },
+        "overall_score": {
+          "type": "number"
+        },
+        "failed_rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Deterministic rules that refused certification, e.g. CERT-05"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verified_finding_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Findings whose source was mechanically re-fetched and whose recorded evidence was still present"
+        },
+        "unverified_finding_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stamp": {
+          "type": "string"
+        },
+        "certifier_version": {
+          "type": "string"
+        },
+        "certified_at": {
+          "type": "string"
+        }
+      }
+    },
+    "blocked_sources": {
+      "type": "object",
+      "description": "Which licensed and public sources were unavailable, and the exact credential missing. A blocked source is disclosed, never silently skipped.",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "blocked": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "available": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "disclosure": {
+          "type": "string"
+        },
+        "checked_at": {
+          "type": "string"
+        }
+      }
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -310,7 +448,7 @@
     "confidence_score": {
       "type": "number",
       "default": 0,
-      "description": "Overall confidence in the heir search (0-100)"
+      "description": "Overall confidence in the heir search (0-100). A self-reported figure \u2014 it is NEVER evidence, and it is withheld from the QA agent so the review is not anchored."
     },
     "search_duration_ms": {
       "type": "number",

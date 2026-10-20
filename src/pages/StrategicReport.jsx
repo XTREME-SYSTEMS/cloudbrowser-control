@@ -263,6 +263,9 @@ export default function StrategicReport() {
         file_data: base64,
         filename: fileName,
         folder_id: "1VyAeFWxWA9nQIw1OcbHjp6-fWkE5WDM8",
+        // Delivery is gated server-side on the case holding a live independent
+        // certification. A refusal here is the gate working, not a defect.
+        heir_search_id: hs.heir_search_id,
       });
       const data = res.data || res;
       if (data.file_url) {

@@ -4,12 +4,45 @@ export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { file_data, filename, folder_id } = body;
+    const { file_data, filename, folder_id, heir_search_id } = body;
 
     if (!file_data || !filename) {
       return Response.json(
         { error: "Missing file_data or filename" },
         { status: 400 }
+      );
+    }
+
+    // ===== DELIVERY GATE =====
+    // A court-ready PDF is the delivery of certified work. If the case holds no
+    // live independent certification this refuses. A warning badge printed on an
+    // already-generated document is not a gate, because the document exists by
+    // then and will be sent anyway.
+    if (!heir_search_id) {
+      return Response.json(
+        { error: "heir_search_id is required. A court-ready PDF delivers one specific certified case." },
+        { status: 400 }
+      );
+    }
+
+    const caseRecord = await base44.entities.HeirSearch.get(heir_search_id).catch(() => null);
+    if (!caseRecord) {
+      return Response.json({ error: "Heir search case not found." }, { status: 404 });
+    }
+
+    const certification = caseRecord.certification || null;
+    if (certification?.certified !== true || certification?.model_separation_ok !== true) {
+      console.warn("uploadCourtReadyPDF refused: case is not independently certified.", certification?.failed_rules);
+      return Response.json(
+        {
+          error: `Delivery refused. This case holds no independent certification${
+            certification?.failed_rules?.length ? ` (failed rules: ${certification.failed_rules.join(", ")})` : ""
+          }. Correct the deficiencies and re-run independent QA before a court-ready PDF is produced.`,
+          blocked_from_delivery: true,
+          failed_rules: certification?.failed_rules || [],
+          reasons: certification?.reasons || [],
+        },
+        { status: 409 }
       );
     }
 

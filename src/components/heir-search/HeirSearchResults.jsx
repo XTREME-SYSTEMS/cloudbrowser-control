@@ -10,11 +10,13 @@ import {
   Dna, Globe2, Landmark, Newspaper, ChevronDown, ChevronRight, Zap, Calendar,
 } from "lucide-react";
 import { downloadHeirPDF } from "@/lib/heirPDF";
+import { CaseAuthorizationProvider } from "@/components/heir-search/CaseAuthorizationContext";
 
 export default function HeirSearchResults({
   result,
   setResult,
   deepSearch,
+  heirSearchId = null,
   searchingSection = null,
   onDeleteSection = undefined,
   onDeepSearchSection = undefined,
@@ -42,6 +44,9 @@ export default function HeirSearchResults({
       const response = await base44.functions.invoke("runSkipTraceFallback", {
         owner_name: heir.name,
         deep_search: true,
+        // Inherits this case's recorded authority; the operator does not have to
+        // restate the permissible purpose for every heir.
+        heir_search_id: heirSearchId || result.id || undefined,
       });
       const data = response.data || response;
       if (data && !data.error) {
@@ -68,6 +73,7 @@ export default function HeirSearchResults({
   const hasData = (obj) => obj && Object.keys(obj).length > 0;
 
   return (
+    <CaseAuthorizationProvider heir_search_id={heirSearchId || result.id || null}>
     <div className="space-y-4">
       {/* Summary */}
       <div className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -613,5 +619,6 @@ export default function HeirSearchResults({
         <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{(result.duration_ms / 1000).toFixed(1)}s</span>
       </div>
     </div>
+    </CaseAuthorizationProvider>
   );
 }

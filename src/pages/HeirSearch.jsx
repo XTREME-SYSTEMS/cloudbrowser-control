@@ -27,8 +27,27 @@ export default function HeirSearch() {
   const [deletingId, setDeletingId] = useState(null);
   const [showAllCases, setShowAllCases] = useState(false);
   const [traceSummary, setTraceSummary] = useState(null);
+  const [auth, setAuth] = useState({ permissible_purpose: "", legal_matter: "", case_reference: "" });
 
   const isBusy = stage !== "";
+
+  // Mirrors base44/shared/searchValidation.ts PERMISSIBLE_PURPOSES. The server
+  // validates against its own table; this list only populates the picker.
+  const PURPOSE_OPTIONS = [
+    ["fiduciary_duty", "Fiduciary duty — estate, probate or trust administration"],
+    ["litigation", "Litigation — locating a party or witness, or asset recovery"],
+    ["court_order", "Court order or federal grand jury subpoena"],
+    ["consumer_written_instruction", "Written instruction of the consumer"],
+    ["account_review_collection", "Review or collection of an account"],
+    ["business_transaction", "Business transaction initiated by the consumer"],
+    ["legal_compliance", "Compliance with federal, state or local law"],
+    ["government_authorized", "Authorized government or law-enforcement function"],
+  ];
+  const authComplete = Boolean(
+    PURPOSE_OPTIONS.some(([id]) => id === auth.permissible_purpose) &&
+    auth.legal_matter.trim() &&
+    auth.case_reference.trim()
+  );
 
   useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
 
@@ -64,6 +83,12 @@ export default function HeirSearch() {
   const handleSearch = async () => {
     const trimmed = query.trim();
     if (!trimmed) return;
+    // Fail closed here as well. The server enforces this; the guard exists so the
+    // operator is told before a run starts rather than after it is refused.
+    if (!authComplete) {
+      setError("Record the authority for this research first: a permissible purpose, the specific legal matter, and a case reference. A search must state what authorises it before any source is contacted.");
+      return;
+    }
     setError(null);
     setResult(null);
     setTraceSummary(null);
@@ -90,9 +115,15 @@ export default function HeirSearch() {
 
       // Stage 2: Ultra-deep heir search
       setStage("searching");
+      const authorizationRecord = {
+        permissible_purpose: auth.permissible_purpose,
+        legal_matter: auth.legal_matter.trim(),
+        case_reference: auth.case_reference.trim(),
+      };
       const response = await base44.functions.invoke("runHeirSearch", {
         ...form, deep_search: true, extreme_deep: true,
         spreadsheet_url: trackingSheetUrl || undefined,
+        authorization: { ...authorizationRecord, subject_name: form.deceased_name },
       });
       const data = response.data || response;
       if (data.error) { setError(data.error); return; }
@@ -101,6 +132,17 @@ export default function HeirSearch() {
 
       // Stage 3: Auto-trace every heir + everyone they know (background)
       if (data.id) {
+        // Persist the asserted authority onto the case. Every search that serves
+        // this case then inherits one recorded purpose, rather than each one
+        // restating it — or quietly omitting it.
+        try {
+          await base44.entities.HeirSearch.update(data.id, {
+            authorization: { ...authorizationRecord, asserted_at: new Date().toISOString() },
+          });
+        } catch (e) {
+          console.error("Could not record the case authorization:", e);
+        }
+
         setStage("tracing");
         try {
           const traceRes = await base44.functions.invoke("autoTraceHeirs", {
@@ -179,8 +221,38 @@ export default function HeirSearch() {
             className="w-full pl-12 pr-4 py-4 text-base rounded-2xl border border-slate-300 bg-white shadow-sm focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20 resize-none placeholder:text-slate-400"
           />
         </div>
+        {/* Authority — recorded before any source is contacted */}
+        <div className="mt-4 p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2.5">
+          <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Authority for this research</p>
+          <select
+            value={auth.permissible_purpose}
+            onChange={e => setAuth({ ...auth, permissible_purpose: e.target.value })}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20"
+          >
+            <option value="">Select the permissible purpose…</option>
+            {PURPOSE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+          </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <input
+              value={auth.legal_matter}
+              onChange={e => setAuth({ ...auth, legal_matter: e.target.value })}
+              placeholder="Specific legal matter (e.g. Estate of J. Smith, probate)"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20"
+            />
+            <input
+              value={auth.case_reference}
+              onChange={e => setAuth({ ...auth, case_reference: e.target.value })}
+              placeholder="Case / docket reference"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20"
+            />
+          </div>
+          <p className="text-[11px] text-slate-500">
+            FCRA §604 permits consumer information to be furnished only under an enumerated permissible purpose. This is recorded on the case and inherited by every search that serves it.
+          </p>
+        </div>
+
         <div className="flex items-center justify-center mt-4">
-          <Button onClick={handleSearch} disabled={isBusy || !query.trim()}
+          <Button onClick={handleSearch} disabled={isBusy || !query.trim() || !authComplete}
             className="rounded-full px-8 h-11 bg-[#0a1f3c] hover:bg-[#1a3a5c] text-white border-0 text-base">
             {isBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Searching...</> : <><Sparkles className="w-4 h-4 mr-2" />Start Research</>}
           </Button>
@@ -218,7 +290,7 @@ export default function HeirSearch() {
       {/* Results */}
       {result && (
         <div className="mt-6">
-          <HeirSearchResults result={result} setResult={setResult} deepSearch={true} />
+          <HeirSearchResults result={result} setResult={setResult} deepSearch={true} heirSearchId={result?.id} />
         </div>
       )}
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import EntitySearchDialog from "./EntitySearchDialog";
+import { useCaseAuthorization } from "./CaseAuthorizationContext";
 
 /**
  * Wraps any text (name, address) to make it clickable.
@@ -7,6 +8,7 @@ import EntitySearchDialog from "./EntitySearchDialog";
  */
 export default function ClickableEntity({ children, type = "name", className = "" }) {
   const [open, setOpen] = useState(false);
+  const { heir_search_id } = useCaseAuthorization();
   if (!children || typeof children !== "string" || children.trim() === "" || children === "—") {
     return <span className={className}>{children}</span>;
   }
@@ -19,7 +21,7 @@ export default function ClickableEntity({ children, type = "name", className = "
       >
         {children}
       </span>
-      <EntitySearchDialog open={open} onOpenChange={setOpen} query={children} type={type} />
+      <EntitySearchDialog open={open} onOpenChange={setOpen} query={children} type={type} heir_search_id={heir_search_id} />
     </>
   );
 }

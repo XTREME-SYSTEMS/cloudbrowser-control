@@ -20,7 +20,7 @@ function isValidEvidenceRecord(record) {
  * Dialog for a skip-trace lookup on a name or address.
  * Results remain candidate leads unless valid, traceable source evidence is attached.
  */
-export default function EntitySearchDialog({ open, onOpenChange, query, type = "name" }) {
+export default function EntitySearchDialog({ open, onOpenChange, query, type = "name", heir_search_id = null }) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
@@ -42,6 +42,9 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
         const response = await base44.functions.invoke("runSkipTraceFallback", {
           owner_name: query,
           deep_search: true,
+          // Inherits the parent case's recorded authority rather than asserting
+          // a fresh, unrecorded one for a one-off lookup.
+          heir_search_id: heir_search_id || undefined,
         });
         if (cancelled) return;
         const data = response.data || response;
@@ -54,7 +57,7 @@ export default function EntitySearchDialog({ open, onOpenChange, query, type = "
       }
     })();
     return () => { cancelled = true; };
-  }, [open, query]);
+  }, [open, query, heir_search_id]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

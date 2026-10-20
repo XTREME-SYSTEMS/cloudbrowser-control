@@ -3,6 +3,7 @@ import { secrets } from 'base44:runtime';
 import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
 import { HEIR_SEARCH_CATALOG } from '../../shared/searchSourceCatalog.ts';
 import { deduplicateHeirs, calculateOverallConfidence, isDeceasedIdentityConfirmed, calculateInheritancePriority } from '../../shared/heirEvidenceEngine.ts';
+import { authorizeSearch } from '../../shared/searchValidation.ts';
 
 /**
  * Heir Search Engine — Deceased Person Heir Identification & Contact Discovery
@@ -39,6 +40,30 @@ export default async function (req: Request): Promise<Response> {
     setGatewayFallback(base44);
 
     const body = await req.json();
+
+    // ===== AUTHORIZATION GATE =====
+    // Recorded once at case intake, before any source is contacted. A research
+    // run with no declared authority is refused here rather than researched and
+    // justified afterwards — the purpose is what authorises the access, not
+    // paperwork generated to fit a result already obtained.
+    const asserted = body?.authorization || {};
+    const authVerdict = authorizeSearch({
+      permissible_purpose: asserted.permissible_purpose,
+      legal_matter: asserted.legal_matter,
+      case_reference: asserted.case_reference,
+      data_categories: Array.isArray(asserted.data_categories) ? asserted.data_categories : [],
+      subject_name: body?.deceased_name,
+      requested_by_id: user.id,
+      requested_by_email: user.email,
+    });
+    if (!authVerdict.ok) {
+      console.warn("runHeirSearch refused by authorization gate:", authVerdict.summary);
+      return Response.json({
+        error: "Research refused by the authorization gate. A permissible purpose, the specific legal matter and a case reference must all be recorded before any source is contacted.",
+        authorization_verdict: authVerdict,
+      }, { status: 403 });
+    }
+
     const {
       deceased_name, deceased_dob, deceased_dod, deceased_last_address,
       deceased_ssn, death_location, case_reference, client_email, deep_search,

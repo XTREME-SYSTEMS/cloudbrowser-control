@@ -13,7 +13,7 @@ export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url, authorization } = body as any;
+    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url, authorization, heir_search_id } = body as any;
 
     if (![property_address, owner_name, phone, email, company].some((value) => typeof value === "string" && value.trim())) {
       return Response.json({
@@ -28,7 +28,25 @@ export default async function (req: Request): Promise<Response> {
     // The permissible purpose is what authorises the access, so it is checked
     // before any source is contacted — never reconstructed afterwards.
     const operator = await base44.auth.me().catch(() => null);
-    const auth = authorization || {};
+
+    // Case-level inheritance: a case is authorised once at intake and every
+    // search serving it inherits that authority. Without this each heir trace
+    // must restate the purpose, and the natural shortcut is to stop asking —
+    // which is how a recorded purpose rots into a checkbox.
+    let auth = authorization || {};
+    const hasInlineAuth = ["permissible_purpose", "legal_matter", "case_reference"].every(
+      (key) => typeof (auth as any)[key] === "string" && (auth as any)[key].trim(),
+    );
+    if (!hasInlineAuth && heir_search_id) {
+      const parentCase: any = await base44.entities.HeirSearch.get(heir_search_id).catch(() => null);
+      const inherited = parentCase?.authorization || {};
+      auth = {
+        permissible_purpose: inherited.permissible_purpose,
+        legal_matter: inherited.legal_matter,
+        case_reference: inherited.case_reference,
+        data_categories: Array.isArray(inherited.data_categories) ? inherited.data_categories : [],
+      };
+    }
     const verdict = authorizeSearch({
       permissible_purpose: auth.permissible_purpose,
       legal_matter: auth.legal_matter,
@@ -53,7 +71,10 @@ export default async function (req: Request): Promise<Response> {
 
     try {
       const raw = await base44.functions.invoke("runSkipTrace", {
-        property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url,
+        property_address, owner_name, phone, email, company,
+        // Link the trace to its parent case so the QA pipeline can find it.
+        batch_id: batch_id || heir_search_id,
+        deep_search, spreadsheet_url,
       });
       const result: any = raw?.data ?? raw;
 
