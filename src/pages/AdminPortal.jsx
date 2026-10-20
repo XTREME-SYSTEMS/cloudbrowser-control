@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, CreditCard, Phone, Key, Ticket, Eye, RefreshCw, ArrowLeft, Users, Sparkles } from "lucide-react";
+import { LayoutDashboard, CreditCard, Phone, Key, Ticket, Eye, RefreshCw, ArrowLeft, Users, Sparkles, Scale } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminSubscriptions from "@/components/admin/AdminSubscriptions";
 import AdminPhoneNumbers from "@/components/admin/AdminPhoneNumbers";
@@ -12,6 +12,7 @@ import AdminPromos from "@/components/admin/AdminPromos";
 import AdminVisionCortex from "@/components/admin/AdminVisionCortex";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminTeam from "@/components/admin/AdminTeam";
+import AdminIndustryBenchmarks from "@/components/admin/AdminIndustryBenchmarks";
 
 const LOGO_URL = "https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png";
 
@@ -24,6 +25,7 @@ const tabs = [
   { id: "visioncortex", label: "Vision Cortex", icon: Eye },
   { id: "users", label: "Users", icon: Users },
   { id: "team", label: "Team", icon: Users },
+  { id: "benchmarks", label: "Benchmarks", icon: Scale },
 ];
 
 export default function AdminPortal() {
@@ -110,6 +112,7 @@ export default function AdminPortal() {
         {activeTab === "visioncortex" && <AdminVisionCortex key={`vc-${refreshKey}`} />}
         {activeTab === "users" && <AdminUsers key={`us-${refreshKey}`} />}
         {activeTab === "team" && <AdminTeam key={`tm-${refreshKey}`} />}
+        {activeTab === "benchmarks" && <AdminIndustryBenchmarks key={`bm-${refreshKey}`} />}
       </div>
     </div>
   );

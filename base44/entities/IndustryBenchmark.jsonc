@@ -1,0 +1,96 @@
+{
+  "name": "IndustryBenchmark",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "professional_standard",
+        "evidentiary_standard",
+        "qa_validation_method",
+        "compliance_requirement",
+        "competitor_benchmark",
+        "business_model"
+      ],
+      "description": "Which reference group this benchmark belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short name of the standard, method, requirement or firm"
+    },
+    "authority": {
+      "type": "string",
+      "description": "Who sets or publishes it (BCG, CAFG, Federal Rules of Evidence, a named firm)"
+    },
+    "citation": {
+      "type": "string",
+      "description": "Rule number, publication, or document name"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Public URL where the underlying requirement can be read"
+    },
+    "requirement": {
+      "type": "string",
+      "description": "What the standard actually requires, stated plainly"
+    },
+    "our_target": {
+      "type": "string",
+      "description": "How our system holds itself to this requirement"
+    },
+    "our_gap": {
+      "type": "string",
+      "description": "Honest statement of what is not yet implemented or not yet verified"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "verified_primary_source",
+        "secondary_source",
+        "vendor_claim_unverified"
+      ],
+      "description": "How well-sourced this entry is"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ],
+      "default": "P1"
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "category",
+    "title",
+    "requirement",
+    "verification_status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
