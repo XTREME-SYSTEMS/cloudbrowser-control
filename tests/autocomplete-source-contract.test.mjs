@@ -153,3 +153,20 @@ test('preflight fails closed when control-plane entities or canonical source tru
     assert.ok(preflight.includes(required), `preflight missing ${required}`);
   }
 });
+
+const selfHealing = read('base44/functions/runSelfHealingLoop/entry.ts');
+
+test('legacy self-healing fails closed when no executable repair or exact validator exists', () => {
+  const applyRepairStart = selfHealing.indexOf('async function applyRepair');
+  const validateRepairStart = selfHealing.indexOf('async function validateRepair');
+  assert.ok(applyRepairStart >= 0, 'applyRepair implementation must exist');
+  assert.ok(validateRepairStart > applyRepairStart, 'validateRepair implementation must follow applyRepair');
+  const applyRepairSource = selfHealing.slice(applyRepairStart, validateRepairStart);
+  assert.doesNotMatch(applyRepairSource, /applied:\\s*true/, 'narrative-only repair branches must not claim a mutation');
+  assert.match(selfHealing, /if \\(!repairResult\\.applied\\) \\{[\\s\\S]*?flagsEscalated\\+\\+;[\\s\\S]*?continue;/,
+    'unapplied repairs must escalate and skip validation');
+  assert.match(selfHealing, /async function validateRepair\\(_base44: any, _flag: any\\)[\\s\\S]*?return \\{ passed: false, score: 0 \\};/,
+    'validator must fail closed until exact behavioral validation exists');
+  assert.doesNotMatch(selfHealing, /return \\{ passed: true, score: 100 \\};/,
+    'unknown entity types must never default to PASS');
+});
