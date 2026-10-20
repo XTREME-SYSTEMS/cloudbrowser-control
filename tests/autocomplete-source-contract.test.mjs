@@ -170,7 +170,7 @@ test('legacy self-healing fails closed when no executable repair or exact valida
   assert.doesNotMatch(selfHealing, /return \{ passed: true, score: 100 \};/,
     'unknown entity types must never default to PASS');
   assert.equal(
-    selfHealing.includes('status: "resolved",\\n                validation_status: "passed"'),
+    selfHealing.includes('status: "resolved",\n                validation_status: "passed"'),
     false,
     'a score-only goal retry must not resolve an existing HealingFlag'
   );
