@@ -1,5 +1,5 @@
 import React from "react";
-import { Database, Link2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Link2, ShieldCheck, ShieldAlert } from "lucide-react";
 import StatusPill from "@/components/investigator/StatusPill";
 
 /**
@@ -110,7 +110,7 @@ function shortWhen(value) {
   return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
 }
 
-function Stat({ label, value, tone }) {
+function Stat({ label, value, tone = "" }) {
   return (
     <div className="rounded-lg border border-border bg-card px-2 py-1.5 text-center">
       <div className={`text-lg font-display font-bold ${tone || ""}`}>{value}</div>

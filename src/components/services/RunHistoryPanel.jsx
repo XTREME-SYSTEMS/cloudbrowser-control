@@ -78,7 +78,7 @@ export default function RunHistoryPanel({ runs, loading }) {
   );
 }
 
-function Chip({ label, bad }) {
+function Chip({ label, bad = false }) {
   return (
     <span className={`rounded-full border px-2 py-0.5 text-[10px] ${bad ? "border-destructive/30 bg-destructive/5 text-destructive" : "border-border/60 text-muted-foreground"}`}>
       {label}

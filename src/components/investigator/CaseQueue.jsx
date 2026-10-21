@@ -85,7 +85,7 @@ export default function CaseQueue({ cases = [], counts, selectedId, onSelect, on
   );
 }
 
-function Stat({ label, value, tone }) {
+function Stat({ label, value, tone = "" }) {
   return (
     <div className="rounded-lg border border-border bg-card px-2 py-1.5">
       <div className={`text-lg font-display font-bold ${tone || ""}`}>{value}</div>

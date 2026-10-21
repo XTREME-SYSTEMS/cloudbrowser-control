@@ -29,7 +29,7 @@ export default function BrandMark({
   size = "md",
   tone = "token",
   tagline = "Heir Search · Probate Genealogy",
-  className,
+  className = "",
 }) {
   const s = SIZES[size] || SIZES.md;
   const t = TONES[tone] || TONES.token;

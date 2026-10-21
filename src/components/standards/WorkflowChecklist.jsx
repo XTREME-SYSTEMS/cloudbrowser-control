@@ -31,7 +31,7 @@ export default function WorkflowChecklist() {
   const counts = Object.values(STEP_AUTONOMY).reduce((acc, a) => {
     acc[a.level] = (acc[a.level] || 0) + 1;
     return acc;
-  }, {});
+  }, /** @type {Record<string, number>} */ ({}));
 
   return (
     <SectionCard

@@ -142,7 +142,7 @@ function Score({ label, value }) {
   );
 }
 
-function Row({ label, value, mono }) {
+function Row({ label, value, mono = false }) {
   return (
     <p className="text-[11px] text-muted-foreground flex gap-2 py-0.5">
       <span className="font-semibold text-foreground w-36 shrink-0">{label}</span>

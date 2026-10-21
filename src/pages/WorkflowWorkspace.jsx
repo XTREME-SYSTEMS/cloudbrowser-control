@@ -43,7 +43,7 @@ export default function WorkflowWorkspace() {
   const loadRuns = useCallback(async () => {
     try {
       const page = await base44.entities.ServiceRun.list("-created_date", 8);
-      setRuns(page?.items || (Array.isArray(page) ? page : []));
+      setRuns(Array.isArray(page) ? page : []);
     } catch (err) {
       console.error(err);
     }

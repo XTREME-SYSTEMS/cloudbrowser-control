@@ -35,7 +35,7 @@ export function toneFor(label) {
   return LABEL_TONES[String(label ?? "")] || "neutral";
 }
 
-export default function StatusPill({ label, tone, className }) {
+export default function StatusPill({ label, tone = undefined, className = "" }) {
   const key = TONES[tone] ? tone : toneFor(label);
   return (
     <span

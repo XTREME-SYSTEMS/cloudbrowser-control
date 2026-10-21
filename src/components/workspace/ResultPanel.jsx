@@ -281,7 +281,7 @@ export default function ResultPanel({ run, onDecision, onRerunStage, busyStage }
   );
 }
 
-function ReviewCard({ title, agent, model, value, suffix, verdict, ok }) {
+function ReviewCard({ title, agent, model, value, suffix = "", verdict = "", ok = undefined }) {
   const Icon = ok === false ? ShieldX : ShieldCheck;
   return (
     <div className="rounded-xl border border-border/60 bg-card p-3">
