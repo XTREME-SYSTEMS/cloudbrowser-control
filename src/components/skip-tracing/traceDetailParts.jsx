@@ -31,7 +31,7 @@ export function when(value) {
 }
 
 /** A titled block. Renders nothing at all when it has no children. */
-export function Section({ icon: Icon, title, count, children, className }) {
+export function Section({ icon: Icon, title, count = null, children = null, className = "" }) {
   if (children === null || children === undefined) return null;
   return (
     <section className={cn("space-y-2", className)}>
@@ -46,7 +46,7 @@ export function Section({ icon: Icon, title, count, children, className }) {
 }
 
 /** One label/value pair. An absent value reads as an em dash, never as blank. */
-export function Field({ label, value, mono = false, href = null, className }) {
+export function Field({ label, value, mono = false, href = null, className = "" }) {
   const empty = value === null || value === undefined || value === "";
   const display = empty ? "—" : String(value);
   const external = href && /^https?:/i.test(href);

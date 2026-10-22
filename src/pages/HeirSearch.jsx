@@ -27,7 +27,7 @@ export default function HeirSearch() {
   const [deletingId, setDeletingId] = useState(null);
   const [showAllCases, setShowAllCases] = useState(false);
   const [traceSummary, setTraceSummary] = useState(null);
-  const [auth, setAuth] = useState({ permissible_purpose: "", legal_matter: "", case_reference: "" });
+  const [auth, setAuth] = useState({ permissible_purpose: "" });
 
   const isBusy = stage !== "";
 
@@ -43,11 +43,10 @@ export default function HeirSearch() {
     ["legal_compliance", "Compliance with federal, state or local law"],
     ["government_authorized", "Authorized government or law-enforcement function"],
   ];
-  const authComplete = Boolean(
-    PURPOSE_OPTIONS.some(([id]) => id === auth.permissible_purpose) &&
-    auth.legal_matter.trim() &&
-    auth.case_reference.trim()
-  );
+  // Only the permissible purpose is required. The legal matter and case
+  // reference boxes were removed from intake; the matter and docket are still
+  // kept on the record whenever a pasted filing supplies them.
+  const authComplete = PURPOSE_OPTIONS.some(([id]) => id === auth.permissible_purpose);
 
   useEffect(() => { loadHistory(); loadTrackingSheet(); }, []);
 
@@ -86,7 +85,7 @@ export default function HeirSearch() {
     // Fail closed here as well. The server enforces this; the guard exists so the
     // operator is told before a run starts rather than after it is refused.
     if (!authComplete) {
-      setError("Record the authority for this research first: a permissible purpose, the specific legal matter, and a case reference. A search must state what authorises it before any source is contacted.");
+      setError("Select the permissible purpose first. A search must state the authority it is conducted under before any source is contacted.");
       return;
     }
     setError(null);
@@ -117,8 +116,6 @@ export default function HeirSearch() {
       setStage("searching");
       const authorizationRecord = {
         permissible_purpose: auth.permissible_purpose,
-        legal_matter: auth.legal_matter.trim(),
-        case_reference: auth.case_reference.trim(),
       };
       const response = await base44.functions.invoke("runHeirSearch", {
         ...form, deep_search: true, extreme_deep: true,
@@ -232,20 +229,6 @@ export default function HeirSearch() {
             <option value="">Select the permissible purpose…</option>
             {PURPOSE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
           </select>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            <input
-              value={auth.legal_matter}
-              onChange={e => setAuth({ ...auth, legal_matter: e.target.value })}
-              placeholder="Specific legal matter (e.g. Estate of J. Smith, probate)"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20"
-            />
-            <input
-              value={auth.case_reference}
-              onChange={e => setAuth({ ...auth, case_reference: e.target.value })}
-              placeholder="Case / docket reference"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-[#0a1f3c] focus:ring-2 focus:ring-[#c9a961]/20"
-            />
-          </div>
           <p className="text-[11px] text-slate-500">
             FCRA §604 permits consumer information to be furnished only under an enumerated permissible purpose. This is recorded on the case and inherited by every search that serves it.
           </p>

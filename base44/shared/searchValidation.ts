@@ -148,7 +148,17 @@ export interface SearchAuthorization {
  * must not touch a data source, because the purpose is what authorises the
  * access — it is not paperwork generated afterwards.
  */
-export function validateSearchRequest(input: SearchAuthorization): ValidationResult {
+export interface AuthGateOptions {
+  /**
+   * Whether the legal matter and the case/docket reference are required.
+   * Defaults to true. A caller that records the permissible purpose on its own
+   * says so explicitly here, rather than the gate being loosened for everyone.
+   */
+  requireReferences?: boolean;
+}
+
+export function validateSearchRequest(input: SearchAuthorization, options: AuthGateOptions = {}): ValidationResult {
+  const requireReferences = options.requireReferences !== false;
   return runChecks(input as any, [
     (i) =>
       isPermissiblePurpose(i.permissible_purpose)
@@ -164,7 +174,7 @@ export function validateSearchRequest(input: SearchAuthorization): ValidationRes
           },
 
     (i) =>
-      isNonEmptyString(i.legal_matter)
+      (!requireReferences || isNonEmptyString(i.legal_matter))
         ? null
         : {
             rule: "AUTH-02",
@@ -176,7 +186,7 @@ export function validateSearchRequest(input: SearchAuthorization): ValidationRes
           },
 
     (i) =>
-      isNonEmptyString(i.case_reference)
+      (!requireReferences || isNonEmptyString(i.case_reference))
         ? null
         : {
             rule: "AUTH-03",
@@ -657,6 +667,6 @@ export function blockingRules(result: ValidationResult): Violation[] {
 /**
  * One call the search path can make. Never throws — returns a verdict.
  */
-export function authorizeSearch(input: SearchAuthorization): ValidationResult {
-  return validateSearchRequest(input);
+export function authorizeSearch(input: SearchAuthorization, options: AuthGateOptions = {}): ValidationResult {
+  return validateSearchRequest(input, options);
 }

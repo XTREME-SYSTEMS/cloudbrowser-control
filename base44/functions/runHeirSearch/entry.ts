@@ -55,11 +55,16 @@ export default async function (req: Request): Promise<Response> {
       subject_name: body?.deceased_name,
       requested_by_id: user.id,
       requested_by_email: user.email,
+    }, {
+      // Intake records the permissible purpose alone. The matter and docket
+      // references are still kept when supplied — a pasted filing populates
+      // them — but they are no longer demanded before a run can start.
+      requireReferences: false,
     });
     if (!authVerdict.ok) {
       console.warn("runHeirSearch refused by authorization gate:", authVerdict.summary);
       return Response.json({
-        error: "Research refused by the authorization gate. A permissible purpose, the specific legal matter and a case reference must all be recorded before any source is contacted.",
+        error: "Research refused by the authorization gate. A permissible purpose must be recorded before any source is contacted.",
         authorization_verdict: authVerdict,
       }, { status: 403 });
     }
