@@ -5,7 +5,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu,
   Bot, Rocket, ShieldCheck, Copy, Moon, Sun, Sparkles, Activity, Globe, Users,
-  FileText, Crown, Target, ClipboardCheck, Gavel,
+  FileText, Crown, Target, ClipboardCheck, Gavel, HeartPulse, Wrench, AlertCircle, Clock,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
@@ -55,6 +55,19 @@ const navGroups = [
       { to: "/xtreme-gpt", label: "Xtreme GPT", icon: Bot },
       { to: "/command-center", label: "Command Center", icon: Sparkles },
       { to: "/mission-control", label: "Mission Control", icon: Activity },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { to: "/system-health", label: "System Health", icon: HeartPulse },
+      { to: "/auto-heal", label: "Auto-Heal", icon: Wrench },
+      { to: "/test-results", label: "Test Results", icon: ClipboardCheck },
+      { to: "/forensic-audit", label: "Forensic Audit", icon: ShieldCheck },
+      { to: "/capability-lab", label: "Capability Lab", icon: Activity },
+      { to: "/audit-logs", label: "Audit Logs", icon: FileText },
+      { to: "/errors", label: "Errors", icon: AlertCircle },
+      { to: "/schedules", label: "Schedules", icon: Clock },
     ],
   },
   {

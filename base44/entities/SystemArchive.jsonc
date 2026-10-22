@@ -1,0 +1,85 @@
+{
+  "name": "SystemArchive",
+  "type": "object",
+  "description": "The archive ledger. Every record retired from the live system is preserved here in full before its live copy is cleared, so an old result can be read back rather than lost. The live system is cleared by reapExpired and by archiveResults; only archiveResults writes here. Written only by archiveResults.",
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "description": "Groups every record retired in the same archive action"
+    },
+    "entity": {
+      "type": "string",
+      "description": "The entity the record was retired from"
+    },
+    "entity_label": {
+      "type": "string",
+      "description": "Plain-language name of that group of records"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "The id the record had in the live system"
+    },
+    "source_created_date": {
+      "type": "string",
+      "description": "When the record was created in the live system, so ordering survives the move"
+    },
+    "archived_at": {
+      "type": "string",
+      "description": "When it was retired"
+    },
+    "archived_by_email": {
+      "type": "string",
+      "description": "Who retired it"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why this batch was archived"
+    },
+    "payload": {
+      "type": "string",
+      "maxLength": 100000,
+      "description": "The whole record as JSON, exactly as it stood when retired"
+    },
+    "payload_bytes": {
+      "type": "number",
+      "default": 0
+    },
+    "payload_truncated": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the record was too large to preserve whole. A truncated record is disclosed, never presented as complete."
+    },
+    "summary": {
+      "type": "string",
+      "description": "One readable line so the ledger can be read without opening the payload"
+    }
+  },
+  "required": [
+    "batch_id",
+    "entity",
+    "source_id",
+    "archived_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

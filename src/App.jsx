@@ -83,6 +83,16 @@ import DesignOptions from '@/pages/DesignOptions';
 import ServiceDetail from '@/pages/ServiceDetail';
 import WorkflowWorkspace from '@/pages/WorkflowWorkspace';
 import ExecutiveAssistant from '@/pages/ExecutiveAssistant';
+import SystemHealth from '@/pages/SystemHealth';
+import AutoHeal from '@/pages/AutoHeal';
+import TestResults from '@/pages/TestResults';
+import ForensicAudit from '@/pages/ForensicAudit';
+import CapabilityTestLab from '@/pages/CapabilityTestLab';
+import AuditLogs from '@/pages/AuditLogs';
+import ErrorsPage from '@/pages/ErrorsPage';
+import Enhancements from '@/pages/Enhancements';
+import Schedules from '@/pages/Schedules';
+import Costs from '@/pages/Costs';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -171,6 +181,16 @@ const AuthenticatedApp = () => {
           <Route path="/services/:slug" element={<ServiceDetail />} />
           <Route path="/workspace" element={<WorkflowWorkspace />} />
           <Route path="/executive-assistant" element={<ExecutiveAssistant />} />
+          <Route path="/system-health" element={<SystemHealth />} />
+          <Route path="/auto-heal" element={<AutoHeal />} />
+          <Route path="/test-results" element={<TestResults />} />
+          <Route path="/forensic-audit" element={<ForensicAudit />} />
+          <Route path="/capability-lab" element={<CapabilityTestLab />} />
+          <Route path="/audit-logs" element={<AuditLogs />} />
+          <Route path="/errors" element={<ErrorsPage />} />
+          <Route path="/enhancements" element={<Enhancements />} />
+          <Route path="/schedules" element={<Schedules />} />
+          <Route path="/costs" element={<Costs />} />
           <Route path="/heir-portal" element={<HeirSearchPortal />} />
           <Route path="/image-replicator" element={<ImageReplicator />} />
           <Route path="/intelligence-command-center" element={<IntelligenceCommandCenter />} />
