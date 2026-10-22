@@ -6,6 +6,7 @@ import { Sparkles, Bot, Shield, AlertCircle } from "lucide-react";
 import MessageBubble from "@/components/ai-chat/MessageBubble";
 import ConversationList from "@/components/ai-chat/ConversationList";
 import ChatInput from "@/components/ai-chat/ChatInput";
+import WhatsAppConnect from "@/components/agents/WhatsAppConnect";
 
 const AGENT_NAME = "autonomous_agent";
 
@@ -124,10 +125,13 @@ export default function AiChat() {
             <Sparkles className="w-5 h-5 text-primary" />
             <div>
               <p className="font-medium text-sm">{activeId ? conversations.find((c) => c.id === activeId)?.metadata?.name || "Chat" : "Select or create a chat"}</p>
-              <p className="text-xs text-muted-foreground">Sandbox mode active · External actions require confirmation</p>
+              <p className="text-xs text-muted-foreground">Acts across your system and connected accounts</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-xs text-green-600"><Shield className="w-3.5 h-3.5" /> Secured</div>
+          <div className="flex shrink-0 items-center gap-2">
+            <WhatsAppConnect />
+            <div className="hidden items-center gap-1 text-xs text-green-600 sm:flex"><Shield className="w-3.5 h-3.5" /> Secured</div>
+          </div>
         </div>
 
         {/* Messages */}

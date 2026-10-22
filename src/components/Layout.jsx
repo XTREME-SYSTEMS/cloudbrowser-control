@@ -52,6 +52,7 @@ const navGroups = [
   {
     label: "AI Systems",
     items: [
+      { to: "/ai-chat", label: "Autonomous Agent", icon: Bot },
       { to: "/xtreme-gpt", label: "Xtreme GPT", icon: Bot },
       { to: "/command-center", label: "Command Center", icon: Sparkles },
       { to: "/mission-control", label: "Mission Control", icon: Activity },

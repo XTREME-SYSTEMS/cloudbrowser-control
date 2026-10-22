@@ -1235,7 +1235,7 @@
   "selected_skill_names": [],
   "selected_workspace_skill_ids": [],
   "model": "gpt_5_4",
-  "whatsapp_greeting": null,
+  "whatsapp_greeting": "Strategic Minds AI. Tell me what you need done and I'll operate your system and accounts for you. I'll only come back to you for payments, or for messages going out to clients.",
   "telegram_greeting": null,
   "line_greeting": null,
   "memory_config": {
