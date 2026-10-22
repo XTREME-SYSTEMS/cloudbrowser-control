@@ -10,6 +10,7 @@ import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Cl
 import { Switch } from "@/components/ui/switch";
 import { SKIP_TRACE_DEEP_CATALOG } from "@/lib/searchSourceCatalog";
 import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
+import TraceDetailDialog from "@/components/skip-tracing/TraceDetailDialog";
 
 export default function SkipTracing() {
   const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0", permissible_purpose: "", legal_matter: "", case_reference: "" });
@@ -32,6 +33,7 @@ export default function SkipTracing() {
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [selectedTrace, setSelectedTrace] = useState(null);
 
   useEffect(() => { loadHistory(); }, []);
 
@@ -425,8 +427,20 @@ export default function SkipTracing() {
               ) : (
                 <div className="space-y-2">
                   {history.map((trace) => (
-                    <div key={trace.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 cursor-pointer"
-                      onClick={() => { setResult(trace); }}>
+                    <div
+                      key={trace.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedTrace(trace)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedTrace(trace);
+                        }
+                      }}
+                      title="Open the full record for this search"
+                      className="flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">
                           {trace.target_property_address || trace.target_owner_name || trace.target_phone || trace.target_email || "—"}
@@ -442,6 +456,7 @@ export default function SkipTracing() {
                           {trace.status}
                         </Badge>
                         <span className={`text-sm font-medium ${statusColor(trace.status)}`}>{trace.confidence_score}%</span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </div>
                     </div>
                   ))}
@@ -451,6 +466,8 @@ export default function SkipTracing() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <TraceDetailDialog trace={selectedTrace} onClose={() => setSelectedTrace(null)} />
     </div>
   );
 }
