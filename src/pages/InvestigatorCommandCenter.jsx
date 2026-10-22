@@ -47,9 +47,10 @@ const TABS = [
 
 /**
  * The three tiles above the queue narrow it by the same rule the counts are
- * built from, so a tile can never promise a number its list cannot show:
- * deliverable is the exportable-as-certified flag, unassigned is a case with no
- * investigator on it.
+ * built from — deliverable is the exportable-as-certified flag, unassigned is a
+ * case with no investigator on it. The counts span every case while the queue
+ * loads the most recent batch, so a tile can still count more than the list has
+ * loaded when the caseload exceeds one batch.
  */
 function applyQueueFilter(cases, filter) {
   if (filter === "deliverable") return cases.filter((c) => c.exportable_as_certified === true);

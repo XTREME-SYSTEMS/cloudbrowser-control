@@ -102,7 +102,7 @@ export default function CaseQueue({ cases = [], counts, selectedId, onSelect, on
   );
 }
 
-/** Each tile narrows the queue to exactly the cases its own number counted. */
+/** Each tile narrows the queue by the rule its own figure is counted with. */
 function Stat({ label, value, tone = "", active = false, onClick }) {
   return (
     <button
