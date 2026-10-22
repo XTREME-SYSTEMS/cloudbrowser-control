@@ -9,7 +9,7 @@ import StatusPill from "@/components/investigator/StatusPill";
  * decision, so a case cannot look more finished here than it is in a spreadsheet
  * or in the report the gate would refuse to certify.
  */
-export default function CaseQueue({ cases = [], counts, selectedId, onSelect, onSearch, search = "", loading }) {
+export default function CaseQueue({ cases = [], counts, selectedId, onSelect, onSearch, search = "", loading, filter = "all", onFilter }) {
   const [term, setTerm] = useState(search);
 
   const submit = (e) => {
@@ -33,9 +33,26 @@ export default function CaseQueue({ cases = [], counts, selectedId, onSelect, on
 
       {counts && (
         <div className="grid grid-cols-3 gap-2 text-center">
-          <Stat label="Cases" value={counts.total} />
-          <Stat label="Deliverable" value={counts.deliverable} tone="text-emerald-600 dark:text-emerald-400" />
-          <Stat label="Unassigned" value={counts.unassigned} tone="text-amber-600 dark:text-amber-400" />
+          <Stat
+            label="Cases"
+            value={counts.total}
+            active={filter === "all"}
+            onClick={() => onFilter("all")}
+          />
+          <Stat
+            label="Deliverable"
+            value={counts.deliverable}
+            tone="text-emerald-600 dark:text-emerald-400"
+            active={filter === "deliverable"}
+            onClick={() => onFilter("deliverable")}
+          />
+          <Stat
+            label="Unassigned"
+            value={counts.unassigned}
+            tone="text-amber-600 dark:text-amber-400"
+            active={filter === "unassigned"}
+            onClick={() => onFilter("unassigned")}
+          />
         </div>
       )}
 
@@ -85,11 +102,19 @@ export default function CaseQueue({ cases = [], counts, selectedId, onSelect, on
   );
 }
 
-function Stat({ label, value, tone = "" }) {
+/** Each tile narrows the queue to exactly the cases its own number counted. */
+function Stat({ label, value, tone = "", active = false, onClick }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-2 py-1.5">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-lg border px-2 py-1.5 text-center transition-all hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        active ? "border-primary/50 bg-primary/5" : "border-border bg-card"
+      }`}
+    >
       <div className={`text-lg font-display font-bold ${tone || ""}`}>{value}</div>
       <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
-    </div>
+    </button>
   );
 }

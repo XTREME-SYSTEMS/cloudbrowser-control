@@ -30,6 +30,8 @@ import GapPlayground from '@/pages/GapPlayground';
 import GapMap from '@/pages/GapMap';
 import SandboxedClone from '@/pages/SandboxedClone';
 import SkipTracing from '@/pages/SkipTracing';
+import SkipTraceResults from '@/pages/SkipTraceResults';
+import SkipTraceDetail from '@/pages/SkipTraceDetail';
 import SwarmOrchestrator from '@/pages/SwarmOrchestrator';
 import Architecture from '@/pages/Architecture';
 import TeamPage from '@/pages/TeamPage';
@@ -65,6 +67,7 @@ import DigitalDominance from '@/pages/DigitalDominance';
 import ClientPortal from '@/pages/ClientPortal';
 import SocialPresence from '@/pages/SocialPresence';
 import HeirSearch from '@/pages/HeirSearch';
+import HeirCaseDetail from '@/pages/HeirCaseDetail';
 import HeirSearchDashboard from '@/pages/HeirSearchDashboard';
 import HeirSearchPortal from '@/pages/HeirSearchPortal';
 import ImageReplicator from '@/pages/ImageReplicator';
@@ -139,6 +142,8 @@ const AuthenticatedApp = () => {
           <Route path="/gap-map" element={<GapMap />} />
           <Route path="/sandboxed-clone" element={<SandboxedClone />} />
           <Route path="/skip-tracing" element={<SkipTracing />} />
+          <Route path="/skip-tracing/results" element={<SkipTraceResults />} />
+          <Route path="/skip-traces/:id" element={<SkipTraceDetail />} />
           <Route path="/swarm-orchestrator" element={<SwarmOrchestrator />} />
           <Route path="/architecture" element={<Architecture />} />
           <Route path="/autocomplete" element={<AutoComplete />} />
@@ -159,6 +164,7 @@ const AuthenticatedApp = () => {
           <Route path="/client-portal" element={<ClientPortal />} />
           <Route path="/social-presence" element={<SocialPresence />} />
           <Route path="/heir-search" element={<HeirSearch />} />
+          <Route path="/heir-cases/:id" element={<HeirCaseDetail />} />
           <Route path="/heir-search-dashboard" element={<HeirSearchDashboard />} />
           <Route path="/investigator" element={<InvestigatorCommandCenter />} />
           <Route path="/design-options" element={<DesignOptions />} />

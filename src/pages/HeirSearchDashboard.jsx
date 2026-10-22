@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,11 @@ export default function HeirSearchDashboard() {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [trackingSheetUrl, setTrackingSheetUrl] = useState("");
+  // The summary tiles navigate here with the set they count, so the filter is
+  // read from the URL: a tile is then one click from the cases behind its number.
+  const statusFilter = searchParams.get("status") || "all";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,7 +57,11 @@ export default function HeirSearchDashboard() {
       c.deceased_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.case_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.client_email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active"
+        ? c.status === "pending" || c.status === "searching"
+        : c.status === statusFilter);
     return matchesSearch && matchesStatus;
   });
 
@@ -65,6 +72,14 @@ export default function HeirSearchDashboard() {
     partial: cases.filter(c => c.status === "partial").length,
     failed: cases.filter(c => c.status === "failed").length,
     totalHeirs: cases.reduce((sum, c) => sum + (c.identified_heirs?.length || 0), 0),
+  };
+
+  /** Send a summary number to the cases it is counting. */
+  const goToSet = (set) => {
+    const next = new URLSearchParams(searchParams);
+    if (!set || set === "all") next.delete("status");
+    else next.set("status", set);
+    setSearchParams(next);
   };
 
   return (
@@ -104,12 +119,18 @@ export default function HeirSearchDashboard() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <StatCard icon={FileText} label="Total Cases" value={stats.total} color="text-primary" />
-        <StatCard icon={Clock} label="Active" value={stats.searching} color="text-[#c9a961]" />
-        <StatCard icon={CheckCircle} label="Found" value={stats.found} color="text-green-500" />
-        <StatCard icon={AlertCircle} label="Partial" value={stats.partial} color="text-yellow-500" />
-        <StatCard icon={AlertCircle} label="Failed" value={stats.failed} color="text-red-500" />
-        <StatCard icon={Users} label="Total Heirs" value={stats.totalHeirs} color="text-[#0a1f3c]" />
+        <StatCard icon={FileText} label="Total Cases" value={stats.total} color="text-primary"
+          active={statusFilter === "all"} onClick={() => goToSet("all")} />
+        <StatCard icon={Clock} label="Active" value={stats.searching} color="text-[#c9a961]"
+          active={statusFilter === "active"} onClick={() => goToSet("active")} />
+        <StatCard icon={CheckCircle} label="Found" value={stats.found} color="text-green-500"
+          active={statusFilter === "found"} onClick={() => goToSet("found")} />
+        <StatCard icon={AlertCircle} label="Partial" value={stats.partial} color="text-yellow-500"
+          active={statusFilter === "partial"} onClick={() => goToSet("partial")} />
+        <StatCard icon={AlertCircle} label="Failed" value={stats.failed} color="text-red-500"
+          active={statusFilter === "failed"} onClick={() => goToSet("failed")} />
+        <StatCard icon={Users} label="Total Heirs" value={stats.totalHeirs} color="text-[#0a1f3c]"
+          onClick={() => goToSet("all")} />
       </div>
 
       {/* Filters */}
@@ -125,10 +146,16 @@ export default function HeirSearchDashboard() {
         </div>
         <select
           value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
+          onChange={e => {
+            const next = new URLSearchParams(searchParams);
+            if (e.target.value === "all") next.delete("status");
+            else next.set("status", e.target.value);
+            setSearchParams(next, { replace: true });
+          }}
           className="px-3 py-2 rounded-md border border-border bg-background text-sm"
         >
           <option value="all">All Statuses</option>
+          <option value="active">Active (pending + searching)</option>
           <option value="pending">Pending</option>
           <option value="searching">Searching</option>
           <option value="found">Found</option>
@@ -173,11 +200,16 @@ export default function HeirSearchDashboard() {
                     const sc = STATUS_CONFIG[c.status] || STATUS_CONFIG.pending;
                     const livingHeirs = (c.identified_heirs || []).filter(h => h.is_living !== false).length;
                     return (
-                      <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                      <tr
+                        key={c.id}
+                        onClick={() => navigate(`/heir-cases/${c.id}`)}
+                        title="Open this case's full results"
+                        className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                      >
                         <td className="py-3 pr-4 font-mono text-xs">{c.case_reference || "—"}</td>
                         <td className="py-3 pr-4">
                           <button
-                            onClick={() => navigate(`/heir-search?case=${c.id}`)}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/heir-cases/${c.id}`); }}
                             className="font-medium text-left hover:text-primary transition-colors"
                           >
                             {c.deceased_name}
@@ -213,10 +245,10 @@ export default function HeirSearchDashboard() {
                         </td>
                         <td className="py-3">
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline" onClick={() => navigate(`/heir-search?case=${c.id}`)}>
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/heir-cases/${c.id}`); }}>
                               View
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => downloadHeirPDF(c)}>
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); downloadHeirPDF(c); }}>
                               PDF
                             </Button>
                           </div>
@@ -302,7 +334,7 @@ function PeopleBeingSearched({ cases, onTrace }) {
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-muted-foreground">{c.case_reference || ""}</span>
                       <button
-                        onClick={(e) => { e.stopPropagation(); onTrace(`/heir-search?case=${c.id}`); }}
+                        onClick={(e) => { e.stopPropagation(); onTrace(`/heir-cases/${c.id}`); }}
                         className="text-xs text-primary hover:underline"
                       >
                         Open
@@ -357,7 +389,7 @@ function PeopleBeingSearched({ cases, onTrace }) {
                               )}
                             </div>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onTrace(`/heir-search?case=${c.id}`); }}
+                              onClick={(e) => { e.stopPropagation(); onTrace(`/heir-cases/${c.id}`); }}
                               className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/60 transition-all shrink-0"
                             >
                               <Target className="w-3 h-3" />
@@ -378,16 +410,22 @@ function PeopleBeingSearched({ cases, onTrace }) {
   );
 }
 
-function StatCard({ icon: Icon, label, value, color }) {
+function StatCard({ icon: Icon, label, value, color, active = false, onClick }) {
   return (
-    <Card>
-      <CardContent className="pt-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
-          <Icon className={`w-4 h-4 ${color}`} />
-        </div>
-        <div className="text-2xl font-heading font-bold">{value}</div>
-      </CardContent>
-    </Card>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-xl border bg-card px-3 py-4 text-left transition-all hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        active ? "border-primary/50 bg-primary/5" : "border-border"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
+        <Icon className={`w-4 h-4 ${color}`} />
+      </div>
+      <div className="text-2xl font-heading font-bold">{value}</div>
+      <div className="mt-1 text-[10px] font-medium text-primary">View all</div>
+    </button>
   );
 }

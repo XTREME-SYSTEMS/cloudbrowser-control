@@ -419,67 +419,67 @@ export default function HeirSearchResults({
       )}
 
       {/* Extreme Deep sub-sections */}
-      {result.extreme_deep && hasData(result.ucc_sec) && (
+      {hasData(result.ucc_sec) && (
         <ResultSection title="UCC, SEC Litigation & Financial Enforcement" icon={Landmark} sectionKey="ucc_sec"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.ucc_sec.ucc_filings?.length > 0 && <p className="text-xs text-slate-500">UCC filings: {result.ucc_sec.ucc_filings.map(u => u.filer).join("; ")}</p>}
           {result.ucc_sec.sec_litigation?.length > 0 && <p className="text-xs text-slate-500">SEC actions: {result.ucc_sec.sec_litigation.join("; ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.fec_lobby) && (
+      {hasData(result.fec_lobby) && (
         <ResultSection title="FEC Donations & Lobbyist Registrations" icon={Landmark} sectionKey="fec_lobby"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.fec_lobby.contributions?.length > 0 && <p className="text-xs text-slate-500">Contributors: {result.fec_lobby.contributions.map(c => `${c.name} (${c.employer || 'employer unknown'})`).join("; ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.username_correlation) && (
+      {hasData(result.username_correlation) && (
         <ResultSection title="Username Correlation & Forum/Gaming" icon={Search} sectionKey="username_correlation"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.username_correlation.profiles?.length > 0 && <p className="text-xs text-slate-500">Profiles: {result.username_correlation.profiles.map(p => `${p.platform}: ${p.username}`).join("; ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.domain_archive) && (
+      {hasData(result.domain_archive) && (
         <ResultSection title="Domain WHOIS History & Web Archive" icon={Globe2} sectionKey="domain_archive"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.domain_archive.historical_whois?.length > 0 && <p className="text-xs text-slate-500">Historical WHOIS: {result.domain_archive.historical_whois.map(w => `${w.domain} (${w.date})`).join("; ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.contact_verification) && (
+      {hasData(result.contact_verification) && (
         <ResultSection title="Contact Verification (SMTP & Phone Port)" icon={Mail} sectionKey="contact_verification"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.contact_verification.verified_emails?.length > 0 && <p className="text-xs text-slate-500">Verified emails: {result.contact_verification.verified_emails.filter(e => e.exists).map(e => e.email).join(", ") || "None confirmed"}</p>}
           {result.contact_verification.verified_phones?.length > 0 && <p className="text-xs text-slate-500">Verified phones: {result.contact_verification.verified_phones.map(p => `${p.number} (${p.line_type})`).join(", ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.crypto_assets) && (
+      {hasData(result.crypto_assets) && (
         <ResultSection title="Cryptocurrency & Digital Assets" icon={Zap} sectionKey="crypto_assets"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.crypto_assets.wallets?.length > 0 && <p className="text-xs text-slate-500">Wallets: {result.crypto_assets.wallets.map(w => `${w.currency}: ${w.address}`).join("; ")}</p>}
           {result.crypto_assets.ens_domains?.length > 0 && <p className="text-xs text-slate-500">ENS domains: {result.crypto_assets.ens_domains.join(", ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.deed_chain) && (
+      {hasData(result.deed_chain) && (
         <ResultSection title="Property Deed Chain-of-Title" icon={Landmark} sectionKey="deed_chain"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.deed_chain.deed_chain?.length > 0 && <p className="text-xs text-slate-500">Transfers: {result.deed_chain.deed_chain.map(d => `${d.date}: ${d.grantor} to ${d.grantee}`).join("; ")}</p>}
           {result.deed_chain.related_owners?.length > 0 && <p className="text-xs text-slate-500">Related owners: {result.deed_chain.related_owners.join(", ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.permits_regulatory) && (
+      {hasData(result.permits_regulatory) && (
         <ResultSection title="Regulatory Permits & Violations" icon={FileText} sectionKey="permits_regulatory"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.permits_regulatory.permits?.length > 0 && <p className="text-xs text-slate-500">Permits: {result.permits_regulatory.permits.map(p => `${p.type} (${p.holder})`).join("; ")}</p>}
           {result.permits_regulatory.violations?.length > 0 && <p className="text-xs text-slate-500">Violations: {result.permits_regulatory.violations.map(v => v.type).join("; ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.social_graph) && (
+      {hasData(result.social_graph) && (
         <ResultSection title="Social Graph & Network Analysis" icon={Users} sectionKey="social_graph"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.social_graph.central_figures?.length > 0 && <p className="text-xs text-slate-500">Central figures: {result.social_graph.central_figures.join(", ")}</p>}
           {result.social_graph.hidden_connections?.length > 0 && <p className="text-xs text-slate-500">Hidden connections: {result.social_graph.hidden_connections.map(c => `${c.person_a} - ${c.person_b} (${c.connection})`).join("; ")}</p>}
         </ResultSection>
       )}
-      {result.extreme_deep && hasData(result.business_network) && (
+      {hasData(result.business_network) && (
         <ResultSection title="Business Affiliation Network" icon={Landmark} sectionKey="business_network"
           result={result} setResult={setResult} onDelete={onDeleteSection} onDeepSearch={onDeepSearchSection} searchingSection={searchingSection}>
           {result.business_network.business_entities?.length > 0 && <p className="text-xs text-slate-500">Entities: {result.business_network.business_entities.map(b => `${b.business_name} (${b.role}, ${b.state})`).join("; ")}</p>}

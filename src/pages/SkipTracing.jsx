@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import { Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle, Cl
 import { Switch } from "@/components/ui/switch";
 import { SKIP_TRACE_DEEP_CATALOG } from "@/lib/searchSourceCatalog";
 import SkipTracingDashboard from "@/components/skip-tracing/SkipTracingDashboard";
-import TraceDetailDialog from "@/components/skip-tracing/TraceDetailDialog";
 
 export default function SkipTracing() {
   const [form, setForm] = useState({ property_address: "", owner_name: "", phone: "", email: "", company: "", spreadsheet_url: "1YJnYg9xY0uuaiIlK6HOnHBrak4ZjxTvcdiLO5QKeCu0", permissible_purpose: "", legal_matter: "", case_reference: "" });
@@ -33,7 +33,7 @@ export default function SkipTracing() {
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [selectedTrace, setSelectedTrace] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => { loadHistory(); }, []);
 
@@ -417,7 +417,7 @@ export default function SkipTracing() {
           <Card>
             <CardHeader>
               <CardTitle>Trace History</CardTitle>
-              <CardDescription>Recent skip trace operations — click to view full results</CardDescription>
+              <CardDescription>Recent skip trace operations — open any one for its complete record</CardDescription>
             </CardHeader>
             <CardContent>
               {loadingHistory ? (
@@ -431,11 +431,11 @@ export default function SkipTracing() {
                       key={trace.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setSelectedTrace(trace)}
+                      onClick={() => navigate(`/skip-traces/${trace.id}`)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          setSelectedTrace(trace);
+                          navigate(`/skip-traces/${trace.id}`);
                         }
                       }}
                       title="Open the full record for this search"
@@ -466,8 +466,6 @@ export default function SkipTracing() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <TraceDetailDialog trace={selectedTrace} onClose={() => setSelectedTrace(null)} />
     </div>
   );
 }

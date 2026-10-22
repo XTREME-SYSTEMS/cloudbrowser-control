@@ -1,13 +1,14 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Phone, Mail, User, Database, Layers, Activity, Bot, RefreshCw, ArrowRight,
+  Phone, Mail, User, Database, Layers, Activity, Bot, RefreshCw, ArrowRight, ChevronRight,
 } from "lucide-react";
 
 export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
+  const navigate = useNavigate();
   const total = traces.length;
   const found = traces.filter((t) => t.status === "found").length;
   const partial = traces.filter((t) => t.status === "partial").length;
@@ -54,42 +55,12 @@ export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Total Traces</p>
-            <p className="text-2xl font-bold mt-1">{total}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-emerald-500/20">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Found</p>
-            <p className="text-2xl font-bold mt-1 text-emerald-500">{found}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-amber-500/20">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Partial</p>
-            <p className="text-2xl font-bold mt-1 text-amber-500">{partial}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-red-500/20">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Failed</p>
-            <p className="text-2xl font-bold mt-1 text-red-500">{failed}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-blue-500/20">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">In Progress</p>
-            <p className="text-2xl font-bold mt-1 text-blue-500">{pending}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Avg Confidence</p>
-            <p className="text-2xl font-bold mt-1">{avgConfidence}%</p>
-          </CardContent>
-        </Card>
+        <MetricTile label="Total Traces" value={total} onClick={() => navigate("/skip-tracing/results")} />
+        <MetricTile label="Found" value={found} tone="text-emerald-500" border="border-emerald-500/20" onClick={() => navigate("/skip-tracing/results?status=found")} />
+        <MetricTile label="Partial" value={partial} tone="text-amber-500" border="border-amber-500/20" onClick={() => navigate("/skip-tracing/results?status=partial")} />
+        <MetricTile label="Failed" value={failed} tone="text-red-500" border="border-red-500/20" onClick={() => navigate("/skip-tracing/results?status=failed")} />
+        <MetricTile label="In Progress" value={pending} tone="text-blue-500" border="border-blue-500/20" onClick={() => navigate("/skip-tracing/results?status=inprogress")} />
+        <MetricTile label="Avg Confidence" value={`${avgConfidence}%`} onClick={() => navigate("/skip-tracing/results")} />
       </div>
 
       <Card>
@@ -110,7 +81,13 @@ export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
           ) : (
             <div className="space-y-2">
               {batchList.map((batch) => (
-                <div key={batch.id} className="p-3 rounded-lg border space-y-2">
+                <button
+                  key={batch.id}
+                  type="button"
+                  onClick={() => navigate(`/skip-tracing/results?batch=${encodeURIComponent(batch.id)}`)}
+                  title="Open every trace in this batch"
+                  className="w-full rounded-lg border p-3 text-left space-y-2 transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="font-mono text-xs">{batch.id === "single" ? "Individual" : batch.id}</Badge>
@@ -129,7 +106,7 @@ export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
                     {batch.failed > 0 && <div className="bg-red-500" style={{ width: pct(batch.failed) }} />}
                     {batch.pending > 0 && <div className="bg-blue-500" style={{ width: pct(batch.pending) }} />}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -147,7 +124,13 @@ export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
           ) : (
             <div className="space-y-1">
               {ownerList.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-2.5 rounded-md border hover:bg-muted/30 transition-colors">
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => navigate(`/skip-traces/${item.id}`)}
+                  title="Open this trace's full record"
+                  className="flex w-full items-center justify-between rounded-md border p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{item.property}</p>
                     <p className={"text-xs truncate " + (item.owner === "Not found" ? "text-muted-foreground" : "text-foreground")}>
@@ -173,8 +156,9 @@ export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
                       {item.status}
                     </Badge>
                     <span className="text-xs font-medium w-8 text-right">{item.confidence}%</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -241,5 +225,26 @@ export default function SkipTracingDashboard({ traces, loading, onRefresh }) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/**
+ * A summary figure that opens the results page holding the traces it counts.
+ * The coloured border it used to carry as a plain card is kept, so the row still
+ * reads the same while becoming the way in to its own numbers.
+ */
+function MetricTile({ label, value, tone = "", border = "border-border", onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-xl border bg-card px-3 py-4 text-left transition-all hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${border}`}
+    >
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${tone}`}>{value}</p>
+      <p className="mt-1 flex items-center gap-1 text-[10px] font-medium text-primary">
+        View all <ArrowRight className="h-3 w-3" />
+      </p>
+    </button>
   );
 }

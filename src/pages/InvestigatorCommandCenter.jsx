@@ -45,6 +45,18 @@ const TABS = [
   { id: "reports", label: "Reports" },
 ];
 
+/**
+ * The three tiles above the queue narrow it by the same rule the counts are
+ * built from, so a tile can never promise a number its list cannot show:
+ * deliverable is the exportable-as-certified flag, unassigned is a case with no
+ * investigator on it.
+ */
+function applyQueueFilter(cases, filter) {
+  if (filter === "deliverable") return cases.filter((c) => c.exportable_as_certified === true);
+  if (filter === "unassigned") return cases.filter((c) => !c.assigned_to_email);
+  return cases;
+}
+
 export default function InvestigatorCommandCenter() {
   const [queue, setQueue] = useState([]);
   const [counts, setCounts] = useState(null);
@@ -56,6 +68,7 @@ export default function InvestigatorCommandCenter() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("overview");
+  const [queueFilter, setQueueFilter] = useState("all");
 
   const message = (err) =>
     err?.response?.data?.error || err?.message || "The request could not be completed.";
@@ -166,13 +179,15 @@ export default function InvestigatorCommandCenter() {
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <div className="rounded-xl border border-border bg-card p-3">
           <CaseQueue
-            cases={queue}
+            cases={applyQueueFilter(queue, queueFilter)}
             counts={counts}
             search={search}
             loading={queueLoading}
             selectedId={selectedId}
             onSelect={openCase}
             onSearch={onSearch}
+            filter={queueFilter}
+            onFilter={setQueueFilter}
           />
         </div>
 
@@ -219,7 +234,7 @@ export default function InvestigatorCommandCenter() {
                 ))}
               </div>
 
-              {tab === "overview" && <OverviewPanel brief={brief} />}
+              {tab === "overview" && <OverviewPanel brief={brief} onGoTab={setTab} />}
               {tab === "relationships" && <FamilyTreePanel kinship={brief.kinship} />}
               {tab === "identity" && <RelationshipReviewPanel kinship={brief.kinship} />}
               {tab === "evidence" && (
@@ -258,25 +273,33 @@ export default function InvestigatorCommandCenter() {
 }
 
 /** The case at a glance: what the graph supports, what it does not, and what is outstanding. */
-function OverviewPanel({ brief }) {
+function OverviewPanel({ brief, onGoTab }) {
   const kin = brief.kinship?.counts;
+  // Each figure opens the tab that holds the detail behind it, so a number is
+  // never a dead end.
   const stats = [
-    { label: "People in graph", value: kin?.persons ?? "--" },
-    { label: "Claims supported", value: kin?.established ?? "--", tone: "text-emerald-600 dark:text-emerald-400" },
-    { label: "Claims unresolved", value: kin?.unresolved ?? "--", tone: "text-amber-600 dark:text-amber-400" },
-    { label: "Conflicts awaiting review", value: kin?.conflicts ?? "--", tone: "text-amber-600 dark:text-amber-400" },
-    { label: "Evidence records", value: brief.evidence_ledger?.length ?? 0 },
-    { label: "Open gaps", value: brief.gaps?.length ?? 0, tone: "text-amber-600 dark:text-amber-400" },
+    { label: "People in graph", value: kin?.persons ?? "--", tab: "relationships" },
+    { label: "Claims supported", value: kin?.established ?? "--", tone: "text-emerald-600 dark:text-emerald-400", tab: "identity" },
+    { label: "Claims unresolved", value: kin?.unresolved ?? "--", tone: "text-amber-600 dark:text-amber-400", tab: "identity" },
+    { label: "Conflicts awaiting review", value: kin?.conflicts ?? "--", tone: "text-amber-600 dark:text-amber-400", tab: "identity" },
+    { label: "Evidence records", value: brief.evidence_ledger?.length ?? 0, tab: "evidence" },
+    { label: "Open gaps", value: brief.gaps?.length ?? 0, tone: "text-amber-600 dark:text-amber-400", tab: "gaps" },
   ];
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card px-3 py-2.5">
+          <button
+            key={s.label}
+            type="button"
+            onClick={() => onGoTab(s.tab)}
+            title="Open the detail behind this figure"
+            className="rounded-xl border border-border bg-card px-3 py-2.5 text-left transition-all hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className={`text-xl font-display font-bold ${s.tone || ""}`}>{s.value}</div>
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
-          </div>
+          </button>
         ))}
       </div>
 
