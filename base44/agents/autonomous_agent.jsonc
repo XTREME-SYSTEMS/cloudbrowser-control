@@ -1228,6 +1228,10 @@
     {
       "function_name": "runAutonomousAudit",
       "description": "Deep search: Run an autonomous audit of the entire system for compliance and security"
+    },
+    {
+      "function_name": "desktopCommander",
+      "description": "Reach the operator's paired computer through Desktop Commander. action=\"status\" reports whether a machine is paired; action=\"tools\" lists exactly what that machine allows; action=\"call\" runs one of those tools with {tool, args}. Use this for anything that has to happen on the operator's own machine rather than in the cloud."
     }
   ],
   "context_files": [],
