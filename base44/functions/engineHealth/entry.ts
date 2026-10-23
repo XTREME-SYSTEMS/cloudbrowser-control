@@ -1,107 +1,15 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.40";
 import { getEngineUrls, isEngineConfigured, setEngineClient } from "../../shared/engineClient.ts";
+import { probeEngine, deriveLabel } from "../../shared/engineProbe.ts";
 import { DEPLOYMENT_VERSION } from "../../shared/deploymentVersion.ts";
 import { secrets } from "base44:runtime";
-// v7.0.0 — multi-engine swarm health probe
-
-const PROBE_TIMEOUT_MS = 8000;
-
-/** Probe a single engine URL directly (no failover), with a hard timeout. */
-async function probeEngine(baseUrl, key) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-  const started = Date.now();
-  try {
-    const res = await fetch(`${baseUrl}/health`, {
-      headers: { "x-api-key": key, "Content-Type": "application/json" },
-      signal: controller.signal,
-    });
-    const text = await res.text();
-    let body;
-    try { body = JSON.parse(text); } catch { body = { raw: text }; }
-    const responseTime = Date.now() - started;
-
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: res.status >= 500 ? "unhealthy" : "degraded",
-        engine_url: baseUrl,
-        response_time_ms: responseTime,
-        error_message: `HTTP ${res.status}: ${typeof body === "object" && body?.error ? body.error : text.slice(0, 200)}`,
-        raw: body,
-      };
-    }
-
-    // Detect HTML responses (misconfigured engine serving Vite app shell)
-    const bodyStr = typeof body === "string" ? body : (body?.raw && typeof body.raw === "string" ? body.raw : "");
-    if (bodyStr && (bodyStr.trim().startsWith("<!doctype") || bodyStr.trim().startsWith("<html") || bodyStr.includes("<!doctype html"))) {
-      return {
-        ok: false,
-        status: "unhealthy",
-        engine_url: baseUrl,
-        response_time_ms: responseTime,
-        error_message: "Engine returned HTML instead of JSON — deployment is misconfigured (serving Vite app, not browser engine)",
-        raw: { html_detected: true, snippet: bodyStr.slice(0, 200) },
-      };
-    }
-
-    // Probe readiness — verifies the browser can actually launch (health alone doesn't)
-    let readiness = null;
-    try {
-      const readyController = new AbortController();
-      const readyTimer = setTimeout(() => readyController.abort(), PROBE_TIMEOUT_MS);
-      const readyRes = await fetch(`${baseUrl}/readiness`, {
-        headers: { "x-api-key": key, "Content-Type": "application/json" },
-        signal: readyController.signal,
-      });
-      const readyText = await readyRes.text();
-      let readyBody;
-      try { readyBody = JSON.parse(readyText); } catch { readyBody = { raw: readyText }; }
-      clearTimeout(readyTimer);
-      readiness = {
-        ready: readyRes.ok && readyBody.ok,
-        browser_launch: readyBody.browser_launch || "unknown",
-        error: readyBody.error || null,
-      };
-    } catch (readyErr) {
-      readiness = { ready: false, error: readyErr.name === "AbortError" ? `Timeout after ${PROBE_TIMEOUT_MS}ms` : readyErr.message };
-    }
-
-    return {
-      ok: true,
-      status: body.ok ? (readiness?.ready ? "healthy" : "degraded") : "degraded",
-      readiness,
-      engine_url: baseUrl,
-      response_time_ms: responseTime,
-      worker_id: body.worker_id,
-      region: body.region,
-      engine_version: body.engine_version,
-      active_sessions: body.active_sessions,
-      max_sessions: body.max_sessions,
-      pool_size: body.pool_size,
-      pool_capacity: body.pool_capacity,
-      uptime_seconds: Math.round(body.uptime),
-      raw: body,
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      status: "unreachable",
-      engine_url: baseUrl,
-      response_time_ms: Date.now() - started,
-      error_message: err.name === "AbortError" ? `Timeout after ${PROBE_TIMEOUT_MS}ms` : err.message,
-    };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function deriveLabel(url, index, total) {
-  // Try to infer engine-N from hostname, else fall back to ordinal
-  const match = url.match(/engine-(\d+)/i);
-  if (match) return `engine-${match[1]}`;
-  return `engine-${index + 1}`;
-}
+// v7.1.0 — every engine is probed through the shared capability-aware probe, so this
+// check and the auto-healer can never disagree about whether an engine can serve.
+// `ok` means a browser actually launched here, not merely that /health answered.
+//
+// This file used to carry its own second copy of the probe, while the auto-healer
+// imported the shared one. The copies drifted: only this one checked readiness, so
+// the healer was blind to an engine whose container could no longer start a browser.
 
 export default async function (req) {
   const base44 = createClientFromRequest(req);
@@ -120,7 +28,7 @@ export default async function (req) {
 
     // Attach labels + persist each probe
     const engines = probes.map((p, i) => {
-      p.engine_label = deriveLabel(p.engine_url, i, urls.length);
+      p.engine_label = deriveLabel(p.engine_url, i);
       return p;
     });
 

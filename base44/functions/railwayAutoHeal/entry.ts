@@ -93,10 +93,25 @@ export default async function (req) {
     // ═══════════════════════════════════════════
     // 1. RAILWAY SERVICE HEALING
     // ═══════════════════════════════════════════
-    const status = await getProjectStatus();
-    const { environmentId } = await getProjectMeta();
+    // A Railway auth failure must never stop the engine healing in step 2 below.
+    // The engine checks used to sit behind this call, so a rejected project token
+    // silently disabled engine failover as well as service restarts — which is why
+    // a degraded engine could sit there for days with nothing acting on it.
+    let railwayServices: any[] = [];
+    let environmentId = "";
+    try {
+      const status = await getProjectStatus();
+      railwayServices = status.services;
+      environmentId = (await getProjectMeta()).environmentId;
+    } catch (railwayError: any) {
+      await logAction(base44, cycleId, "railway_project", "project", "railway", "railway_unreachable", "none", "failed", railwayError.message);
+      actions.push({
+        target_type: "railway_project", target_id: "project", target_name: "railway",
+        issue: "railway_unreachable", action: "none", result: "failed", error: railwayError.message,
+      });
+    }
 
-    for (const service of status.services) {
+    for (const service of railwayServices) {
       for (const instance of service.instances) {
         const dep = instance.latestDeployment;
         const targetId = service.id;
@@ -179,8 +194,14 @@ export default async function (req) {
         const healthyBackups = probes.slice(1).filter((p) => p.ok);
         const defaultUrl = secrets.get("ENGINE_URL")?.replace(/\/$/, "");
 
+        // Only a hard outage moves traffic off the primary. A primary that answers but
+        // cannot launch a browser is reported by engineHealth and left where it is,
+        // never routed around: sessions are process-local and the primary holds the
+        // deployment's volume, so promoting a backup would strand live sessions.
+        const primaryOut = primaryProbe && !primaryProbe.ok && primaryProbe.status !== "degraded";
+
         // Primary down → promote first healthy backup
-        if (primaryProbe && !primaryProbe.ok && healthyBackups.length > 0) {
+        if (primaryOut && healthyBackups.length > 0) {
           const backup = healthyBackups[0];
           const newPrimaryUrl = backup.engine_url.replace(/\/$/, "");
 
