@@ -90,6 +90,20 @@ export default async function (req) {
           now - new Date(l.healed_at).getTime() < ONE_DAY_MS
       ).length;
 
+    const loggedRecently = (issue: string, windowMs: number) =>
+      recentLogs.some(
+        (l: any) =>
+          l.issue_detected === issue &&
+          l.healed_at &&
+          now - new Date(l.healed_at).getTime() < windowMs
+      );
+
+    // A Railway token that has gone bad fails every cycle. On a 10-minute schedule
+    // that is 144 identical rows a day, which buries the real healing history and
+    // bloats the 500-row read above that the cooldown logic depends on. One row an
+    // hour is enough to see it; every cycle is not.
+    const RAILWAY_UNREACHABLE_LOG_INTERVAL_MS = 60 * 60 * 1000;
+
     // ═══════════════════════════════════════════
     // 1. RAILWAY SERVICE HEALING
     // ═══════════════════════════════════════════
@@ -104,7 +118,9 @@ export default async function (req) {
       railwayServices = status.services;
       environmentId = (await getProjectMeta()).environmentId;
     } catch (railwayError: any) {
-      await logAction(base44, cycleId, "railway_project", "project", "railway", "railway_unreachable", "none", "failed", railwayError.message);
+      if (!loggedRecently("railway_unreachable", RAILWAY_UNREACHABLE_LOG_INTERVAL_MS)) {
+        await logAction(base44, cycleId, "railway_project", "project", "railway", "railway_unreachable", "none", "failed", railwayError.message);
+      }
       actions.push({
         target_type: "railway_project", target_id: "project", target_name: "railway",
         issue: "railway_unreachable", action: "none", result: "failed", error: railwayError.message,

@@ -1,0 +1,59 @@
+{
+  "name": "Engine Health Self-Heal",
+  "description": "Every 10 minutes: probes every browser engine for genuine readiness (a browser actually launching, not merely /health answering), then runs the auto-healer, which redeploys failed or stuck Railway services, deploys a service that is not running, and moves traffic off the primary engine only when it is hard down.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 10,
+      "interval_unit": "minutes",
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "engine_health_self_heal",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "probe_engines": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "engineHealth",
+            "args": {}
+          },
+          "then": "heal_failures",
+          "x-base44": {
+            "title": "Probe every engine",
+            "description": "Confirms each engine can actually launch a browser, and records the result"
+          }
+        }
+      },
+      {
+        "heal_failures": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "railwayAutoHeal",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Heal detected failures",
+            "description": "Redeploys failed or stuck services; promotes a backup engine only on a real outage"
+          }
+        }
+      }
+    ]
+  }
+}
