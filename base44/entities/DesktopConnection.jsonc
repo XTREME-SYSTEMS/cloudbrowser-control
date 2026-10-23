@@ -1,0 +1,108 @@
+{
+  "name": "DesktopConnection",
+  "type": "object",
+  "description": "The paired Desktop Commander device \u2014 the operator's own computer, reachable by the agent through the remote MCP endpoint. Holds the OAuth grant for that machine. Every token field is encrypted at rest with ENCRYPTION_KEY and is never returned to a caller. Only admins may read or change a pairing.",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "What the operator calls this machine"
+    },
+    "device_name": {
+      "type": "string",
+      "description": "Device name reported by Desktop Commander (e.g. JARVIS-COMMAND)"
+    },
+    "account_email": {
+      "type": "string",
+      "description": "The Desktop Commander account this pairing belongs to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "connected",
+        "needs_reauth",
+        "error"
+      ],
+      "default": "pending",
+      "description": "pending until the operator finishes the one-time authorisation; needs_reauth when the grant was revoked or expired beyond refresh"
+    },
+    "scopes": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "OAuth client registered against the Desktop Commander authorisation server"
+    },
+    "client_secret_enc": {
+      "type": "string",
+      "description": "Encrypted client secret, when the server issues a confidential client"
+    },
+    "access_token_enc": {
+      "type": "string",
+      "description": "Encrypted access token"
+    },
+    "refresh_token_enc": {
+      "type": "string",
+      "description": "Encrypted refresh token"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "When the access token stops being valid, so it can be refreshed before use"
+    },
+    "pending_state": {
+      "type": "string",
+      "description": "The single-use state for the authorisation in flight. The callback will only complete a pairing whose state matches."
+    },
+    "pending_verifier_enc": {
+      "type": "string",
+      "description": "Encrypted PKCE verifier for the authorisation in flight"
+    },
+    "tool_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many tools the device advertised the last time it was reached"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "The tools the device advertised, so the operator can see exactly what it can be asked to do"
+    },
+    "last_error": {
+      "type": "string"
+    },
+    "last_used_at": {
+      "type": "string"
+    },
+    "connected_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

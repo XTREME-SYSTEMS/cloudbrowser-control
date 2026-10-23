@@ -7,6 +7,7 @@ import MessageBubble from "@/components/ai-chat/MessageBubble";
 import ConversationList from "@/components/ai-chat/ConversationList";
 import ChatInput from "@/components/ai-chat/ChatInput";
 import WhatsAppConnect from "@/components/agents/WhatsAppConnect";
+import DesktopCommanderConnect from "@/components/agents/DesktopCommanderConnect";
 
 const AGENT_NAME = "autonomous_agent";
 
@@ -120,7 +121,7 @@ export default function AiChat() {
       {/* Main chat */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <div>
@@ -128,7 +129,8 @@ export default function AiChat() {
               <p className="text-xs text-muted-foreground">Acts across your system and connected accounts</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <DesktopCommanderConnect />
             <WhatsAppConnect />
             <div className="hidden items-center gap-1 text-xs text-green-600 sm:flex"><Shield className="w-3.5 h-3.5" /> Secured</div>
           </div>
