@@ -284,7 +284,10 @@ function normalizeCookies(cookies) {
 }
 
 async function locate(page, selector) {
-  if (!selector) return page;
+  // Acting on an element needs a name for it. Returning the Page here made a missing
+  // selector surface as "page.click is not a function" — an opaque HTTP 500. Whole-page
+  // reads handle their own missing selector instead (see extract_text / extract_html).
+  if (!selector) throw new Error("A selector is required for this action");
   if (selector.startsWith("//") || selector.startsWith("xpath=")) {
     return page.locator(`xpath=${selector.replace(/^xpath=/, "")}`).first();
   }
@@ -1254,8 +1257,11 @@ api.post("/sessions/:id/execute", async (req, res) => {
         }
         break;
       }
-      case "extract_text": { result.data = await (await locate(page, selector)).innerText(); break; }
-      case "extract_html": { result.data = await (await locate(page, selector)).innerHTML(); break; }
+      // No selector means the whole page. These two cases used to hand a bare Page to
+      // innerText()/innerHTML(), which Page does not implement, so every whole-page read
+      // answered HTTP 500 instead of returning the page.
+      case "extract_text": { result.data = selector ? await (await locate(page, selector)).innerText() : await page.evaluate(() => document.body?.innerText || ""); break; }
+      case "extract_html": { result.data = selector ? await (await locate(page, selector)).innerHTML() : await page.content(); break; }
       case "extract_attribute": { result.data = await (await locate(page, selector)).getAttribute(options.attribute || "href"); break; }
       case "extract_table": { result.data = await page.evaluate((sel) => { const t = document.querySelector(sel); if (!t) return []; return [...t.querySelectorAll("tr")].map((r) => [...r.querySelectorAll("th,td")].map((c) => c.innerText.trim())); }, selector); break; }
       case "extract_json": { result.data = await page.evaluate(options.evaluateFn || `(selector) => document.querySelector(selector)?.innerText`, selector); try { result.data = JSON.parse(result.data); } catch (e) {} break; }
