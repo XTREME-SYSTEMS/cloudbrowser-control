@@ -25,6 +25,10 @@ COPY captcha-self-solver.js ./
 COPY fingerprint-randomizer.js ./
 COPY human-behavior.js ./
 COPY stt-whisper.js ./
+# pool-healer.js is imported by server.js at boot. Leaving it out crashed every build
+# on ERR_MODULE_NOT_FOUND while Railway kept the previous container serving — which
+# made a missing file in the image look like a failed deploy.
+COPY pool-healer.js ./
 COPY self-solvers/ ./self-solvers/
 
 ENV PORT=8080
