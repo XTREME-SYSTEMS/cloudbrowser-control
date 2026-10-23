@@ -47,6 +47,7 @@ export default async function (req) {
 
   const cycleId = `heal-${Date.now()}`;
   const actions: any[] = [];
+  const skipped: any[] = [];
 
   try {
     // Check if auto-heal is enabled (default: enabled)
@@ -127,6 +128,41 @@ export default async function (req) {
       });
     }
 
+    // ═══════════════════════════════════════════
+    // 0. ENGINE PROBE — READ BEFORE ANY RAILWAY SERVICE ACTION
+    // ═══════════════════════════════════════════
+    // A Railway deployment marked FAILED is NOT an outage. Railway keeps the previous
+    // instance serving while a new build fails, so the service can be entirely healthy.
+    // Acting on that status alone restarted two working engines on every cycle —
+    // destroying their warm browser pool and any live session — while every probe
+    // reported the fleet healthy. Read the fleet first, and never restart a service
+    // that is demonstrably still serving browser work.
+    const engineKey = secrets.get("ENGINE_API_KEY");
+    const engineUrls = engineKey ? await getEngineUrls() : [];
+    const probes = engineUrls.length > 0
+      ? await Promise.all(engineUrls.map((url, i) => probeEngine(url, engineKey)))
+      : [];
+    probes.forEach((p, i) => { p.engine_label = deriveLabel(p.engine_url, i); });
+
+    // Railway serves a service at <service-name>-<environment>.up.railway.app, and one
+    // engine service name is a prefix of another ("cloudbrowser-engine" against
+    // "cloudbrowser-engine-2"), so resolve the LONGEST service name the host starts
+    // with. Taking the first match would let engine-1's name claim engine-2's probe.
+    const servingService = (serviceName: string) => {
+      const name = String(serviceName || "").toLowerCase();
+      if (!name) return false;
+      return probes.some((p) => {
+        if (!p.ok || typeof p.engine_url !== "string") return false;
+        let host = "";
+        try { host = new URL(p.engine_url).hostname.toLowerCase(); } catch { return false; }
+        const matched = railwayServices
+          .map((s: any) => String(s.name || "").toLowerCase())
+          .filter((sn: string) => sn && (host === sn || host.startsWith(`${sn}-`)))
+          .sort((a: string, b: string) => b.length - a.length)[0];
+        return matched === name;
+      });
+    };
+
     for (const service of railwayServices) {
       for (const instance of service.instances) {
         const dep = instance.latestDeployment;
@@ -135,6 +171,19 @@ export default async function (req) {
 
         if (isOnCooldown(targetId)) continue;
         if (redeployCount(targetId) >= MAX_REDEPLOYS_PER_DAY) continue;
+
+        // Never restart a service that is still answering and still launching browsers.
+        // The FAILED deployment is reported, not acted on: a restart here costs the warm
+        // pool and every live session, and gains nothing while the old instance serves.
+        if (servingService(targetName)) {
+          if (dep?.status === "FAILED") {
+            skipped.push({
+              target_type: "railway_service", target_id: targetId, target_name: targetName,
+              issue: "failed_deployment", reason: "engine is still serving browser work",
+            });
+          }
+          continue;
+        }
 
         // FAILED deployment → redeploy
         if (dep?.status === "FAILED" && dep.canRedeploy) {
@@ -199,13 +248,11 @@ export default async function (req) {
     // ═══════════════════════════════════════════
     // 2. ENGINE FAILOVER — PROMOTE BACKUP IF PRIMARY DOWN
     // ═══════════════════════════════════════════
-    const engineKey = secrets.get("ENGINE_API_KEY");
     if (engineKey) {
-      const urls = await getEngineUrls();
+      const urls = engineUrls;
       if (urls.length > 0) {
-        const probes = await Promise.all(urls.map((url, i) => probeEngine(url, engineKey)));
-        probes.forEach((p, i) => { p.engine_label = deriveLabel(p.engine_url, i); });
-
+        // `probes` was read before the Railway actions above, so this failover decision
+        // and the restart gate use one reading of the fleet rather than two.
         const primaryProbe = probes[0];
         const healthyBackups = probes.slice(1).filter((p) => p.ok);
         const defaultUrl = secrets.get("ENGINE_URL")?.replace(/\/$/, "");
@@ -298,6 +345,7 @@ export default async function (req) {
         failed: failed.length,
       },
       actions,
+      skipped,
       __v: DEPLOYMENT_VERSION,
     }, { status: 200 });
   } catch (error) {
