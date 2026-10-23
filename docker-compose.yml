@@ -7,7 +7,7 @@
 # Base44 runtime — run `npm run dev` on the host for the UI until the
 # frontend port (Phase 4) lands.
 #
-# Production equivalents: see docs/portable/DEPLOYMENT.md
+# Production equivalents: see portable/CUTOVER.md
 name: cloudbrowser-control
 
 services:

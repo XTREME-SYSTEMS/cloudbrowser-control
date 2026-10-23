@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import fs from "fs";
 import { chromium } from "playwright";
+import { createPoolHealer } from "./pool-healer.js";
 // Self-hosted CAPTCHA solver — zero external API dependency.
 import { solveCaptchaSelf } from './captcha-self-solver.js';
 // TASK 8: Fingerprint + human behavior modules
@@ -290,27 +291,28 @@ async function locate(page, selector) {
   return page.locator(selector).first();
 }
 
-async function warmPool() {
-  while (pool.length < POOL_SIZE && sessions.size < MAX_SESSIONS) {
-    try {
-      const browser = await chromium.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-      });
-      const context = await browser.newContext();
-      await context.addInitScript(buildStealthScript("pool_" + Math.random().toString(36).slice(2)));
-      const page = await context.newPage();
-      const id = uid();
-      const session = {
-        id, browser, context, page, status: "pooled", url: "", title: "",
-        lastActivity: Date.now(), createdAt: Date.now(), consoleLogs: [], networkLogs: [], isPooled: true,
-      };
-      sessions.set(id, session);
-      await sessionManager.trackSession(id, session);
-      pool.push(id);
-    } catch (e) { break; }
-  }
-}
+// ═══════════════════════════════════════════════
+// Self-healing pool
+//
+// The implementation lives in pool-healer.js so its failure handling can be
+// exercised directly (see tests/pool-self-heal.test.js). What it must not do is
+// leak a half-built browser, hand out a dead pooled session, swallow a launch
+// error, or keep answering "healthy" once it can no longer start a browser.
+// ═══════════════════════════════════════════════
+
+const healer = createPoolHealer({
+  chromium,
+  sessions,
+  pool,
+  closeSession,
+  poolSize: POOL_SIZE,
+  maxSessions: MAX_SESSIONS,
+  uid,
+  buildStealthScript,
+  trackSession: (id, session) => sessionManager.trackSession(id, session),
+});
+
+const { state: selfHeal, isUsable, recordLaunchFailure, launchBrowser, warmPool } = healer;
 
 // Multi-provider CAPTCHA — Browserbase parity.
 // Supports: recaptcha_v2, recaptcha_v3, hcaptcha, turnstile, funcaptcha, image.
@@ -827,7 +829,12 @@ async function paginate(page, options) {
 setInterval(() => {
   const now = Date.now();
   for (const [id, s] of sessions) {
-    if (s.status === "pooled") continue;
+    // A pooled session whose browser has died is not idle capacity — it is a
+    // leaked process and a trap for the next caller. Reap it like any other.
+    if (s.status === "pooled") {
+      if (!isUsable(s)) closeSession(id, "dead_pooled").catch(() => {});
+      continue;
+    }
     if (now - s.lastActivity > SESSION_TTL_MS) closeSession(id, "timed_out").catch(() => {});
   }
 }, 60000);
@@ -840,9 +847,13 @@ setInterval(() => warmPool(), 120000);
 // ═══════════════════════════════════════════════
 
 api.get("/health", (req, res) => {
+  // `ok` stays true: this process is answering. `status` tells the truth about
+  // whether it can actually serve — an engine that cannot start a browser is
+  // degraded, not healthy, so no consumer is told that a broken engine is fine.
+  const degraded = selfHeal.consecutive_launch_failures > 0 && pool.length === 0;
   res.json({
     ok: true,
-    status: "healthy",
+    status: degraded ? "degraded" : "healthy",
     uptime: process.uptime(),
     worker_id: WORKER_ID,
     region: REGION,
@@ -853,6 +864,8 @@ api.get("/health", (req, res) => {
     max_sessions: MAX_SESSIONS,
     pool_size: pool.length,
     pool_capacity: POOL_SIZE,
+    pool_deficit: Math.max(0, POOL_SIZE - pool.length),
+    self_heal: selfHeal,
     timestamp: new Date().toISOString(),
   });
 });
@@ -908,7 +921,10 @@ api.post("/sessions", async (req, res) => {
     if (opts.usePool && pool.length > 0) {
       const pooledId = pool.shift();
       const s = sessions.get(pooledId);
-      if (s) {
+      // Never hand out a browser that has already died: the caller would get a
+      // session id that fails on its very first action.
+      if (s && !isUsable(s)) await closeSession(pooledId, "dead_pooled");
+      else if (s) {
         await sessionManager.setStatus(pooledId, "active");
         // Merge per-session opts that pooled sessions don't have yet
         // (captcha solver config, proxy, headers, etc.)
@@ -963,23 +979,35 @@ api.post("/sessions", async (req, res) => {
 
     if (opts.userDataDir) {
       context = await chromium.launchPersistentContext(opts.userDataDir, { headless: true, args: launchArgs, ...contextOptions });
-      page = context.pages()[0] || await context.newPage();
-      await context.addInitScript(buildStealthScript(opts.userDataDir));
-      // TASK 8: Full fingerprint randomization
-      if (opts.fingerprintLevel === 'full') {
-        const fp = generateFingerprint();
-        await context.addInitScript(getFingerprintInitScript(fp));
+      try {
+        page = context.pages()[0] || await context.newPage();
+        await context.addInitScript(buildStealthScript(opts.userDataDir));
+        // TASK 8: Full fingerprint randomization
+        if (opts.fingerprintLevel === 'full') {
+          const fp = generateFingerprint();
+          await context.addInitScript(getFingerprintInitScript(fp));
+        }
+      } catch (e) {
+        // A persistent context owns its browser process too: close it before
+        // rethrowing, or the half-built profile leaks and joins the pile.
+        try { await context.close(); } catch (closeErr) {}
+        recordLaunchFailure(e);
+        throw e;
       }
     } else {
-      browser = await chromium.launch({ headless: true, args: launchArgs });
-      context = await browser.newContext(contextOptions);
-      await context.addInitScript(buildStealthScript(Math.random().toString(36).slice(2)));
-      // TASK 8: Full fingerprint randomization
-      if (opts.fingerprintLevel === 'full') {
-        const fp = generateFingerprint();
-        await context.addInitScript(getFingerprintInitScript(fp));
-      }
-      page = await context.newPage();
+      // Routed through the shared launcher so a failed start is cleaned up and
+      // counted, instead of leaking the browser and surfacing as a bare 500.
+      await launchBrowser(launchArgs, async (b) => {
+        browser = b;
+        context = await browser.newContext(contextOptions);
+        await context.addInitScript(buildStealthScript(Math.random().toString(36).slice(2)));
+        // TASK 8: Full fingerprint randomization
+        if (opts.fingerprintLevel === 'full') {
+          const fp = generateFingerprint();
+          await context.addInitScript(getFingerprintInitScript(fp));
+        }
+        page = await context.newPage();
+      });
     }
 
     // Restore cookies/storage if provided (resume / context).
@@ -1368,8 +1396,9 @@ api.get("/pool", (req, res) => {
   });
 });
 
-api.post("/pool/warm", async (req, res) => { await warmPool(); res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID }); });
+api.post("/pool/warm", async (req, res) => { healer.resetBackoff(); await warmPool(); res.json({ poolSize: pool.length, poolCapacity: POOL_SIZE, workerId: WORKER_ID }); });
 api.post("/pool/drain", async (req, res) => { while (pool.length > 0) { const id = pool.shift(); await closeSession(id, "drained"); } res.json({ poolSize: 0, workerId: WORKER_ID }); });
+api.post("/pool/recycle", async (req, res) => { res.json({ ...(await healer.recyclePool()), workerId: WORKER_ID }); });
 
 // ═══════════════════════════════════════════════
 // Graceful shutdown (H3 fix) — drain sessions on SIGTERM

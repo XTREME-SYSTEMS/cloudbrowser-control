@@ -3,6 +3,12 @@ region = "ams"
 numReplicas = 3
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+# Liveness only. /health answers 200 whenever the process is up, however short
+# the browser pool is — readiness is a routing decision for the caller, not a
+# reason to recycle a container. The engine restarts itself when it truly
+# cannot start a browser (see the self-heal block in server.js).
+healthcheckPath = "/health"
+healthcheckTimeout = 30
 
 [build]
 builder = "DOCKERFILE"
