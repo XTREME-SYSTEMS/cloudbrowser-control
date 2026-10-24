@@ -24,8 +24,9 @@ function getBlobToken(): string | null {
 
 const BLOB_MISSING = 'BLOB_READ_WRITE_TOKEN not set. Add it to app secrets to enable file storage via Vercel Blob.';
 
-async function uploadToNative(base44: any, file: File | Blob, isPrivate: boolean) {
-  if (!base44) throw new Error(`${BLOB_MISSING} (no client supplied for the platform-storage fallback)`);
+async function uploadToNative(base44: any, file: File | Blob, isPrivate: boolean, preferredFailure?: string) {
+  const because = preferredFailure ? ` Preferred store unavailable: ${preferredFailure}` : '';
+  if (!base44) throw new Error(`${BLOB_MISSING}${because} (no client supplied for the platform-storage fallback)`);
   const res: any = isPrivate
     ? await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file })
     : await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });
@@ -40,7 +41,7 @@ async function uploadToNative(base44: any, file: File | Blob, isPrivate: boolean
     ? payload.file_uri || payload.file_url || payload.url
     : payload.file_url || payload.url || payload.file_uri;
   if (!url) {
-    throw new Error(`Platform storage returned no file URL (keys received: ${Object.keys(payload || {}).join(', ') || 'none'})`);
+    throw new Error(`Platform storage returned no file URL (keys received: ${Object.keys(payload || {}).join(', ') || 'none'}).${because}`);
   }
   return url;
 }
@@ -64,30 +65,44 @@ async function uploadToBlob(file: File | Blob, pathname?: string): Promise<{ url
 // storage when the Blob token is not configured.
 export async function uploadFile(opts: { file: File | Blob; pathname?: string; base44?: any }): Promise<{ file_url: string }> {
   if (!getBlobToken()) {
-    const url = await uploadToNative(opts.base44, opts.file, false);
-    if (url) return { file_url: url };
-    throw new Error(BLOB_MISSING);
+    return { file_url: await uploadToNative(opts.base44, opts.file, false) };
   }
-  const result = await uploadToBlob(opts.file, opts.pathname);
-  return { file_url: result.url };
+  try {
+    const result = await uploadToBlob(opts.file, opts.pathname);
+    return { file_url: result.url };
+  } catch (blobError) {
+    // A token that is present but rejected — wrong store, revoked, or the wrong kind
+    // of token — used to fail the whole upload. The file is not what is wrong, the
+    // token is: the platform store takes over and the reason is carried through so
+    // the token can still be fixed.
+    return { file_url: await uploadToNative(opts.base44, opts.file, false, blobError.message) };
+  }
 }
 
 // Upload a public file, with the same fallback.
 export async function uploadPublicFile(opts: { file: File | Blob; pathname?: string; base44?: any }): Promise<{ file_url: string }> {
   if (!getBlobToken()) {
-    const url = await uploadToNative(opts.base44, opts.file, false);
-    if (url) return { file_url: url };
-    throw new Error(BLOB_MISSING);
+    return { file_url: await uploadToNative(opts.base44, opts.file, false) };
   }
-  const result = await uploadToBlob(opts.file, opts.pathname);
-  return { file_url: result.url };
+  try {
+    const result = await uploadToBlob(opts.file, opts.pathname);
+    return { file_url: result.url };
+  } catch (blobError) {
+    return { file_url: await uploadToNative(opts.base44, opts.file, false, blobError.message) };
+  }
 }
 
 // Upload a private file to Vercel Blob storage.
 // Vercel Blob URLs are publicly accessible but unguessable — effective privacy for temp files.
-export async function uploadPrivateFile(opts: { file: File | Blob; pathname?: string }): Promise<{ file_uri: string }> {
-  const result = await uploadToBlob(opts.file, opts.pathname);
-  return { file_uri: result.url };
+export async function uploadPrivateFile(opts: { file: File | Blob; pathname?: string; base44?: any }): Promise<{ file_uri: string }> {
+  try {
+    const result = await uploadToBlob(opts.file, opts.pathname);
+    return { file_uri: result.url };
+  } catch (blobError) {
+    // Same reasoning as the public path: a rejected token must not lose the file
+    // when a client is at hand to keep it in the platform's private store.
+    return { file_uri: await uploadToNative(opts.base44, opts.file, true, blobError.message) };
+  }
 }
 
 // Create a signed URL for a Vercel Blob file.

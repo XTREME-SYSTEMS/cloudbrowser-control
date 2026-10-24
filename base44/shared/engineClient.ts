@@ -10,6 +10,7 @@ import { secrets } from "base44:runtime";
 
 let _base44 = null;
 let _cachedConfig = null;
+let _lastGoodUrl = null;
 
 /** Set the base44 client for URL override lookups. Call at top of each function. */
 export function setEngineClient(base44) {
@@ -90,8 +91,15 @@ export async function engineFetch(path, options = {}, requestId) {
   };
   if (requestId) baseHeaders["x-request-id"] = requestId;
 
+  // The engine that answered last time is tried first: browser sessions live in one
+  // engine's memory, so the engine that served the previous step of a run is the one
+  // most likely to hold the session the next step names.
+  const ordered = _lastGoodUrl && urls.includes(_lastGoodUrl)
+    ? [_lastGoodUrl, ...urls.filter((url) => url !== _lastGoodUrl)]
+    : urls;
+
   const errors = [];
-  for (const baseUrl of urls) {
+  for (const baseUrl of ordered) {
     try {
       const res = await fetch(`${baseUrl}${path}`, {
         ...options,
@@ -107,6 +115,16 @@ export async function engineFetch(path, options = {}, requestId) {
         continue;
       }
 
+      // A 404 usually means "not on this engine", not "not at all": sessions and
+      // contexts are held in a single engine's memory, and the fleet is tried in
+      // order. Treating it as fatal is what made multi-step sessions fail
+      // intermittently — the call had to land on the owning engine by luck. Ask the
+      // other engines before giving up; only an engine that has it answers.
+      if (res.status === 404) {
+        errors.push(`${baseUrl}: ${typeof body === "object" && body?.error ? body.error : "not found"}`);
+        continue;
+      }
+
       if (!res.ok) {
         const errMsg = typeof body === "object" && body?.error ? body.error : `Engine error ${res.status}`;
         throw new Error(errMsg);
@@ -118,6 +136,7 @@ export async function engineFetch(path, options = {}, requestId) {
         continue;
       }
 
+      _lastGoodUrl = baseUrl;
       return body;
     } catch (err) {
       // Network error / fetch rejection — record and try next engine

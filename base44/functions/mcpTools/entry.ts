@@ -193,23 +193,29 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       // Upload and create artifact
       if (res.base64) {
         const file = new File([Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0))], `mcp_screenshot.png`, { type: "image/png" });
-        // Store the capture. Vercel Blob is preferred, but its token is optional and
-        // is not configured here, and a missing third-party token must not lose the
-        // screenshot: the platform's own storage takes over. The fallback lives here
-        // rather than only in the shared module so it travels with this function.
+        // Two stores, tried in order: the preferred Blob store, then the platform's
+        // own. A capture is never lost to a storage configuration gap, and the
+        // fallback lives here rather than only in the shared module so it travels
+        // with this function. The caller is an MCP client holding no session, so the
+        // capture is stored publicly: anyone with the link can open it.
         let screenshotUrl = null;
+        const failures = [];
         try {
-          screenshotUrl = (await uploadFile({ file, base44 })).file_url;
+          screenshotUrl = (await uploadFile({ file, base44 })).file_url || null;
         } catch (blobError) {
+          failures.push(blobError.message);
+        }
+        if (!screenshotUrl) {
           try {
             const uploaded = await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });
-            screenshotUrl = uploaded?.file_url || null;
+            const payload = uploaded?.data || uploaded || {};
+            screenshotUrl = payload.file_url || payload.url || payload.file_uri || null;
+            if (!screenshotUrl) failures.push(`platform storage returned no URL (keys: ${Object.keys(payload).join(", ") || "none"})`);
           } catch (nativeError) {
-            throw new Error(`${blobError.message} Platform storage also failed: ${nativeError.message}`);
+            failures.push(nativeError.message);
           }
-          if (!screenshotUrl) throw new Error(`${blobError.message} Platform storage returned no URL.`);
         }
-        if (!screenshotUrl) throw new Error("Screenshot upload failed");
+        if (!screenshotUrl) throw new Error(`Screenshot upload failed: ${failures.join(" | ")}`);
         return { screenshot_url: screenshotUrl, size: res.size };
       }
       return { error: "No screenshot captured" };

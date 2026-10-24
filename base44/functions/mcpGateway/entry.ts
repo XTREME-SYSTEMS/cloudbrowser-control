@@ -150,7 +150,9 @@ async function exec(base44, s, action_type, payload = {}) {
 
 async function uploadScreenshot(base44, base64, name = "mcp_screenshot.png") {
   const file = new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name, { type: "image/png" });
-  const res = await uploadFile({ file });
+  // The client travels with the upload so the storage layer can fall back to the
+  // platform's own store when the preferred store is unavailable.
+  const res = await uploadFile({ file, base44 });
   return res.file_url;
 }
 

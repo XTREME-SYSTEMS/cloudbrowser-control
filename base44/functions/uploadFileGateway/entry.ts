@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { uploadFile, uploadPublicFile, uploadPrivateFile, createSignedUrl } from '../../shared/storageGateway.ts';
 
 // File upload gateway — allows frontend pages to upload files to Vercel Blob
@@ -16,6 +17,7 @@ function base64ToBlob(b64: string, type: string): Blob {
 }
 
 export default async function(req) {
+  const base44 = createClientFromRequest(req);
   try {
     const body = await req.json().catch(() => ({}));
     const { action, file_data, filename, content_type, file_uri, expires_in } = body;
@@ -23,12 +25,14 @@ export default async function(req) {
     if (action === 'upload' || action === 'upload_public') {
       const blob = base64ToBlob(file_data, content_type || 'application/octet-stream');
       const file = new File([blob], filename || `file_${Date.now()}`, { type: content_type });
-      const result = action === 'upload_public' ? await uploadPublicFile({ file }) : await uploadFile({ file });
+      // The client travels with the upload so the storage layer can fall back to the
+      // platform's own store when the preferred store is unavailable.
+      const result = action === 'upload_public' ? await uploadPublicFile({ file, base44 }) : await uploadFile({ file, base44 });
       return Response.json({ ok: true, ...result });
     } else if (action === 'upload_private') {
       const blob = base64ToBlob(file_data, content_type || 'application/octet-stream');
       const file = new File([blob], filename || `file_${Date.now()}`, { type: content_type });
-      const result = await uploadPrivateFile({ file });
+      const result = await uploadPrivateFile({ file, base44 });
       return Response.json({ ok: true, ...result });
     } else if (action === 'create_signed_url') {
       const result = await createSignedUrl({ file_uri, expires_in });

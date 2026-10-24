@@ -41,7 +41,7 @@ export default async function (req) {
 
     // Upload as file
     const file = new File([output], filename, { type: contentType });
-    const uploadResult = await uploadFile({ file });
+    const uploadResult = await uploadFile({ file, base44 });
 
     return Response.json({ file_url: uploadResult.file_url, filename, format, count: results.length });
   } catch (error) {
