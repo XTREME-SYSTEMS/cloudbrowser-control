@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { observeFleet, observeMachine, diagnose } from '../../shared/openClawDiagnose.ts';
+import { observeFleet, observeMachine, diagnose, observeStorage } from '../../shared/openClawDiagnose.ts';
 
 /**
  * OpenClaw's full-system diagnostic probe.
@@ -80,6 +80,22 @@ export default async function (req) {
     const engines = fleet.engines || [];
     const { problems, proposals } = diagnose({ fleet, machine });
 
+    // Storage is read on the same pass. Nothing here repairs it — no code can
+    // provision a third-party token — but an hour of a store that cannot keep a
+    // capture must not pass unrecorded, which is exactly how this fault stayed
+    // invisible until a screenshot failed.
+    const storage = observeStorage();
+    const storageProblems = storage.ok
+      ? []
+      : [{
+        id: 'storage_unconfigured',
+        issue: 'storage_unconfigured',
+        severity: 'medium',
+        evidence: storage.note,
+        suggest: null,
+      }];
+    const allProblems = [...problems, ...storageProblems];
+
     const report = {
       probe_id: probeId,
       started_at: startedAt,
@@ -94,17 +110,19 @@ export default async function (req) {
       },
       machine,
       parity: parityOf(engines),
-      problems,
+      problems: allProblems,
       proposals,
+      storage,
       unreadable,
     };
 
-    const verdict = verdictOf({ engines, problems, unreadable });
+    const verdict = verdictOf({ engines, problems: allProblems, unreadable });
     const serving = engines.filter((engine) => engine.serving).length;
     const summary = [
       `Full diagnostic: ${verdict}`,
       `${serving}/${engines.length} engines serving browser work`,
-      `${(problems || []).length} problem(s)`,
+      `${allProblems.length} problem(s)`,
+      storage.ok ? null : 'file storage unconfigured',
       machine.connected ? 'paired machine read' : 'paired machine not read',
       unreadable.length ? `${unreadable.length} leg(s) unreadable` : null,
     ].filter(Boolean).join(' · ');
@@ -135,8 +153,9 @@ export default async function (req) {
       verdict,
       summary,
       serving_engines: `${serving}/${engines.length}`,
-      problems,
+      problems: allProblems,
       proposals,
+      storage,
       parity: report.parity,
       machine_connected: Boolean(machine.connected),
       railway_ok: Boolean(fleet.railway?.ok),

@@ -74,6 +74,26 @@ export async function observeMachine(base44) {
   };
 }
 
+/**
+ * Storage: where a capture or an export is actually kept. One question, answered
+ * plainly — is the preferred store configured? A missing third-party token is no
+ * longer fatal (the platform's own storage takes over for a caller that passes its
+ * client), but the fact belongs in the hourly report rather than being rediscovered
+ * when someone's screenshot fails.
+ */
+export function observeStorage() {
+  const blobToken = Boolean(secrets.get('BLOB_READ_WRITE_TOKEN'));
+  return {
+    primary: 'vercel_blob',
+    blob_token_configured: blobToken,
+    fallback: 'platform_storage',
+    ok: blobToken,
+    note: blobToken
+      ? null
+      : 'The Vercel Blob token is not set. Uploads that take the fallback path are kept in platform storage at a permanent public URL — anyone with the link can open them.',
+  };
+}
+
 function uniqueBy(list, key) {
   const seen = new Set();
   return list.filter((item) => {
