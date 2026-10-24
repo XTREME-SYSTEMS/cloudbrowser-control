@@ -15,7 +15,7 @@
 //   approval — queued with the exact command, and run only when a human says so
 // A third class is refused outright and is never queued, only reported.
 
-export const POLICY_VERSION = "openclaw-guardian/2026.10.24";
+export const POLICY_VERSION = "openclaw-guardian/2026.10.24.2";
 
 export const RISK_SAFE = "safe";
 export const RISK_APPROVAL = "approval";
@@ -34,7 +34,7 @@ export const ACTION_CATALOG = [
     executor: "function",
     function_name: "railwayAutoHeal",
     reversible: true,
-    why: "Acts only on services demonstrably not serving browser work, rebuilds a degraded engine's pool in place, and carries its own 5-minute cooldown and 5-per-target-per-day cap.",
+    why: "Acts only on services demonstrably not serving browser work. It rebuilds a degraded engine's browser pool in place, and when that pool rebuild has itself failed — the signature of a container that can no longer spawn a browser — it rebuilds that one engine's container (a redeploy of its current build). One target at a time, under a 5-minute cooldown and a 5-per-target-per-day cap that apply to the rebuild as to any other redeploy, and never on a service still serving browser work.",
   },
   {
     id: "platform.pool_reconcile",

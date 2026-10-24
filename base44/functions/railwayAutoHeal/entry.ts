@@ -159,9 +159,79 @@ export default async function (req) {
     // Recycling the pool drops those pooled handles and re-warms from scratch. It
     // runs entirely inside the container, so it needs no restart and takes no live
     // session with it — the only safe lever on an engine that may still be serving
-    // work. One that still cannot launch after the rebuild is left for a human:
-    // restarting it would cost live sessions and the next cycle would find the same
-    // thing again.
+    // work. One that still cannot launch after the rebuild is escalated instead: its
+    // container is rebuilt above, because that is the only lever left under a fault
+    // the container itself cannot clear.
+    // Railway serves a service at <service-name>-<environment>.up.railway.app, and one
+    // engine service name is a prefix of another ("cloudbrowser-engine" against
+    // "cloudbrowser-engine-2"), so resolve the LONGEST service name the host starts
+    // with. Taking the first match would let engine-1's name claim engine-2's probe.
+    const serviceMatchingHost = (hostname: string) => {
+      const host = String(hostname || "").toLowerCase();
+      if (!host) return null;
+      return railwayServices
+        .filter((s: any) => {
+          const name = String(s.name || "").toLowerCase();
+          return Boolean(name) && (host === name || host.startsWith(`${name}-`));
+        })
+        .sort((a: any, b: any) => String(b.name).length - String(a.name).length)[0] || null;
+    };
+
+    const serviceForEngine = (engineUrl: string) => {
+      try {
+        return serviceMatchingHost(new URL(engineUrl).hostname);
+      } catch {
+        return null;
+      }
+    };
+
+    // Rebuild one engine's container. This is the last lever there is, so it is spent
+    // only on an engine whose in-container pool rebuild has already failed: that
+    // failure is the signature of a container that cannot spawn a browser at all
+    // (spawn EAGAIN, then an immediate crash on launch), which no amount of recycling
+    // inside it can clear. Measured, not theoretical: the primary sat unspawnable for
+    // a working day, its own exit-on-launch-failure guard standing down because the
+    // pool still listed warm browsers, until its service was rebuilt by hand.
+    const rebuildEngineService = async (probe: any, evidence: string) => {
+      const service = serviceForEngine(probe.engine_url);
+      if (!service) {
+        const error = "No Railway service matches this engine's host, so its container could not be rebuilt.";
+        await logAction(base44, cycleId, "engine", probe.engine_url, probe.engine_label, "engine_unspawnable", "rebuild_service", "failed", error, { engine_error: evidence });
+        actions.push({ target_type: "engine", target_id: probe.engine_url, target_name: probe.engine_label, issue: "engine_unspawnable", action: "rebuild_service", result: "failed", error });
+        return;
+      }
+
+      const targetId = service.id;
+      const targetName = service.name;
+
+      // A rebuild is capped like any other redeploy: one target, a 5-minute cooldown
+      // after a success, and at most MAX_REDEPLOYS_PER_DAY in a day — so a chronically
+      // broken image cannot be rebuilt in a loop.
+      if (isOnCooldown(targetId) || redeployCount(targetId) >= MAX_REDEPLOYS_PER_DAY) {
+        skipped.push({
+          target_type: "railway_service", target_id: targetId, target_name: targetName,
+          issue: "engine_unspawnable", reason: "already rebuilt recently, or at the daily rebuild cap",
+        });
+        return;
+      }
+
+      try {
+        await railwayGraphQL(
+          `mutation($environmentId: String!, $serviceId: String!) {
+            serviceInstanceRedeploy(environmentId: $environmentId, serviceId: $serviceId)
+          }`,
+          { environmentId, serviceId: targetId }
+        );
+        // The rebuild takes minutes, and is verified by the next cycle's probe rather
+        // than claimed here: the mutation being accepted is the action's result, no more.
+        await logAction(base44, cycleId, "railway_service", targetId, targetName, "engine_unspawnable", "redeploy", "success", "", { engine: probe.engine_label, engine_error: evidence });
+        actions.push({ target_type: "railway_service", target_id: targetId, target_name: targetName, issue: "engine_unspawnable", action: "redeploy", result: "success", engine: probe.engine_label });
+      } catch (e: any) {
+        await logAction(base44, cycleId, "railway_service", targetId, targetName, "engine_unspawnable", "redeploy", "failed", e.message, { engine: probe.engine_label });
+        actions.push({ target_type: "railway_service", target_id: targetId, target_name: targetName, issue: "engine_unspawnable", action: "redeploy", result: "failed", error: e.message });
+      }
+    };
+
     if (engineKey) {
       const MAX_POOL_RECYCLES_PER_DAY = 6;
       const poolRecycleCount = (targetId: string) =>
@@ -173,10 +243,32 @@ export default async function (req) {
             now - new Date(l.healed_at).getTime() < ONE_DAY_MS
         ).length;
 
+      // A pool rebuild that did not restore browser launch is what escalates a
+      // degraded engine from an in-container repair to a container rebuild. It is
+      // read from the logs rather than decided in this cycle, so the escalation always
+      // rests on a completed attempt that is on the record.
+      const poolRebuildFailedRecently = (targetId: string) =>
+        recentLogs.some(
+          (l: any) =>
+            l.target_id === targetId &&
+            l.action_taken === "recycle_pool" &&
+            l.action_result === "failed" &&
+            l.healed_at &&
+            now - new Date(l.healed_at).getTime() < ONE_DAY_MS
+        );
+
       for (const probe of probes) {
         if (probe.ok || probe.status !== "degraded" || !probe.readiness) continue;
         const targetId = probe.engine_url;
         if (isOnCooldown(targetId)) continue;
+
+        // The in-container lever has already been tried against this exact fault and
+        // did not work, so recycle nothing and rebuild the service instead.
+        if (poolRebuildFailedRecently(targetId)) {
+          await rebuildEngineService(probe, String(probe.error_message || "browser launch failed").slice(0, 200));
+          continue;
+        }
+
         if (poolRecycleCount(targetId) >= MAX_POOL_RECYCLES_PER_DAY) continue;
 
         const before = String(probe.error_message || "browser launch failed").slice(0, 200);
@@ -210,22 +302,13 @@ export default async function (req) {
       }
     }
 
-    // Railway serves a service at <service-name>-<environment>.up.railway.app, and one
-    // engine service name is a prefix of another ("cloudbrowser-engine" against
-    // "cloudbrowser-engine-2"), so resolve the LONGEST service name the host starts
-    // with. Taking the first match would let engine-1's name claim engine-2's probe.
+    // Is any probe that belongs to this service still serving browser work?
     const servingService = (serviceName: string) => {
       const name = String(serviceName || "").toLowerCase();
       if (!name) return false;
       return probes.some((p) => {
         if (!p.ok || typeof p.engine_url !== "string") return false;
-        let host = "";
-        try { host = new URL(p.engine_url).hostname.toLowerCase(); } catch { return false; }
-        const matched = railwayServices
-          .map((s: any) => String(s.name || "").toLowerCase())
-          .filter((sn: string) => sn && (host === sn || host.startsWith(`${sn}-`)))
-          .sort((a: string, b: string) => b.length - a.length)[0];
-        return matched === name;
+        return String(serviceForEngine(p.engine_url)?.name || "").toLowerCase() === name;
       });
     };
 
