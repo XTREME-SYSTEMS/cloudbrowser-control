@@ -22,6 +22,7 @@ export default function AutonomousChatPanel() {
   );
   const [toolCalls, setToolCalls] = useState(0);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -68,6 +69,19 @@ export default function AutonomousChatPanel() {
     }
   }, [open, conversationId, loadHistory, messages.length]);
 
+  // The agent behind this panel is admin-only, so the panel is only offered to an
+  // admin. Showing it to everyone gave a signed-in non-admin a floating "Full
+  // Access" tab whose every message failed with an opaque permission error.
+  useEffect(() => {
+    let cancelled = false;
+    base44.auth.me()
+      .then(user => { if (!cancelled) setIsAdmin(user?.role === 'admin'); })
+      .catch(() => { if (!cancelled) setIsAdmin(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!isAdmin) return null;
+
   const send = async (text) => {
     const msg = text || input;
     if (!msg.trim() || sending) return;
@@ -104,7 +118,10 @@ export default function AutonomousChatPanel() {
         }
       }
     } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Connection error: ${e.message}` }]);
+      const content = e?.response?.status === 403
+        ? "Admin access is required for the autonomous agent. Sign in with an admin account, or have an admin raise this account's role."
+        : `Connection error: ${e.message}`;
+      setMessages(prev => [...prev, { role: "assistant", content }]);
     } finally {
       setSending(false);
       scrollToBottom();
