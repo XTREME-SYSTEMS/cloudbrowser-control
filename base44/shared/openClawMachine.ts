@@ -142,14 +142,43 @@ export function machineProblems(state) {
     ];
   }
 
+  // An unreadable machine is not a broken one. When the reading came back empty or
+  // incomplete, every field below is simply unknown — and "no process found" in a
+  // reading that never arrived would propose restarting a gateway that is fine. A
+  // partial reading concludes nothing, and says so.
+  if (!state?.host || state?.partial_reading) {
+    return [
+      {
+        id: "machine_unreadable",
+        issue: "machine_unreadable",
+        severity: "medium",
+        evidence: "The paired machine answered, but the reading came back incomplete, so nothing about its state could be concluded.",
+        suggest: null,
+      },
+    ];
+  }
+
   const gateway = state.gateway || {};
-  if (!gateway.running) {
+
+  // A restart needs two independent signs that the gateway is gone: its process
+  // missing AND its endpoint silent. A missing process on its own is often just a
+  // reading gap (a truncated process list), and restarting on that would take down
+  // a gateway that was serving.
+  if (!gateway.running && !gateway.health_ok) {
     problems.push({
       id: "gateway_down",
       issue: "gateway_down",
       severity: "high",
-      evidence: "No openclaw-gateway process is running on the machine.",
+      evidence: `No openclaw-gateway process is running and its health endpoint did not answer (${gateway.health_raw || "no response"}).`,
       suggest: "machine.gateway_restart",
+    });
+  } else if (!gateway.running) {
+    problems.push({
+      id: "gateway_process_unreadable",
+      issue: "gateway_process_unreadable",
+      severity: "low",
+      evidence: `The gateway health endpoint answered live (${gateway.health_raw || "ok"}), but no matching process appeared in the process list.`,
+      suggest: null,
     });
   } else if (!gateway.health_ok) {
     problems.push({
