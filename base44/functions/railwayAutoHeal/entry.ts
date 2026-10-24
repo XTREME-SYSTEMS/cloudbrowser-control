@@ -144,6 +144,72 @@ export default async function (req) {
       : [];
     probes.forEach((p, i) => { p.engine_label = deriveLabel(p.engine_url, i); });
 
+    // ═══════════════════════════════════════════
+    // 0b. DEGRADED ENGINE — REBUILD ITS BROWSER POOL
+    // ═══════════════════════════════════════════
+    // An engine that answers /health but cannot launch a browser is degraded, and
+    // nothing else here acts on it: its Railway deployment is not FAILED (the old
+    // instance is up), and it cannot self-restart either — its own
+    // exit-on-launch-failure guard stands down while the pool still lists warm
+    // browsers. That is how a container which can spawn nothing keeps reporting
+    // "healthy" to everything that only reads /health, while every job routed to it
+    // fails. Measured, not theoretical: the primary sat degraded with a full pool
+    // reading 3/3 until its pool was rebuilt by hand.
+    //
+    // Recycling the pool drops those pooled handles and re-warms from scratch. It
+    // runs entirely inside the container, so it needs no restart and takes no live
+    // session with it — the only safe lever on an engine that may still be serving
+    // work. One that still cannot launch after the rebuild is left for a human:
+    // restarting it would cost live sessions and the next cycle would find the same
+    // thing again.
+    if (engineKey) {
+      const MAX_POOL_RECYCLES_PER_DAY = 6;
+      const poolRecycleCount = (targetId: string) =>
+        recentLogs.filter(
+          (l: any) =>
+            l.target_id === targetId &&
+            l.action_taken === "recycle_pool" &&
+            l.healed_at &&
+            now - new Date(l.healed_at).getTime() < ONE_DAY_MS
+        ).length;
+
+      for (const probe of probes) {
+        if (probe.ok || probe.status !== "degraded" || !probe.readiness) continue;
+        const targetId = probe.engine_url;
+        if (isOnCooldown(targetId)) continue;
+        if (poolRecycleCount(targetId) >= MAX_POOL_RECYCLES_PER_DAY) continue;
+
+        const before = String(probe.error_message || "browser launch failed").slice(0, 200);
+        try {
+          const res = await fetch(`${String(targetId).replace(/\/$/, "")}/pool/recycle`, {
+            method: "POST",
+            headers: { "x-api-key": engineKey, "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(30000),
+          });
+          if (!res.ok) throw new Error(`pool recycle returned HTTP ${res.status}`);
+
+          // Re-read this engine so the rest of the cycle works from the healed
+          // state — an engine that is serving again must not then be restarted.
+          const fresh = await probeEngine(probe.engine_url, engineKey);
+          Object.assign(probe, fresh);
+
+          await logAction(base44, cycleId, "engine", targetId, probe.engine_label, "engine_degraded", "recycle_pool",
+            probe.ok ? "success" : "failed",
+            probe.ok ? "" : String(probe.error_message || "still cannot launch a browser after a pool rebuild"),
+            { before_error: before, status_after: probe.status });
+          actions.push({
+            target_type: "engine", target_id: targetId, target_name: probe.engine_label,
+            issue: "engine_degraded", action: "recycle_pool",
+            result: probe.ok ? "success" : "failed",
+            error: probe.ok ? undefined : String(probe.error_message || "still cannot launch a browser"),
+          });
+        } catch (e: any) {
+          await logAction(base44, cycleId, "engine", targetId, probe.engine_label, "engine_degraded", "recycle_pool", "failed", e.message, { before_error: before });
+          actions.push({ target_type: "engine", target_id: targetId, target_name: probe.engine_label, issue: "engine_degraded", action: "recycle_pool", result: "failed", error: e.message });
+        }
+      }
+    }
+
     // Railway serves a service at <service-name>-<environment>.up.railway.app, and one
     // engine service name is a prefix of another ("cloudbrowser-engine" against
     // "cloudbrowser-engine-2"), so resolve the LONGEST service name the host starts
