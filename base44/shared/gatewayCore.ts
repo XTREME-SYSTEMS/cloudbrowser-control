@@ -6,6 +6,7 @@
 
 import { hashKey, timingSafeEqual } from "./crypto.ts";
 import { withCaptchaCredentials, getCaptchaCredentials } from "./captchaSolver.ts";
+import { waitUntil } from "base44:runtime";
 
 export { hashKey, timingSafeEqual };
 
@@ -70,8 +71,11 @@ export async function checkRateLimit(base44, keyHash, limitPerMinute) {
 
   // Increment the first entry atomically
   if (entries.length > 0) {
+    // The record's id field is `id`. Querying `_id` matched nothing, so the counter
+    // never incremented past 1 and the limit never fired — every request was allowed
+    // no matter how many a key sent.
     await base44.asServiceRole.entities.RateLimitEntry.updateMany(
-      { _id: entries[0].id },
+      { id: entries[0].id },
       { $inc: { count: 1 } }
     );
     // Re-read to get the updated count
@@ -423,9 +427,11 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
         return errResp(409, "Job is already running");
       }
 
-      // Async execution: return 202 immediately, execute in background
-      // The platform function invoke is fire-and-forget when we don't await
-      (async () => {
+      // Async execution: return 202 immediately and keep the worker alive while the
+      // job runs. A bare detached promise is killed the moment the response is sent,
+      // which is why jobs sat in "queued" and never executed — waitUntil is what
+      // actually buys the time after the response has gone out.
+      waitUntil((async () => {
         try {
           const result = await base44.asServiceRole.functions.invoke("runJob", { jobId: params.id });
           // Cache result for idempotency replay
@@ -447,7 +453,7 @@ export async function dispatch(base44, route, params, data, keyRecord, requestId
             ).catch(() => {});
           }
         }
-      })().catch(() => {});
+      })().catch(() => {}));
 
       return Response.json({
         ok: true,

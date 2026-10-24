@@ -17,7 +17,7 @@ function getBlobToken(): string | null {
 const BLOB_MISSING = 'BLOB_READ_WRITE_TOKEN not set. Add it to app secrets to enable file storage via Vercel Blob.';
 
 async function uploadToNative(base44: any, file: File | Blob, isPrivate: boolean) {
-  if (!base44) return null;
+  if (!base44) throw new Error(`${BLOB_MISSING} (no client supplied for the platform-storage fallback)`);
   const res = isPrivate
     ? await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file })
     : await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });

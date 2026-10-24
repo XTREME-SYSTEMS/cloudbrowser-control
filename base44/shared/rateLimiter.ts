@@ -19,6 +19,10 @@ function currentWindowStart(): number {
   return Math.floor(Date.now() / 60000) * 60000;
 }
 
+// Counters are read and written with the service role on purpose: the caller is an
+// API-key client with no app-user session, while RateLimitEntry is admin-only. Read
+// through the caller's own client and every read returns empty, so the count never
+// accumulates and the limit never fires — which is what was happening.
 export async function checkRateLimit(
   base44: any,
   key: string,
@@ -28,29 +32,29 @@ export async function checkRateLimit(
   const windowStart = currentWindowStart();
   const resetAt = windowStart + 60000;
 
-  const entries = await base44.entities.RateLimitEntry.filter({ key_hash: keyHash, window_start: windowStart });
+  const entries = await base44.asServiceRole.entities.RateLimitEntry.filter({ key_hash: keyHash, window_start: windowStart });
 
   if (entries.length > 0) {
     const entry = entries[0];
     if (entry.count >= limitPerMinute) {
       return { allowed: false, remaining: 0, limit: limitPerMinute, resetAt, windowStart };
     }
-    await base44.entities.RateLimitEntry.update(entry.id, { count: entry.count + 1 });
+    await base44.asServiceRole.entities.RateLimitEntry.update(entry.id, { count: entry.count + 1 });
     return { allowed: true, remaining: limitPerMinute - entry.count - 1, limit: limitPerMinute, resetAt, windowStart };
   }
 
-  await base44.entities.RateLimitEntry.create({ key_hash: keyHash, window_start: windowStart, count: 1 });
+  await base44.asServiceRole.entities.RateLimitEntry.create({ key_hash: keyHash, window_start: windowStart, count: 1 });
   return { allowed: true, remaining: limitPerMinute - 1, limit: limitPerMinute, resetAt, windowStart };
 }
 
 export async function getCurrentCount(base44: any, key: string): Promise<number> {
   const keyHash = hashKey(key);
   const windowStart = currentWindowStart();
-  const entries = await base44.entities.RateLimitEntry.filter({ key_hash: keyHash, window_start: windowStart });
+  const entries = await base44.asServiceRole.entities.RateLimitEntry.filter({ key_hash: keyHash, window_start: windowStart });
   return entries.length > 0 ? entries[0].count : 0;
 }
 
 export async function resetRateLimit(base44: any, key: string): Promise<void> {
   const keyHash = hashKey(key);
-  await base44.entities.RateLimitEntry.deleteMany({ key_hash: keyHash });
+  await base44.asServiceRole.entities.RateLimitEntry.deleteMany({ key_hash: keyHash });
 }
