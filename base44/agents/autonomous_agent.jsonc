@@ -1235,7 +1235,48 @@
     }
   ],
   "context_files": [],
-  "app_user_connector_configs": [],
+  "app_user_connector_configs": [
+    {
+      "connector_id": "6ad09aaddbe512e6934af09c",
+      "enabled": true
+    },
+    {
+      "connector_id": "6ad09bfbe726b33e8f873406",
+      "enabled": true
+    },
+    {
+      "connector_id": "69db1e5e75a5f8c15c80cf34",
+      "enabled": true
+    },
+    {
+      "connector_id": "69db1fad3c50db37ad0ce8dd",
+      "enabled": true
+    },
+    {
+      "connector_id": "69ddcb7e5d965b5605cd24b4",
+      "enabled": true
+    },
+    {
+      "connector_id": "69db201897e4e8f9ae073be7",
+      "enabled": true
+    },
+    {
+      "connector_id": "6ad9dfffef86c988847dbbe8",
+      "enabled": true
+    },
+    {
+      "connector_id": "69db228b2439d854c8587167",
+      "enabled": true
+    },
+    {
+      "connector_id": "69e521c8418f5cecefb2567c",
+      "enabled": true
+    },
+    {
+      "connector_id": "6ab15ad1cf868907e918178e",
+      "enabled": true
+    }
+  ],
   "selected_skill_names": [],
   "selected_workspace_skill_ids": [],
   "model": "gpt_5_4",
