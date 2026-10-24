@@ -18,10 +18,23 @@ const BLOB_MISSING = 'BLOB_READ_WRITE_TOKEN not set. Add it to app secrets to en
 
 async function uploadToNative(base44: any, file: File | Blob, isPrivate: boolean) {
   if (!base44) throw new Error(`${BLOB_MISSING} (no client supplied for the platform-storage fallback)`);
-  const res = isPrivate
+  const res: any = isPrivate
     ? await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file })
     : await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });
-  return (isPrivate ? res?.file_uri : res?.file_url) || null;
+  // The stored file's URL is returned differently depending on the call path: the SDK
+  // may hand back the payload itself or an HTTP-response wrapper around it. Reading
+  // only one shape yielded no URL, and the caller then reported the unrelated
+  // missing-Blob-token error — which is what made a working upload look like a
+  // configuration gap. Read both, and if neither has a URL say which keys did arrive
+  // rather than blaming the token.
+  const payload = res?.data ?? res ?? {};
+  const url = isPrivate
+    ? payload.file_uri || payload.file_url || payload.url
+    : payload.file_url || payload.url || payload.file_uri;
+  if (!url) {
+    throw new Error(`Platform storage returned no file URL (keys received: ${Object.keys(payload || {}).join(', ') || 'none'})`);
+  }
+  return url;
 }
 
 async function uploadToBlob(file: File | Blob, pathname?: string): Promise<{ url: string; pathname: string; contentType: string }> {

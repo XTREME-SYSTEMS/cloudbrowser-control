@@ -201,9 +201,13 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
         try {
           screenshotUrl = (await uploadFile({ file, base44 })).file_url;
         } catch (blobError) {
-          const uploaded = await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });
-          screenshotUrl = uploaded?.file_url || null;
-          if (!screenshotUrl) throw blobError;
+          try {
+            const uploaded = await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });
+            screenshotUrl = uploaded?.file_url || null;
+          } catch (nativeError) {
+            throw new Error(`${blobError.message} Platform storage also failed: ${nativeError.message}`);
+          }
+          if (!screenshotUrl) throw new Error(`${blobError.message} Platform storage returned no URL.`);
         }
         if (!screenshotUrl) throw new Error("Screenshot upload failed");
         return { screenshot_url: screenshotUrl, size: res.size };
