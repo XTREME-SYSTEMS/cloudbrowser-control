@@ -193,10 +193,20 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       // Upload and create artifact
       if (res.base64) {
         const file = new File([Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0))], `mcp_screenshot.png`, { type: "image/png" });
-        // The client is passed so storage can fall back to the platform's own store
-        // when the optional Blob token is not configured.
-        const uploadRes = await uploadFile({ file, base44 });
-        return { screenshot_url: uploadRes.file_url, size: res.size };
+        // Store the capture. Vercel Blob is preferred, but its token is optional and
+        // is not configured here, and a missing third-party token must not lose the
+        // screenshot: the platform's own storage takes over. The fallback lives here
+        // rather than only in the shared module so it travels with this function.
+        let screenshotUrl = null;
+        try {
+          screenshotUrl = (await uploadFile({ file, base44 })).file_url;
+        } catch (blobError) {
+          const uploaded = await base44.asServiceRole.integrations.Core.UploadPublicFile({ file });
+          screenshotUrl = uploaded?.file_url || null;
+          if (!screenshotUrl) throw blobError;
+        }
+        if (!screenshotUrl) throw new Error("Screenshot upload failed");
+        return { screenshot_url: screenshotUrl, size: res.size };
       }
       return { error: "No screenshot captured" };
     }
