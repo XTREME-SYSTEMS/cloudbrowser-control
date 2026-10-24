@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "openclaw_diagnostic_probe",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_probe": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runDiagnosticProbe",
+            "args": {
+              "triggered_by": "schedule"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Full diagnostic probe",
+            "description": "Read the fleet, the project and the machine, then preserve the report"
+          }
+        }
+      }
+    ]
+  },
+  "name": "OpenClaw Diagnostic Probe",
+  "description": "Runs OpenClaw's full-system diagnostic probe every hour: the engine fleet, the Railway project and the paired machine are read through the same observation path the autonomy cycle uses, the problems and build drift are listed, and the whole report is preserved in the archive ledger so any hour can be read back."
+}

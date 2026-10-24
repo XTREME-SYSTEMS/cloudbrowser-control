@@ -1,15 +1,15 @@
 {
   "name": "SystemArchive",
   "type": "object",
-  "description": "The archive ledger. Every record retired from the live system is preserved here in full before its live copy is cleared, so an old result can be read back rather than lost. The live system is cleared by reapExpired and by archiveResults; only archiveResults writes here. Written only by archiveResults.",
+  "description": "The archive ledger. Two append-only writers, and nothing else: archiveResults preserves a record retired from the live system in full before its live copy is cleared, and runDiagnosticProbe appends one full-system diagnostic report per scheduled probe. Either way an entry is preserved whole, and a payload too large to keep is disclosed as truncated rather than presented as complete.",
   "properties": {
     "batch_id": {
       "type": "string",
-      "description": "Groups every record retired in the same archive action"
+      "description": "Groups every record retired in the same archive action, or every entry of one diagnostic probe"
     },
     "entity": {
       "type": "string",
-      "description": "The entity the record was retired from"
+      "description": "The entity the record was retired from, or SystemProbe for a diagnostic probe report"
     },
     "entity_label": {
       "type": "string",

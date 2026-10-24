@@ -20,6 +20,9 @@ export async function observeFleet(base44) {
     probe.engine_label = deriveLabel(probe.engine_url, index);
   });
 
+  // The rich fields are kept rather than discarded: a diagnostic has to be able to
+  // say which build each engine is actually running, so build drift shows up as
+  // drift instead of being rediscovered later as a fault.
   const engines = probes.map((probe) => ({
     url: probe.engine_url,
     label: probe.engine_label,
@@ -27,6 +30,13 @@ export async function observeFleet(base44) {
     status: probe.status,
     ready: probe.readiness?.ready ?? null,
     error: probe.error_message || null,
+    version: probe.engine_version || null,
+    region: probe.region || null,
+    active_sessions: probe.active_sessions ?? null,
+    max_sessions: probe.max_sessions ?? null,
+    pool_size: probe.pool_size ?? null,
+    uptime_seconds: probe.uptime_seconds ?? null,
+    response_time_ms: probe.response_time_ms ?? null,
   }));
 
   const railway = { ok: false, services: 0, failed: [], error: null };
