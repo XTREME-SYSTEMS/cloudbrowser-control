@@ -5,6 +5,9 @@ import { getModelForTask } from '../../shared/aiRouter.ts';
 import { runGatewayAgent } from '../../shared/gatewayAgent.ts';
 import { runAutonomousGatewayAgent } from '../../shared/autonomousGatewayAgent.ts';
 
+// Agents that can change live infrastructure or the operator's own machine are admin-only.
+const OPS_AGENTS = new Set(['autonomous_agent', 'openclaw_operator']);
+
 export default async function(req) {
   let base44;
   let userMessage;
@@ -20,7 +23,7 @@ export default async function(req) {
     if (body.action === 'start') {
       if (!Object.hasOwn(GATEWAY_AGENTS, body.agent_name)) return Response.json({ error: 'Unknown agent.' }, { status: 400 });
       const config = GATEWAY_AGENTS[body.agent_name];
-      if (body.agent_name === 'autonomous_agent' && user.role !== 'admin') return Response.json({ error: 'Admin access is required for the operations agent.' }, { status: 403 });
+      if (OPS_AGENTS.has(body.agent_name) && user.role !== 'admin') return Response.json({ error: 'Admin access is required for the operations agent.' }, { status: 403 });
       const metadata = { name: String(body.metadata?.name || 'Chat').slice(0, 200), description: String(body.metadata?.description || '').slice(0, 1000) };
       const legacyId = typeof body.legacy_id === 'string' && body.legacy_id.length <= 100 ? body.legacy_id : null;
       if (legacyId) {
@@ -41,7 +44,7 @@ export default async function(req) {
     requestKey = body.request_key;
     conversation = await base44.entities.GatewayConversation.get(body.conversation_id);
     if (!conversation || conversation.created_by_id !== user.id) return Response.json({ error: 'Conversation not found.' }, { status: 404 });
-    if (conversation.agent_name === 'autonomous_agent' && user.role !== 'admin') return Response.json({ error: 'Admin access is required for the operations agent.' }, { status: 403 });
+    if (OPS_AGENTS.has(conversation.agent_name) && user.role !== 'admin') return Response.json({ error: 'Admin access is required for the operations agent.' }, { status: 403 });
 
     const scope = { conversation_id: conversation.id, created_by_id: user.id };
     const previous = await base44.entities.GatewayMessage.filter({ ...scope, request_key: requestKey }, { sort: 'created_date', limit: 2 });

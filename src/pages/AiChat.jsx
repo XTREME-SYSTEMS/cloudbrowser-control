@@ -9,7 +9,8 @@ import ChatInput from "@/components/ai-chat/ChatInput";
 import WhatsAppConnect from "@/components/agents/WhatsAppConnect";
 import DesktopCommanderConnect from "@/components/agents/DesktopCommanderConnect";
 
-const AGENT_NAME = "autonomous_agent";
+// The chat agent of record is OpenClaw — the supervised autonomy operator.
+const AGENT_NAME = "openclaw_operator";
 
 
 export default function AiChat() {
@@ -59,7 +60,7 @@ export default function AiChat() {
     try {
       const conv = await agentsApi.createConversation({
         agent_name: AGENT_NAME,
-        metadata: { name: `Chat ${conversations.length + 1}`, description: "Autonomous agent conversation" },
+        metadata: { name: `Chat ${conversations.length + 1}`, description: "OpenClaw supervision conversation" },
       });
       setConversations([conv, ...conversations]);
       setActiveId(conv.id);
@@ -106,7 +107,7 @@ export default function AiChat() {
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><Bot className="w-5 h-5 text-primary-foreground" /></div>
-            <div><p className="font-heading font-semibold text-sm">Autonomous Agent</p><p className="text-xs text-muted-foreground">Full system access</p></div>
+            <div><p className="font-heading font-semibold text-sm">OpenClaw</p><p className="text-xs text-muted-foreground">Supervised autonomy</p></div>
           </div>
         </div>
         <ConversationList
@@ -126,7 +127,7 @@ export default function AiChat() {
             <Sparkles className="w-5 h-5 text-primary" />
             <div>
               <p className="font-medium text-sm">{activeId ? conversations.find((c) => c.id === activeId)?.metadata?.name || "Chat" : "Select or create a chat"}</p>
-              <p className="text-xs text-muted-foreground">Acts across your system and connected accounts</p>
+              <p className="text-xs text-muted-foreground">Observes the platform and your machine, gated by the guardian</p>
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
@@ -144,12 +145,12 @@ export default function AiChat() {
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Bot className="w-12 h-12 text-muted-foreground mb-3" />
               <p className="text-lg font-medium">Start a conversation</p>
-              <p className="text-sm text-muted-foreground mb-4">Create a new chat to interact with the autonomous agent</p>
+              <p className="text-sm text-muted-foreground mb-4">Create a new chat to talk to OpenClaw</p>
               <Button onClick={handleCreate}><Sparkles className="w-4 h-4" /> New Chat</Button>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <p className="text-sm text-muted-foreground">Send a message to start. The agent can browse the web, create sessions, run jobs, manage sandboxes, and provision systems.</p>
+              <p className="text-sm text-muted-foreground">Send a message to start. Ask OpenClaw what is wrong right now, to run a supervision cycle, what the guardian is holding for your approval, or what it has refused and why.</p>
             </div>
           ) : (
             <>

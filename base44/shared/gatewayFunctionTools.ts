@@ -51,6 +51,9 @@ export const AGENT_FUNCTIONS: Record<string, { name: string; description: string
     { name: 'runBatchOperation', description: 'Run a batch operation across multiple targets' },
     { name: 'runAgentLoop', description: 'Dispatch an autonomous agent task cycle' },
   ],
+  openclaw_operator: [
+    { name: 'openClawAgent', description: 'OpenClaw supervision: cycle (observe both sides, guardian-gated repairs, independent validation), status (recent cycles, approvals waiting, switches), policy (the guardian catalogue), run (one catalogued action now), approve/reject (decide a queued approval).' },
+  ],
 };
 
 // Creates a single call_function tool scoped to the agent's permitted functions.
