@@ -3,6 +3,8 @@
 // unguessable (random suffixes), providing effective privacy for temporary files.
 // Provides: uploadFile, uploadPublicFile, uploadPrivateFile, createSignedUrl.
 
+import { secrets } from "base44:runtime";
+
 const BLOB_BASE_URL = 'https://blob.vercel-storage.com';
 
 // Optional on purpose. Vercel Blob is the preferred store, but when its token is
@@ -11,7 +13,13 @@ const BLOB_BASE_URL = 'https://blob.vercel-storage.com';
 // screenshot. A caller that passes a client gets the fallback; a caller that does
 // not still gets the explicit error, exactly as before.
 function getBlobToken(): string | null {
-  return process.env.BLOB_READ_WRITE_TOKEN || null;
+  // App secrets are exposed through the runtime here; process.env is the older
+  // accessor and stays as a fallback. Reading only process.env meant a token that was
+  // in fact configured never reached this module, and every upload reported it as
+  // missing — which is exactly how a configured secret looked like a config gap.
+  let token: string | null = null;
+  try { token = secrets.get('BLOB_READ_WRITE_TOKEN') || null; } catch (e) { token = null; }
+  return token || process.env.BLOB_READ_WRITE_TOKEN || null;
 }
 
 const BLOB_MISSING = 'BLOB_READ_WRITE_TOKEN not set. Add it to app secrets to enable file storage via Vercel Blob.';
