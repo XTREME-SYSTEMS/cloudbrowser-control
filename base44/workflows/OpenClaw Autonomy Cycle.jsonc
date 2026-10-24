@@ -1,0 +1,48 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/30 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "openclaw_autonomy_cycle",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_cycle": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "openClawAgent",
+            "args": {
+              "action": "cycle",
+              "triggered_by": "schedule"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "OpenClaw cycle",
+            "description": "Observe, gate, repair, validate"
+          }
+        }
+      }
+    ]
+  },
+  "name": "OpenClaw Autonomy Cycle",
+  "description": "Runs the supervised OpenClaw autonomy cycle every 30 minutes: observe the platform and the paired machine, let the guardian gate the repairs, apply the automatic ones, verify them independently and record the cycle. A cycle with nothing to review costs no model calls."
+}

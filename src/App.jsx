@@ -84,6 +84,7 @@ import ServiceDetail from '@/pages/ServiceDetail';
 import WorkflowWorkspace from '@/pages/WorkflowWorkspace';
 import ExecutiveAssistant from '@/pages/ExecutiveAssistant';
 import SystemHealth from '@/pages/SystemHealth';
+import OpenClawCommand from '@/pages/OpenClawCommand';
 import AutoHeal from '@/pages/AutoHeal';
 import TestResults from '@/pages/TestResults';
 import ForensicAudit from '@/pages/ForensicAudit';
@@ -182,6 +183,7 @@ const AuthenticatedApp = () => {
           <Route path="/workspace" element={<WorkflowWorkspace />} />
           <Route path="/executive-assistant" element={<ExecutiveAssistant />} />
           <Route path="/system-health" element={<SystemHealth />} />
+          <Route path="/openclaw" element={<OpenClawCommand />} />
           <Route path="/auto-heal" element={<AutoHeal />} />
           <Route path="/test-results" element={<TestResults />} />
           <Route path="/forensic-audit" element={<ForensicAudit />} />

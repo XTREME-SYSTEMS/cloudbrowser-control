@@ -10,7 +10,10 @@ const LABELS = {
   sales_engine: "Sales Engine",
   brand_guardian: "Brand Guardian",
   replicator: "The Replicator",
-  swarm: "The Swarm"
+  swarm: "The Swarm",
+  openclaw_operator: "OpenClaw Operator",
+  openclaw_guardian: "OpenClaw Guardian",
+  openclaw_validator: "OpenClaw Validator"
 };
 
 export default function AgentChatPage() {

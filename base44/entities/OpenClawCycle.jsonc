@@ -1,0 +1,211 @@
+{
+  "name": "OpenClawCycle",
+  "type": "object",
+  "description": "One supervised autonomy cycle run by openClawAgent: what was observed on the platform and on the paired machine, which repairs the guardian admitted, what was applied, what was refused, and the validator's independent verdict. A refusal is recorded as first class, so a repair that was NOT made is as visible as one that was. Written only by openClawAgent.",
+  "properties": {
+    "cycle_id": {
+      "type": "string"
+    },
+    "triggered_by": {
+      "type": "string",
+      "enum": [
+        "schedule",
+        "operator",
+        "workflow"
+      ],
+      "default": "operator"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "clean",
+        "healed",
+        "awaiting_approval",
+        "failed"
+      ],
+      "default": "running"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "clean",
+        "healed_verified",
+        "healed_unverified",
+        "awaiting_approval",
+        "escalated",
+        "failed"
+      ],
+      "default": "clean"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "policy_version": {
+      "type": "string",
+      "description": "Which guardian catalogue governed this cycle, so an old decision can be read against the rules in force at the time"
+    },
+    "observed": {
+      "type": "object",
+      "description": "The reading this cycle acted on: engine fleet, Railway project, paired machine",
+      "properties": {
+        "engines": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "railway": {
+          "type": "object"
+        },
+        "machine": {
+          "type": "object"
+        }
+      }
+    },
+    "problems": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "guardian": {
+      "type": "object",
+      "description": "The permission gate. The deterministic catalogue sets the ceiling; the model review may only narrow it, never widen it.",
+      "properties": {
+        "policy_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string",
+          "description": "Which model reviewed the proposals, recorded so the separation is auditable"
+        },
+        "verdict": {
+          "type": "string"
+        },
+        "allowed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "approval_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "refused": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "validation": {
+      "type": "object",
+      "description": "Independent verification. The producer never grades itself: every claim is re-measured after the repair and then judged by a different model.",
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "not_needed",
+            "verified",
+            "partly_verified",
+            "unproven"
+          ]
+        },
+        "independent": {
+          "type": "boolean",
+          "default": false
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "duration_ms": {
+      "type": "number",
+      "default": 0
+    },
+    "error": {
+      "type": "string"
+    },
+    "requested_by_email": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "verdict"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

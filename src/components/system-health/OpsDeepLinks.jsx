@@ -6,6 +6,7 @@ import { ChevronRight, Plug } from "lucide-react";
  * their routes, so nothing could reach them — these links put them back on the map.
  */
 const CONSOLES = [
+  { to: "/openclaw", label: "OpenClaw Autonomy", note: "Guardian-gated repair cycles, their proof, and your approval queue" },
   { to: "/auto-heal", label: "Auto-Heal", note: "Infrastructure remediation log and its on/off switch" },
   { to: "/test-results", label: "Test Results", note: "Stored results from every suite that has run" },
   { to: "/forensic-audit", label: "Forensic Audit", note: "Scored proof suite with per-check evidence" },

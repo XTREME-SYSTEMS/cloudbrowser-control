@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { encrypt, decrypt } from '../../shared/crypto.ts';
+import { encrypt } from '../../shared/crypto.ts';
 import { listMcpTools, callMcpTool } from '../../shared/mcpClient.ts';
 import {
   MCP_ENDPOINT,
@@ -8,9 +8,14 @@ import {
   createState,
   registerClient,
   buildAuthorizeUrl,
-  refreshAccessToken,
-  expiryFrom,
 } from '../../shared/desktopCommanderAuth.ts';
+// The grant handling moved to a shared module so the OpenClaw cycle can reach the
+// same paired machine without a second copy of it.
+import {
+  currentConnection,
+  publicView,
+  liveAccessToken,
+} from '../../shared/desktopCommanderBridge.ts';
 
 // The bridge from this app's agent to the operator's own computer, through the
 // Desktop Commander remote MCP endpoint. The agent calls this function and the
@@ -33,66 +38,6 @@ function originFor(req) {
 
 function callbackUrlFor(req) {
   return `${originFor(req)}/functions/${CALLBACK_FUNCTION}`;
-}
-
-function reauth(message) {
-  const error = new Error(message);
-  error.needsReauth = true;
-  return error;
-}
-
-async function currentConnection(base44) {
-  const page = await base44.entities.DesktopConnection.filter({}, { sort: '-created_date', limit: 1 });
-  return page.items?.[0] || null;
-}
-
-/** Never hand credentials back to a caller — only what the operator needs to see. */
-function publicView(connection) {
-  if (!connection) return { connected: false, status: 'none', tools: [], tool_count: 0 };
-  return {
-    connected: connection.status === 'connected',
-    status: connection.status,
-    device_name: connection.device_name || null,
-    account_email: connection.account_email || null,
-    scopes: connection.scopes || null,
-    connected_at: connection.connected_at || null,
-    last_used_at: connection.last_used_at || null,
-    last_error: connection.last_error || null,
-    tool_count: connection.tool_count || 0,
-    tools: (connection.tools || []).map((tool) => ({ name: tool.name, description: tool.description })),
-  };
-}
-
-/** A live access token, renewed from the stored grant when it has aged out. */
-async function liveAccessToken(base44, connection) {
-  const expiresAt = connection.expires_at ? new Date(connection.expires_at).getTime() : 0;
-  const existing = await decrypt(connection.access_token_enc);
-  if (existing && expiresAt > Date.now()) return existing;
-
-  const refresh = await decrypt(connection.refresh_token_enc);
-  if (!refresh) throw reauth('This device has no stored grant left. Pair it again.');
-
-  try {
-    const tokens = await refreshAccessToken({
-      refreshToken: refresh,
-      clientId: connection.client_id,
-      clientSecret: await decrypt(connection.client_secret_enc),
-    });
-    await base44.entities.DesktopConnection.update(connection.id, {
-      access_token_enc: await encrypt(tokens.access_token),
-      refresh_token_enc: await encrypt(tokens.refresh_token || refresh),
-      expires_at: expiryFrom(tokens),
-      status: 'connected',
-      last_error: '',
-    });
-    return tokens.access_token;
-  } catch (error) {
-    await base44.entities.DesktopConnection.update(connection.id, {
-      status: 'needs_reauth',
-      last_error: error.message,
-    });
-    throw reauth(`The device grant could not be renewed (${error.message}). Pair it again.`);
-  }
 }
 
 async function startPairing(base44, req) {
