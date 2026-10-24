@@ -126,7 +126,7 @@ export default function WorkflowWorkspace() {
         if (data?.error && !data?.run) setError(data.error);
         if (data?.run) setActiveRun(data.run);
       })
-      .catch((err) => setError(err?.message || "The run could not be started."))
+      .catch((err) => setError(err?.response?.data?.error || err?.message || "The run could not be started."))
       .finally(() => {
         loadRuns();
         setQueueKey((k) => k + 1);

@@ -25,7 +25,7 @@ export default function CommandConsole({ onQueueChanged }) {
       if (data?.error) throw new Error(data.error);
       setBrief(data.brief);
     } catch (err) {
-      setError(err?.message || "Could not get the operating brief.");
+      setError(err?.response?.data?.error || err?.message || "Could not get the operating brief.");
     } finally {
       setBriefLoading(false);
     }
@@ -42,7 +42,9 @@ export default function CommandConsole({ onQueueChanged }) {
       setResult(data);
       onQueueChanged?.();
     } catch (err) {
-      setError(err?.message || "The assistant could not act on that.");
+      // Show what was actually refused rather than the bare HTTP status, so a
+      // permission refusal reads as a permission refusal.
+      setError(err?.response?.data?.error || err?.message || "The assistant could not act on that.");
     } finally {
       setSending(false);
     }
