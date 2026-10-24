@@ -24,7 +24,7 @@ function Panel({ icon: Icon, title, note, children }) {
   );
 }
 
-function Row({ tone = "warn", label, value }) {
+function Row({ tone = "warn", label, value = null }) {
   return (
     <div className="flex items-start gap-2">
       <Dot tone={tone} />

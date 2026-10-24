@@ -1,6 +1,6 @@
 {
   "name": "Retention Reaper",
-  "description": "Daily cleanup of expired screenshots, logs, and videos based on SystemSettings retention policy. Produces audit evidence for each reaped batch.",
+  "description": "Daily cleanup of expired screenshots, engine telemetry, logs, and videos based on SystemSettings retention policy. Produces audit evidence for each reaped batch.",
   "trigger": {
     "condition": null,
     "config": {
@@ -80,10 +80,29 @@
               }
             }
           },
-          "then": "log_receipt",
+          "then": "reap_engine_health",
           "x-base44": {
             "title": "Reap expired videos",
             "description": "Clear video URLs older than retention period"
+          }
+        }
+      },
+      {
+        "reap_engine_health": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reapExpired",
+            "args": {
+              "entity": "EngineHealthLog",
+              "date_field": "checked_at",
+              "setting_key": "engine_health_retention_days",
+              "default_days": 14
+            }
+          },
+          "then": "log_receipt",
+          "x-base44": {
+            "title": "Reap engine telemetry",
+            "description": "Delete engine health readings older than retention"
           }
         }
       },

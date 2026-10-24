@@ -193,7 +193,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       // Upload and create artifact
       if (res.base64) {
         const file = new File([Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0))], `mcp_screenshot.png`, { type: "image/png" });
-        const uploadRes = await uploadFile({ file });
+        const uploadRes = await uploadFile({ file, base44 });
         return { screenshot_url: uploadRes.file_url, size: res.size };
       }
       return { error: "No screenshot captured" };

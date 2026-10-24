@@ -15,7 +15,7 @@ function Group({ icon: Icon, title, note, children }) {
   );
 }
 
-function Entry({ entry, onRun, busy, runnable }) {
+function Entry({ entry, onRun = null, busy = false, runnable = false }) {
   return (
     <div className="rounded-lg border border-border/60 bg-secondary/20 p-2.5">
       <div className="flex flex-wrap items-center gap-2">
