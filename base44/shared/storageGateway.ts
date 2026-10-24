@@ -22,6 +22,16 @@ function getBlobToken(): string | null {
   return token || process.env.BLOB_READ_WRITE_TOKEN || null;
 }
 
+// The store id can arrive on its own. Vercel resolves the target store from the
+// token or from a header, and when the token carries no store id the request is
+// refused with "Cannot get store id from token or header" — so a store id supplied
+// as its own secret is sent as that header rather than being ignored.
+function getBlobStoreId(): string | null {
+  let storeId: string | null = null;
+  try { storeId = secrets.get('BLOB_STORE_ID') || null; } catch (e) { storeId = null; }
+  return storeId || process.env.BLOB_STORE_ID || null;
+}
+
 const BLOB_MISSING = 'BLOB_READ_WRITE_TOKEN not set. Add it to app secrets to enable file storage via Vercel Blob.';
 
 async function uploadToNative(base44: any, file: File | Blob, isPrivate: boolean, preferredFailure?: string) {
@@ -52,9 +62,12 @@ async function uploadToBlob(file: File | Blob, pathname?: string): Promise<{ url
   const formData = new FormData();
   const filename = pathname || `file_${Date.now()}`;
   formData.append('file', file, filename);
+  const headers: Record<string, string> = { 'Authorization': `Bearer ${token}`, 'x-api-version': '7' };
+  const storeId = getBlobStoreId();
+  if (storeId) headers['x-vercel-blob-store-id'] = storeId;
   const res = await fetch(BLOB_BASE_URL, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}`, 'x-api-version': '7' },
+    headers,
     body: formData,
   });
   if (!res.ok) { const t = await res.text(); throw new Error(`Vercel Blob upload error ${res.status}: ${t}`); }
