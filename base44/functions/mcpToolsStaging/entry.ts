@@ -80,7 +80,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_end": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (session.session_id && await isStagingEngineConfigured()) {
         try { await stagingEngineDelete(`/sessions/${session.session_id}`); } catch (e) {}
       }
@@ -90,7 +90,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_navigate": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "goto", value: params.url,
@@ -102,7 +102,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "solve_captcha": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       const solveOptions = await withCaptchaCredentials(base44, {
         type: params.type, siteKey: params.site_key, provider: params.provider, maxWait: params.max_wait,
@@ -115,7 +115,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_act": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       let actionOptions = params.options || {};
       if (params.action_type === "solve_captcha") {
@@ -129,7 +129,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_observe": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "evaluate", options: { fn: params.fn || "() => ({ url: location.href, title: document.title })" },
@@ -139,7 +139,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_extract": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       const extractType = params.extract_type || "extract_text";
       const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, { action_type: extractType, selector: params.selector });
@@ -148,7 +148,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_screenshot": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "screenshot", options: { fullPage: params.full_page || false },
@@ -163,13 +163,13 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_list_tabs": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       return { tabs: session.tabs || [], current_url: session.current_url, environment: "staging" };
     }
     case "browser_switch_tab": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isStagingEngineConfigured()) throw new Error("Staging engine not configured");
       const res = await stagingEnginePost(`/sessions/${session.session_id}/execute`, { action_type: "switch_tab", value: String(params.tab_index) });
       return { url: res.url, environment: "staging" };

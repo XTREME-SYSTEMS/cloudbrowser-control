@@ -39,7 +39,7 @@ export default async function (req: Request): Promise<Response> {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url } = body;
+    const { property_address, owner_name, phone, email, company, batch_id, deep_search, spreadsheet_url, authorization } = body;
     const deep = deep_search === true;
 
     if (!property_address && !owner_name && !phone && !email) {
@@ -49,9 +49,38 @@ export default async function (req: Request): Promise<Response> {
       );
     }
 
+    // ===== AUTHORIZATION GATE =====
+    // Standard mode reaches the same person-level sources as deep mode, so it is held to
+    // the same FCRA §604 test. Without this the gate could be bypassed simply by calling
+    // this entry point instead of runMaxSkipTrace: the trace would return contact details
+    // and relatives with no permissible purpose recorded anywhere.
+    const verdict = authorizeSearch({
+      permissible_purpose: authorization?.permissible_purpose,
+      legal_matter: authorization?.legal_matter,
+      case_reference: authorization?.case_reference,
+      data_categories: Array.isArray(authorization?.data_categories) ? authorization.data_categories : [],
+      subject_name: owner_name || property_address,
+      requested_by_id: user.id,
+      requested_by_email: user.email,
+    });
+
+    if (!verdict.ok) {
+      console.warn("runSkipTrace refused by authorization gate:", verdict.summary);
+      return Response.json({
+        status: "rejected",
+        verification_status: "unauthorized",
+        evidence_verified: false,
+        error:
+          "Search refused by the authorization gate. A permissible purpose, the specific legal matter and a case reference must all be recorded before any source is contacted.",
+        authorization_verdict: verdict,
+      }, { status: 403 });
+    }
+
     // Create skip trace record
     const skipTrace = await base44.entities.SkipTrace.create({
       target_property_address: property_address || "",
+      authorization: authorization || {},
+      validation: { ...verdict, verified_at: new Date().toISOString() },
       target_owner_name: owner_name || "",
       target_phone: phone || "",
       target_email: email || "",

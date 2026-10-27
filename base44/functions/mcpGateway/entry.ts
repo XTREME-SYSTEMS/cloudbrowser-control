@@ -139,7 +139,7 @@ export default async function (req) {
 async function getSession(base44, keyRecord, sessionId) {
   const s = await base44.asServiceRole.entities.Session.get(sessionId);
   if (!s) throw new Error("Session not found");
-  if (keyRecord.project_id && s.project_id && s.project_id !== keyRecord.project_id) throw new Error("Session not found (tenant)");
+  if (s.project_id && s.project_id !== keyRecord.project_id) throw new Error("Session not found (tenant)");
   return s;
 }
 

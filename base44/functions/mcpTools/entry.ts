@@ -114,7 +114,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_end": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (session.session_id && await isEngineConfigured()) {
         try { await engineDelete(`/sessions/${session.session_id}`); } catch (e) {}
       }
@@ -127,7 +127,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_navigate": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "goto", value: params.url,
@@ -142,7 +142,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_act": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       // Inject captcha solver credentials for solve_captcha actions
       let actionOptions = params.options || {};
@@ -161,7 +161,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_observe": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "evaluate",
@@ -173,7 +173,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_extract": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const extractType = params.extract_type || "extract_text";
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
@@ -185,7 +185,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_screenshot": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "screenshot", options: { fullPage: params.full_page || false },
@@ -224,14 +224,14 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "browser_list_tabs": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       return { tabs: session.tabs || [], current_url: session.current_url };
     }
 
     case "browser_switch_tab": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "switch_tab", value: String(params.tab_index),
@@ -243,7 +243,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
     case "solve_captcha": {
       const session = await base44.asServiceRole.entities.Session.get(params.session_id);
       if (!session) throw new Error("Session not found");
-      if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
+      if (session.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const solveOptions = await withCaptchaCredentials(base44, {
         type: params.type,
