@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { invokeLLM, setGatewayFallback } from '../../shared/vercelAiGateway.ts';
 import { SKIP_TRACE_DEEP_CATALOG } from '../../shared/searchSourceCatalog.ts';
+import { authorizeSearch } from '../../shared/searchValidation.ts';
 
 /**
  * Skip Trace Engine — Multi-Method Owner & Contact Discovery
