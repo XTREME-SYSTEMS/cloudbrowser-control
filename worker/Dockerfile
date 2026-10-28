@@ -1,17 +1,18 @@
 FROM node:24-alpine
 
+# Build context is the repository root — same layout as the API, for the same
+# reason: worker.js imports ../shared/db.js, which only exists if shared/ is
+# copied alongside it.
 WORKDIR /srv
-
-# Dependencies first for layer caching. No lockfile is committed yet, so the
-# image installs from the range-pinned manifest (see docs/portable/DEPLOYMENT.md
-# for the lockfile follow-up).
-COPY package.json ./
+COPY worker/package.json ./package.json
 RUN npm install --omit=dev --no-audit --no-fund
 
-COPY . .
+COPY worker/ ./worker/
+COPY shared/ ./shared/
 
 ENV NODE_ENV=production
 
+WORKDIR /srv/worker
 USER node
 
 CMD ["node", "worker.js"]
