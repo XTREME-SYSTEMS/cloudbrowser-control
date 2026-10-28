@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
+import { runMigrations } from "./lib/migrate.js";
+
 import {
   newRequestId,
   normalizeError,
@@ -121,6 +123,9 @@ const isEntrypoint =
   Boolean(process.argv[1]) && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 
 if (isEntrypoint) {
+  // Schema first: a database without tables answers /health but fails every task.
+  await runMigrations();
+
   const port = Number(process.env.API_PORT || 4000);
   const server = createApp().listen(port, () => {
     console.log(JSON.stringify({ level: "info", msg: "api_listening", port, version: API_VERSION }));
