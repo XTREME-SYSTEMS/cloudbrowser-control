@@ -14,8 +14,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // The image layout depends on the build context, so look in each plausible place
 // rather than assuming one.
 const CANDIDATES = [
-  path.resolve(here, "../../db/migrations"),
-  path.resolve(here, "../db/migrations"),
+  path.resolve(here, "../db"),              // schema shipped inside the API image
+  path.resolve(here, "../../db/migrations"), // repo-root build
+  path.resolve(here, "../db/migrations"),    // api as build root
   "/srv/db/migrations",
 ];
 
