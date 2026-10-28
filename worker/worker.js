@@ -189,7 +189,7 @@ async function loop() {
       }
       await runJob(job);
     } catch (err) {
-      log("error", "worker_loop_error", { error: err?.message });
+      log("error", `worker_loop_error: ${err?.code || err?.name || "Error"}: ${err?.message || "no message"}`);
       await sleep(POLL_INTERVAL_MS);
     }
   }
@@ -207,7 +207,7 @@ async function reaper() {
         });
       }
     } catch (err) {
-      log("error", "reaper_error", { error: err?.message });
+      log("error", `reaper_error: ${err?.code || err?.name || "Error"}: ${err?.message || "no message"}`);
     }
     await sleep(REAP_INTERVAL_MS);
   }
