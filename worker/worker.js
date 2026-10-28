@@ -243,7 +243,19 @@ process.on("SIGINT", () => {
 });
 
 main().catch(async (err) => {
-  log("error", "worker_fatal", { error: err?.message });
+  // Railway renders only the JSON "msg" field of a structured log line, so a boot
+  // failure explained in a sibling field is invisible in the dashboard. The reason
+  // has to travel inside msg, or the crash reads as a bare "worker_fatal".
+  const parts = [];
+  if (err?.code) parts.push(String(err.code));
+  if (err?.name && err.name !== "Error") parts.push(String(err.name));
+  const detail =
+    err?.message ||
+    (Array.isArray(err?.errors) ? err.errors.map((e) => e?.message).filter(Boolean).join(" | ") : "");
+  parts.push(detail || "no message");
+  log("error", `worker_fatal: ${parts.join(": ")}`, {
+    stack: typeof err?.stack === "string" ? err.stack.split("\n").slice(0, 3).join(" | ") : undefined,
+  });
   await closePool().catch(() => {});
   process.exit(1);
 });
