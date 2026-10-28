@@ -1,19 +1,21 @@
 FROM node:24-alpine
 
+# Build context is the repository root: the API imports ../shared/db.js, so the
+# image lays out /srv/api/server.js beside /srv/shared/, with dependencies
+# installed at /srv where both of them can resolve them. Building from api/ alone
+# left /shared absent and the container died on ERR_MODULE_NOT_FOUND.
 WORKDIR /srv
-
-# Dependencies first for layer caching. No lockfile is committed yet, so the
-# image installs from the range-pinned manifest (see docs/portable/DEPLOYMENT.md
-# for the lockfile follow-up).
-COPY package.json ./
+COPY api/package.json ./package.json
 RUN npm install --omit=dev --no-audit --no-fund
 
-COPY . .
+COPY api/ ./api/
+COPY shared/ ./shared/
 
 ENV NODE_ENV=production
 ENV API_PORT=4000
 EXPOSE 4000
 
+WORKDIR /srv/api
 USER node
 
 CMD ["node", "server.js"]
