@@ -7,6 +7,10 @@ export const JOB_COLUMNS = `id, tenant_id, type, status, priority, payload, resu
   available_at, created_at, updated_at, completed_at`;
 
 /** Atomically reserves the next runnable job and increments its attempt count. */
+// The claim is an UPDATE ... FROM, so a bare column in RETURNING is ambiguous
+// between the jobs row and the candidate row. Qualifying it resolves error 42702.
+const JOB_RETURNING = JOB_COLUMNS.split(",").map((column) => `j.${column.trim()}`).join(", ");
+
 export async function claimNextJob({ workerId, leaseMs }) {
   const { rows } = await getPool().query(
     `WITH candidate AS (
@@ -26,7 +30,7 @@ export async function claimNextJob({ workerId, leaseMs }) {
             updated_at = NOW()
        FROM candidate c
       WHERE j.id = c.id
-      RETURNING ${JOB_COLUMNS}`,
+      RETURNING ${JOB_RETURNING}`,
     [workerId, leaseMs],
   );
   return rows[0] || null;
