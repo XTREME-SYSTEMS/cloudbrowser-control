@@ -57,7 +57,7 @@ The wrapper returns `{manifest, source_url, read_only:true, downloaded_documents
 
 ## Observed live pilot (2026-11-12, America/New_York)
 
-- `https://www.ldiline.com/projects/15527/plans/bobs-discount-furniture-melbourne-fl`: public listing shows **Drawing Index - FREE DOWNLOAD**, **Full Set** and tabs to Plans/Specs; no direct file bytes obtained. Live extractor stage `PUBLIC_INDEX_OR_METADATA`.
+- `https://www.ldiline.com/projects/15527/plans/bobs-discount-furniture-melbourne-fl`: public listing shows **Drawing Index - FREE DOWNLOAD**, **Full Set** and tabs to Plans/Specs. The collapsed download sections contain links stating **registered users only**; read-only extractor correctly reports `HOLD_SOURCE` and `login_required`. No direct file bytes obtained. Live targeted receipt `rcpt_1794499626387_o6i1si`.
 - `https://www.ldiline.com/projects/15527/specs/bobs-discount-furniture-melbourne-fl`: **Bob's Discount Furniture Melbourne, FL Specs.zip**, **161.3 KB**, displayed registration requirement, paid option. Live extractor stage `HOLD_SOURCE` and `login_required`, `paid_order_offered=true`.
 - Source invitation Sierra Contracting, Gmail `1a1cb292692cec76`, references concrete finishes. GC due time Nov 17 at 11:59 PM ET; public LDI planroom has shown an earlier noon time. Resolve with GC before submission.
 - Browser test receipt `rcpt_1794499132956_aspvoa`: **12/12** pure JavaScript checks passed in the live Chromium context. This does **not** validate a built/deployed MCP route or authenticated end-to-end ZIP download.
