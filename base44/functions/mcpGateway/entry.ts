@@ -285,7 +285,19 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "extract_text": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "extract_text", { selector: p.selector }); return { data: r.data, url: r.url }; }
     case "extract_table": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "extract_table", { selector: p.selector }); return { data: r.data, url: r.url }; }
     case "extract_links": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "evaluate", { options: { fn: LINKS_SCRIPT } }); return { links: r.data, url: r.url }; }
-    case "extract_plan_manifest": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "plan_manifest", { options: { projectId: p.project_id, sourceMessageId: p.source_message_id, gc: p.gc } }); return { manifest: r.data, source_url: r.url, read_only: true, downloaded_documents: 0 }; }
+    case "extract_plan_manifest": {
+      const s = await getSession(base44, keyRecord, p.session_id);
+      // Existing getSession allows global/unscoped sessions for legacy tools.
+      // Plan evidence can be confidential, so this NEW route requires explicit
+      // principal-to-session project equality. Never use an unbound session.
+      if (!keyRecord.project_id || !s.project_id || s.project_id !== keyRecord.project_id) {
+        throw new Error("Plan discovery requires a project-bound authorized browser session");
+      }
+      const r = await exec(base44, s, "plan_manifest", {
+        options: { projectId: p.project_id, sourceMessageId: p.source_message_id, gc: p.gc }
+      });
+      return { manifest: r.data, source_url: r.url, read_only: true, downloaded_documents: 0 };
+    }
     case "extract":
     case "extract_structured": {
       const s = await getSession(base44, keyRecord, p.session_id);
