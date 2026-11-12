@@ -103,17 +103,20 @@ export function extractPlanManifest(snapshot = {}, context = {}) {
   }
 
   // Many planrooms expose file names as plain text, without a download href.
-  const filename = /(?:^|\n)\s*([^\n\r]{2,140}\.(?:pdf|dwg|dxf|zip|7z|xlsx|xls|docx))\s*(?:\n|$)/gim;
-  let match;
-  while ((match = filename.exec(text)) && documents.length < 100) {
-    const label = normalized(match[1], 145);
+  // Preserve unlinked drawing names even when a planroom appends a "161.3 KB" size column.
+  // Matching is line-bounded to avoid treating prose or arbitrary URLs as actual files.
+  for (const line of text.split(/\r?\n/).slice(0, 2000)) {
+    if (documents.length >= 100) break;
+    const match = /^\s*(.{2,160}?\.(?:pdf|dwg|dxf|zip|7z|xlsx|xls|docx))(?=\s|$)(?:\s+\d[\d,.]*\s*(?:[kmgt]?b)?\b.*)?\s*$/i.exec(line);
+    if (!match) continue;
+    const label = normalized(match[1], 165);
     const key = "unlinked:" + label.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     documents.push({
       label, href: null, kind: documentKind(label),
       extension: label.match(FILE_EXTENSION)?.[1]?.toLowerCase() || null,
-      access: "filename_only", source_excerpt: label, offsite: false,
+      access: "filename_only", source_excerpt: normalized(line, 240), offsite: false,
       sha256: null, revision: null
     });
   }
