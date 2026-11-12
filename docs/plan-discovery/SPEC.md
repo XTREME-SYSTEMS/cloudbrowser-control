@@ -13,7 +13,7 @@ For each in-scope Florida contractor bid invitation, extract the project owner/G
 
 - Cloud Browser runtime: `browser-engine/server.js`, Playwright 3.1.0. Authenticated sessions only.
 - New browser-engine action: `plan_manifest` (read-only, current page, no network navigation or download).
-- Existing MCP gateway: `base44/functions/mcpGateway/entry.ts`. New `extract_plan_manifest` action with `sessions:read` scope; validates session ownership via existing `getSession` before engine dispatch.
+- Existing MCP gateway: `base44/functions/mcpGateway/entry.ts`. New `extract_plan_manifest` action with `sessions:read` scope; calls existing `getSession` **and rejects unbound principal/session or mismatched project IDs** before engine dispatch. Legacy unscoped sessions remain unsupported for this tool.
 - Existing GPT tool manifest: `base44/mcp/config.json`, advertises `extract_plan_manifest`.
 - Logic: `browser-engine/plan-discovery.js`; no external packages, secrets, or new infrastructure.
 - Existing user account Cloud Browser Template: `6af5d75ab3b894fde9a26b54`.
