@@ -129,3 +129,19 @@ test("records unlinked drawing index and full set without asserting download rig
   assert.equal(x.downloaded_documents, 0);
   assert.equal(x.measured_floor_sf, null);
 });
+
+test("detects access warnings from collapsed planroom link text", () => {
+  const x = extractPlanManifest({
+    url: base,
+    title: "Plans",
+    text: "Drawing Index - FREE DOWNLOAD\nFull Set",
+    links: [
+      { label: "Plans", href: base },
+      { label: "This is available for download to registered users. Log in now", href: "https://www.ldiline.com/auth/login?redirect=https://www.ldiline.com/projects/15527/plans" }
+    ]
+  });
+  assert.equal(x.access.state, "login_required");
+  assert.equal(x.stage, "HOLD_SOURCE");
+  assert.ok(x.documents.some(d => d.kind === "index"));
+  assert.equal(x.downloaded_documents, 0);
+});
