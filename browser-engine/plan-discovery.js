@@ -72,10 +72,13 @@ export function extractPlanManifest(snapshot = {}, context = {}) {
   if (!pageUrl) throw new TypeError("Expected a public HTTP(S) plan source URL");
   const pageHost = new URL(pageUrl).hostname;
   const text = String(snapshot.text || "").slice(0, 100000);
-  const access = accessAssessment(text, { captcha: snapshot.captcha });
+  const anchors = Array.isArray(snapshot.links) ? snapshot.links.slice(0, 1000) : [];
+  // Collapsed planroom sections may hide their login warnings from body.innerText.
+  // Anchor labels/context still expose "available to registered users" safely.
+  const linkEvidence = anchors.map(a => normalized(a.label || a.text, 350) + " " + normalized(a.context, 350)).join("\n");
+  const access = accessAssessment(text + "\n" + linkEvidence, { captcha: snapshot.captcha });
   const documents = [];
   const seen = new Set();
-  const anchors = Array.isArray(snapshot.links) ? snapshot.links.slice(0, 1000) : [];
 
   for (const anchor of anchors) {
     const label = normalized(anchor.label || anchor.text, 240);
