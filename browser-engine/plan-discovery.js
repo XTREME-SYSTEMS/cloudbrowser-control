@@ -8,6 +8,7 @@
 const FILE_EXTENSION = /\.(pdf|dwg|dxf|zip|7z|xlsx|xls|docx)(?:$|[?#])/i;
 const PLAN_TERMS = /\b(plans?|drawing|blueprint|floor|finish|sheet|schedule|specification|specs?|addend(?:um|a)|bid form|construction document|architectural|division 0[39])\b/i;
 const PRIVATE_HOST = /(^localhost$|\.localhost$|\.internal$|\.local$|^metadata\.google\.internal$)/i;
+const NAVIGATION_LABEL = /^(?:skip to main content|plan room|home|public projects|private projects|project calendar|send us files|plan holders|details|register(?: \/ login)?|login|order|shopping cart|cart)$/i;
 
 function normalized(value, limit = 400) {
   return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, limit);
@@ -81,10 +82,15 @@ export function extractPlanManifest(snapshot = {}, context = {}) {
     const contextText = normalized(anchor.context, 320);
     const href = safeDocumentUrl(anchor.href, pageUrl);
     if (!href) continue;
-    const combined = label + " " + href + " " + contextText;
-    if (!PLAN_TERMS.test(combined) && !FILE_EXTENSION.test(href)) continue;
+    // Exclude normal navigation. The parent project URL often contains "/plans/" or
+    // "/specs/", which must NOT make every menu link appear to be a document.
+    if (NAVIGATION_LABEL.test(label)) continue;
+    const pathTail = decodeURIComponent(new URL(href).pathname.split("/").pop() || "");
+    const semantic = label + " " + contextText + " " + pathTail;
+    const isFullSet = /^full set$/i.test(label) && /\/(?:plans|drawings)\//i.test(pageUrl);
+    if (!PLAN_TERMS.test(semantic) && !FILE_EXTENSION.test(pathTail) && !isFullSet) continue;
     const ext = href.match(FILE_EXTENSION)?.[1]?.toLowerCase() || null;
-    const kind = documentKind(combined);
+    const kind = isFullSet ? "plan" : documentKind(semantic);
     const key = href.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
