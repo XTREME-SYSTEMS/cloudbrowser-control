@@ -126,6 +126,22 @@ export function extractPlanManifest(snapshot = {}, context = {}) {
       sha256: null, revision: null
     });
   }
+  // Public planroom labels frequently have no direct href in the rendered HTML.
+  // Inventory the listing but never claim the file was fetched or freely accessible.
+  const plainListings = [
+    { line: "Drawing Index - FREE DOWNLOAD", kind: "index" },
+    { line: "Full Set", kind: "plan" }
+  ];
+  const rawLines = text.split(/\r?\n/).map(x => normalized(x, 180));
+  for (const entry of plainListings) {
+    if (!rawLines.some(line => line.toLowerCase() === entry.line.toLowerCase())) continue;
+    if (documents.some(d => d.label.toLowerCase() === entry.line.toLowerCase())) continue;
+    documents.push({
+      label: entry.line, href: null, kind: entry.kind, extension: null,
+      access: "listed_no_direct_url", source_excerpt: entry.line,
+      offsite: false, sha256: null, revision: null
+    });
+  }
   const dueLines = text.split(/\n/).map(x => normalized(x, 180))
     .filter(x => /^(?:due\s*:|bid\s*(?:due|date|deadline)\s*:|proposal\s*deadline\s*:)/i.test(x))
     .slice(0, 8);
