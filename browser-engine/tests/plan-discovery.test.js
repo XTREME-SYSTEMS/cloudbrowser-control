@@ -52,7 +52,7 @@ test("extracts LDI public listing links but does not claim a document download",
     ]
   }, { projectId: "6af5581adeb26661b7f890ec", sourceMessageId: "1a1cb292692cec76" });
   assert.equal(x.stage, "PUBLIC_INDEX_OR_METADATA");
-  assert.equal(x.documents.length, 3);
+  assert.equal(x.documents.length, 4);
   assert.equal(x.documents.find(d => d.kind === "index").access, "listing_link_only");
   assert.equal(x.downloaded_documents, 0);
   assert.equal(x.floor_scope_verified, false);
@@ -98,4 +98,34 @@ test("provides browser helper without navigation, downloads, forms or network fe
   assert.equal(calls,1);
   assert.equal(out.gc,"Sierra Contracting");
   assert.equal(out.downloaded_documents,0);
+});
+
+test("does not misclassify planroom menus as documents", () => {
+  const x = extractPlanManifest({
+    url: base,
+    title: "Planroom navigation",
+    text: "Public projects\nDrawing Index - FREE DOWNLOAD\nFull Set",
+    links: [
+      { label: "Skip to main content", href: "#content" },
+      { label: "PLAN ROOM", href: "/" },
+      { label: "Plan Holders", href: "/plan-holders" },
+      { label: "Plans", href: base },
+      { label: "Specs", href: base.replace("/plans/", "/specs/") }
+    ]
+  });
+  assert.equal(x.documents.some(d => d.label === "PLAN ROOM"), false);
+  assert.equal(x.documents.some(d => d.label === "Plan Holders"), false);
+  assert.equal(x.documents.some(d => d.label === "Skip to main content"), false);
+  assert.equal(x.documents.filter(d => d.label === "Plans").length, 1);
+});
+
+test("records unlinked drawing index and full set without asserting download rights", () => {
+  const x = extractPlanManifest({
+    url: base, text: "Drawing Index - FREE DOWNLOAD\nFull Set",
+    links: []
+  });
+  assert.ok(x.documents.some(d => d.label === "Drawing Index - FREE DOWNLOAD" && d.href === null && d.access === "listed_no_direct_url"));
+  assert.ok(x.documents.some(d => d.label === "Full Set" && d.kind === "plan" && d.access === "listed_no_direct_url"));
+  assert.equal(x.downloaded_documents, 0);
+  assert.equal(x.measured_floor_sf, null);
 });
