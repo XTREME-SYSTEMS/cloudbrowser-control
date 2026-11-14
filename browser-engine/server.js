@@ -9,6 +9,7 @@ import { solveCaptchaSelf } from './captcha-self-solver.js';
 import { generateFingerprint, getFingerprintInitScript } from './fingerprint-randomizer.js';
 import { humanClick, humanType, generateMousePath, humanDelay } from './human-behavior.js';
 import SessionManager from './session-manager.js';
+import { discoverPlansOnPage } from './plan-discovery.js';
 
 
 const app = express();
@@ -1261,6 +1262,7 @@ api.post("/sessions/:id/execute", async (req, res) => {
       // innerText()/innerHTML(), which Page does not implement, so every whole-page read
       // answered HTTP 500 instead of returning the page.
       case "extract_text": { result.data = selector ? await (await locate(page, selector)).innerText() : await page.evaluate(() => document.body?.innerText || ""); break; }
+      case "plan_manifest": { result.data = await discoverPlansOnPage(page, { projectId: options.projectId, sourceMessageId: options.sourceMessageId, gc: options.gc }); break; }
       case "extract_html": { result.data = selector ? await (await locate(page, selector)).innerHTML() : await page.content(); break; }
       case "extract_attribute": { result.data = await (await locate(page, selector)).getAttribute(options.attribute || "href"); break; }
       case "extract_table": { result.data = await page.evaluate((sel) => { const t = document.querySelector(sel); if (!t) return []; return [...t.querySelectorAll("tr")].map((r) => [...r.querySelectorAll("th,td")].map((c) => c.innerText.trim())); }, selector); break; }

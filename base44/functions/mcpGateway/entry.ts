@@ -21,7 +21,7 @@ const TOOL_SCOPES: Record<string, string> = {
   type: "sessions:write", fill: "sessions:write", clear: "sessions:write", press_key: "sessions:write", select_option: "sessions:write",
   upload_file: "sessions:write", scroll: "sessions:write", scroll_to_element: "sessions:write",
   wait_for: "sessions:read", wait_for_selector: "sessions:read", wait_for_navigation: "sessions:read", wait_for_network_idle: "sessions:read",
-  extract: "sessions:read", extract_text: "sessions:read", extract_table: "sessions:read", extract_links: "sessions:read", extract_structured: "sessions:read",
+  extract: "sessions:read", extract_text: "sessions:read", extract_table: "sessions:read", extract_links: "sessions:read", extract_structured: "sessions:read", extract_plan_manifest: "sessions:read",
   screenshot: "sessions:read", full_page_screenshot: "sessions:read", element_screenshot: "sessions:read",
   list_tabs: "sessions:read", open_tab: "sessions:write", close_tab: "sessions:write", switch_tab: "sessions:write",
   get_console: "sessions:read", get_network: "sessions:read", get_requests: "sessions:read", get_responses: "sessions:read", get_errors: "sessions:read",
@@ -285,6 +285,19 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
     case "extract_text": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "extract_text", { selector: p.selector }); return { data: r.data, url: r.url }; }
     case "extract_table": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "extract_table", { selector: p.selector }); return { data: r.data, url: r.url }; }
     case "extract_links": { const s = await getSession(base44, keyRecord, p.session_id); const r = await exec(base44, s, "evaluate", { options: { fn: LINKS_SCRIPT } }); return { links: r.data, url: r.url }; }
+    case "extract_plan_manifest": {
+      const s = await getSession(base44, keyRecord, p.session_id);
+      // Existing getSession allows global/unscoped sessions for legacy tools.
+      // Plan evidence can be confidential, so this NEW route requires explicit
+      // principal-to-session project equality. Never use an unbound session.
+      if (!keyRecord.project_id || !s.project_id || s.project_id !== keyRecord.project_id) {
+        throw new Error("Plan discovery requires a project-bound authorized browser session");
+      }
+      const r = await exec(base44, s, "plan_manifest", {
+        options: { projectId: p.project_id, sourceMessageId: p.source_message_id, gc: p.gc }
+      });
+      return { manifest: r.data, source_url: r.url, read_only: true, downloaded_documents: 0 };
+    }
     case "extract":
     case "extract_structured": {
       const s = await getSession(base44, keyRecord, p.session_id);
@@ -437,14 +450,14 @@ async function handleTool(base44, tool, p, keyRecord, requestId) {
       const s = await getSession(base44, keyRecord, p.session_id);
       const obs = await exec(base44, s, "evaluate", { options: { fn: OBSERVE_SCRIPT } });
       const llmRes = await invokeLLM({
-        prompt: "You are a browser agent. GOAL: " + (p.goal || "") + "\nCurrent page: " + (obs.data?.url || "") + "\nVisible interactive elements (semantic): " + JSON.stringify((obs.data?.elements || []).slice(0, 40)) + "\nPropose ONE deterministic browser action to progress toward the goal. Return JSON with action_type (goto|click|type|fill|press|scroll|screenshot|extract|done), selector, value, and reasoning. If goal achieved, action_type=done.",
+        prompt: "You are a browser agent. GOAL: " + (p.goal || "") + "\nCurrent page: " + (obs.data?.url || "") + "\nVisible interactive elements (semantic): " + JSON.stringify((obs.data?.elements || []).slice(0, 40)) + "\nPropose ONE deterministic browser action to progress toward the goal. Return JSON with action_type (goto|click|type|fill|press|scroll|screenshot|extract_text|done), selector, value, and reasoning. If goal achieved, action_type=done.",
         response_json_schema: { type: "object", properties: { action_type: { type: "string" }, selector: { type: "string" }, value: { type: "string" }, reasoning: { type: "string" }, done: { type: "boolean" } } },
       });
       const proposal = llmRes || {};
-      const ALLOWED = new Set(["goto", "click", "type", "fill", "press", "scroll", "screenshot", "extract_text", "done"]);
+      const ALLOWED = new Set(["goto", "click", "type", "fill", "press", "scroll", "screenshot", "extract_text", "extract", "done"]);
       if (!ALLOWED.has(proposal.action_type)) return { error: "policy_rejected: action_type '" + proposal.action_type + "' not allowed", proposal, step: "policy_check" };
       if (proposal.done || proposal.action_type === "done") return { done: true, reasoning: proposal.reasoning, observation: { url: obs.data?.url, element_count: obs.data?.element_count } };
-      const actRes = await exec(base44, s, proposal.action_type === "press" ? "press" : proposal.action_type, { selector: proposal.selector, value: proposal.value });
+      const actRes = await exec(base44, s, proposal.action_type === "extract" ? "extract_text" : proposal.action_type, { selector: proposal.selector, value: proposal.value });
       const postObs = await exec(base44, s, "evaluate", { options: { fn: STATE_SCRIPT } });
       return { step: "agent_step", proposal, action_result: actRes, post_state: postObs.data, done: false };
     }
